@@ -19,7 +19,7 @@ replace the latest revision with this text.</b></p>
 [% oldText %]
 </textarea>
 
-<p>Summarize changes: <input type="text" name="summary" size="60" maxlength="200" /><br />
+<p class='editsubmit'>Summarize changes: <input type="text" name="summary" size="60" maxlength="200" /><br />
 <input type="checkbox" name="recent_edit" value="on" />This change is a minor edit.<br />
 <input type="submit" name="Save" value="Save" />
 [% IF userName %]
