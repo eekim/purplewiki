@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Section.pm,v 1.1.2.3 2003/01/30 08:31:48 cdent Exp $
+# $Id: Section.pm,v 1.1.2.4 2003/01/30 09:30:20 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Section;
 
 # PurpleWiki Section Data Access
 
-# $Id: Section.pm,v 1.1.2.3 2003/01/30 08:31:48 cdent Exp $
+# $Id: Section.pm,v 1.1.2.4 2003/01/30 09:30:20 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -57,11 +57,10 @@ sub new {
 sub getText {
     my $self = shift;
 
-    if (ref($self->{data})) {
-        return $self->{data};
-    } else {
+    if (!ref($self->{data})) {
         $self->{data} = new PurpleWiki::Database::Text($self->{data});
     }
+    return $self->{data};
 }
 
 sub getHost {
@@ -133,7 +132,6 @@ sub _init {
 
     # If we have data to push in
     if (defined($args{data})) {
-        print STDERR "args data is defined in Section\n";
         my %tempHash = split(/$FS2/, $args{data}, -1);
 
         foreach my $key (keys(%tempHash)) {

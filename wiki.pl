@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.10 2003/01/30 08:31:48 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.11 2003/01/30 09:30:20 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -44,22 +44,30 @@ use CGI::Carp qw(fatalsToBrowser);
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
-# Global variables:
-use vars qw(%UserCookie %SetCookie $MainPage
-  $q $Now $UserID $TimeZoneOffset );
-
 my $ScriptName;         # the name by which this script is called
 my $wikiParser;         # the reference to the PurpleWiki Parser
 my $InterSiteInit = 0;
 my %InterSite;
 my $user;               # our reference to the logged in user
+my %UserCookie;         # The cookie received from the user
+my %SetCookie;          # The cookie to be sent to the user
+my $MainPage;           # ?
+my $q;                  # CGI query reference
+my $Now;                # The time at the beginning of the request
+my $UserID;             # UserID of the current session. FIXME: can we
+                        # get this off $user reliably?
+my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
+                        # get this off $user reliably? Doesn't look
+                        # worth it.
+
+# we only need one of these per run
+$wikiParser = PurpleWiki::Parser::WikiText->new;
 
 # The "main" program, called from the end of this script file.
 sub DoWikiRequest {
   &InitRequest() or return;
 
   # Instantiate PurpleWiki parser.
-  $wikiParser = PurpleWiki::Parser::WikiText->new;
 
   if (!&DoBrowseRequest()) {
     &DoOtherRequest();
@@ -247,8 +255,7 @@ sub BrowsePage {
     $diffRevision = $goodRevision;
     $diffRevision = &GetParam('diffrevision', $diffRevision);
 
-    $fullHtml .= &PurpleWiki::Database::GetDiffHTML($page,
-        $keptRevision, $showDiff, $id, $diffRevision, $newText);
+    $fullHtml .= &GetDiffHTML($page, $keptRevision, $showDiff, $id, $diffRevision, $newText);
   }
 
   $fullHtml .= &WikiToHTML($text->getText());
@@ -1944,7 +1951,6 @@ sub DoPost {
     $page->setPageCache('oldauthor', $section->getRevision());
   }
 
-  print STDERR "Revision: $id: " . $section->getRevision() . "\n";
   # only save section if it is not the first
   if ($section->getRevision() > 0) {
     $keptRevision->addSection($section, $Now);
@@ -1965,7 +1971,6 @@ sub DoPost {
   $section->setTS($Now);
   $page->setRevision($section->getRevision());
   $page->setTS($Now);
-  print STDERR "2nd Revision: $id: " . $section->getRevision() . "\n";
   $page->save();
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
   &PurpleWiki::Database::ReleaseLock();
@@ -2231,7 +2236,121 @@ sub DoShowVersion {
   print "<p>UseModWiki version 0.92<p>\n";
   print &GetCommonFooter();
 }
-#END_OF_OTHER_CODE
+# ==== Difference markup and HTML ====
+sub GetDiffHTML {
+    my $page = shift;
+    my $keptRevision = shift;
+  my $diffType = shift;
+  my $id = shift;
+  my $rev = shift;
+  my $newText = shift;
+  my ($html, $diffText, $diffTextTwo, $priorName, $links, $usecomma);
+  my ($major, $minor, $author, $useMajor, $useMinor, $useAuthor, $cacheName);
+
+  $links = "(";
+  $usecomma = 0;
+  $major  = &ScriptLinkDiff(1, $id, 'major diff', "");
+  $minor  = &ScriptLinkDiff(2, $id, 'minor diff', "");
+  $author = &ScriptLinkDiff(3, $id, 'author diff', "");
+  $useMajor  = 1;
+  $useMinor  = 1;
+  $useAuthor = 1;
+  if ($diffType == 1) {
+    $priorName = 'major';
+    $cacheName = 'major';
+    $useMajor  = 0;
+  } elsif ($diffType == 2) {
+    $priorName = 'minor';
+    $cacheName = 'minor';
+    $useMinor  = 0;
+  } elsif ($diffType == 3) {
+    $priorName = 'author';
+    $cacheName = 'author';
+    $useAuthor = 0;
+  }
+  if ($rev ne "") {
+    $diffText = PurpleWiki::Database::GetKeptDiff($keptRevision,
+                              $newText, $rev, 1);  # 1 = get lock
+    if ($diffText eq "") {
+      $diffText = '(The revisions are identical or unavailable.)';
+    }
+  } else {
+    $diffText  = &PurpleWiki::Database::GetCacheDiff($page, $cacheName);
+  }
+  $useMajor  = 0  if ($useMajor  && ($diffText eq PurpleWiki::Database::GetCacheDiff($page, "major")));
+  $useMinor  = 0  if ($useMinor  && ($diffText eq PurpleWiki::Database::GetCacheDiff($page, "minor")));
+  $useAuthor = 0  if ($useAuthor && ($diffText eq PurpleWiki::Database::GetCacheDiff($page, "author")));
+  $useMajor  = 0  if ((!defined($page->getPageCache('oldmajor'))) ||
+                      ($page->getPageCache("oldmajor") < 1));
+  $useAuthor = 0  if ((!defined($page->getPageCache('oldauthor'))) ||
+                      ($page->getPageCache("oldauthor") < 1));
+  if ($useMajor) {
+    $links .= $major;
+    $usecomma = 1;
+  }
+  if ($useMinor) {
+    $links .= ", "  if ($usecomma);
+    $links .= $minor;
+    $usecomma = 1;
+  }
+  if ($useAuthor) {
+    $links .= ", "  if ($usecomma);
+    $links .= $author;
+  }
+  if (!($useMajor || $useMinor || $useAuthor)) {
+    $links .= 'no other diffs';
+  }
+  $links .= ")";
+
+  if ((!defined($diffText)) || ($diffText eq "")) {
+    $diffText = 'No diff available.';
+  }
+  if ($rev ne "") {
+    $html = '<b>'
+            . "Difference (from revision $rev to current revision"
+            . "</b>\n" . "$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
+  } else {
+    if (($diffType != 2) &&
+        ((!defined($page->getPageCache("old$cacheName"))) ||
+         ($page->getPageCache("old$cacheName") < 1))) {
+      $html = '<b>'
+              . "No diff available--this is the first $priorName revision."
+              . "</b>\n$links<hr>";
+    } else {
+      $html = '<b>'
+              . "Difference (from prior $priorName revision)"
+              . "</b>\n$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
+    }
+  }
+  return $html;
+}
+
+sub DiffToHTML {
+  my ($html) = @_;
+  my ($tChanged, $tRemoved, $tAdded);
+
+  $tChanged = 'Changed:';
+  $tRemoved = 'Removed:';
+  $tAdded   = 'Added:';
+  $html =~ s/\n--+//g;
+  # Note: Need spaces before <br> to be different from diff section.
+  $html =~ s/(^|\n)(\d+.*c.*)/$1 <br><strong>$tChanged $2<\/strong><br>/g;
+  $html =~ s/(^|\n)(\d+.*d.*)/$1 <br><strong>$tRemoved $2<\/strong><br>/g;
+  $html =~ s/(^|\n)(\d+.*a.*)/$1 <br><strong>$tAdded $2<\/strong><br>/g;
+  $html =~ s/\n((<.*\n)+)/&ColorDiff($1,"ffffaf")/ge;
+  $html =~ s/\n((>.*\n)+)/&ColorDiff($1,"cfffcf")/ge;
+  return $html;
+}
+
+sub ColorDiff {
+  my ($diff, $color) = @_;
+
+  $diff =~ s/(^|\n)[<>]/$1/g;
+  $diff =  $wikiParser->parse($diff, 'add_node_ids' => 0)->view('wikitext');
+  $diff =~ s/\r?\n/<br>/g;
+  return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
+         . "</td></tr></table>\n";
+}
 
 &DoWikiRequest()  if ($RunCGI && ($_ ne 'nocgi'));   # Do everything.
 1; # In case we are loaded from elsewhere
