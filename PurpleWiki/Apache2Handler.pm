@@ -31,7 +31,7 @@
 package PurpleWiki::Apache2Handler;
 
 use strict;
-use lib '/home/cdent/src/PurpleWiki';
+use lib '/home/cdent/src/psSing';
 use IO::File;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
@@ -43,7 +43,7 @@ use Apache::Const -compile => qw(OK);
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $CONFIG = '/home/cdent/testpurple';
+my $CONFIG = '/home/cdent/wikidb';
 my $CSS = '/~cdent/purple.css';
 
 sub handler {
@@ -58,14 +58,12 @@ sub handler {
     my $purpleConfig = new PurpleWiki::Config($CONFIG);
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
-        config => $purpleConfig,
         wikiword => 1,
         css_file => $CSS,
         url => $url,
     );
 
     print $wiki->view('xhtml', 
-        config => $purpleConfig,
         wikiword => 1,
         css_file => $CSS,
         url => $url,

@@ -71,9 +71,8 @@ sub parseForPurple {
     my $config = new PurpleWiki::Config($CONFIG_DIR);
     my $parser = PurpleWiki::Parser::WikiText->new();
     my $wiki = $parser->parse($str,
-            config => $config,
             wikiword => $WIKIWORDS);
-    my $results = $wiki->view('wikihtml', 'url' => $url, config => $config);
+    my $results = $wiki->view('wikihtml', 'url' => $url);
 
     return $results;
 }
@@ -168,9 +167,8 @@ sub _processText {
     my $config = new PurpleWiki::Config($CONFIG_DIR);
     my $parser = PurpleWiki::Parser::WikiText->new();
     my $wiki = $parser->parse($text, 'add_node_ids' => 1,
-        config => $config,
         'url' => $permalink);
-    $text = $wiki->view('wikitext', config => $config);
+    $text = $wiki->view('wikitext');
     $text =~ s/\r//g;
 
     return $text;

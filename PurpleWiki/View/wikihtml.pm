@@ -55,7 +55,6 @@ sub new {
     $self->{pageName} = "";
     $self->{url} = $self->{url} || "";
     $self->{transcluder} = new PurpleWiki::Transclusion(
-        config => $self->{config},
         url => $self->{url});
 
     # standard flag for determining whether or not a hard rule should
@@ -314,17 +313,16 @@ sub _wikiLink {
 
     if ($nodeRef->content =~ /:/) {
         $linkString .= '<a href="' .
-            &PurpleWiki::Page::getInterWikiLink($pageName, $self->{config});
+            &PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '">' . $nodeRef->content . '</a>';
-    } elsif (&PurpleWiki::Page::exists($pageName, $self->{config})) {
+    } elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
-            &PurpleWiki::Page::getFreeLink($nodeRef->content, 
-                $self->{config}) .  '">';
+            &PurpleWiki::Page::getFreeLink($nodeRef->content) .  '">';
         } else {
             $linkString .= '<a href="' . 
-            &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config});
+            &PurpleWiki::Page::getWikiWordLink($pageName);
             $linkString .= "#nid$pageNid" if $pageNid;
             $linkString .= '">';
         }
@@ -333,12 +331,11 @@ sub _wikiLink {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '[' . $nodeRef->content . ']';
             $linkString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($nodeRef->content, 
-                    $self->{config}) .  '">';
+                &PurpleWiki::Page::getFreeLink($nodeRef->content) .  '">';
         } else {
             $linkString .= $nodeRef->content;
             $linkString .= '<a href="' .
-                &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config}) .
+                &PurpleWiki::Page::getWikiWordLink($pageName) .
                     '">';
         }
         $linkString .= '?</a>';
@@ -425,10 +422,9 @@ by view().
 
 =head1 METHODS
 
-=head2 new(config => $config, url => $url, pageName => $pageName)
+=head2 new(url => $url, pageName => $pageName)
 
-Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
-then a fatal error occurs.  
+Returns a new PurpleWiki::View::wikihtml object.
 
 url is the URL prepended to NIDs, defaults to the empty string. 
 

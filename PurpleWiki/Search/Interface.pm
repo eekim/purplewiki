@@ -32,6 +32,7 @@
 package PurpleWiki::Search::Interface;
 
 use strict;
+use PurpleWiki::Config;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -42,7 +43,7 @@ sub new {
 
     my %params = @_;
 
-    $self->{config} = $params{config};
+    $self->{config} = PurpleWiki::Config->instance();
 
     bless ($self, $class);
 
@@ -123,7 +124,7 @@ objects is returned. The normal ordering is reverse chronological.
 
 =over 4
 
-=item new(config => PurpleWiki::Config)
+=item new()
 
 =item search($query)
 

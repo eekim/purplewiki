@@ -8,6 +8,7 @@ PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
 PurpleWiki/Apache2NidHandler.pm
 PurpleWiki/Config.pm
+PurpleWiki/Singleton.pm
 PurpleWiki/Database.pm
 PurpleWiki/Database/KeptRevision.pm
 PurpleWiki/Database/Page.pm

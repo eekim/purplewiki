@@ -44,7 +44,7 @@ sub new {
 
     my %params = @_;
 
-    $self->{config} = $params{config};
+    $self->{config} = PurpleWiki::Config->instance();
 
     $self->{modules} = $self->{config}->SearchModule;
 
@@ -59,7 +59,7 @@ sub search {
         my $class = "PurpleWiki::Search::$module";
         eval "require $class";
 
-        my $searcher = $class->new(config => $self->config());
+        my $searcher = $class->new();
 
         $self->{results}{$module} = [ $searcher->search($query) ];
     }
@@ -122,11 +122,9 @@ object is required.
 
 =over 4
 
-=item new(config => PurpleWiki::Config)
+=item new()
 
-Creates a new PurpleWiki::Search::Engine. Uses the passed in
-PurpleWiki::Config object to determine which modules are to
-be used in the search() method.
+Creates a new PurpleWiki::Search::Engine.
 
 =item search($query)
 

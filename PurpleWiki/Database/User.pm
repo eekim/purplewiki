@@ -35,6 +35,7 @@ package PurpleWiki::Database::User;
 # $Id$
 
 use strict;
+use PurpleWiki::Config;
 use PurpleWiki::Database;
 
 our $VERSION;
@@ -57,6 +58,7 @@ sub new {
     my $class = ref($proto) || $proto;
     my %args = @_;
     my $self = { %args };
+    $self->{config} = PurpleWiki::Config->instance();
     bless ($self, $class);
     $self->_init();
     return $self;
@@ -108,13 +110,13 @@ sub _getNewUserID {
     while (-f $self->getUserFile($id+10)) {
         $id += 10;
     }
-    &PurpleWiki::Database::RequestLock($self->{config}) or die('Could not get user-ID lock');
+    &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
     while (-f $self->getUserFile($id)) {
         $id++;
     }
     $self->createUserDir();
     &PurpleWiki::Database::WriteStringToFile($self->getUserFile($id), "lock");  # reserve the ID
-    &PurpleWiki::Database::ReleaseLock($self->{config});
+    &PurpleWiki::Database::ReleaseLock();
     return $id;
 }
 

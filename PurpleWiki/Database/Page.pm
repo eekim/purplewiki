@@ -35,6 +35,7 @@ package PurpleWiki::Database::Page;
 # $Id$
 
 use strict;
+use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;
@@ -55,6 +56,7 @@ sub new {
     my $class = ref($proto) || $proto;
     my %args = @_;
     my $self = { %args };
+    $self->{config} = PurpleWiki::Config->instance();
     bless ($self, $class);
     return $self;
 }
@@ -165,8 +167,7 @@ sub getSection {
             new PurpleWiki::Database::Section('data' => $self->{text_default},
                                               'now' => $self->getNow(),
                                               'userID' => $self->{userID},
-                                              'username' => $self->{username},
-                                              'config' => $self->{config});
+                                              'username' => $self->{username});
         return $self->{text_default};
     }
 }

@@ -35,6 +35,7 @@ package PurpleWiki::Database::KeptRevision;
 # $Id$
 
 use strict;
+use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 
@@ -51,7 +52,7 @@ sub new {
     bless ($self, $class);
 
     $self->{id} = $params{id};
-    $self->{config} = $params{config};
+    $self->{config} = PurpleWiki::Config->instance();
     $self->{sections} = ();
     $self->_makeKeptList();
 
@@ -153,8 +154,8 @@ sub _parseData {
         # field is empty
         if (length($section)) {
             push(@{$self->{sections}}, 
-                new PurpleWiki::Database::Section('data' => $section,
-                        'config' => $self->{config}));
+                new PurpleWiki::Database::Section('data' => $section));
+                       
         }
     }
 
