@@ -776,7 +776,9 @@ sub DoEdit {
       print GetHttpHeader() . $wikiTemplate->process('errors/editSiteReadOnly');
       return;
   }
-  my $page = new PurpleWiki::Database::Page('id' => $id);
+
+  $page = new PurpleWiki::Database::Page('id' => $id);
+
   if (-f $page->getLockedPageFile()) {
       $wikiTemplate->vars(&globalTemplateVars);
       print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
