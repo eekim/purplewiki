@@ -1,6 +1,7 @@
 # PurpleWiki::View::wikitext.pm
+# vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.2.6.3 2003/05/21 08:47:27 cdent Exp $
+# $Id: wikitext.pm,v 1.2.6.4 2003/05/31 02:37:31 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -208,7 +209,8 @@ sub view {
     my ($wikiTree, %params) = @_;
 
     &registerHandlers;
-    return &PurpleWiki::View::EventHandler::view($wikiTree, %params);
+    return _textHeader($wikiTree, %params) . 
+    	&PurpleWiki::View::EventHandler::view($wikiTree, %params);
 }
 
 # private
@@ -218,6 +220,40 @@ sub _nid {
 
     return " [nid $nid]";
 }
+
+sub _textHeader {
+    my ($wikiTree, %params) = @_;
+    my $outputString;
+
+    # FIXME: this can be a loop
+    if ($wikiTree->title) {
+        $outputString .= '[title ' . $wikiTree->title . "]\n";
+    }
+    if ($wikiTree->subtitle) {
+        $outputString .= '[subtitle ' . $wikiTree->subtitle . "]\n";
+    }
+    if ($wikiTree->authors) {
+        foreach my $author (@{$wikiTree->authors}) {
+            $outputString .= '[author ' . $author->[0];
+            if (scalar @{$author} > 1) {
+                $outputString .= ' ' . $author->[1];
+            }
+            $outputString .= "]\n";
+        }
+    }
+    if ($wikiTree->id) {
+        $outputString .= '[id ' . $wikiTree->id . "]\n";
+    }
+    if ($wikiTree->version) {
+        $outputString .= '[version ' . $wikiTree->version . "]\n";
+    }
+    if ($wikiTree->date) {
+        $outputString .= '[date ' . $wikiTree->date . "]\n";
+    }
+
+    return $outputString;
+}
+
 
 1;
 __END__

@@ -65,7 +65,7 @@ sub parseForPurple {
     $str = "\n$str\r\n";
     my $parser = PurpleWiki::Parser::WikiText->new();
     my $wiki = $parser->parse($str);
-    my $results = $wiki->view('wikihtml', 'urlBase' => $url);
+    my $results = $wiki->view('wikihtml', 'url' => $url);
     return $results;
 }
 

@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.5 2003/05/21 08:47:27 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.6 2003/05/31 02:37:31 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,7 +39,7 @@ use PurpleWiki::Transclusion;
 
 # globals
 
-use vars qw(@sectionState $urlBase);
+use vars qw(@sectionState $url);
 
 # structural node event handlers
 
@@ -232,7 +232,7 @@ sub view {
     my ($wikiTree, %params) = @_;
 
     &registerHandlers;
-    $urlBase = $params{urlBase} || '';
+    $url = $params{url} || '';
     return &PurpleWiki::View::EventHandler::view($wikiTree, %params);
 }
 
@@ -276,7 +276,7 @@ sub _nid {
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
 	                   'title="' . "0$nid" . '" href="' .
-			   $urlBase . '#nid0' .
+			   $url . '#nid0' .
 			   $nid . '">#</a>';
     }
 

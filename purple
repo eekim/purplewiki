@@ -2,7 +2,7 @@
 #
 # purple -- Document authoring system using PurpleWiki.
 #
-# $Id: purple,v 1.2.6.1 2003/05/21 06:13:24 cdent Exp $
+# $Id: purple,v 1.2.6.2 2003/05/31 02:37:31 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
@@ -29,6 +29,8 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
+use strict;
+use lib '/home/cdent/src/pwManage/purplewiki.nidGen';
 use File::Copy;
 use Getopt::Long;
 use IO::File;
@@ -37,10 +39,13 @@ use PurpleWiki::Parser::WikiText;
 my $addNodeIds = 0;
 my $optionDriver = '';
 my $cssFile = '';
+my $url = '';
 
 GetOptions('add_ids'  => \$addNodeIds,
            'driver=s' => \$optionDriver,
-           'css=s'    => \$cssFile);
+           'css=s'    => \$cssFile,
+           'url=s'  => \$url);
+
 
 if (scalar @ARGV < 2) {
     if (!($addNodeIds && scalar @ARGV == 1)) {
@@ -48,7 +53,7 @@ if (scalar @ARGV < 2) {
 Usage:
   $0 --add_ids input.wiki
       or
-  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] input.wiki output.[txt|html]
+  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] [--url=URL] input.wiki output.[txt|html]
 EOM
         exit;
     }
@@ -59,6 +64,7 @@ $params{css_file} = $cssFile if ($cssFile);
 $params{add_node_ids} = $addNodeIds if ($addNodeIds);
 $params{wikiword} = 0;
 $params{freelink} = 0;
+$params{url} = $url if ($url);
 
 my $inputFile = $ARGV[0];
 my $outputFile = $ARGV[1];
@@ -73,7 +79,7 @@ if ($optionDriver eq '') {
 }
 
 my $wikiContent = &readFile($inputFile);
-my $wikiParser = PurpleWiki::Parser::WikiText->new;
+my $wikiParser = PurpleWiki::Parser::WikiText->new();
 my $wiki = $wikiParser->parse($wikiContent, %params);
 $wiki->title($outputFile) if (!$wiki->title);
 
@@ -97,7 +103,7 @@ else {
 if ($addNodeIds) {
     unlink "$inputFile~" if (-e "$inputFile~");
     &File::Copy::move($inputFile, "$inputFile~");
-    print $wiki->view('WikiText');
+    print $wiki->view('wikitext');
     &writeFile($inputFile, $wiki->view('wikitext'));
 }
 
@@ -109,7 +115,7 @@ sub readFile {
     my $fileName = shift;
     my $fileContent;
 
-    $fh = new IO::File $fileName;
+    my $fh = new IO::File $fileName;
     if (defined $fh) {
         local ($/);
         $fileContent = <$fh>;
@@ -124,7 +130,8 @@ sub readFile {
 sub writeFile {
     my ($fileName, $fileContent) = @_;
 
-    $fh = new IO::File ">$fileName";
+
+    my $fh = new IO::File ">$fileName";
     if (defined $fh) {
         print $fh $fileContent;
         $fh->close;
