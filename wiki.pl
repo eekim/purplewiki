@@ -30,16 +30,16 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-kwiki");}
+BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
 
 package UseModWiki;
 use strict;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
-use CGI::Session;
 use PurpleWiki::Config;
+use PurpleWiki::Session;
 
-my $CONFIG_DIR='/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -53,14 +53,12 @@ my $visitedPagesCache;
 my $visitedPagesCacheSize = 7;
 
 my $q;                  # CGI query reference
-my $Now;                # The time at the beginning of the request
 
 # we only need one of each these per run
 my $config = new PurpleWiki::Config($CONFIG_DIR);
 my $context = {};
 $context{config} = $config;
 
-# load this list of function modules
 my @modules = qw( wikiparser pages userdb template request acl spit search );
 my %modules = $config->Module;
 my @loaderror = ();
@@ -68,12 +66,21 @@ my @loaderror = ();
 for my $module (@modules) {
     my $class = $modules{$module};
     next unless $class;
-    require $class;
+    eval "require $class";
+    if ($@) {
+        push(@loaderror, "Error $@ loading $class for $module\n");
+        next;
+    }
     $class .= 's' if ($module eq 'pages' && substr($class,-1,1) ne 's');
     unless ($context{$module} = $class->new($config)) {
         push(@loaderror, "Error loading $class for $module");
     }
 }
+
+#my $wikiParser = $context{wikiparser};
+#my $wikiTemplate = $context{template};
+#my $userDb = $context{userdb};
+#my $acl = $context{acl};
 
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;
@@ -116,7 +123,7 @@ sub InitCGIRequest {
         return 0;
     }
     my $request = $context->{request}->new($context, cgi => $q);
-    $request $request->parseCGI();
+    $request->parseCGI();
     $request->{tzoffset} = 0;
     undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
 
@@ -136,18 +143,33 @@ sub InitCGIRequest {
     $visitedPagesCache = $session->param('visitedPagesCache') || {};
 }
 
+sub dumpParams {
+  my $q = shift;
+  my $F;
+  open($F, ">>/tmp/form_log");
+  print $F $q->url(-path_info=>1),"\n";
+  $q->save($F);
+  close $F;
+}
+
 sub getId {
   my ($self, $req) = @_;
 
-  if ($self->{freelinks}->FreeLinks && (!$page->pageExists())) {
-    $id = FreeToNormal($id);
+  my $sid = ($config->CookieName) ? $q->cookie($config->CookieName) :
+      $q->cookie($config->SiteName);
+  $session = PurpleWiki::Session->new($sid);
+  my $userId = $session->param('userId');
+  $user = $userDb->loadUser($userId) if ($userId);
+  $session->clear(['userId']) if (!$user);
+
+  if ($user && $user->tzOffset != 0) {
+    $TimeZoneOffset = $user->tzOffset * (60 * 60);
   }
 }
 
 sub parseCGI {
   my ($self, $req) = @_;
   my ($id, $action, $text, $urlPage);
-  my $page;
 
   if ($urlPage = (!$req->param) ? $self->{homepage}
                          : $self->getParam($req, 'keywords', '')) {
@@ -159,52 +181,28 @@ sub parseCGI {
     return 1;
   }
                             
-  $action = lc(GetParam('action', ''));
-  $id = GetParam('id', $config->HomePage);
-  $page = $pages->newPageId($id);
+  $self->{action} = lc(GetParam('action', ''));
+  $self->{id} = GetParam('id', $config->HomePage);
+  $self->{revision} = $request->revision();
 }
 
-sub actions {
-  if ($action eq 'browse') {
-    if ($config->FreeLinks && (!$page->pageExists())) {
-      $id = FreeToNormal($id);
+sub preferredLanguages {
+    my @langStrings = split(/\s*,\s*/, $q->http('Accept-Language'));
+    my @languages;
+    my @toSort;
+    foreach my $lang (@langStrings) {
+        if ($lang =~ /^\s*([^\;]+)\s*\;\s*q=(.+)\s*$/) {
+            push @toSort, { lang => $1, q => $2 };
+        }
+        else {
+            push @languages, $lang;
+        }
     }
-    BrowsePage($page, $id)  if ValidIdOrDie($id);
-    return 1;
-  } elsif ($action eq 'rc') {
-    BrowsePage($page, $config->RCName);
-    return 1;
-  } elsif ($action eq 'random') {
-    DoRandom();
-    return 1;
-  } elsif ($action eq 'history') {
-    DoHistory($id)   if ValidIdOrDie($id);
-    return 1;
-  }
-  return 0;  # Request not handled
-}
-
-sub BrowsePage {
-  my ($page, $id) = (shift, shift);
-  my $body;
-  my ($allDiff, $showDiff);
-  my ($revision, $goodRevision, $diffRevision);
-
-  my ($text);
-
-  my ($userId, $username);
-  if ($user) {
-      $userId = $user->id;
-      $username= $user->username;
-  }
-  $page = $pages -> newPage('id' => $id, 'now' => $Now,
-                            'userID' => $userId,
-                            'username' => $username);
-
-  my $pageName = $id;
-  $pageName =~ s/_/ /g if ($config->FreeLinks);
-
-  $revision = $request->revision();
+    my @sorted = sort { $b->{q} <=> $a->{q} } @toSort;
+    foreach my $langHash (@sorted) {
+        push @languages, $langHash->{lang};
+    }
+    return @languages;
 }
 
 sub logSession {

@@ -5,11 +5,11 @@ use Test;
 
 BEGIN { plan tests => 5 };
 
-use PurpleWiki::Database::User::UseMod;
+use PurpleWiki::UseMod::User::UseMod;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $datadir = 'tDB';
+my $datadir = 't/tDB';
 my $userName = '@blueoxen*eekim';
 
 #########################
@@ -17,7 +17,7 @@ my $userName = '@blueoxen*eekim';
 my $config = new PurpleWiki::Config($configdir);
 
 # create new user database
-my $userDb = PurpleWiki::Database::User::UseMod->new;
+my $userDb = PurpleWiki::UseMod::User::UseMod->new;
 
 # create new user $userName
 my $user = $userDb->createUser;

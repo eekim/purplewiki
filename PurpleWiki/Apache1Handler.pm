@@ -50,7 +50,7 @@ sub handler {
     my $url = Apache::URI->parse($r)->unparse();
 
     my $content = readFile($file);
-    my $CONFIG = $ENV{WIKIDB};
+    my $CONFIG = $ENV{PW_CONFIG_DIR};
     my $purpleConfig = new PurpleWiki::Config($CONFIG);
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 

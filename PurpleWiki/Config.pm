@@ -57,13 +57,14 @@ my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     BracketText UseAmPm FreeUpper ShowEdits NonEnglish
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
 my @SCALAR_CONFIGS = qw( DatabasePackage
-    DataDir ScriptName SiteName HomePage RCName 
-    FullUrl ScriptTZ RcDefault KeepDays CreateLinkText
+    DataDir ReposPath ScriptName SiteName HomePage RCName 
+    FullUrl ScriptTZ RcDefault KeepDays CookieName
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
     LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
-    ServiceProviderName ServiceProviderKey ReturnUrl);
+    ParserDriver UserDatabaseDriver ACLDriver LocaleFile
+    ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 my @HASH_CONFIGS = qw( Module Action );
 

@@ -76,7 +76,6 @@ sub get {
     my $nidLong = "nid$nid";
     my $outputType = $self->{outputType} || '';
     my $content;
-
     # get the URL that hosts this nid out of the the db
     my $url = $self->getURL($nid);
 
@@ -90,14 +89,25 @@ sub get {
         # FIXME: assumes that anything not the wiki
         # is static content
         my $scriptName = $self->{config}->ScriptName;
-        if ((($url =~ /$scriptName/) || ($url =~ /\.wiki$/)) &&
+        $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
+        my ($host, $path);
+        if ($url =~ m'^http://([^/]+)/') {
+            ($host, $path) = ($1, "/$'");
+        } else {  # what other URL patterns do we need?
+            ($host, $path) = ('', $url);
+        }
+        if ((($path =~ /$scriptName/) || ($path =~ /\.wiki$/)) &&
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
-        } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
+        } elsif ((!$host || $host eq 'localhost' || $host eq $ENV{HTTP_HOST})
+                 && $path =~ /$scriptName/) {
             my ($id) = ($url =~ /\?([^&]+)\b/);
-            $content=($self->{pages}->newPageId($id)
-                           ->getPageNode($id, uc($nid)))
-                     || "transclusion index out of sync";
+            #$content=($self->{pages}->getPageNode($id, uc($nid)))
+            #         || "transclusion index out of sync";
+            my $page = $self->{pages}->getPage($id);
+            my $tree = $page->getTree();
+            $content = $tree ? $tree->view('subtree', 'nid' => uc($nid))
+                             : "transclusion index out of sync";
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));

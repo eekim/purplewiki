@@ -7,7 +7,7 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = http://your.site/cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
+ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
 ScriptDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
 SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
@@ -15,8 +15,15 @@ RCName      = RecentChanges     # Name of changes page (change space to _)
 #FullUrl     = ""                # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""                # Local time zone
 #Umask       = 0002	             # the umask used when writing files
+DatabasePackage = PurpleWiki::Archive::PlainText
+#DatabasePackage = PurpleWiki::Archive::UseMod
+#DatabasePackage = PurpleWiki::Archive::Subversion
+#ReposPath = /wiki   # needed for Subversion back end
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
+
+DefaultLanguage = en           # Default language to use
+#CookieName = YourWiki         # Cookie name.
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
@@ -53,9 +60,6 @@ ShowNid                # if set value of Nid is shown
 # Create Link Options
 #CreateLinkBefore       # if set, puts create link (?) before the text
                        # (PHPWiki-style)
-CreateLinkText = "?"   # text displayed in create link.  If not set,
-                       # displays the link using the "create" CSS style (
-                       # (MoinMoin and SocialText-style)
 
 # Minor options:
 RecentTop              # if set recent on top
@@ -75,8 +79,11 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
-# Template Modules
-TemplateDriver = TT
+# PurpleWiki Modules
+ParserDriver        = PurpleWiki::Parser::WikiText
+TemplateDriver      = PurpleWiki::Template::TT
+UserDatabaseDriver  = PurpleWiki::UseMod::User::UseMod
+ACLDriver           = PurpleWiki::ACL
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
@@ -93,14 +100,11 @@ TemplateDriver = TT
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 
 # == You should not have to change anything below this line. =============
-PageDir     = $DataDir/page      # Stores page data
 UserDir     = $DataDir/user      # Stores user data
-KeepDir     = $DataDir/keep      # Stores kept (old) page data
 TempDir     = $DataDir/temp      # Temporary files and locks
 LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
-RcFile      = $DataDir/rclog     # New RecentChanges logfile
-RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 TemplateDir = $DataDir/templates # templates
+LocaleFile  = $DataDir/messages.l10n # Localization messages
 
 # == End of Configuration =================================================

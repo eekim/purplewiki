@@ -34,10 +34,9 @@ my $config = new PurpleWiki::Config($configdir);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my ($input, $output, $shouldBe, $wiki, $diff);
 
-my $database_package = $config->DatabasePackage
-                         || "PurpleWiki::Database::Page";
-eval "require $database_package";
-$database_package .= "s" unless ($database_package =~ /s$/);
+my $database_package = $config->DatabasePackage;
+print STDERR "Error in Package: $database_package\nError:$@"
+    unless (eval "require $database_package");
 my $pages = $database_package->new ($config);
 $config->{pages} = $pages;
 

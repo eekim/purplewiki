@@ -30,7 +30,7 @@ use MT::Comment;
 
 my $CONFIG_DIR = '/home/cdent/testwiki';
 my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords anywhere
-my $PURLENUMBERS = 1; # set to 0 if you don't want purple numbers
+my $PURPLENUMBERS = 1; # set to 0 if you don't want purple numbers
 my @TEXT_SECTIONS = qw(text text_more);
 
 ##### PRESENTATION #####

@@ -57,7 +57,9 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my $rcRef = $self ->{pages}-> recentChanges();
+    my $urlbase = $self->{config}->ScriptName . '?';
+    my $pages = $self->{config}->{pages};
+    my $rcRef = $pages-> recentChanges();
     my @recentChanges = @{$rcRef};
 
     my $rss = new XML::RSS;
@@ -73,14 +75,15 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $page = $self->{pages}->newPageId($recentChange->{id})
-        my $bodyText = $page->getWikiHTML();
+        my $id = $recentChange->{pageId};
+        my $bodyText = $pages->getPage($id)
+                       ->getTree()->view('wikihtml', url => $urlbase.$id);
 
         $rss->add_item(
-            title => $recentChange->{pageName},
-            link  => $self->{config}->ScriptName . '?' .$recentChange->{id},
+            title => $id,
+            link  => $self->{config}->ScriptName . '?' .$id,
             dc => {
-                creator => $recentChange->{userName},
+                creator => $recentChange->{userId},
             },
             description => "<![CDATA[$bodyText]]>\n",
         );
@@ -122,9 +125,5 @@ Returns RSS string of RecentChanges.
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
-
-=head1 SEE ALSO
-
-L<PurpleWiki::Database>.
 
 =cut

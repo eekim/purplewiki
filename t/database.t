@@ -6,26 +6,27 @@ use Test;
 
 BEGIN { plan tests => 5 };
 
-use PurpleWiki::Database;
+use PurpleWiki::UseMod::Database;
+use PurpleWiki::Misc;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $file = "tDB/$$";
-my $dir = "tDB/testdir$$";
+my $file = "t/tDB/$$";
+my $dir = "t/tDB/testdir$$";
 my $content = "sample content";
-my $tempdir = 'tDB/temp';
+my $tempdir = 't/tDB/temp';
 my $lockdir = "$tempdir/lockmain";
 
 
 # filehandling
-ok(PurpleWiki::Database::WriteStringToFile($file, $content), 1);
-ok(PurpleWiki::Database::ReadFile($file), $content);
-ok(PurpleWiki::Database::CreateDir($dir) && -d $dir);
+ok(PurpleWiki::Misc::WriteStringToFile($file, $content), 1);
+ok(PurpleWiki::Misc::ReadFile($file), $content);
+ok(PurpleWiki::Misc::CreateDir($dir) && -d $dir);
 
 # lockhandling
 my $config = new PurpleWiki::Config($configdir);
-ok(PurpleWiki::Database::RequestLock($config) && -d $lockdir);
-ok(PurpleWiki::Database::ReleaseLock($config) && ! -d $lockdir);
+ok(PurpleWiki::UseMod::Database::RequestLock($config) && -d $lockdir);
+ok(PurpleWiki::UseMod::Database::ReleaseLock($config) && ! -d $lockdir);
 
 # diff handling elsewhere, in the page tests
    

@@ -32,8 +32,6 @@ package PurpleWiki::Template::TT;
 use 5.005;
 use strict;
 use base 'PurpleWiki::Template::Base';
-use IO::Select;
-use IPC::Open3;
 use Template;
 
 our $VERSION;
