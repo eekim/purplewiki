@@ -89,6 +89,13 @@ sub children {
     return $this->{children};
 }
 
+sub id {
+    my $this = shift;
+
+    $this->{id} = shift if @_;
+    return $this->{id};
+}
+
 1;
 __END__
 
@@ -135,6 +142,7 @@ The data structure looks like:
     href     => string
     content  => string
     children => [PurpleWiki::InlineNode, ...]
+    id       => (not currently used)
   }
 
 =head2 Content Nodes
