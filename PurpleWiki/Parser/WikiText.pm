@@ -436,7 +436,7 @@ sub parse {
         }
         elsif ($line =~ /^\s*$/) {  # blank line
             if ($isBracePre) {
-                $nodeContent .= $line;
+                $nodeContent .= "\n";
             }
             else {
                 $currentNode = &_terminateNode($currentNode, \$nodeContent,
