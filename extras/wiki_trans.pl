@@ -16,10 +16,10 @@ my $wiki = $wikiParser->parse($wikiContent, config=>$config, add_node_ids=>0);
 $wiki->title($ARGV[1]) if (!$wiki->title);
 
 if (@ARGV == 3) {
-    print $wiki->view($ARGV[2]);
+    print $wiki->view($ARGV[2], config => $config);
 }
 else {
-    print $wiki->view('debug');
+    print $wiki->view('debug', config => $config);
 }
 
 #$wiki->view('XHTML','collapse'=>[2]);
