@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: Page.pm,v 1.1.2.2 2003/01/28 05:43:49 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: Page.pm,v 1.1.2.2 2003/01/28 05:43:49 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -69,12 +69,19 @@ sub pageFileExists {
     return (-f $filename);
 }
 
+sub getPageCache {
+    my $self = shift;
+    my $cache = shift;
+    
+    return $self->{$cache};
+}
+
 sub setPageCache {
     my $self = shift;
     my $cache = shift;
     my $revision = shift;
 
-    $self->{cache} = $revision;
+    $self->{$cache} = $revision;
 }
 
 # Opens the page file associated with this id of this
@@ -155,18 +162,15 @@ sub getName {
     return $self->{id};
 }
 
+sub getRevision {
+    my $self = shift;
+    return $self->{revision};
+}
+
 # Retrieves the now of when this page was asked for.
 sub getNow {
     my $self = shift;
     return $self->{now};
-}
-
-# Determins the filename of the keep page with this id.
-sub getKeepFile {
-    my $self = shift;
-
-    return $KeepDir . '/' . $self->getPageDirectory() . '/' .
-        $self->getID() . '.kp';
 }
 
 # Determines the filename of the page with this id.
@@ -221,6 +225,16 @@ sub _openNewPage {
     $self->{tscreate} = $self->getNow();
     $self->{ts} = $self->getNow();
 }
+
+# we go ahead and rewrite the whole thing
+sub save {
+    my $self = shift;
+    my $data = $self->serialize();
+
+    PurpleWiki::Database::CreatePageDir($PageDir, $self->getID());
+    PurpleWiki::Database::WriteStringToFile($self->getPageFile(), $data);
+}
+
 
 sub serialize {
     my $self = shift;

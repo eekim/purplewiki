@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.5 2003/01/27 10:11:23 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.6 2003/01/28 05:43:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -45,7 +45,8 @@ local $| = 1;  # Do not buffer output (localized for mod_perl)
 
 # Global variables:
 #use vars qw( %Section %Text %InterSite %SaveUrl %SaveNumUrl
-use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
+#use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
+use vars qw(%InterSite %SaveUrl %SaveNumUrl
   %KeptRevisions %UserCookie %SetCookie %UserData %IndexHash %Translate
   %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
   @KeptList @IndexList $IndexInit $q $Now $UserID $TimeZoneOffset );
@@ -176,13 +177,14 @@ sub BrowsePage {
   my ($fullHtml, $oldId, $allDiff, $showDiff, $openKept);
   my ($revision, $goodRevision, $diffRevision, $newText);
 
-  my ($page, $text, $keptRevision, $keptSection);
+  my ($page, $section, $text, $keptRevision, $keptSection);
 
   print STDERR "id: $id\n";
   $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
                                     'userID' => $UserID, 
                                     'username' => GetParam("username", ""));
   $page->openPage();
+  $section = $page->getSection();
   $text = $page->getText();
   $newText = $text->getText();
   $keptRevision = new PurpleWiki::Database::KeptRevision($id);
@@ -246,18 +248,8 @@ sub BrowsePage {
     $diffRevision = $goodRevision;
     $diffRevision = &GetParam('diffrevision', $diffRevision);
 
-    my $keptSection = $keptRevision->getRevision($diffRevision);
-    my $oldText = '';
-    if (defined($keptSection)) {
-      $oldText = $keptSection->getText()->getText();
-    }
-
-    print STDERR "oldText: $oldText\n\n";
-
-    # FIXME: confusing!
-    # get the revision from the kept, get the section, get the text ref
-    # then get the text of that text
-    $fullHtml .= &PurpleWiki::Database::GetDiffHTML($showDiff, $id, $diffRevision, $newText, $oldText);
+    $fullHtml .= &PurpleWiki::Database::GetDiffHTML($page,
+        $keptRevision, $showDiff, $id, $diffRevision, $newText);
   }
 
   $fullHtml .= &WikiToHTML($text->getText());
@@ -267,10 +259,10 @@ sub BrowsePage {
     print $fullHtml;
     &DoRc();
     print "<hr>\n"  if (!&GetParam('embed', $EmbedWiki));
-    print &GetFooterText($id, $goodRevision);
+    print &GetFooterText($section, $id, $goodRevision);
     return;
   }
-  $fullHtml .= &GetFooterText($id, $goodRevision);
+  $fullHtml .= &GetFooterText($section, $id, $goodRevision);
 
   print $fullHtml;
 
@@ -281,7 +273,7 @@ sub ReBrowsePage {
   my ($id, $oldId, $isEdit) = @_;
 
   if ($oldId ne "") {   # Target of #REDIRECT (loop breaking)
-    print &GetRedirectPage("action=browse&id=$id&oldid=$oldId",
+    print &GetRedirectpage("action=browse&id=$id&oldid=$oldId",
                            $id, $isEdit);
   } else {
     print &GetRedirectPage($id, $id, $isEdit);
@@ -812,6 +804,7 @@ sub GetHtmlHeader {
 }
 
 sub GetFooterText {
+  my $section = shift;
   my ($id, $rev) = @_;
   my $result = '';
 
@@ -836,14 +829,14 @@ sub GetFooterText {
     $result .= ' | ';
     $result .= &GetPageLinkText($id, 'View current revision');
   }
-  if ($Section{'revision'} > 0) {
+  if ($section->getRevision() > 0) {
     $result .= '<br>';
     if ($rev eq '') {  # Only for most current rev
       $result .= 'Last edited';
     } else {
       $result .= 'Edited';
     }
-    $result .= ' ' . &TimeToText($Section{ts});
+    $result .= ' ' . &TimeToText($section->getTS());
   }
   if ($UseDiff) {
     $result .= ' ' . &ScriptLinkDiff(4, $id, '(diff)', $rev);
@@ -961,156 +954,6 @@ sub QuoteHtml {
     $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
   }
   return $html;
-}
-
-sub InterPageLink {
-  my ($id) = @_;
-  my ($name, $site, $remotePage, $url, $punct);
-
-  ($id, $punct) = &SplitUrlPunct($id);
-
-  $name = $id;
-  ($site, $remotePage) = split(/:/, $id, 2);
-  $url = &GetSiteUrl($site);
-  return ("", $id . $punct)  if ($url eq "");
-  $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
-  $url .= $remotePage;
-  return ("<a href=\"$url\">$name</a>", $punct);
-}
-
-sub StoreBracketInterPage {
-  my ($id, $text) = @_;
-  my ($site, $remotePage, $url, $index);
-
-  ($site, $remotePage) = split(/:/, $id, 2);
-  $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
-  $url = &GetSiteUrl($site);
-  if ($text ne "") {
-    return "[$id $text]"  if ($url eq "");
-  } else {
-    return "[$id]"  if ($url eq "");
-    $text = &GetBracketUrlIndex($id);
-  }
-  $url .= $remotePage;
-  return &StoreRaw("<a href=\"$url\">[$text]</a>");
-}
-
-sub GetBracketUrlIndex {
-  my ($id) = @_;
-  my ($index, $key);
-
-  # Consider plain array?
-  if ($SaveNumUrl{$id} > 0) {
-    return $SaveNumUrl{$id};
-  }
-  $SaveNumUrlIndex++;  # Start with 1
-  $SaveNumUrl{$id} = $SaveNumUrlIndex;
-  return $SaveNumUrlIndex;
-}
-
-sub GetSiteUrl {
-  my ($site) = @_;
-  my ($data, $url, $status);
-
-  if (!$InterSiteInit) {
-    $InterSiteInit = 1;
-    ($status, $data) = &PurpleWiki::Database::ReadFile($InterFile);
-    return ""  if (!$status);
-    %InterSite = split(/\s+/, $data);  # Later consider defensive code
-  }
-  $url = $InterSite{$site}  if (defined($InterSite{$site}));
-  return $url;
-}
-
-sub StoreRaw {
-  my ($html) = @_;
-
-  $SaveUrl{$SaveUrlIndex} = $html;
-  return $FS . $SaveUrlIndex++ . $FS;
-}
-
-sub StorePre {
-  my ($html, $tag) = @_;
-
-  return &StoreRaw("<$tag>" . $html . "</$tag>");
-}
-
-sub StoreHref {
-  my ($anchor, $text) = @_;
-
-  return "<a" . &StoreRaw($anchor) . ">$text</a>";
-}
-
-sub StoreUrl {
-  my ($name, $useImage) = @_;
-  my ($link, $extra);
-
-  ($link, $extra) = &UrlLink($name, $useImage);
-  # Next line ensures no empty links are stored
-  $link = &StoreRaw($link)  if ($link ne "");
-  return $link . $extra;
-}
-
-sub UrlLink {
-  my ($rawname, $useImage) = @_;
-  my ($name, $punct);
-
-  ($name, $punct) = &SplitUrlPunct($rawname);
-  if ($NetworkFile && $name =~ m|^file:|) {
-    # Only do remote file:// links. No file:///c|/windows.
-    if ($name =~ m|^file://[^/]|) {
-      return ("<a href=\"$name\">$name</a>", $punct);
-    }
-    return $rawname;
-  }
-  # Restricted image URLs so that mailto:foo@bar.gif is not an image
-  if ($useImage && ($name =~ /^(http:|https:|ftp:).+\.$ImageExtensions$/)) {
-    return ("<img src=\"$name\">", $punct);
-  }
-  return ("<a href=\"$name\">$name</a>", $punct);
-}
-
-sub StoreBracketUrl {
-  my ($url, $text) = @_;
-
-  if ($text eq "") {
-    $text = &GetBracketUrlIndex($url);
-  }
-  return &StoreRaw("<a href=\"$url\">[$text]</a>");
-}
-
-sub StorePageOrEditLink {
-  my ($page, $name) = @_;
-
-  if ($FreeLinks) {
-    $page =~ s/^\s+//;      # Trim extra spaces
-    $page =~ s/\s+$//;
-    $page =~ s|\s*/\s*|/|;  # ...also before/after subpages
-  }
-  $name =~ s/^\s+//;
-  $name =~ s/\s+$//;
-  return &StoreRaw(&GetPageOrEditLink($page, $name));
-}
-
-sub SplitUrlPunct {
-  my ($url) = @_;
-  my ($punct);
-
-  if ($url =~ s/\"\"$//) {
-    return ($url, "");   # Delete double-quote delimiters here
-  }
-  $punct = "";
-  ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
-  $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
-  return ($url, $punct);
-}
-
-sub StripUrlPunct {
-  my ($url) = @_;
-  my ($junk);
-
-  ($url, $junk) = &SplitUrlPunct($url);
-  return $url;
 }
 
 # ==== Misc. functions ====
@@ -1367,8 +1210,6 @@ sub DoOtherRequest {
       &DoUnlock();
     } elsif ($action eq "index") {
       &DoIndex();
-    } elsif ($action eq "links") {
-      &DoLinks();
     } elsif ($action eq "pagelock") {
       &DoPageLock();
     } elsif ($action eq "editlock") {
@@ -1377,8 +1218,6 @@ sub DoOtherRequest {
       &DoEditPrefs();
     } elsif ($action eq "editbanned") {
       &DoEditBanned();
-    } elsif ($action eq "editlinks") {
-      &DoEditLinks();
     } elsif ($action eq "login") {
       &DoEnterLogin();
     } elsif ($action eq "newlogin") {
@@ -1424,6 +1263,11 @@ sub DoEdit {
   my ($header, $editRows, $editCols, $userName, $revision, $oldText);
   my ($summary, $isEdit, $pageTime);
 
+  my $page;
+  my $section;
+  my $text;
+  my $keptRevision;
+
   if (!&UserCanEdit($id, 1)) {
     print &GetHeader("", 'Editing Denied', "");
     if (&UserIsBanned()) {
@@ -1437,44 +1281,54 @@ sub DoEdit {
     return;
   }
   # Consider sending a new user-ID cookie if user does not have one
-  &PurpleWiki::Database::OpenPage($id, \%Page, $Now);
-  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text, \%Section, $Now);
-  $pageTime = $Section{'ts'};
+  $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
+  $section = $page->getSection();
+  $text = $page->getText();
+  $keptRevision = new PurpleWiki::DataBase::KeptRevision($id);
+  $pageTime = $section->getTS();
   $header = "Editing $id";
+  
   # Old revision handling
   $revision = &GetParam('revision', '');
   $revision =~ s/\D//g;  # Remove non-numeric chars
   if ($revision ne '') {
-    &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions);
-    if (!defined($KeptRevisions{$revision})) {
+    if (!$keptRevision->hasRevision($revision)) {
       $revision = '';
       # Later look for better solution, like error message?
     } else {
-      &PurpleWiki::Database::OpenKeptRevision($revision, \%KeptRevisions, \%Section, \%Text);
+      # replace text with the revision we care about
+      $text = $keptRevision->getRevision($revision)->getText();
       $header = "Editing revision $revision of $id";
     }
   }
-  $oldText = $Text{'text'};
+
+  $oldText = $text->getText();
+
   if ($preview && !$isConflict) {
     $oldText = $newText;
   }
+
   $editRows = &GetParam("editrows", 20);
   $editCols = &GetParam("editcols", 65);
   print &GetHeader('', &QuoteHtml($header), '');
+
   if ($revision ne '') {
     print "\n<b>"
           . "Editing old revision $revision "
     . 'Saving this page will replace the latest revision with this text.'
           . '</b><br>'
   }
+
   if ($isConflict) {
     $editRows -= 10  if ($editRows > 19);
     print "\n<H1>" . 'Edit Conflict!' . "</H1>\n";
+
     if ($isConflict>1) {
       # The main purpose of a new warning is to display more text
       # and move the save button down from its old location.
       print "\n<H2>" . '(This is a new conflict)' . "</H2>\n";
     }
+
     print "<p><strong>",
           'Someone saved this page after you started editing.', " ",
           'The top textbox contains the saved text.', " ",
@@ -1909,147 +1763,6 @@ sub PrintPageList {
   }
 }
 
-sub DoLinks {
-  print &GetHeader('', &QuoteHtml('Full Link List'), '');
-  print "<hr><pre>\n\n\n\n\n";  # Extra lines to get below the logo
-  &PrintLinkList(&GetFullLinkList());
-  print "</pre>\n";
-  print &GetMinimumFooter();
-}
-
-sub PrintLinkList {
-  my ($pagelines, $page, $names, $editlink);
-  my ($link, $extra, @links, %pgExists);
-
-  %pgExists = ();
-  foreach $page (&PurpleWiki::Database::AllPagesList()) {
-    $pgExists{$page} = 1;
-  }
-  $names = &GetParam("names", 1);
-  $editlink = &GetParam("editlink", 0);
-  foreach $pagelines (@_) {
-    @links = ();
-    foreach $page (split(' ', $pagelines)) {
-      if ($page =~ /\:/) {  # URL or InterWiki form
-        if ($page =~ /$UrlPattern/) {
-          ($link, $extra) = &UrlLink($page);
-        } else {
-          ($link, $extra) = &InterPageLink($page);
-        }
-      } else {
-        if ($pgExists{$page}) {
-          $link = &GetPageLink($page);
-        } else {
-          $link = $page;
-          if ($editlink) {
-            $link .= &GetEditLink($page, "?");
-          }
-        }
-      }
-      push(@links, $link);
-    }
-    if (!$names) {
-      shift(@links);
-    }
-    print join(' ', @links), "\n";
-  }
-}
-
-sub GetFullLinkList {
-  my ($name, $unique, $sort, $exists, $empty, $link, $search);
-  my ($pagelink, $interlink, $urllink);
-  my (@found, @links, @newlinks, @pglist, %pgExists, %seen);
-
-  $unique = &GetParam("unique", 1);
-  $sort = &GetParam("sort", 1);
-  $pagelink = &GetParam("page", 1);
-  $interlink = &GetParam("inter", 0);
-  $urllink = &GetParam("url", 0);
-  $exists = &GetParam("exists", 2);
-  $empty = &GetParam("empty", 0);
-  $search = &GetParam("search", "");
-  if (($interlink == 2) || ($urllink == 2)) {
-    $pagelink = 0;
-  }
-
-  %pgExists = ();
-  @pglist = &PurpleWiki::Database::AllPagesList();
-  foreach $name (@pglist) {
-    $pgExists{$name} = 1;
-  }
-  %seen = ();
-  foreach $name (@pglist) {
-    @newlinks = ();
-    if ($unique != 2) {
-      %seen = ();
-    }
-    @links = &GetPageLinks($name, $pagelink, $interlink, $urllink);
-
-    foreach $link (@links) {
-      $seen{$link}++;
-      if (($unique > 0) && ($seen{$link} != 1)) {
-        next;
-      }
-      if (($exists == 0) && ($pgExists{$link} == 1)) {
-        next;
-      }
-      if (($exists == 1) && ($pgExists{$link} != 1)) {
-        next;
-      }
-      if (($search ne "") && !($link =~ /$search/)) {
-        next;
-      }
-      push(@newlinks, $link);
-    }
-    @links = @newlinks;
-    if ($sort) {
-      @links = sort(@links);
-    }
-    unshift (@links, $name);
-    if ($empty || ($#links > 0)) {  # If only one item, list is empty.
-      push(@found, join(' ', @links));
-    }
-  }
-  return @found;
-}
-
-sub GetPageLinks {
-  my ($name, $pagelink, $interlink, $urllink) = @_;
-  my ($text, @links);
-
-  @links = ();
-  &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
-  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text,\%Section, $Now);
-  $text = $Text{'text'};
-  $text =~ s/<html>((.|\n)*?)<\/html>/ /ig;
-  $text =~ s/<nowiki>(.|\n)*?\<\/nowiki>/ /ig;
-  $text =~ s/<pre>(.|\n)*?\<\/pre>/ /ig;
-  $text =~ s/<code>(.|\n)*?\<\/code>/ /ig;
-  if ($interlink) {
-    $text =~ s/''+/ /g;  # Quotes can adjacent to inter-site links
-    $text =~ s/$InterLinkPattern/push(@links, &StripUrlPunct($1)), ' '/ge;
-  } else {
-    $text =~ s/$InterLinkPattern/ /g;
-  }
-  if ($urllink) {
-    $text =~ s/''+/ /g;  # Quotes can adjacent to URLs
-    $text =~ s/$UrlPattern/push(@links, &StripUrlPunct($1)), ' '/ge;
-  } else {
-    $text =~ s/$UrlPattern/ /g;
-  }
-  if ($pagelink) {
-    if ($FreeLinks) {
-      my $fl = $FreeLinkPattern;
-      $text =~ s/\[\[$fl\|[^\]]+\]\]/push(@links, &FreeToNormal($1)), ' '/ge;
-      $text =~ s/\[\[$fl\]\]/push(@links, &FreeToNormal($1)), ' '/ge;
-    }
-    if ($WikiLinks) {
-      $text =~ s/$LinkPattern/push(@links, &StripUrlPunct($1)), ' '/ge;
-    }
-  }
-  return @links;
-}
-
 sub DoPost {
   my ($editDiff, $old, $newAuthor, $pgtime, $oldrev, $preview, $user);
   my $string = &GetParam("text", undef);
@@ -2100,10 +1813,10 @@ sub DoPost {
   &PurpleWiki::Database::RequestLock() or die('Could not get editing lock');
   # Consider extracting lock section into sub, and eval-wrap it?
   # (A few called routines can die, leaving locks.)
-  my $keepRevision = new PurpleWiki::Database::KeepRevision($id);
+  my $keptRevision = new PurpleWiki::Database::KeptRevision($id);
   my $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
   my $text = $page->getText();
-  my $setion = $page->getSection();
+  my $section = $page->getSection();
   $old = $text->getText();
   $oldrev = $section->getRevision();
   $pgtime = $section->getTS();
@@ -2116,10 +1829,10 @@ sub DoPost {
     return;
   }
   # Later extract comparison?
-  if (($UserID > 399) || ($Section{'id'} > 399))  {
-    $newAuthor = ($UserID ne $Section{'id'});       # known user(s)
+  if (($UserID > 399) || ($section->getID() > 399))  {
+    $newAuthor = ($UserID ne $section->getID());       # known user(s)
   } else {
-    $newAuthor = ($Section{'ip'} ne $authorAddr);  # hostname fallback
+    $newAuthor = ($section->getIP() ne $authorAddr);  # hostname fallback
   }
   $newAuthor = 1  if ($oldrev == 0);  # New page
   $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
@@ -2142,7 +1855,7 @@ sub DoPost {
   $user = &GetParam("username", "");
   # If the person doing editing chooses, send out email notification
   if ($EmailNotify) {
-    EmailNotify($id, $user) if &GetParam("do_email_notify", "") eq 'on';
+    EmailNotify($page, $id, $user) if &GetParam("do_email_notify", "") eq 'on';
   }
   if (&GetParam("recent_edit", "") eq 'on') {
     $isEdit = 1;
@@ -2154,21 +1867,20 @@ sub DoPost {
     $page->setPageCache('oldauthor', $section->getRevision());
   }
 
-  $keepRevision->addSection($section, $Now);
-  $keepRevision->trimKepts($Now);
-  $keepRevision->save();
+  $keptRevision->addSection($section, $Now);
+  $keptRevision->trimKepts($Now);
+  $keptRevision->save();
 
   if ($UseDiff) {
-    &PurpleWiki::Database::UpdateDiffs(\%Page, \%KeptRevisions, $id, $editTime, $old, $string, $isEdit, $newAuthor);
+    &PurpleWiki::Database::UpdateDiffs($page, $keptRevision, $id, $editTime, $old, $string, $isEdit, $newAuthor);
   }
-  $Text{'text'} = $string;
-  $Text{'minor'} = $isEdit;
-  $Text{'newauthor'} = $newAuthor;
-  $Text{'summary'} = $summary;
-  $Section{'host'} = &GetRemoteHost(1);
-  &PurpleWiki::Database::SaveDefaultText(\%Text, \%Page, \%Section, $UserID, GetParam("username", ""), $Now);
-  &PurpleWiki::Database::SavePage(\%Page, $Now);
-  &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $Section{'host'});
+  $text->setText($string);
+  $text->setMinor($isEdit);
+  $text->setNewAuthor($newAuthor);
+  $text->setSummary($summary);
+  $section->setHost(&GetRemoteHost(1));
+  $page->save();
+  &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
   &PurpleWiki::Database::ReleaseLock();
   &ReBrowsePage($id, "", 1);
 }
@@ -2200,7 +1912,7 @@ EOF
 sub EmailNotify {
   local $/ = "\n";   # don't slurp whole files in this sub.
   if ($EmailNotify) {
-    my ($id, $user) = @_;
+    my ($page, $id, $user) = @_;
     if ($user) {
       $user = " by $user";
     }
@@ -2210,6 +1922,7 @@ sub EmailNotify {
     $address = join ",", <EMAIL>;
     $address =~ s/\n//g;
     close(EMAIL);
+    my $revision = $page->getRevision();
     my $home_url = $q->url();
     my $page_url = $home_url . "?$id";
     my $editors_summary = $q->param("summary");
@@ -2223,7 +1936,7 @@ sub EmailNotify {
 
  The $SiteName page $id at
    $page_url
- has been changed$user to revision $Page{revision}. $editors_summary
+ has been changed$user to revision $revision . $editors_summary
 
  (Replying to this notification will
   send email to the entire mailing list,
@@ -2243,11 +1956,13 @@ END_MAIL_CONTENT
 sub SearchTitleAndBody {
   my ($string) = @_;
   my ($name, $freeName, @found);
+  my $page;
+  my $text;
 
   foreach $name (&PurpleWiki::Database::AllPagesList()) {
-    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
-    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text, \%Section, $Now);
-    if (($Text{'text'} =~ /$string/i) || ($name =~ /$string/i)) {
+    $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now);
+    $text = $page->getText();
+    if (($text->getText() =~ /$string/i) || ($name =~ /$string/i)) {
       push(@found, $name);
     } elsif ($FreeLinks && ($name =~ m/_/)) {
       $freeName = $name;
@@ -2263,11 +1978,13 @@ sub SearchTitleAndBody {
 sub SearchBody {
   my ($string) = @_;
   my ($name, @found);
+  my $page;
+  my $text;
 
   foreach $name (&PurpleWiki::Database::AllPagesList()) {
-    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
-    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text, \%Section, $Now);
-    if ($Text{'text'} =~ /$string/i){
+    $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now);
+    $text = $page->getText();
+    if ($text->getText() =~ /$string/i) {
       push(@found, $name);
     }
   }
@@ -2417,161 +2134,6 @@ sub DoUpdateBanned {
     print "<p>Updated banned list";
   }
   print &GetCommonFooter();
-}
-
-# ==== Editing/Deleting pages and links ====
-sub DoEditLinks {
-  print &GetHeader("", "Editing Links", "");
-  if ($AdminDelete) {
-    return  if (!&UserIsAdminOrError());
-  } else {
-    return  if (!&UserIsEditorOrError());
-  }
-  print &GetFormStart();
-  print GetHiddenValue("edit_links", 1), "\n";
-  print "<b>Editing/Deleting page titles:</b><br>\n";
-  print "<p>Enter one command on each line.  Commands are:<br>",
-        "<tt>!PageName</tt> -- deletes the page called PageName<br>\n",
-        "<tt>=OldPageName=NewPageName</tt> -- Renames OldPageName ",
-        "to NewPageName and updates links to OldPageName.<br>\n",
-        "<tt>|OldPageName|NewPageName</tt> -- Changes links to OldPageName ",
-        "to NewPageName.",
-        " (Used to rename links to non-existing pages.)<br>\n";
-  print &GetTextArea('commandlist', "", 12, 50);
-  print $q->checkbox(-name=>"p_changerc", -override=>1, -checked=>1,
-                      -label=>"Edit $RCName");
-  print "<br>\n";
-  print $q->checkbox(-name=>"p_changetext", -override=>1, -checked=>1,
-                      -label=>"Substitute text for rename");
-  print "<br>", $q->submit(-name=>'Edit'), "\n";
-  print "<hr>\n";
-  print &GetGotoBar("");
-  print $q->endform;
-  print &GetMinimumFooter();
-}
-
-sub BuildLinkIndex {
-  my (@pglist, $page, @links, $link, %seen);
-
-  @pglist = &PurpleWiki::Database::AllPagesList();
-  %LinkIndex = ();
-  foreach $page (@pglist) {
-    &BuildLinkIndexPage($page);
-  }
-}
-
-sub BuildLinkIndexPage {
-  my ($page) = @_;
-  my (@links, $link, %seen);
-
-  @links = &GetPageLinks($page, 1, 0, 0);
-  %seen = ();
-  foreach $link (@links) {
-    if (defined($LinkIndex{$link})) {
-      if (!$seen{$link}) {
-        $LinkIndex{$link} .= " " . $page;
-      }
-    } else {
-      $LinkIndex{$link} .= " " . $page;
-    }
-    $seen{$link} = 1;
-  }
-}
-
-sub EditRecentChanges {
-  my ($action, $old, $new) = @_;
-
-  &EditRecentChangesFile($RcFile,    $action, $old, $new);
-  &EditRecentChangesFile($RcOldFile, $action, $old, $new);
-}
-
-sub EditRecentChangesFile {
-  my ($fname, $action, $old, $new) = @_;
-  my ($status, $fileData, $errorText, $rcline, @rclist);
-  my ($outrc, $ts, $page, $junk);
-
-  ($status, $fileData) = &PurpleWiki::Database::ReadFile($fname);
-  if (!$status) {
-    # Save error text if needed.
-    $errorText = "<p><strong>Could not open $RCName log file:"
-                 . "</strong> $fname<p>Error was:\n<pre>$!</pre>\n";
-    print $errorText;   # Maybe handle differently later?
-    return;
-  }
-  $outrc = "";
-  @rclist = split(/\n/, $fileData);
-  foreach $rcline (@rclist) {
-    ($ts, $page, $junk) = split(/$FS3/, $rcline);
-    if ($page eq $old) {
-      if ($action == 1) {  # Delete
-        ; # Do nothing (don't add line to new RC)
-      } elsif ($action == 2) {
-        $junk = $rcline;
-        $junk =~ s/^(\d+$FS3)$old($FS3)/"$1$new$2"/ge;
-        $outrc .= $junk . "\n";
-      }
-    } else {
-      $outrc .= $rcline . "\n";
-    }
-  }
-  &WriteStringToFile($fname . ".old", $fileData);  # Backup copy
-  &WriteStringToFile($fname, $outrc);
-}
-
-# Delete and rename must be done inside locks.
-sub DeletePage {
-  my ($page, $doRC, $doText) = @_;
-  my ($fname, $status);
-
-  $page =~ s/ /_/g;
-  $page =~ s/\[+//;
-  $page =~ s/\]+//;
-  $status = &ValidId($page);
-  if ($status ne "") {
-    print "Delete-Page: page $page is invalid, error is: $status<br>\n";
-    return;
-  }
-  
-  $fname = &PurpleWiki::Database::GetPageFile($page);
-  unlink($fname)  if (-f $fname);
-  $fname = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($page) .  "/$page.kp";
-  unlink($fname)  if (-f $fname);
-  &EditRecentChanges(1, $page, "")  if ($doRC);  # Delete page
-  # Currently don't do anything with page text
-}
-
-sub SubFreeLink {
-  my ($link, $name, $old, $new) = @_;
-  my ($oldlink);
-
-  $oldlink = $link;
-  $link =~ s/^\s+//;
-  $link =~ s/\s+$//;
-  if (($link eq $old) || (&FreeToNormal($old) eq &FreeToNormal($link))) {
-    $link = $new;
-  } else {
-    $link = $oldlink;  # Preserve spaces if no match
-  }
-  $link = "[[$link";
-  if ($name ne "") {
-    $link .= "|$name";
-  }
-  $link .= "]]";
-  return &StoreRaw($link);
-}
-
-sub SubWikiLink {
-  my ($link, $old, $new) = @_;
-  my ($newBracket);
-
-  $newBracket = 0;
-  if ($link eq $old) {
-    $link = $new;
-    if (!($new =~ /^$LinkPattern$/)) {
-      $link = "[[$link]]";
-    }
-  }
-  return &StoreRaw($link);
 }
 
 sub DoShowVersion {

@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.3 2003/01/27 10:11:23 cdent Exp $
+# $Id: Database.pm,v 1.1.2.4 2003/01/28 05:43:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.3 2003/01/27 10:11:23 cdent Exp $
+# $Id: Database.pm,v 1.1.2.4 2003/01/28 05:43:48 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -613,34 +613,35 @@ sub GetNewUserId {
 }
 
 sub UpdateDiffs {
-    my $pagehash = shift;
-    my $keptrevisionshash = shift;
+    my $page = shift;
+    my $keptRevision = shift;
     my ($id, $editTime, $old, $new, $isEdit, $newAuthor) = @_;
     my ($editDiff, $oldMajor, $oldAuthor);
 
     $editDiff  = &GetDiff($old, $new, 0);     # 0 = already in lock
-    $oldMajor  = &GetPageCache('oldmajor');
-    $oldAuthor = &GetPageCache('oldauthor');
+    $oldMajor  = $page->getPageCache('oldmajor');
+    $oldAuthor = $page->getPageCache('oldauthor');
     if ($UseDiffLog) {
         &WriteDiff($id, $editTime, $editDiff);
     }
-    &SetPageCache($pagehash, 'diff_default_minor', $editDiff);
-    if ($isEdit || !$newAuthor) {
-        &OpenKeptRevisions('text_default', $keptrevisionshash);
-    }
+    $page->setPageCache('diff_default_minor', $editDiff);
+
     if (!$isEdit) {
-        &SetPageCache($pagehash, 'diff_default_major', "1");
+        $page->setPageCache('diff_default_major', "1");
     } else {
-        &SetPageCache($pagehash, 'diff_default_major', &GetKeptDiff($new, $oldMajor, 0, $keptrevisionshash));
+        $page->setPageCache('diff_default_major',
+            &GetKeptDiff($keptRevision, $new, $oldMajor, 0));
     }
+
     if ($newAuthor) {
-        &SetPageCache($pagehash, 'diff_default_author', "1");
+        $page->setPageCache('diff_default_author', "1");
     } elsif ($oldMajor == $oldAuthor) {
-        &SetPageCache($pagehash, 'diff_default_author', "2");
+        $page->setPageCache('diff_default_author', "2");
     } elsif ($oldMajor == $oldAuthor) {
-        &SetPageCache($pagehash, 'diff_default_author', "2");
+        $page->setPageCache('diff_default_author', "2");
     } else {
-        &SetPageCache($pagehash, 'diff_default_author', &GetKeptDiff($new, $oldAuthor, 0, $keptrevisionshash));
+        $page->setPageCache('diff_default_author',
+            &GetKeptDiff($keptRevision, $new, $oldAuthor, 0));
     }
 }
 
@@ -655,11 +656,12 @@ sub WriteDiff {
 
 # ==== Difference markup and HTML ====
 sub GetDiffHTML {
+    my $page = shift;
+    my $keptRevision = shift;
   my $diffType = shift;
   my $id = shift;
   my $rev = shift;
   my $newText = shift;
-  my $oldText = shift;
   my ($html, $diffText, $diffTextTwo, $priorName, $links, $usecomma);
   my ($major, $minor, $author, $useMajor, $useMinor, $useAuthor, $cacheName);
 
@@ -685,7 +687,7 @@ sub GetDiffHTML {
     $useAuthor = 0;
   }
   if ($rev ne "") {
-    $diffText = &GetKeptDiff($newText, $rev, 1, $oldText);  # 1 = get lock
+    $diffText = &GetKeptDiff($keptRevision, $newText, $rev, 1);  # 1 = get lock
     if ($diffText eq "") {
       $diffText = '(The revisions are identical or unavailable.)';
     }
@@ -695,10 +697,10 @@ sub GetDiffHTML {
   $useMajor  = 0  if ($useMajor  && ($diffText eq &GetCacheDiff("major")));
   $useMinor  = 0  if ($useMinor  && ($diffText eq &GetCacheDiff("minor")));
   $useAuthor = 0  if ($useAuthor && ($diffText eq &GetCacheDiff("author")));
-  $useMajor  = 0  if ((!defined(&GetPageCache('oldmajor'))) ||
-                      (&GetPageCache("oldmajor") < 1));
-  $useAuthor = 0  if ((!defined(&GetPageCache('oldauthor'))) ||
-                      (&GetPageCache("oldauthor") < 1));
+  $useMajor  = 0  if ((!defined($page->getPageCache('oldmajor'))) ||
+                      ($page->getPageCache("oldmajor") < 1));
+  $useAuthor = 0  if ((!defined($page->getPageCache('oldauthor'))) ||
+                      ($page->getPageCache("oldauthor") < 1));
   if ($useMajor) {
     $links .= $major;
     $usecomma = 1;
@@ -750,10 +752,11 @@ sub GetCacheDiff {
   return $diffText;
 }
 
-# Must be done after minor diff is set and OpenKeptRevisions called
 sub GetKeptDiff {
-  my ($newText, $oldRevision, $lock, $oldText) = @_;
-  my (%sect, %data);
+    my $keptRevision = shift;
+  my ($newText, $oldRevision, $lock) = @_;
+
+  my $oldText = $keptRevision->getRevision($oldRevision)->getText();
 
   return ""  if ($oldText eq "");  # Old revision not found
   return &GetDiff($oldText, $newText, $lock);
