@@ -25,7 +25,7 @@
       [% END %]
       . . . . .
       [% IF page.userName %]
-      <a href="[% baseUrl %]?[% page.userName %]" title="ID [% page.userId %] from [% page.host %]">[% page.userName %]</a>
+      [% page.userName %]
       [% ELSE %]
       [% page.host %]
       [% END %]

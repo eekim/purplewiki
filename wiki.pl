@@ -31,7 +31,7 @@
 #    Boston, MA 02111-1307 USA
 
 package UseModWiki;
-use lib '/home/gerry/purple/blueoxen/branches/database-api-1';
+use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use strict;
 my $useCap=0;
 eval "use Authen::Captcha; $useCap=1;";
@@ -332,13 +332,17 @@ sub DoRc {
             $prevDate = $date;
         }
         my $pageId = $page->{pageId};
+        my $userName;
+        if ($page->{userId}) {
+            $userName = $userDb->loadUser($page->{userId})->username;
+        }
         push @{$recentChanges[$#recentChanges]->{pages}},
             { id => $pageId,
               pageName => $pages->getName($pageId),
               time => CalcTime($page->{timeStamp}),
               numChanges => $page->{numChanges},
               summary => QuoteHtml($page->{changeSummary}),
-              userName => $page->{userName},
+              userName => $userName,
               userId => $page->{userId},
               host => $page->{host},
               diffUrl => $config->ScriptName .
@@ -384,6 +388,9 @@ sub DoHistory {
     my $first = 1;
     for my $pageinfo (@pageHistory) {
         my $rev = $pageinfo->{revision};
+        if ($pageinfo->{user}) {
+            $pageinfo->{userName} = $userDb->loadUser($pageinfo->{user})->username;
+        }
         if ($first) {
             $pageinfo->{pageUrl} = "$base?$id";
             $first = 0;
