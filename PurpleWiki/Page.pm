@@ -1,8 +1,8 @@
 # PurpleWiki::Page.pm
 #
-# $Id: Page.pm,v 1.8 2002/11/24 08:55:15 eekim Exp $
+# $Id: Page.pm,v 1.9 2003/01/02 06:06:30 eekim Exp $
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -31,7 +31,7 @@ package PurpleWiki::Page;
 
 # mappings between PurpleWiki code and code withing useMod
 
-# $Id: Page.pm,v 1.8 2002/11/24 08:55:15 eekim Exp $
+# $Id: Page.pm,v 1.9 2003/01/02 06:06:30 eekim Exp $
 
 sub exists {
     my $id = shift;

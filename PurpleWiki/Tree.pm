@@ -1,8 +1,8 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.21 2002/12/30 10:11:55 eekim Exp $
+# $Id: Tree.pm,v 1.22 2003/01/02 06:06:30 eekim Exp $
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -33,6 +33,7 @@ use 5.005;
 use strict;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
+use PurpleWiki::View::Text;
 use PurpleWiki::View::WikiHTML;
 use PurpleWiki::View::WikiText;
 
@@ -134,6 +135,9 @@ sub view {
     elsif (lc($driver) eq 'wiki') {
         return &PurpleWiki::View::WikiText::view($this, %params);
     }
+    elsif (lc($driver) eq 'text') {
+        return &PurpleWiki::View::Text::view($this, %params);
+    }
 }
 
 ### private
@@ -193,6 +197,9 @@ and metadata about the document.  Current metadata are lastNid, title,
 subtitle, id, date, version, and authors.  PurpleWiki only uses the
 first two, but the rest are useful if PurpleWiki is used as a document
 authoring system.
+
+The root node of a tree should always be a structural node of type
+'document'.
 
 =head1 VIEW DRIVERS
 
