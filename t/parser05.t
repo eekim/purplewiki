@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 17 };
+BEGIN { plan tests => 36 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -38,7 +38,7 @@ my $wiki = $wikiParser->parse($wikiContent, config => $config);
 # Wiki content.  ( tests)
 ok(scalar @{$wiki->root->children} == 1);
 ok($wiki->root->children->[0]->type eq 'section');
-ok(scalar @{$wiki->root->children->[0]->children} == 4);
+ok(scalar @{$wiki->root->children->[0]->children} == 7);
 ok($wiki->root->children->[0]->children->[0]->type eq 'p');
 ok($wiki->root->children->[0]->children->[0]->content->[0]->type
     eq 'wikiword');
@@ -66,3 +66,41 @@ ok($wiki->root->children->[0]->children->[3]->content->[1]->type
     eq 'wikiword');
 ok($wiki->root->children->[0]->children->[3]->content->[1]->content
     eq '/Test');
+
+ok($wiki->root->children->[0]->children->[4]->type eq 'p');
+ok($wiki->root->children->[0]->children->[4]->content->[0]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[4]->content->[0]->content
+    eq 'EekimBlah');
+ok($wiki->root->children->[0]->children->[4]->content->[1]->type
+    eq 'text');
+ok($wiki->root->children->[0]->children->[4]->content->[1]->content
+    eq ':Home');
+
+ok($wiki->root->children->[0]->children->[5]->type eq 'p');
+ok($wiki->root->children->[0]->children->[5]->content->[0]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[5]->content->[0]->content
+    eq 'EekimBlah');
+ok($wiki->root->children->[0]->children->[5]->content->[1]->type
+    eq 'text');
+ok($wiki->root->children->[0]->children->[5]->content->[1]->content
+    eq ':Home');
+ok($wiki->root->children->[0]->children->[5]->content->[2]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[5]->content->[2]->content
+    eq '/Test');
+
+ok($wiki->root->children->[0]->children->[6]->type eq 'p');
+ok($wiki->root->children->[0]->children->[6]->content->[0]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[6]->content->[0]->content
+    eq 'EekimBlah');
+ok($wiki->root->children->[0]->children->[6]->content->[1]->type
+    eq 'text');
+ok($wiki->root->children->[0]->children->[6]->content->[1]->content
+    eq ':');
+ok($wiki->root->children->[0]->children->[6]->content->[2]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[6]->content->[2]->content
+    eq 'HomePage');

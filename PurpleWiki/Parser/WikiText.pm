@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.12 2003/07/19 08:24:11 eekim Exp $
+# $Id: WikiText.pm,v 1.13 2003/07/19 18:07:43 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -74,7 +74,7 @@ sub parse {
 
     my %listMap = ('ul' => '(\*+)\s*(.*)',
                    'ol' => '(\#+)\s*(.*)',
-                   'dl' => '(\;+)([^:]+\:?)\:(.*)',
+                   'dl' => q{(\;+)([^:]+\:?)\:(.*)},
                   );
 
     my $aggregateListRegExp = join('|', values(%listMap));
@@ -127,7 +127,7 @@ sub parse {
         }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
             foreach $listType (keys(%listMap)) {
-                if ($line =~ /^$listMap{$listType}$/) {
+                if ($line =~ /^$listMap{$listType}$/x) {
                     $currentNode = &_terminateParagraph($currentNode,
                                                         \$nodeContent,
                                                         %params);
@@ -455,7 +455,7 @@ sub _parseInlineNode {
                                                            'content'=>$node);
         }
         elsif ($params{wikiword} &&
-               ($node =~ /^([A-Z]\w+):([^\]\#\s"<>]+(?:\#[A-Z0-9]+)?)$rxQuoteDelim$/s)) {
+               ($node =~ /^([A-Z]\w+):([^\]\#\:\s"<>]+(?:\#[A-Z0-9]+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
             if (&PurpleWiki::Page::siteExists($site, $params{config})) {
@@ -469,9 +469,28 @@ sub _parseInlineNode {
                     push @inlineNodes,
                         PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                     'content'=>$site);
-                    push @inlineNodes,
-                        PurpleWiki::InlineNode->new('type'=>'text',
-                                                    'content'=>':');
+                    if ( ($page =~ /^$rxWikiWord(?:\#[A-Z0-9]+)?$/) ||
+                         ($page =~ /^$rxWikiWord\/$rxSubpage(?:\#[A-Z0-9]+)?$/) ) {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>':');
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                        'content'=>$page);
+                    }
+                    elsif ($page =~ /(.*)(\/$rxSubpage(?:\#[A-Z0-9]+)?)$/) {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>":$1");
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                        'content'=>$2);
+                    }
+                    else {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>":$page");
+                    }
                 }
                 else {
                     if ( ($page =~ /^$rxWikiWord(?:\#[A-Z0-9]+)?$/) ||
