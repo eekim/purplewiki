@@ -19,6 +19,7 @@ LocalSequenceDir = $DataDir     # The directory where purple number sequences li
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
 DefaultLanguage = en           # Default language to use
+#CookieName = YourWiki         # Cookie name.
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days

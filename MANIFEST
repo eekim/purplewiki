@@ -30,6 +30,7 @@ PurpleWiki/Search/MovableType.pm
 PurpleWiki/Search/Result.pm
 PurpleWiki/Search/Wiki.pm
 PurpleWiki/Sequence.pm
+PurpleWiki/Session.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Syndication/Rss.pm
 PurpleWiki/Transclusion.pm

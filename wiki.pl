@@ -34,7 +34,6 @@ package UseModWiki;
 use strict;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
-use CGI::Session;
 use Digest::MD5;
 use PurpleWiki::ACL;
 use PurpleWiki::Config;
@@ -44,6 +43,7 @@ use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Database::User::UseMod;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Search::Engine;
+use PurpleWiki::Session;
 
 my $CONFIG_DIR='/var/www/wikidb';
 
@@ -126,9 +126,9 @@ sub InitCookie {
   $TimeZoneOffset = 0;
   undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
 
-  my $sid = $q->cookie($config->SiteName);
-  $session = CGI::Session->new("driver:File", $sid,
-                               {Directory => "$CONFIG_DIR/sessions"});
+  my $sid = ($config->CookieName) ? $q->cookie($config->CookieName) :
+      $q->cookie($config->SiteName);
+  $session = PurpleWiki::Session->new($sid);
   my $userId = $session->param('userId');
   $user = $userDb->loadUser($userId) if ($userId);
   $session->clear(['userId']) if (!$user);
