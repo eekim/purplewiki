@@ -208,7 +208,7 @@ sub _wikiLink {
             &PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '">' . $nodeRef->content . '</a>';
-    } elsif (&PurpleWiki::Page::exists($pageName) {
+    } elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
             &PurpleWiki::Page::getFreeLink($nodeRef->content) .  '">';
