@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.5 2003/08/18 07:10:54 eekim Exp $
+# $Id: EventHandler.pm,v 1.6 2003/08/28 17:41:47 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -117,6 +117,10 @@ sub registerHandlers {
     $structuralHandler{pre}->{pre} = \&emptyString;
     $structuralHandler{pre}->{main} = \&structuralContent;
     $structuralHandler{pre}->{post} = \&emptyString;
+
+    $structuralHandler{sketch}->{pre} = \&emptyString;
+    $structuralHandler{sketch}->{main} = \&emptyString;
+    $structuralHandler{sketch}->{post} = \&emptyString;
 
     $inlineHandler{b}->{pre} = \&emptyString;
     $inlineHandler{b}->{main} = \&recurseInline;
