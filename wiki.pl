@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.14 2004/02/07 02:20:57 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -45,7 +45,8 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $CONFIG_DIR='/var/www/wikidb';
 
-our $VERSION = "0.9.3";
+our ($VERSION) = ' $Id$ ' =~ /\$Id:\s+\S+\s(\d+)\s/;
+print $VERSION;
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 

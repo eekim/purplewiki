@@ -8,7 +8,7 @@ my $cgiDir = prompt("Where should the wiki.pl CGI be installed?",
 
 WriteMakefile(
     'NAME'		=> 'PurpleWiki',
-    'VERSION'	=> '0.9.2',
+    'VERSION'	=> '0.93',
     'PREREQ_PRINT' => 1,
     'EXE_FILES' => [
         'wiki.pl',
