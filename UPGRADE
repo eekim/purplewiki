@@ -89,6 +89,11 @@ Perform the following required steps:
       LogoLeft
       UseLookup
 
+   d. Change KeepDays from the original default of 14 days to 30
+      or 90. This is the expiration time for old versions of pages. 
+      The old low number proved unhelpful in the battle against
+      spam.
+
 5. If you use PurpleWiki::Apache1Handler or PurpleWiki::Apache2Handler
    to present wiki formatted text files, see the documentation included in
    the modules for changes to their configuration. The configuration
