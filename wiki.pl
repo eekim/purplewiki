@@ -1109,10 +1109,8 @@ sub DoPost {
   # clean \r out of string
   $string =~ s/\r//g;
 
-  my $url = $config->ScriptName . "?$id";
   my $wiki = $wikiParser->parse($string,
                                 'add_node_ids'=>1,
-                                'url'=>$url,
                                 'freelink' => $config->FreeLinks);
 
   my $error_template = '';
@@ -1162,6 +1160,7 @@ sub DoPost {
 
   if ($pages->putPage(pageId => $id,
                       tree => $wiki,
+                      url=> $config->ScriptName . "?$id",
                       oldrev => GetParam("oldrev", ""),
                       changeSummary => $summary,
                       host => GetRemoteHost(1),

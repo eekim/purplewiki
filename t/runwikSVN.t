@@ -2,6 +2,7 @@
 
 use Test;
 require "t/runlog.pl";
+require "t/runTest.pl";
 
 BEGIN {
     eval { require SVN::Repos; };
@@ -9,7 +10,7 @@ BEGIN {
         print STDERR "Could not find Subversion modules, skiping tests\n";
         exit;
     }
-    plan tests => 75;
+    plan tests => 82;
 };
 
 END {
@@ -31,7 +32,7 @@ system('cp t/config.runSVN t/config');
     open(OUT, ">&STDOUT") || die "Error open $!\n";
 
     my ($test_in, $test_out, $compare);
-    for my $seq (0..74) {
+    for my $seq (0..81) {
         $test_in = "$testdir/request.$seq";
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";

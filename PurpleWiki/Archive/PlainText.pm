@@ -41,6 +41,7 @@ use File::Path;
 use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::View::Filter;
 
 sub new {
   my $proto = shift;
@@ -169,7 +170,7 @@ sub _getSequencer {
   my $ret;
   return $ret if (defined($ret = $self->{sequence}));
 
-  $self->{sequence} = new PurpleWiki::Sequence($self->{sequrl}, $self->{seqdir});
+  $self->{sequence} = new PurpleWiki::Sequence($self->{seqdir}, $self->{sequrl});
 }
 
 sub deletePage {

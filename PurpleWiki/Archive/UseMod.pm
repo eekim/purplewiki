@@ -40,6 +40,7 @@ use PurpleWiki::UseMod::Section;
 use PurpleWiki::UseMod::KeptRevision;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::View::Filter;
 
 # defaults for Text Based data structure
 my $DATA_VERSION = 3;            # the data format version
@@ -218,7 +219,7 @@ sub _getSequencer {
   my $ret;
   return $ret if (defined($ret = $self->{sequence}));
 
-  $self->{sequence} = new PurpleWiki::Sequence($self->{sequrl}, $self->{seqdir});
+  $self->{sequence} = new PurpleWiki::Sequence($self->{seqdir}, $self->{sequrl});
 }
 
 sub deletePage {

@@ -35,6 +35,7 @@ package PurpleWiki::Archive::Subversion;
 
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::View::Filter;
 
 use SVN::Fs;
 use SVN::Delta;

@@ -35,7 +35,7 @@ use CGI::Session;
 use PurpleWiki::Config;
 
 our $VERSION;
-$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
+$VERSION = sprintf("%d", q$Id: 520 2004-10-06 07:15:47Z gerry $ =~ /\s(\d+)\s/);
 
 ### constructor
 

@@ -4,7 +4,7 @@ my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
 $configdir = "t";
 $dodiff=1;
-$testdir="out";
+$testdir="t/out";
 while (@ARGV) {
     $a = shift(@ARGV);
     if ($a =~ /^-1/) {
@@ -54,6 +54,7 @@ if ($split) {
         if (open(IN, $test_in)) {
             chomp($url = <IN>);
             my $q = new CGI(IN);
+print ERR "Starting $test_out\n";
             runTest($q, $test_out);
             if ($dodiff) {
             my $diff = diffOutput($compare, $test_out);
@@ -63,6 +64,7 @@ if ($split) {
                     unlink $test_out unless ($update);
                 } else {
                     unlink $test_out;
+                    print ERR "Ok $seq\n";
                 }
             }
             close IN;
@@ -184,7 +186,7 @@ my ($child, $kid);
         print ERR "Kid $kid Ch $child\n" if ($kid != $child);
     } else {
         # in child, run the test and exit
-        require "wiki.pl";
+        require "./wiki.pl";
         &UseModWiki::DoWikiRequest($q);
         exit;
     }

@@ -41,6 +41,7 @@ use File::Path;
 use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::View::Filter;
 
 sub new {
   my $proto = shift;

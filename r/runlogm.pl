@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 require "t/runlog.pl";
+require "t/runTest.pl";
 
 my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
@@ -34,7 +35,7 @@ while (@ARGV) {
 }
 $ENV{PW_CONFIG_DIR} = $configdir;
 
-require "./wiki.pl";
+require './wiki.pl';
 use CGI;
 
 open(ERR, ">&STDERR") || die "Error open $!\n";

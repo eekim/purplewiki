@@ -305,11 +305,16 @@ sub _updateURLByLocal {
     for my $nid (@$nids) {
         $index{$nid} = $url;
         delete $oldnids{$nid};
+#print STDERR "U[$nid]";
     }
     for my $nid (keys %oldnids) {
         delete $index{$nid};
+#print STDERR "D[$nid]";
     }
+#print STDERR "updateURL($url, ",join(" ",@$nids),")\n";
     $revidx{$url} = join(" ", @$nids);
+    untie %index;
+    untie %revidx;
 }
 
 sub _updateURLByRemote {
