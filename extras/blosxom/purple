@@ -1,13 +1,16 @@
 # Blosxom Plugin: purple
 # Author: Eugene Eric Kim <eekim@blueoxen.org>
-# Version: 0+1i
-# $Id: purple,v 1.1 2003/08/14 07:49:00 eekim Exp $
+# Version: 0+2i
+# $Id: purple,v 1.2 2003/11/20 06:31:15 eekim Exp $
 
 package purple;
 
 # --- Configurable variables -----
 
 $configDir = '/var/www/wikidb';
+
+# Using the cooluri plugin for permalinks?
+$coolUri = 0;
 
 # --------------------------------
 
@@ -26,10 +29,17 @@ sub story {
     my $wiki = $wikiParser->parse($$body_ref,
                                   config => $config,
                                   add_node_ids => 0);
+    my $url = $blosxom::url;
+    if ($coolUri) {
+        $url .= '/' . $blosxom::yr . '/' . $blosxom::mo_num . '/' .
+            $blosxom::da . '/' . $blosxom::fn;
+    }
+    else {
+        $url .= $blosxom::path . '/' . $blosxom::fn . '.' . $blosxom::flavour;
+    }
     $$body_ref = $wiki->view('wikihtml',
                              config => $config,
-                             url => $blosxom::url . $blosxom::path . '/' .
-                                    $blosxom::fn . '.' . $blosxom::flavour);
+                             url => $url);
     # make metadata available under the purple namespace
     $$title_ref = $wiki->title if ($wiki->title);
     $subtitle = $wiki->subtitle if ($wiki->subtitle);
@@ -51,7 +61,7 @@ Blosxom Plug-in: purple
 
 =head1 VERSION
 
-0+1i
+0+2i
 
 =head1 DESCRIPTION
 
@@ -77,6 +87,9 @@ C<$configDir> is the location of your Wiki's configuration directory
 (usually called wikidb).  There must be a valid PurpleWiki config file
 in the directory, even if you don't actually have a local Wiki
 installation.
+
+If you are using Rob Hague's cooluri plugin for permalinks, set
+C<$coolUri> to 1.
 
 =head2 Adding purple numbers to your entries
 
