@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 use Test;
+$^W = 0;
 
 BEGIN {
     eval { require SVN::Repos; };

@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 use Test;
+$^W = 0;
 require "t/runlog.pl";
 require "t/runTest.pl";
 

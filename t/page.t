@@ -4,9 +4,11 @@
 use strict;
 use warnings;
 use Test;
+$^W = 0;
 
 BEGIN { plan tests => 17; };
 
+system('cp t/config.tDef t/config');
 system('rm -fr t/tDB');
 
 use PurpleWiki::Parser::WikiText;
@@ -71,8 +73,9 @@ EOF
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
 my $database_package = $config->ArchiveDriver;
-print STDERR "Error in Package: $database_package\nError:$@"
-    unless (eval "require $database_package");
+print "DB $database_package\n";
+eval "require $database_package";
+print "Error in Package: $database_package\nError:$@" if $@;
 my $pages = $database_package->new ($config, create => 1);
 $config->{pages} = $pages;
 
@@ -155,6 +158,5 @@ ok($recentCh, $rcResult);
 
 sub END {
     unlink('t/tDB/sequence');
-#    system('rm -fr t/tDB');
 }
 

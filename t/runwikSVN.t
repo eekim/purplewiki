@@ -3,6 +3,7 @@
 use Test;
 require "t/runlog.pl";
 require "t/runTest.pl";
+$^W = 0;
 
 BEGIN {
     eval { require SVN::Repos; };
