@@ -9,6 +9,7 @@ use PurpleWiki::Database::User::UseMod;
 use PurpleWiki::Config;
 
 my $configdir = 't';
+my $datadir = 'tDB';
 my $userName = '@blueoxen*eekim';
 
 #########################
@@ -23,7 +24,7 @@ my $user = $userDb->createUser;
 ok($user->id == 1001);
 $user->username($userName);
 $userDb->saveUser($user);
-ok(-f "$configdir/user/1/1001.db");
+ok(-f "$datadir/user/1/1001.db");
 
 # create another user
 $user = undef;
@@ -38,18 +39,18 @@ ok($user->username eq $userName);
 
 sub END { 
     # delete user database
-    unlink("$configdir/user/usernames.db");
-    unlink("$configdir/user/1/1001.db");
-    unlink("$configdir/user/2/1002.db");
-    rmdir("$configdir/user/0");
-    rmdir("$configdir/user/1");
-    rmdir("$configdir/user/2");
-    rmdir("$configdir/user/3");
-    rmdir("$configdir/user/4");
-    rmdir("$configdir/user/5");
-    rmdir("$configdir/user/6");
-    rmdir("$configdir/user/7");
-    rmdir("$configdir/user/8");
-    rmdir("$configdir/user/9");
-    rmdir("$configdir/user");
+    unlink("$datadir/user/usernames.db");
+    unlink("$datadir/user/1/1001.db");
+    unlink("$datadir/user/2/1002.db");
+    rmdir("$datadir/user/0");
+    rmdir("$datadir/user/1");
+    rmdir("$datadir/user/2");
+    rmdir("$datadir/user/3");
+    rmdir("$datadir/user/4");
+    rmdir("$datadir/user/5");
+    rmdir("$datadir/user/6");
+    rmdir("$datadir/user/7");
+    rmdir("$datadir/user/8");
+    rmdir("$datadir/user/9");
+    rmdir("$datadir/user");
 }

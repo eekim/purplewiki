@@ -14,7 +14,8 @@ HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
-LocalSequenceDir = "t"
+DataDir     = "tDB"
+LocalSequenceDir = $DataDir
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
@@ -72,7 +73,7 @@ UserDir     = $DataDir/user      # Stores user data
 KeepDir     = $DataDir/keep      # Stores kept (old) page data
 TempDir     = $DataDir/temp      # Temporary files and locks
 LockDir     = $TempDir/lock      # DB is locked if this exists
-InterFile   = $DataDir/intermap  # Interwiki site->url map
+InterFile   = t/intermap         # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 

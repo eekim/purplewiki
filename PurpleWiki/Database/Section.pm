@@ -178,11 +178,12 @@ sub _init {
         } 
         $self->{data} = $self->getText();
     } else {
+        my $now = $args{now} || time;
         $self->{name} = 'text_default';
         $self->{version} = 1;
         $self->{revision} = 0;
-        $self->{tscreate} = $args{now};
-        $self->{ts} = $args{now};
+        $self->{tscreate} = $now;
+        $self->{ts} = $now;
         $self->{ip} = $ENV{REMOTE_ADDR};
         $self->{host} = '';
         $self->{id} = $args{userID};

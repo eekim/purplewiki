@@ -103,7 +103,7 @@ my ($self, $page) = @_;
   $keptRevision->trimKepts($now);
   $keptRevision->save();
   $page->setRevision($section->getRevision());
-  $page->setTS($now);
+  $page->{ts} = $now;
   $self->WriteRcLog($page->{id}, $page->{summary}, $now,
                     $self->{username}, $page->{host} || $page->{ip});
 }
@@ -116,7 +116,7 @@ sub allPages {
 # pages->recentChanges(backto => $starttime, count => $count)
 sub recentChanges {
   my $self = shift;
-  my $config = $self->{config} || PurpleWiki::Conifg->instance();
+  my $config = $self->{config} || PurpleWiki::Config->instance();
   my %params = @_;
   my $starttime = 0;
   $starttime = $params{backto} if ($params{backto});
@@ -205,6 +205,7 @@ sub new {
 # page->getIP()
 sub getIP {
   my $self = shift;
+  $self->_openPage() unless ($self->{open});
   $self->{ip};
 }
 
@@ -215,7 +216,9 @@ sub getLockState {
 
 # page->getUserID()
 sub getUserID {
-   shift->{userID};
+    my $self = shift;
+    $self->_openPage() unless ($self->{open});
+    $self->{userID};
 }
 
 
@@ -237,6 +240,9 @@ sub pageFileExists {
 # Returns the revision of this Page.
 sub getRevision {
     my $self = shift;
+    my $rev = $self->{selectrevision};
+    return $rev if $rev;
+    $self->_openPage() unless ($self->{open});
     return $self->getSection()->getRevision();
 }
 
@@ -253,19 +259,13 @@ sub setRevision {
     $self->{revision} = $revision;
 }
 
-sub getTime { shift->{ts}; }
+sub getTime { shift->getTS(); }
 
 # Gets the timestamp of this Page. 
 sub getTS {
     my $self = shift;
-    return $self->{ts};
-}
-
-# Sets the timestamp of this Page.
-sub setTS {
-    my $self = shift;
-    my $ts = shift;
-    $self->{ts} = $ts;
+    $self->_openPage() unless ($self->{open});
+    return $self->getSection()->getTS();
 }
 
 # Gets one of a few different cache data items for this Page.
@@ -298,7 +298,8 @@ sub _openPage {
         my $data = PurpleWiki::Database::ReadFileOrDie($filename);
         $self->_parseData($data);
     } else {
-        $self->_openNewPage();
+        $self->{version} = $DATA_VERSION;
+        $self->{revision} = 0;
     }
 
     if ($self->{version} != $DATA_VERSION) {
@@ -316,12 +317,12 @@ sub _getText {
 # Or creates a new one (or lets getSectin create it)
 sub getText {
     my $self = shift;
-    my $selectversion = "";
-    $self->{selectedversion} = $selectversion = shift if @_;
-    $self->_openPage();
-    if ($selectversion && ($selectversion != $self->{version})) {
+    my $selectrevision = "";
+    $self->{selectrevision} = $selectrevision = shift if @_;
+    $self->_openPage() unless ($self->{open});
+    if ($selectrevision && ($selectrevision != $self->{version})) {
         my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
-        return $krev->getRevision($selectversion)->getText();
+        return $krev->getRevision($selectrevision)->getText();
     } else {
         my $section = $self->getSection();
         my $text = $section->getText();
@@ -381,8 +382,10 @@ sub searchResult {
 sub getRevisions {
     my $self = shift;
     my @pageHistory = ();
+    $self->_openPage() unless ($self->{open});
     my $id = $self->{id};
-    push @pageHistory, _getRevisionHistory($id, $self->getSection, 1);
+
+    push @pageHistory, $self->_getRevisionHistory($id, $self->getSection, 1);
     my $krev = new PurpleWiki::Database::KeptRevision(id => $id);
     foreach my $section ( sort {-($a->getRevision() <=> $b->getRevision())}
                                $krev->getSections() ) {
@@ -429,7 +432,7 @@ sub _getRevisionHistory {
         $summary = '';
     }
     return { revision => $rev,
-             dateTime => TimeToText($ts),
+             dateTime => UseMod::TimeToText($ts),
              host => $host,
              user => $user,
              summary => $summary,
@@ -448,7 +451,6 @@ sub getSection {
     } else {
         $self->{text_default} =
             new PurpleWiki::Database::Section('data' => $self->{text_default},
-                                              'now' => $self->getNow(),
                                               'userID' => $self->{userID},
                                               'username' => $self->{username});
         return $self->{text_default};
@@ -459,19 +461,14 @@ sub getSection {
 sub getVersion {
     my $self = shift;
 
-    return $self->{selectversion};
+    return $self->{version};
 }
 
 # Retrieves the page id.
 sub getID {
     my $self = shift;
+    $self->_openPage() unless ($self->{open});
     return $self->{id};
-}
-
-# Retrieves the now of when this page was asked for.
-sub getNow {
-    my $self = shift;
-    return $self->{now};
 }
 
 # Determines the filename of the page with this id.
@@ -519,16 +516,6 @@ sub _parseData {
     }
 
     $self->{text_default} = $self->getSection();
-}
-
-# Sets the minium data fields necessary for a Page.
-sub _openNewPage {
-    my $self = shift;
-
-    $self->{version} = 3;
-    $self->{revision} = 0;
-    $self->{ts_create} = $self->getNow();
-    $self->{ts} = $self->getNow();
 }
 
 # page->save();

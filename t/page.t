@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 12};
+BEGIN { plan tests => 13};
 
 use PurpleWiki::Database::Page;
 use PurpleWiki::Database::KeptRevision;
@@ -13,9 +13,9 @@ use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $lockdir = 't/temp/lockmain';
+my $lockdir = 'tDB/temp/lockmain';
 my $id = 'WikiPage';
-my $idFilename = 't/page/W/WikiPage.db';
+my $idFilename = 'tDB/page/W/WikiPage.db';
 my $newcontent = "Describe the new page here.\n";
 my $content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord.
@@ -95,10 +95,12 @@ ok($oldText, $newcontent);
 my $oldrev = $page->getRevision();
 ok($oldrev, 0);
 
+my $timestamp = time;
+
 # add a new wikitext to the page
 $page = $pages->newPage(id => $id,
                         wikitext => $output,
-                        timestamp => time);
+                        timestamp => $timestamp);
 my $getText = $page->getText();
 ok($getText, $expected_content);
 
@@ -112,8 +114,11 @@ ok($page->save(), -f $idFilename);
 ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 undef($page);
 
+
 # load the page up and make sure the id and text are right
 my $newPage = $pages->newPageId($id);
+my $ts = $newPage->getTS();
+ok($ts, $timestamp);
 ok($newPage->getID(), $id);
 ok($newPage->getText(), $expected_content);
 
@@ -126,7 +131,7 @@ $output =~ s/\r//g;
 ok($output, $second_expected_content);
 
 sub END {
-    unlink('t/sequence');
+    unlink('tDB/sequence');
     unlink($idFilename);
     rmdir($lockdir);
 }

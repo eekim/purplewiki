@@ -30,7 +30,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-push(@INC,"/home/gerry/purple/blueoxen/branches/database-kwiki");
+BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-kwiki");}
 
 package UseModWiki;
 use strict;
@@ -381,9 +381,9 @@ sub GetHttpHeader {
 sub ReBrowsePage {
   my $id = shift;
 
-  $q->redirect(-uri => ( ($config->FullUrl ne "")
-                          ? $config->FullUrl
-                          : $q->url(-full=>1) ) . $id);
+  print $q->redirect(-uri => ( ($config->FullUrl ne "")
+                               ? $config->FullUrl
+                               : $q->url(-full=>1) ) . "?" . $id);
 }
 
 # ==== Common wiki markup ====
@@ -563,7 +563,7 @@ sub FreeToNormal {
 # == Page-editing and other special-action code ========================
 
 sub DoOtherRequest {
-  my ($id, $action, $text, $search);
+  my ($id, $action, $search);
 
   $action = GetParam("action", "");
   $id = GetParam("id", "");
@@ -681,7 +681,7 @@ sub DoEdit {
       return;
   }
 
-  $pageTime = $page->getTS();
+  $pageTime = $page->getTS() || 0;
   
   # Old revision handling
   $revision = GetParam('revision', '');
@@ -1068,23 +1068,18 @@ sub DoPost {
                                 'freelink' => $config->FreeLinks);
   $string = $wiki->view('wikitext');
 
-  $wikiTemplate->vars(&globalTemplateVars,
-                      pageName => $id);
-  if (!$acl->canEdit($user, $id)) {
-      # This is an internal interface--we don't need to explain
-      print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
-      return;
+  my $error_template = '';
+  $error_template = 'errors/editNotAllowed'
+      if (!$acl->canEdit($user, $id));
+  $error_template = 'errors/pageCannotBeDefined'
+      if (($id eq 'SampleUndefinedPage') || ($id eq 'Sample_Undefined_Page'));
+  if ($error_template) {
+    $wikiTemplate->vars(&globalTemplateVars,
+                        pageName => $id);
+    print GetHttpHeader() . $wikiTemplate->process($error_template);
+    return;
   }
 
-  if (($id eq 'SampleUndefinedPage') || ($id eq 'SampleUndefinedPage')) {
-    print GetHttpHeader() . $wikiTemplate->process('errors/pageCannotBeDefined');
-    return;
-  }
-  if (($id eq 'Sample_Undefined_Page')
-      || ($id eq 'Sample_Undefined_Page')) {
-    print GetHttpHeader() . $wikiTemplate->process('errors/pageCannotBeDefined');
-    return;
-  }
   $summary =~ s/[\r\n]//g;
   # Add a newline to the end of the string (if it doesn't have one)
   $string .= "\n"  if (!($string =~ /\n$/));
