@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Section.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Section.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database::Section;
 
 # PurpleWiki Section Data Access
 
-# $Id: Section.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Section.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 use PurpleWiki::Database::Text;
 
 # Creates a new Section reference, may be a
@@ -47,11 +46,15 @@ use PurpleWiki::Database::Text;
 # to represent a single version of a WikiPage. They
 # contain metadata about the wiki page, and a pointer
 # to the text itself.
+#
+# FIXME: argument passing is very crufty throughout this
 sub new {
     my $proto = shift;
+    my %params = @_;
     my $class = ref($proto) || $proto;
     my $self = {};
     bless ($self, $class);
+    $self->{config} = $params{config};
     $self->_init(@_);
     return $self;
 }
@@ -61,7 +64,8 @@ sub getText {
     my $self = shift;
 
     if (!ref($self->{data})) {
-        $self->{data} = new PurpleWiki::Database::Text($self->{data});
+        $self->{data} = new PurpleWiki::Database::Text(data => $self->{data},
+            config => $self->{config});
     }
     return $self->{data};
 }
@@ -152,7 +156,8 @@ sub _init {
 
     # If we have data to push in
     if (defined($args{data})) {
-        my %tempHash = split(/$FS2/, $args{data}, -1);
+        my $regexp = $self->{config}->FS2;
+        my %tempHash = split(/$regexp/, $args{data}, -1);
 
         foreach my $key (keys(%tempHash)) {
             $self->{$key} = $tempHash{$key};
@@ -168,7 +173,7 @@ sub _init {
         $self->{host} = '';
         $self->{id} = $args{userID};
         $self->{username} = $args{username};
-        $self->{data} = new PurpleWiki::Database::Text();
+        $self->{data} = new PurpleWiki::Database::Text(config => $self->{config});
     }
 }
 
@@ -179,10 +184,12 @@ sub serialize {
 
     my $textData = $self->{data}->serialize();
 
-    my $data = join($FS2, map {$_ . $FS2 . $self->{$_}} 
+    my $separator = $self->{config}->FS2;
+
+    my $data = join($separator, map {$_ . $separator .  $self->{$_}}
         ('name', 'version', 'id', 'username', 'ip', 'host',
-         'ts', 'tscreate', 'keepts', 'revision'));
-    $data .= $FS2 . 'data' . $FS2 . $textData;
+            'ts', 'tscreate', 'keepts', 'revision'));
+    $data .= $separator . 'data' . $separator . $textData;
 
     return $data;
 }

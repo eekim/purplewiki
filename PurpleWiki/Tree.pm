@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.24 2003/01/18 05:23:45 eekim Exp $
+# $Id: Tree.pm,v 1.25 2003/06/20 23:54:02 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,6 @@ package PurpleWiki::Tree;
 use 5.005;
 use strict;
 use PurpleWiki::StructuralNode;
-use PurpleWiki::View::debug;
-use PurpleWiki::View::text;
-use PurpleWiki::View::wikihtml;
-use PurpleWiki::View::wikitext;
 
 ### constructor
 
@@ -45,7 +41,6 @@ sub new {
     my $self;
 
     $self = {};
-    $self->{lastNid} = $options{lastNid} ? $options{lastNid} : undef;
     $self->{title} = $options{title} ? $options{title} : undef;
     $self->{subtitle} = $options{subtitle} ? $options{subtitle} : undef;
     $self->{id} = $options{id} ? $options{id} : undef;
@@ -66,13 +61,6 @@ sub root {
     my $this = shift;
 
     return $this->{rootNode};
-}
-
-sub lastNid {
-    my $this = shift;
-
-    $this->{lastNid} = shift if @_;
-    return $this->{lastNid};
 }
 
 sub title {
@@ -127,16 +115,24 @@ sub view {
     my ($driver, %params) = @_;
 
     if (lc($driver) eq 'debug') {
+	require PurpleWiki::View::debug;
         return &PurpleWiki::View::debug::view($this, %params);
     } 
     elsif (lc($driver) eq 'wikihtml') {
+	require PurpleWiki::View::wikihtml;
         return &PurpleWiki::View::wikihtml::view($this, %params);
     }
     elsif (lc($driver) eq 'wikitext') {
+	require PurpleWiki::View::wikitext;
         return &PurpleWiki::View::wikitext::view($this, %params);
     }
     elsif (lc($driver) eq 'text') {
+	require PurpleWiki::View::text;
         return &PurpleWiki::View::text::view($this, %params);
+    }
+    elsif (lc($driver) eq 'xhtml') {
+	require PurpleWiki::View::xhtml;
+        return &PurpleWiki::View::xhtml::view($this, %params);
     }
 }
 
@@ -175,9 +171,6 @@ PurpleWiki::Tree - Basic PurpleWiki data structure
 
   $wiki->title("WikiPage");  # sets the title to "WikiPage"
 
-  $wiki->lastNid(23);        # sets the last NID to 23
-  print $wiki->lastNid;      # prints "23"
-
   $wiki->authors([ ['Joe Schmoe', 'joe@schmoe.net'],
                    ['Bob Marley', 'bob@jamaica.net'] ]);
 
@@ -193,7 +186,7 @@ parser, and the tree is traversed using the nodes' methods, starting
 with the root node.
 
 PurpleWiki::Tree's main purpose is to hold the document's root node
-and metadata about the document.  Current metadata are lastNid, title,
+and metadata about the document.  Current metadata are title,
 subtitle, id, date, version, and authors.  PurpleWiki only uses the
 first two, but the rest are useful if PurpleWiki is used as a document
 authoring system.
@@ -241,7 +234,6 @@ Returns the root StructuralNode object.
 
 =head2 Accessors/Mutators
 
- lastNid()
  title()
  subtitle()
  id()

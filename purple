@@ -2,7 +2,7 @@
 #
 # purple -- Document authoring system using PurpleWiki.
 #
-# $Id: purple,v 1.2 2003/01/18 05:23:45 eekim Exp $
+# $Id: purple,v 1.3 2003/06/20 23:54:01 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
@@ -29,6 +29,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
+use strict;
 use File::Copy;
 use Getopt::Long;
 use IO::File;
@@ -37,10 +38,13 @@ use PurpleWiki::Parser::WikiText;
 my $addNodeIds = 0;
 my $optionDriver = '';
 my $cssFile = '';
+my $url = '';
 
 GetOptions('add_ids'  => \$addNodeIds,
            'driver=s' => \$optionDriver,
-           'css=s'    => \$cssFile);
+           'css=s'    => \$cssFile,
+           'url=s'  => \$url);
+
 
 if (scalar @ARGV < 2) {
     if (!($addNodeIds && scalar @ARGV == 1)) {
@@ -48,11 +52,18 @@ if (scalar @ARGV < 2) {
 Usage:
   $0 --add_ids input.wiki
       or
-  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] input.wiki output.[txt|html]
+  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] [--url=URL] input.wiki output.[txt|html]
 EOM
         exit;
     }
 }
+
+my %params;
+$params{css_file} = $cssFile if ($cssFile);
+$params{add_node_ids} = $addNodeIds if ($addNodeIds);
+$params{wikiword} = 0;
+$params{freelink} = 0;
+$params{url} = $url if ($url);
 
 my $inputFile = $ARGV[0];
 my $outputFile = $ARGV[1];
@@ -67,8 +78,8 @@ if ($optionDriver eq '') {
 }
 
 my $wikiContent = &readFile($inputFile);
-my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent, 'add_node_ids'=>$addNodeIds);
+my $wikiParser = PurpleWiki::Parser::WikiText->new();
+my $wiki = $wikiParser->parse($wikiContent, %params);
 $wiki->title($outputFile) if (!$wiki->title);
 
 if (-e $outputFile) {
@@ -78,21 +89,20 @@ if (-e $outputFile) {
 
 if ($optionDriver eq '') {
     if ($outputFileType eq 'html') {
-        &writeFile($outputFile, &htmlHeader($wiki, $cssFile) .
-                   $wiki->view('wikihtml') . &htmlFooter);
+        &writeFile($outputFile, $wiki->view('xhtml', %params));
     }
     else {
-        &writeFile($outputFile, $wiki->view('text'));
+        &writeFile($outputFile, $wiki->view('text', %params));
     }
 }
 else {
-    &writeFile($outputFile, $wiki->view($optionDriver));
+    &writeFile($outputFile, $wiki->view($optionDriver, %params));
 }
 
 if ($addNodeIds) {
     unlink "$inputFile~" if (-e "$inputFile~");
     &File::Copy::move($inputFile, "$inputFile~");
-    print $wiki->view('WikiText');
+    print $wiki->view('wikitext');
     &writeFile($inputFile, $wiki->view('wikitext'));
 }
 
@@ -104,7 +114,7 @@ sub readFile {
     my $fileName = shift;
     my $fileContent;
 
-    $fh = new IO::File $fileName;
+    my $fh = new IO::File $fileName;
     if (defined $fh) {
         local ($/);
         $fileContent = <$fh>;
@@ -119,59 +129,12 @@ sub readFile {
 sub writeFile {
     my ($fileName, $fileContent) = @_;
 
-    $fh = new IO::File ">$fileName";
+
+    my $fh = new IO::File ">$fileName";
     if (defined $fh) {
         print $fh $fileContent;
         $fh->close;
     }
-}
-
-sub htmlHeader {
-    my ($wikiTree, $cssFile) = @_;
-
-    my $htmlString = "<html>\n<head>\n";
-    $htmlString .= '<title>' . $wikiTree->title . "</title>\n"
-        if ($wikiTree->title);
-    $htmlString .= '<link rel="stylesheet" href="' . $cssFile .
-        '" type="text/css" />' . "\n" if ($cssFile ne '');
-    $htmlString .= '<meta name="lastnid" content="' . $wikiTree->lastNid . '" />' .
-        "\n" if ($wikiTree->lastNid);
-    $htmlString .= "</head>\n<body>\n";
-    $htmlString .= '<h1 class="title">' . $wikiTree->title . "</h1>\n"
-        if ($wikiTree->title);
-    $htmlString .= '<h2 class="subtitle">' . $wikiTree->subtitle . "</h2>\n"
-        if ($wikiTree->subtitle);
-    if ($wikiTree->authors) {
-        $htmlString .= '<p class="authors">';
-        foreach my $author (@{$wikiTree->authors}) {
-            $htmlString .= $author->[0];
-            $htmlString .= ' &lt;' . $author->[1] . '&gt;'
-                if (scalar @{$author} > 1);
-            $htmlString .= "<br />\n";
-        }
-        $htmlString .= "</p>\n";
-    }
-    if ($wikiTree->id || $wikiTree->version || $wikiTree->date) {
-        $htmlString .= '<p class="docinfo">';
-        if ($wikiTree->id) {
-            $htmlString .= $wikiTree->id;
-            if ($wikiTree->version) {
-                $htmlString .= "<br />\n";
-            }
-        }
-        if ($wikiTree->version) {
-            $htmlString .= $wikiTree->version;
-            if ($wikiTree->date) {
-                $htmlString .= "<br />\n";
-            }
-        }
-        $htmlString .= $wikiTree->date if ($wikiTree->date);
-        $htmlString .= "</p>\n";
-    }
-}
-
-sub htmlFooter {
-    return "</body>\n</html>\n";
 }
 
 =head1 NAME

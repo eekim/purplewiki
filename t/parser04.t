@@ -7,6 +7,8 @@ BEGIN { plan tests => 17 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Config;
+my $configdir = 't';
 
 sub readFile {
     my $fileName = shift;
@@ -28,9 +30,10 @@ sub readFile {
 
 ### tree_test08.txt -- Document metadata.
 
+my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/tree_test08.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent);
+my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
 # Metadata.  (8 tests)
 ok($wiki->title eq 'Treatise on World Peace');

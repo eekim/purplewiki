@@ -1,7 +1,7 @@
 # PurpleWiki::Database::User
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: User.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: User.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database::User;
 
 # PurpleWiki User Data Access
 
-# $Id: User.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: User.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 use PurpleWiki::Database;
 
 my @DataFields = (
@@ -79,7 +78,8 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    my %tempHash = split (/$FS1/, $data, -1);
+    my $regexp = $self->{config}->FS1;
+    my %tempHash = split (/$regexp/, $data, -1);
 
     foreach my $key (keys(%tempHash)) {
         $self->{$key} = $tempHash{$key};
@@ -105,13 +105,13 @@ sub _getNewUserID {
     while (-f $self->getUserFile($id+10)) {
         $id += 10;
     }
-    &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
+    &PurpleWiki::Database::RequestLock($self->{config}) or die('Could not get user-ID lock');
     while (-f $self->getUserFile($id)) {
         $id++;
     }
     $self->createUserDir();
     &PurpleWiki::Database::WriteStringToFile($self->getUserFile($id), "lock");  # reserve the ID
-    &PurpleWiki::Database::ReleaseLock();
+    &PurpleWiki::Database::ReleaseLock($self->{config});
     return $id;
 }
 
@@ -131,7 +131,7 @@ sub getUserFile {
 
     return "" if ($id < 1);
 
-    return $UserDir . "/" . ($id % 10) . "/$id.db";
+    return $self->{config}->UserDir . "/" . ($id % 10) . "/$id.db";
 }
 
 sub userFileExists {
@@ -179,11 +179,13 @@ sub createUserDir {
     my $self = shift;
     my ($n, $subdir);
 
-    if (!(-d "$UserDir/0")) {
-        PurpleWiki::Database::CreateDir($UserDir);
+    my $userdir = $self->{config}->UserDir;
+
+    if (!(-d "$userdir/0")) {
+        PurpleWiki::Database::CreateDir($userdir);
 
         foreach $n (0..9) {
-            $subdir = "$UserDir/$n";
+            $subdir = "$userdir/$n";
             PurpleWiki::Database::CreateDir($subdir);
         }
     }
@@ -192,7 +194,9 @@ sub createUserDir {
 sub serialize {
     my $self = shift;
 
-    my $data = join($FS1, map {$_ . $FS1 . $self->{$_}} @DataFields);
+    my $separator = $self->{config}->FS1;
+
+    my $data = join($separator, map {$_ . $separator . $self->{$_}} @DataFields);
 
     return $data;
 }

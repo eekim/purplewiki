@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Database.pm,v 1.3 2003/06/20 23:54:01 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,11 +32,13 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Database.pm,v 1.3 2003/06/20 23:54:01 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 
+# Reads a string from a given filename and returns the data.
+# If it cannot open the file, it dies with an error.
+# Public
 sub ReadFileOrDie {
   my $fileName = shift;
   my ($status, $data);
@@ -48,6 +50,10 @@ sub ReadFileOrDie {
   return $data;
 }
 
+# Reads a string from a given filename and returns a
+# status value and the string. 1 for success, 0 for 
+# failure.
+# Public
 sub ReadFile {
   my $fileName = shift;
   my ($data);
@@ -61,43 +67,43 @@ sub ReadFile {
   return (0, "");
 }
 
+# Creates a directory if it doesn't already exist.
+# FIXME: there should be some error checking here.
+# Public
 sub CreateDir {
     my $newdir = shift;
 
     mkdir($newdir, 0775)  if (!(-d $newdir));
 }
 
-sub GetDiff {
+# Creates a diff using Text::Diff
+# We require it in here rather than at the top in
+# case we never need it in the current running
+# process.
+# Private
+sub _GetDiff {
+    require Text::Diff;
     my ($old, $new, $lock) = @_;
-    my ($diff_out, $oldName, $newName);
 
-    &CreateDir($TempDir);
-    $oldName = "$TempDir/old_diff";
-    $newName = "$TempDir/new_diff";
-    if ($lock) {
-        &RequestDiffLock() or return "";
-        $oldName .= "_locked";
-        $newName .= "_locked";
-    }
-    &WriteStringToFile($oldName, $old);
-    &WriteStringToFile($newName, $new);
-    $diff_out = `diff $oldName $newName`;
-    &ReleaseDiffLock()  if ($lock);
-    $diff_out =~ s/\\ No newline.*\n//g;   # Get rid of common complaint.
-    # No need to unlink temp files--next diff will just overwrite.
+    my $diff_out = Text::Diff::diff(\$old, \$new, {STYLE => "OldStyle"});
     return $diff_out;
 }
 
-sub RequestLockDir {
-    my ($name, $tries, $wait, $errorDie) = @_;
+# Creates a directory that acts as a general locking
+# mechanism for the system.
+# FIXME: ForceReleaseLock (below) is not immediately accessible
+# to mortals.
+# Private.
+sub _RequestLockDir {
+    my ($name, $tries, $wait, $errorDie, $config) = @_;
     my ($lockName, $n);
 
-    &CreateDir($TempDir);
-    $lockName = $LockDir . $name;
+    &CreateDir($config->TempDir);
+    $lockName = $config->LockDir . $name;
     $n = 0;
     while (mkdir($lockName, 0555) == 0) {
         if ($! != 17) {
-            die("can not make $LockDir: $!\n")  if $errorDie;
+            die("can not make $lockName: $!\n")  if $errorDie;
             return 0;
         }
         return 0  if ($n++ >= $tries);
@@ -106,40 +112,44 @@ sub RequestLockDir {
     return 1;
 }
 
-sub ReleaseLockDir {
-    my ($name) = @_;
-    rmdir($LockDir . $name);
+# Removes the locking directory, destroying the lock
+# Private
+sub _ReleaseLockDir {
+    my ($name, $config) = @_;
+    rmdir($config->LockDir . $name);
 }
 
+# Requests a general editing lock for the system.
+# Public
 sub RequestLock {
+    my $config = shift;
     # 10 tries, 3 second wait, die on error
-    return &RequestLockDir("main", 10, 3, 1);
+    return &_RequestLockDir("main", 10, 3, 1, $config);
 }
 
+# Releases the general editing lock
+# Public
 sub ReleaseLock {
-    &ReleaseLockDir('main');
+    my $config = shift;
+    &_ReleaseLockDir('main', $config);
 }
 
+# Forces the lock to be released
+# Public
 sub ForceReleaseLock {
-    my ($name) = @_;
+    my ($name, $config) = @_;
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !&RequestLockDir($name, 5, 3, 0);
-    &ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
+    $forced = !&_RequestLockDir($name, 5, 3, 0, $config);
+    &_ReleaseLockDir($name, $config);  # Release the lock, even if we didn't get it.
     return $forced;
 }
 
-sub RequestDiffLock {
-    # 4 tries, 2 second wait, do not die on error
-    return &RequestLockDir('diff', 4, 2, 0);
-}
-
-sub ReleaseDiffLock {
-    &ReleaseLockDir('diff');
-}
-
+# Writes the given string to the given file. Dies
+# if it can't write.
+# Public
 sub WriteStringToFile {
     my $file = shift;
     my $string = shift;
@@ -149,6 +159,7 @@ sub WriteStringToFile {
     close(OUT);
  }
 
+# Not used?
 sub AppendStringToFile {
     my ($file, $string) = @_;
 
@@ -157,19 +168,24 @@ sub AppendStringToFile {
     close(OUT);
 }
 
+# Creates and returns an array containing a list of all the
+# wiki pages in the database.
+# Public
 sub AllPagesList {
+    my $config = shift;
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
     @pages = ();
     # The following was inspired by the FastGlob code by Marc W. Mengel.
     # Thanks to Bob Showalter for pointing out the improvement.
-    opendir(PAGELIST, $PageDir);
+    opendir(PAGELIST, $config->PageDir);
     @dirs = readdir(PAGELIST);
     closedir(PAGELIST);
     @dirs = sort(@dirs);
     foreach $dir (@dirs) {
         next  if (($dir eq '.') || ($dir eq '..'));
-        opendir(PAGELIST, "$PageDir/$dir");
+        my $directory = $config->PageDir . "/$dir";
+        opendir(PAGELIST, $directory);
         @pageFiles = readdir(PAGELIST);
         closedir(PAGELIST);
         foreach $id (@pageFiles) {
@@ -177,7 +193,7 @@ sub AllPagesList {
             if (substr($id, -3) eq '.db') {
                 push(@pages, substr($id, 0, -3));
             } elsif (substr($id, -4) ne '.lck') {
-                opendir(PAGELIST, "$PageDir/$dir/$id");
+                opendir(PAGELIST, "$directory/$id");
                 @subpageFiles = readdir(PAGELIST);
                 closedir(PAGELIST);
                 foreach $subId (@subpageFiles) {
@@ -191,17 +207,19 @@ sub AllPagesList {
     return sort(@pages);
 }
 
+# Updates the diffs keps for a page.
+# Public
 sub UpdateDiffs {
     my $page = shift;
     my $keptRevision = shift;
-    my ($id, $editTime, $old, $new, $isEdit, $newAuthor) = @_;
+    my ($id, $editTime, $old, $new, $isEdit, $newAuthor, $config) = @_;
     my ($editDiff, $oldMajor, $oldAuthor);
 
-    $editDiff  = &GetDiff($old, $new, 0);     # 0 = already in lock
+    $editDiff  = &_GetDiff($old, $new, 0);     # 0 = already in lock
     $oldMajor  = $page->getPageCache('oldmajor');
     $oldAuthor = $page->getPageCache('oldauthor');
-    if ($UseDiffLog) {
-        &WriteDiff($id, $editTime, $editDiff);
+    if ($config->UseDiffLog) {
+        &_WriteDiff($id, $editTime, $editDiff, $config);
     }
     $page->setPageCache('diff_default_minor', $editDiff);
 
@@ -224,6 +242,8 @@ sub UpdateDiffs {
     }
 }
 
+# Retrieves a cached diff for a page.
+# Public
 sub GetCacheDiff {
   my ($page, $type) = @_;
   my ($diffText);
@@ -234,6 +254,8 @@ sub GetCacheDiff {
   return $diffText;
 }
 
+# Retrieves the diff of an old kept revision
+# Public
 sub GetKeptDiff {
     my $keptRevision = shift;
     my ($newText, $oldRevision, $lock) = @_;
@@ -242,13 +264,16 @@ sub GetKeptDiff {
     my $oldText = $section->getText()->getText();
 
     return ""  if ($oldText eq "");  # Old revision not found
-    return &GetDiff($oldText, $newText, $lock);
+    return &_GetDiff($oldText, $newText, $lock);
 }
 
-sub WriteDiff {
-    my ($id, $editTime, $diffString) = @_;
+# Writes out a diff to the diff log.
+# Private
+sub _WriteDiff {
+    my ($id, $editTime, $diffString, $config) = @_;
 
-    open (OUT, ">>$DataDir/diff_log") or die('can not write diff_log');
+    my $directory = $config->DataDir;
+    open (OUT, ">>$directory/diff_log") or die('can not write diff_log');
     print OUT  "------\n" . $id . "|" . $editTime . "\n";
     print OUT  $diffString;
     close(OUT);

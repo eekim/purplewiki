@@ -1,6 +1,7 @@
 # PurpleWiki::View::wikitext.pm
+# vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.2 2003/01/19 18:38:13 eekim Exp $
+# $Id: wikitext.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,6 +33,7 @@ package PurpleWiki::View::wikitext;
 use 5.005;
 use strict;
 use PurpleWiki::Tree;
+use PurpleWiki::View::EventHandler;
 
 # globals
 
@@ -39,247 +41,219 @@ my $sectionDepth = 0;
 my $indentDepth = 0;
 my @listStack;
 my $lastInlineProcessed;
+my @sectionState;
 
-my %structuralActionMap = (
-    'section' => {
-        'pre' => sub { $sectionDepth++; return; },
-        'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { $sectionDepth--;
-                        undef $lastInlineProcessed; return; },
-    },
-    'indent' => {
-        'pre' => sub { $indentDepth++; return; },
-        'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { $indentDepth--;
-                        undef $lastInlineProcessed;
-                        return "\n" if ($indentDepth == 0); },
-    },
-    'ul' => {
-        'pre' => sub { push @listStack, 'ul'; return; },
-        'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { pop @listStack;
-                        undef $lastInlineProcessed;
-                        return "\n" if (scalar @listStack == 0); },
-    },
-    'ol' => {
-        'pre' => sub { push @listStack, 'ol'; return; },
-        'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { pop @listStack;
-                        undef $lastInlineProcessed;
-                        return "\n" if (scalar @listStack == 0); },
-    },
-    'dl' => {
-        'pre' => sub { push @listStack, 'dl'; return; },
-        'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { pop @listStack;
-                        undef $lastInlineProcessed;
-                        return "\n" if (scalar @listStack == 0); },
-    },
-    'h' => {
-        'pre' => sub { return '=' x $sectionDepth . ' '; },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        undef $lastInlineProcessed;
-                        return &_printNid($nid) . ' ' .
-                            '=' x $sectionDepth . "\n\n"; },
-        },
-    'p' => {
-        'pre' => sub { return ':' x $indentDepth; },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        my $outputString = &_printNid($nid) . "\n";
-                        $outputString .= "\n" if ($indentDepth == 0);
-                        undef $lastInlineProcessed;
-                        return $outputString; },
-    },
-    'li' => {
-        'pre' => sub { if ($listStack[$#listStack] eq 'ul') {
-                           return '*' x scalar(@listStack) . ' ';
-                       }
-                       else {
-                           return '#' x scalar(@listStack) . ' ';
-                       } },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        undef $lastInlineProcessed;
-                        return &_printNid($nid) . "\n"; },
-    },
-    'dt' => {
-        'pre' => sub { return ';' x scalar(@listStack); },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        undef $lastInlineProcessed;
-                        return &_printNid($nid); },
-    },
-    'dd' => {
-        'pre' => sub { return ':'; },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        undef $lastInlineProcessed;
-                        return &_printNid($nid) . "\n"; },
-    },
-    'pre' => {
-        'pre' => sub { return },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        undef $lastInlineProcessed;
-                        return &_printNid($nid) . "\n\n"; },
-    },
-    );
+# structural node event handlers
 
-my %inlineActionMap = (
-    'b' => {
-        'pre' => sub { return "'''"; },
-        'mid' => \&_traverseInlineWithData,
-        'post' => sub { $lastInlineProcessed = 'b';
-                        return "'''"; },
-    },
-    'i' => {
-        'pre' => sub { return "''"; },
-        'mid' => \&_traverseInlineWithData,
-        'post' => sub { $lastInlineProcessed = 'i';
-                        return "''"; },
-    },
-    'tt' => {
-        'pre' => sub { return '<tt>'; },
-        'mid' => \&_traverseInlineWithData,
-        'post' => sub { $lastInlineProcessed = 'tt';
-                        return '</tt>'; },
-    },
-    'text' => {
-        'pre' => sub { my $node = shift;
-                       if ($lastInlineProcessed eq 'wikiword' &&
-                           $node->content =~ /^\w/) {
-                           return '""';
-                       }
-                       else {
-                           return;
-                       } },
-        'mid' => \&_printInlineData,
-        'post' => sub { $lastInlineProcessed = 'text'; return; }
-    },
-    'nowiki' => {
-        'pre' => sub { return '<nowiki>'; },
-        'mid' => \&_printInlineData,
-        'post' => sub { $lastInlineProcessed = 'nowiki';
-                        return '</nowiki>'; }
+sub startList {
+    my $structuralNode = shift;
+
+    push @listStack, $structuralNode->type;
+    return '';
+}
+
+sub endList {
+    pop @listStack;
+    undef $lastInlineProcessed;
+    return "\n" if (scalar @listStack == 0);
+}
+
+sub showNid {
+    my $structuralNode = shift;
+    undef $lastInlineProcessed;
+    my $outputString = &_nid($structuralNode->id);
+    if ($structuralNode->type eq 'dt') {
+        return $outputString;
     }
-    );
+    elsif ($structuralNode->type eq 'pre') {
+        return $outputString . "\n\n";
+    }
+    else {
+        return $outputString . "\n";
+    }
+}
+
+# inline node event handlers
+
+sub inlineContent {
+    my $inlineNode = shift;
+
+    return $inlineNode->content;
+}
+
+# functions
+
+sub registerHandlers {
+    $PurpleWiki::View::EventHandler::structuralHandler{section}->{pre} =
+        sub { $sectionDepth++; return ''; };
+    $PurpleWiki::View::EventHandler::structuralHandler{section}->{post} =
+        sub { $sectionDepth--; undef $lastInlineProcessed; return ''; };
+
+    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} =
+        sub { $indentDepth++; return ''; };
+    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{post} =
+        sub { $indentDepth--;
+              undef $lastInlineProcessed;
+              return "\n" if ($indentDepth == 0); };
+
+    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&startList;
+    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{post} = \&endList;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{pre} = \&startList;
+    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{post} = \&endList;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{pre} = \&startList;
+    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{post} = \&endList;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{h}->{pre} =
+        sub { return '=' x $sectionDepth . ' '; };
+    $PurpleWiki::View::EventHandler::structuralHandler{h}->{post} =
+        sub { my $structuralNode = shift;
+              undef $lastInlineProcessed;
+              return &_nid($structuralNode->id) . ' ' . '=' x $sectionDepth . "\n\n"; };
+
+    $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} =
+        sub { return ':' x $indentDepth; };
+    $PurpleWiki::View::EventHandler::structuralHandler{p}->{post} =
+        sub { my $structuralNode = shift;
+              my $outputString = &_nid($structuralNode->id) . "\n";
+              $outputString .= "\n" if ($indentDepth == 0);
+              undef $lastInlineProcessed;
+              return $outputString; };
+
+    $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} =
+        sub { if ($listStack[$#listStack] eq 'ul') {
+                  return '*' x scalar(@listStack) . ' ';
+              }
+              else {
+                  return '#' x scalar(@listStack) . ' ';
+              } };
+    $PurpleWiki::View::EventHandler::structuralHandler{li}->{post} = \&showNid;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{pre} =
+        sub { return ';' x scalar(@listStack); };
+    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{post} = \&showNid;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{pre} =
+        sub { return ':'; };
+    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{post} = \&showNid;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{post} = \&showNid;
+
+    $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} =
+        sub { return "'''"; };
+    $PurpleWiki::View::EventHandler::inlineHandler{b}->{post} =
+        sub { $lastInlineProcessed = 'b'; return "'''"; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} =
+        sub { return "''"; };
+    $PurpleWiki::View::EventHandler::inlineHandler{i}->{post} =
+        sub { $lastInlineProcessed = 'i'; return "''"; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{tt}->{pre} =
+        sub { return "<tt>"; };
+    $PurpleWiki::View::EventHandler::inlineHandler{tt}->{post} =
+        sub { $lastInlineProcessed = 'tt'; return "</tt>"; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{text}->{pre} =
+        sub { my $structuralNode = shift;
+              if ($lastInlineProcessed eq 'wikiword' &&
+                  $structuralNode->content =~ /^\w/) {
+                  return '""';
+              }
+              else {
+                  return '';
+              } };
+    $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{text}->{post} =
+        sub { $lastInlineProcessed = 'text'; return ''; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{pre} =
+        sub { return '<nowiki>'; };
+    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{post} =
+        sub { $lastInlineProcessed = 'nowiki'; return '</nowiki>'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} =
+        sub { my $inlineNode = shift; return '[t'; };
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{post} =
+        sub { $lastInlineProcessed = 'transclusion'; return ']'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} =
+        sub { my $inlineNode = shift; return '[' . $inlineNode->href . ' '; };
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{post} =
+        sub { $lastInlineProcessed = 'link'; return ']'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{url}->{post} =
+        sub { $lastInlineProcessed = 'url'; return ''; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{post} =
+        sub { $lastInlineProcessed = 'wikiword'; return ''; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{pre} =
+        sub { return '[['; };
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{post} =
+        sub { $lastInlineProcessed = 'freelink'; return ']]'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{image}->{post} =
+        sub { $lastInlineProcessed = 'image'; return ''; };
+}
 
 sub view {
     my ($wikiTree, %params) = @_;
 
-    my $outputString = &_printHeader($wikiTree);
-    $outputString .= &_traverseStructural($wikiTree->root->children, 0);
-    return $outputString;
+    &registerHandlers;
+    return _textHeader($wikiTree, %params) . 
+    	&PurpleWiki::View::EventHandler::view($wikiTree, %params);
 }
 
-sub _traverseStructural {
-    my ($nodeListRef, $indentLevel) = @_;
-    my $outputString;
+# private
 
-    if ($nodeListRef) {
-        foreach my $node (@{$nodeListRef}) {
-            if (defined($structuralActionMap{$node->type})) {
-                $outputString .= &{$structuralActionMap{$node->type}{'pre'}};
-                $outputString .= &{$structuralActionMap{$node->type}{'mid'}}($node,
-                                                            $indentLevel);
-                $outputString .= &{$structuralActionMap{$node->type}{'post'}}($node->id);
-            } 
-        }
-    }
-    return $outputString;
-}
-
-sub _traverseInlineIfContent {
-    my $structuralNode = shift;
-    my $indentLevel = shift;
-    if ($structuralNode->content) {
-        return _traverseInline($structuralNode->content, $indentLevel);
-    }
-}
-
-sub _traverseInlineWithData {
-    my $inlineNode = shift;
-    my $indentLevel = shift;
-    return _traverseInline($inlineNode->children, $indentLevel);
-}
-
-sub _printInlineData {
-    my $inlineNode = shift;
-    return $inlineNode->content;
-}
-
-sub _traverseStructuralWithChild {
-    my $structuralNode = shift;
-    my $indentLevel = shift;
-    return _traverseStructural($structuralNode->children, $indentLevel + 1);
-}
-
-sub _traverseInline {
-    my ($nodeListRef, $indentLevel) = @_;
-    my $outputString;
-
-    foreach my $inlineNode (@{$nodeListRef}) {
-        if ($inlineNode->type eq 'link') {
-            $outputString .= '[' . $inlineNode->href . ' ' . $inlineNode->content . ']';
-            $lastInlineProcessed = 'link';
-        }
-        elsif ($inlineNode->type eq 'wikiword') {
-            $outputString .= $inlineNode->content;
-            $lastInlineProcessed = 'wikiword';
-        }
-        elsif ($inlineNode->type eq 'url' || $inlineNode->type eq 'image') {
-            $outputString .= $inlineNode->content;
-            $lastInlineProcessed = 'url';
-        }
-        elsif ($inlineNode->type eq 'freelink') {
-            $outputString .= '[[' . $inlineNode->content . ']]';
-            $lastInlineProcessed = 'freelink';
-        }
-        elsif (defined($inlineActionMap{$inlineNode->type})) {
-            $outputString .=
-                &{$inlineActionMap{$inlineNode->type}{'pre'}}($inlineNode);
-            $outputString .=
-                &{$inlineActionMap{$inlineNode->type}{'mid'}}($inlineNode,
-                                                          $indentLevel);
-            $outputString .=
-                &{$inlineActionMap{$inlineNode->type}{'post'}};
-        }
-    }
-    return $outputString;
-}
-
-sub _printNid {
+sub _nid {
     my $nid = shift;
+
     return " [nid $nid]";
 }
 
-sub _printHeader {
-    my $wikiTree = shift;
-    my $header;
+sub _textHeader {
+    my ($wikiTree, %params) = @_;
+    my $outputString;
 
-    $header = "[lastnid " . $wikiTree->lastNid . "]\n"
-        if ($wikiTree->lastNid);
-    $header .= "[title " . $wikiTree->title . "]\n"
-        if ($wikiTree->title);
-    $header .= "[subtitle " . $wikiTree->subtitle . "]\n"
-        if ($wikiTree->subtitle);
-    $header .= "[docid " . $wikiTree->id . "]\n"
-        if ($wikiTree->id);
+    # FIXME: this can be a loop
+    if ($wikiTree->title) {
+        $outputString .= '[title ' . $wikiTree->title . "]\n";
+    }
+    if ($wikiTree->subtitle) {
+        $outputString .= '[subtitle ' . $wikiTree->subtitle . "]\n";
+    }
     if ($wikiTree->authors) {
         foreach my $author (@{$wikiTree->authors}) {
-            $header .= "[author " . $author->[0];
-            $header .= " " . $author->[1] if (scalar @{$author} > 1);
-            $header .= "]\n";
+            $outputString .= '[author ' . $author->[0];
+            if (scalar @{$author} > 1) {
+                $outputString .= ' ' . $author->[1];
+            }
+            $outputString .= "]\n";
         }
     }
-    $header .= "[date " . $wikiTree->date . "]\n"
-        if ($wikiTree->date);
-    $header .= "[version " . $wikiTree->version . "]\n"
-        if ($wikiTree->title);
-    return "$header\n";
+    if ($wikiTree->id) {
+        $outputString .= '[id ' . $wikiTree->id . "]\n";
+    }
+    if ($wikiTree->version) {
+        $outputString .= '[version ' . $wikiTree->version . "]\n";
+    }
+    if ($wikiTree->date) {
+        $outputString .= '[date ' . $wikiTree->date . "]\n";
+    }
+
+    return $outputString;
 }
+
 
 1;
 __END__

@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.1 2003/01/20 20:54:34 eekim Exp $
+# $Id: EventHandler.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -137,6 +137,10 @@ sub registerHandlers {
     $inlineHandler{nowiki}->{main} = \&emptyString;
     $inlineHandler{nowiki}->{post} = \&emptyString;
 
+    $inlineHandler{transclusion}->{pre} = \&emptyString;
+    $inlineHandler{transclusion}->{main} = \&emptyString;
+    $inlineHandler{transclusion}->{post} = \&emptyString;
+
     $inlineHandler{link}->{pre} = \&emptyString;
     $inlineHandler{link}->{main} = \&emptyString;
     $inlineHandler{link}->{post} = \&emptyString;
@@ -174,12 +178,17 @@ sub traverseStructural {
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
             if (defined($structuralHandler{$node->type})) {
+		    # FIXME: these || '' shouldn't be here
+		    # but should be in the handlers
                 $outputString .=
-                    $structuralHandler{$node->type}{pre}($node, %params);
+                    $structuralHandler{$node->type}{pre}($node, %params)
+		    	|| '';
                 $outputString .=
-                    $structuralHandler{$node->type}{main}($node, %params);
+                    $structuralHandler{$node->type}{main}($node, %params)
+		    	|| '';
                 $outputString .=
-                    $structuralHandler{$node->type}{post}($node, %params);
+                    $structuralHandler{$node->type}{post}($node, %params)
+		    	|| '';
             }
         }
     }

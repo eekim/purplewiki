@@ -7,16 +7,16 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /~cdent/testwiki.cgi # The name of the wiki script, for use in urls
+ScriptName  = /example/testwiki.cgi # The name of the wiki script, for use in urls
 CookieName  = TestWiki      # Name for this wiki (for multi-wiki sites)
 SiteName    = TestWiki          # Name of site (used for titles)
 HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
-LogoUrl     = /~cdent/images/Singapore.gif  # URL for site logo (empty for none)
-StyleSheet  = /~cdent/usemod.css  # URL for CSS stylesheet (like "/wiki.css")
-#SiteBase    = ""              # Full URL for <BASE> header
-#FullUrl     = ""              # Set if the auto-detected URL is wrong
-#ScriptTZ    = ""              # Local time zone
+#LogoUrl     = ""             # URL for site logo (empty for none)
+#StyleSheet  = ""             # URL for CSS stylesheet (like "/wiki.css")
+#SiteBase    = ""             # Full URL for <BASE> header
+#FullUrl     = ""             # Set if the auto-detected URL is wrong
+#ScriptTZ    = ""             # Local time zone
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
