@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.1.2.3 2003/01/30 02:54:00 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.4 2003/01/30 08:31:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.1.2.3 2003/01/30 02:54:00 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.4 2003/01/30 08:31:48 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -67,14 +67,14 @@ sub hasRevision {
     my $self = shift;
     my $revision = shift;
 
-    return (ref($self->{sections}->[$revision]));
+    return (ref($self->{sections}->[$revision - 1]));
 }
 
 # Retrieves the Section related to a particular revision
 sub getRevision {
     my $self = shift;
     my $revision = shift;
-    return $self->{sections}->[$revision];
+    return $self->{sections}->[$revision - 1]; # computers v people counting
 }
 
 sub addSection {
@@ -98,10 +98,6 @@ sub trimKepts {
         }
     }
 }
-
-
-
-
 
 sub keptFileExists {
     my $self = shift;

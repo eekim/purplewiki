@@ -1,7 +1,7 @@
 # PurpleWiki::Database::User
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: User.pm,v 1.1.2.1 2003/01/30 02:54:00 cdent Exp $
+# $Id: User.pm,v 1.1.2.2 2003/01/30 08:31:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::User;
 
 # PurpleWiki User Data Access
 
-# $Id: User.pm,v 1.1.2.1 2003/01/30 02:54:00 cdent Exp $
+# $Id: User.pm,v 1.1.2.2 2003/01/30 08:31:48 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -103,6 +103,7 @@ sub _getNewUserID {
     while (-f $self->getUserFile($id)) {
         $id++;
     }
+    $self->createUserDir();
     &PurpleWiki::Database::WriteStringToFile($self->getUserFile($id), "lock");  # reserve the ID
     &PurpleWiki::Database::ReleaseLock();
     return $id;

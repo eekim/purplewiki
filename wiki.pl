@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.9 2003/01/30 02:54:00 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.10 2003/01/30 08:31:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -1672,7 +1672,6 @@ sub DoUpdatePrefs {
   $TimeZoneOffset = &GetParam("tzoffset", 0) * (60 * 60);
   print 'Local time:', ' ', &TimeToText($Now), '<br>';
 
-  print STDERR "saving: " . $user->getID() . "\n";
   $user->save();
 
   print '<b>', 'Preferences saved.', '</b>';
@@ -1684,8 +1683,10 @@ sub UpdateEmailList {
   my (@old_emails);
 
   local $/ = "\n";  # don't slurp whole files in this sub.
-  # FIXME: this isn't what they mean is it?
-  if (my $new_email = $user->getField('email') = &GetParam("p_email", "")) {
+
+  my $new_email = &GetParam("p_email", "");
+  if ($new_email) {
+    $user->setField('email', $new_email);
     my $notify = $user->getField('notify');
     if (-f "$DataDir/emails") {
       open(NOTIFY, "$DataDir/emails")
@@ -1914,7 +1915,7 @@ sub DoPost {
   $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
   # Detect editing conflicts and resubmit edit
   if (($oldrev > 0) && ($newAuthor && ($oldtime != $pgtime))) {
-    &PurpleWiki::Database::ReleaseLock();
+    PurpleWiki::Database::ReleaseLock();
     if ($oldconflict>0) {  # Conflict again...
       &DoEdit($id, 2, $pgtime, $string, $preview);
     } else {
@@ -1923,7 +1924,7 @@ sub DoPost {
     return;
   }
   if ($preview) {
-    &PurpleWiki::Database::ReleaseLock();
+    PurpleWiki::Database::ReleaseLock();
     &DoEdit($id, 0, $pgtime, $string, 1);
     return;
   }
@@ -1943,9 +1944,13 @@ sub DoPost {
     $page->setPageCache('oldauthor', $section->getRevision());
   }
 
-  $keptRevision->addSection($section, $Now);
-  $keptRevision->trimKepts($Now);
-  $keptRevision->save();
+  print STDERR "Revision: $id: " . $section->getRevision() . "\n";
+  # only save section if it is not the first
+  if ($section->getRevision() > 0) {
+    $keptRevision->addSection($section, $Now);
+    $keptRevision->trimKepts($Now);
+    $keptRevision->save();
+  }
 
   if ($UseDiff) {
     &PurpleWiki::Database::UpdateDiffs($page, $keptRevision, $id, $editTime, $old, $string, $isEdit, $newAuthor);
@@ -1960,6 +1965,7 @@ sub DoPost {
   $section->setTS($Now);
   $page->setRevision($section->getRevision());
   $page->setTS($Now);
+  print STDERR "2nd Revision: $id: " . $section->getRevision() . "\n";
   $page->save();
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
   &PurpleWiki::Database::ReleaseLock();

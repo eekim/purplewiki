@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.6 2003/01/30 02:54:00 cdent Exp $
+# $Id: Database.pm,v 1.1.2.7 2003/01/30 08:31:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.6 2003/01/30 02:54:00 cdent Exp $
+# $Id: Database.pm,v 1.1.2.7 2003/01/30 08:31:48 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -335,7 +335,9 @@ sub GetKeptDiff {
     my $keptRevision = shift;
   my ($newText, $oldRevision, $lock) = @_;
 
+  print STDERR "GetKeptDiff: oldRevision: $oldRevision\n";
   my $section = $keptRevision->getRevision($oldRevision);
+  print STDERR "GetKeptDiff: section: $section\n";
   my $oldText = $section->getText()->getText();
 
   return ""  if ($oldText eq "");  # Old revision not found

@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.1.2.4 2003/01/30 02:54:00 cdent Exp $
+# $Id: Page.pm,v 1.1.2.5 2003/01/30 08:31:48 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.1.2.4 2003/01/30 02:54:00 cdent Exp $
+# $Id: Page.pm,v 1.1.2.5 2003/01/30 08:31:48 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -96,7 +96,7 @@ sub getPageCache {
     my $self = shift;
     my $cache = shift;
     
-    return $self->{$cache};
+    return $self->{"cache_$cache"};
 }
 
 sub setPageCache {
@@ -104,7 +104,7 @@ sub setPageCache {
     my $cache = shift;
     my $revision = shift;
 
-    $self->{$cache} = $revision;
+    $self->{"cache_$cache"} = $revision;
 }
 
 # Opens the page file associated with this id of this
@@ -147,11 +147,12 @@ sub getSection {
     if (ref($self->{text_default})) {
         return $self->{text_default};
     } else {
-        return
+        $self->{text_default} =
             new PurpleWiki::Database::Section('data' => $self->{text_default},
                                               'now' => $self->getNow(),
                                               'userID' => $self->{userID},
                                               'username' => $self->{username});
+        return $self->{text_default};
     }
 }
 
