@@ -12,7 +12,8 @@ my $configdir = 't';
 my $file = "t/$$";
 my $dir = "t/testdir$$";
 my $content = "sample content";
-my $lockdir = 't/temp/lockmain';
+my $tempdir = 't/temp';
+my $lockdir = "$tempdir/lockmain";
 
 
 # filehandling
@@ -29,3 +30,4 @@ ok(PurpleWiki::Database::ReleaseLock($config) && ! -d $lockdir);
    
 unlink($file);
 rmdir($dir);
+rmdir($tempdir);
