@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.12 2003/01/30 09:43:05 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.13 2003/01/30 18:27:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -121,6 +121,7 @@ sub InitCookie {
   $UserID =~ s/\D//g;  # Numeric only
   if ($UserID < 200) {
     $UserID = 111;
+    $user = new PurpleWiki::Database::User('id' => $UserID);
   } else {
     $user = new PurpleWiki::Database::User('id' => $UserID);
     if ($user->userExists()) {
