@@ -33,6 +33,7 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 package PurpleWiki::Database::Pages;
 
+use PurpleWiki::Page;
 use PurpleWiki::Database;
 use PurpleWiki::Config;
 use PurpleWiki::Database::Section;
@@ -46,9 +47,11 @@ my $DATA_VERSION = 3;            # the data format version
 
 sub new {
   my $proto = shift;
+  my $config = shift;
+  die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
-  my $config = (@_) ? shift : PurpleWiki::Config->instance();
+
   $self->{script} = $config->ScriptName;
   $self->{fs1} = $config->FS1;
   $self->{fs2} = $config->FS2;
@@ -73,71 +76,78 @@ sub getPage {
 
 # $pages->putPage(<named args>)
 # The following named args are expected:
-#   id
-#   wikitext
-#   timestamp
-#   username
-#   userid
-#   summary
-#   host
+#   pageId             Page idendifier for database (no spaces, '/' ok)
+#   tree               Parsed representation of the wikitext
+#   userId             User who made the change
+#   changeSummary      Comment on the change
+#   host               Host that made the change
+#   oldrev (optional)  The revision this change was based on, if present it
+#                      can fail (return "Conflict") if it doesn't match the
+#                      current revision.
 #   
 sub putPage {
   my $self = shift;
   my %args = @_;
-  return 0 unless (defined($args{wikitext}));
+  my $tree = $args{tree};
+  return "No Data" unless (defined($tree));
+  my $wikitext = $tree->view('wikitext');
+  $wikitext .= "\n"  unless (substr($wikitext, -1, "\n"));
+  my $host = $args{host} || $ENV{REMOTE_ADDR};
 
-  my $id = $args{id};
-  my $now = $args{timestamp};
+  my $id = $args{pageId};
+  my $now = time;
   $self->_requestLock();
 
   # Success, but don't do anything if no change
   my $page = $self->_openPage($id);
-  my $old = $page->getText();
-  return 1 if ($old eq $args{wikitext});
+  my $old = $page->_getText();
+  return "" if ($old eq $args{wikitext});
 
   # Fail on detecting edit conflicts
   if (($page->getRevision > 0) && ($args{oldrev} != $page->getRevision())) {
     # conflict detected, release the lock and exit with negative status
     $self->_releaseLock();
-    return 0;
+#print STDERR "Conflict $id\n";
+    return "Conflict";
   }
   my $section = $page->_getSection();
+  my $user = $args{userId};
+  my $userName = $user ? $user->username : undef;
 
   $page = PurpleWiki::Database::ModPage->new(
                  pages => $self,
                  id => $id,
                  ts => $now,
                  text_default => $section,
-                 username => $args{username},
-                 userid => $args{userid} );
+                 username => $userName,
+                 userid => $user );
 
   my $fsexp = $self->{fs};
   my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
   my $text = $section->getText();
 
-  my $wikitext = $args{wikitext};
   $wikitext =~ s/$fsexp//g;
-  $args{summary} =~ s/$fsexp//g;
+  $args{changeSummary} =~ s/$fsexp//g;
   $text->setText($wikitext);
   $text->setNewAuthor(1);
-  $text->setSummary($args{summary});
-  $section->setHost($args{host});
+  $text->setSummary($args{changeSummary});
+  $section->setHost($host);
   my $newRev = $page->getRevision() + 1;
 #print STDERR "putPage($wikitext) rev -> $newRev\n";
   $section->setRevision($newRev);
   $section->setTS($now);
-  $section->setUsername($self->{username});
+  $section->setUsername($userName);
   $section->setUserID($self->{userid});
   $keptRevision->addSection($section, $now);
   $keptRevision->trimKepts($now - ($self->{keepdays} * 24 * 60 * 60))
       if ($self->{keepdays});
   $keptRevision->save();
   $page->{revision} = $newRev;
-  $self->_WriteRcLog($page->{id}, $page->{summary}, $now,
-                    $self->{username}, $page->{host} || $page->{ip});
+  $self->_WriteRcLog($args{pageId}, $args{changeSummary}, $now,
+                     $userName, $host);
   $self->_save($page);
   $self->_releaseLock();
-  return 1;
+  return "";
 }
 
 sub allPages {
@@ -148,7 +158,7 @@ sub allPages {
 sub recentChanges {
   my $self = shift;
   my $starttime = shift;
-  my $config = $self->{config} || PurpleWiki::Config->instance();
+  my $config = PurpleWiki::Config->instance();
   my %params = @_;
   $starttime = 0 unless $starttime;
   PurpleWiki::Database::recentChanges($config, $starttime);
@@ -187,13 +197,20 @@ sub _WriteRcLog {
 sub diff {
   my ($self, $id, $diffRevision, $goodRevision) = @_;
   my $page = $self->getPage($id, $goodRevision);
-  my $to = $page->getText();
+  my $to = $page->_getText();
 
   $page->{selectrevision} = $diffRevision || $goodRevision - 1;
-  my $from = $page->getText();
+  my $from = $page->_getText();
 
   require Text::Diff;
   Text::Diff::diff(\$from, \$to, {STYLE => "OldStyle"});
+}
+
+sub getName {
+    shift;
+    my $pageName = shift;
+    $pageName =~ s/_/ /g;
+    $pageName;
 }
 
 sub pageExists {
@@ -389,14 +406,14 @@ sub _getRevisionHistory {
 #
 # get just one node
 #
-sub getPageNode {
-  my ($self, $id, $nid) = @_;
-  my $page = $self->getPage($id);
-  my $tree = $page->getTree();
+#sub getPageNode {
+#  my ($self, $id, $nid) = @_;
+#  my $page = $self->getPage($id);
+#  my $tree = $page->getTree();
 #print STDERR "getPageNode:$pages Pg:$page Tr:$tree Id:$id Nid:$nid\n";
-  return $tree->view('subtree', 'nid' => uc($nid)) if ($tree);
-  ""
-}
+#  return $tree->view('subtree', 'nid' => uc($nid)) if ($tree);
+#  ""
+#}
 
 package PurpleWiki::Database::ModPage;
 
@@ -434,28 +451,32 @@ sub getRevision {
     return $self->_getSection()->getRevision();
 }
 
-sub getTime { shift->getTS(); }
-
 # Gets the timestamp of this Page. 
-sub getTS {
+sub getTime {
     my $self = shift;
-    return $self->_getSection()->getTS();
+    my $section;
+    if ($self->{selectrevision}) {
+        unless ($section = $self->{section}) {
+            $self->_getText();
+            $section = $self->{section};
+        }
+    } else {
+        $section = $self->_getSection();
+    }
+    return ($section && $section->getTS());
 }
 
 #
-# page->getText([revision])
+# page->_getText([revision])
 #
-# Return the content string for the selected 'revision' or the current
-# revision.  Also sets the selected revision of the page, so if you do
-# another 'getText' or 'getRevision' that's what you get.
-#
-sub getText {
+sub _getText {
     my $self = shift;
     my $selectrevision = $self->{selectrevision};
     if ($selectrevision && ($selectrevision != $self->{revision})) {
         my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
         for my $section ($krev->getSections()) {
             if ($selectrevision == $section->getRevision()) {
+                $self->{section} = $section;
                 my $text = $section->getText();
                 return (ref($text)) ? $text->getText() : $text;
             }
@@ -472,41 +493,26 @@ sub getText {
 #
 # format the page for HTML output
 #
-sub getWikiHTML {
-    my $self = shift;
-
-    my $url = $self->{pages}->{script} . '?' . $self->{id};
-    my $parser = PurpleWiki::Parser::WikiText->new();
-    my $wiki = $parser->parse($self->getText(),
-                   add_node_ids => 0,
-                   url => $url,
-               );
-    return $wiki->view('wikihtml', url => $url);
-}
+#sub getWikiHTML {
+#    my $self = shift;
+#
+#    my $url = $self->{pages}->{script} . '?' . $self->{id};
+#    my $parser = PurpleWiki::Parser::WikiText->new();
+#    my $wiki = $parser->parse($self->_getText(),
+#                   add_node_ids => 0,
+#                   url => $url,
+#               );
+#    return $wiki->view('wikihtml', url => $url);
+#}
 
 sub getTree {
   my $self = shift;
   my $tree = $self->{tree};
   return $tree if $tree;
+  my $text = $self->_getText();
+  return undef unless $text;
   my $parser = new PurpleWiki::Parser::WikiText;
-  my $text = $self->getText();
-  return "" unless $text;
   return $parser->parse($text, 'add_node_ids' => 0);
-}
-
-# page->searchResult([string])
-sub searchResult {
-    my $self = shift;
-    my $string = shift || $self->getText();
-    my $name = $self->getID();
-
-    my $result = new PurpleWiki::Search::Result();
-    $result->title($name);
-    $result->modifiedTime($self->getTS());
-    $result->url($self->getWikiWordLink($name));
-    $result->summary(substr($string, 0, 99) . '...');
-
-    return $result;
 }
 
 # exists. If not a new one is created

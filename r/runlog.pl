@@ -2,10 +2,13 @@
 
 my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
+$configdir = "r";
 while (@ARGV) {
     $a = shift(@ARGV);
     if ($a =~ /^-1/) {
         $once = 1;
+    } elsif ($a =~ /^-c/) {
+        $configdir = $' || shift(@ARGV);
     } elsif ($a =~ /^-s/) {
         $split = 1;
     } elsif ($a =~ /^-u/) {
@@ -18,6 +21,7 @@ while (@ARGV) {
         die "Bad option :$a:\n";
     }
 }
+$ENV{PURPLE_CONFIG_DIR} = $configdir;
 
 use CGI;
 
@@ -74,23 +78,67 @@ sub diffOutput {
 #my $diff= join("\n", @diff)."\n";
 #return $diff;
     my @out = ();
-    my ($pre, $post) = ("", 0);
+    my @from = ();
+    my @to = ();
+    my ($pre, $after, $add_delete) = ("", 0, 0);
     for (@diff) {
-        if (/^\d+(,\d+)?c\d+(,\d+)?$/) {
-            if ($post) { push @out, ($_ . "\n"); }
-            else { $post = 0; $pre = ($_ . "\n"); }
+        if (/^\d+(,\d+)?([cda])\d+(,\d+)?$/) {
+            if ($2 ne 'c') {
+                $add_delete = 1;
+                push @out, $_;
+                next;
+            }
+            if (@from || @to) {
+                my $realdiff = check(\@from, \@to);
+                push @out, $pre, $realdiff if $realdiff;
+            }
+            $pre = $_;
+            @from = @to = ();
+            $add_delete = $after = 0;
+        } elsif ($add_delete) {
+            push @out, $_;
         } elsif (/^---$/) {
-            if ($post) { push @out, ($_ . "\n"); }
-            else { $pre .= ($_ . "\n"); }
-        } elsif (/^[><]\s+(Set-Cookie|Date|<p>Last save time):/) {
-        } elsif (/^[><][\.\s]+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,/) {
+            $after = 1;
+        #} elsif (/^[><]\s+(Set-Cookie|Date|<p>Last save time):/) {
+        #} elsif (/^[><][\.\s]+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,/) {
+        } elsif (/^< /) {
+            push @out, "From after $." if $after;
+            push @from, $_;
+        } elsif (/^> /) {
+            push @out, "To before $." unless $after;
+            push @to, $_;
         } else {
-            push @out, $pre, "$_\n";
-            $pre = '';
-            $post = 1;
+            push @out, "No match $. $_";
         }
     }
-    return join("", @out);
+    if (@from || @to) {
+        my $realdiff = check(\@from, \@to);
+        push @out, $pre, $realdiff if $realdiff;
+    }
+    return join("\n", @out);
+}
+
+sub check {
+my ($from, $to) = @_;
+my (@from, @to) = ((), ());
+my $last = $#from;
+    if ($#to == $last) {
+        for my $i (0..$last) {
+           my $f = stripDate($$from[$i]);
+           my $t = stripDate($$to[$i]);
+print ERR "Diff:\n-$from\n+$to\n" if ($t ne $f);
+           return join("\n", @$from, '---', @$to) if ($t ne $f);
+        }
+    }
+    return "";
+}
+
+sub stripDate {
+my $line = shift;
+    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d?\d:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\w/DateTimeStamp/;
+    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\w/DateStamp/;
+    $line =~ s/\w\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\w/TimeStamp/;
+    substr($line,2);
 }
 
 sub writeTest {

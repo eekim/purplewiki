@@ -42,9 +42,6 @@ use PurpleWiki::Page;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $sequence;
-my $url;
-
 ### markup regular expressions
 my $rxNowiki = '<nowiki>.*?<\/nowiki>';
 my $rxTt = '<tt>.*?<\/tt>|\{\{\{.*?\}\}\}';
@@ -68,6 +65,11 @@ my $rxTransclusion = '\[t [A-Z0-9]+\]';
 sub new {
     my $this = shift;
     my $self = {};
+    my $config = PurpleWiki::Config->instance();
+    $self->{sequence} = new PurpleWiki::Sequence($config->LocalSequenceDir,
+                                                 $config->RemoteSequenceURL);
+    $self->{wikiword} = $config->WikiLinks;
+    $self->{freelink} = $config->FreeLinks;
 
     bless($self, $this);
     return $self;
@@ -80,16 +82,12 @@ sub parse {
     my $wikiContent = shift;
     my %params = @_;
 
-    $params{config} = PurpleWiki::Config->instance();
-
-    $url = $params{url};
-    $sequence = new PurpleWiki::Sequence($params{config}->LocalSequenceDir,
-        $params{config}->RemoteSequenceURL);
+    $this->{url} = $params{url};
 
     # set default parameters
-    $params{wikiword} = $params{config}->WikiLinks
+    $params{wikiword} = $this->{wikiword}
         if (!defined $params{wikiword});
-    $params{freelink} = $params{config}->FreeLinks
+    $params{freelink} = $this->{freelink}
         if (!defined $params{freelink});
 
     my $tree = PurpleWiki::Tree->new;
@@ -468,7 +466,9 @@ sub parse {
     }
 
     if ($params{'add_node_ids'}) {
-        &_addNodeIds($tree->root);
+        my $rootNode = $tree->root;
+        $this->_traverseAndAddNids($rootNode->children)
+            if ($rootNode);
     }
     return $tree;
 }
@@ -764,25 +764,18 @@ sub _parseInlineNode {
     return \@inlineNodes;
 }
 
-sub _addNodeIds {
-    my ($rootNode) = @_;
-
-    &_traverseAndAddNids($rootNode->children)
-        if ($rootNode->children);
-}
-
 sub _traverseAndAddNids {
-    my ($nodeListRef) = @_;
+    my ($this, $nodeListRef) = @_;
 
     foreach my $node (@{$nodeListRef}) {
         if (($node->type eq 'h' || $node->type eq 'p' ||
              $node->type eq 'li' || $node->type eq 'pre' ||
              $node->type eq 'dt' || $node->type eq 'dd') &&
             !$node->id) {
-            $node->id($sequence->getNext($url));
+            $node->id($this->{sequence}->getNext($this->{url}));
         }
         my $childrenRef = $node->children;
-        &_traverseAndAddNids($childrenRef)
+        $this->_traverseAndAddNids($childrenRef)
             if ($childrenRef);
     }
 }

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 12};
+BEGIN { plan tests => 13};
 
 use PurpleWiki::Database::Pages;
 use PurpleWiki::Database::KeptRevision;
@@ -90,7 +90,7 @@ ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 ok($page->getID, $id);
 
 # stored text should be empty at this stage
-my $oldText = $page->getText();
+my $oldText = $page->getTree()->view('wikitext');
 ok($oldText, $newcontent);
 
 # revision should be 0
@@ -102,11 +102,10 @@ my $timestamp = time;
 # add a new wikitext to the page
 
 
-my $result = $pages->putPage(id => $id,
-                        wikitext => $output,
-                        timestamp => $timestamp);
+my $result = $pages->putPage(pageId => $id,
+                             tree => $wiki);
 ok(-f $idFilename);
-ok($result, 1);
+ok($result, "");
 
 undef($page);
 
@@ -116,10 +115,13 @@ my $newPage = $pages->getPage($id);
 # adding the wikitext should make a new version
 ok($newPage->getRevision(), 1);
 
-my $ts = $newPage->getTS();
-ok($ts, $timestamp);
+my $ts = $newPage->getTime();
+my $timediff = $ts - $timestamp;
+$timediff = -$timediff if ($timediff < 0);
+print "TD:$timediff\n";
+ok($timediff < 100);
 ok($newPage->getID(), $id);
-ok($newPage->getText(), $expected_content);
+ok($newPage->getTree()->view('wikitext'), $expected_content);
 
 # parse second content
 $wiki = $parser->parse($second_content, add_node_ids => 1);

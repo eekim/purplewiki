@@ -59,7 +59,6 @@ my $visitedPagesCache;
 my $visitedPagesCacheSize = 7;
 
 my $q;                  # CGI query reference
-my $Now;                # The time at the beginning of the request
 
 my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
                         # get this off $user reliably? Doesn't look
@@ -121,7 +120,6 @@ sub InitRequest {
     $q = new CGI;
 #dumpParams($q);
   }
-  $Now = time;                     # Reset in case script is persistent
 
   my $database_package = $config->DatabasePackage;
   eval "require $database_package";
@@ -140,6 +138,8 @@ sub InitRequest {
   $config->{pages} = $pages;   # use the config to store context vars for now
 
   InitCookie();         # Reads in user data
+  # tell the template object which language dir to use
+  #$wikiTemplate->language(&preferredLanguages);
   return 1;
 }
 
@@ -159,6 +159,24 @@ sub InitCookie {
   }
 
   $visitedPagesCache = $session->param('visitedPagesCache') || {};
+}
+
+sub preferredLanguages {
+    my @langStrings = split(/\s*,\s*/, $q->http('Accept-Language'));
+    my @languages;
+    my @toSort;
+    foreach my $lang (@langStrings) {
+        if ($lang =~ /^\s*([^\;]+)\s*\;\s*q=(.+)\s*$/) {
+            push @toSort, { lang => $1, q => $2 };
+        } else {
+            push @languages, $lang;
+        }
+    }
+    my @sorted = sort { $b->{q} <=> $a->{q} } @toSort;
+    foreach my $langHash (@sorted) {
+        push @languages, $langHash->{lang};
+    }
+    return @languages;
 }
 
 sub DoBrowseRequest {
@@ -203,9 +221,7 @@ sub BrowsePage {
       $username= $user->username;
   }
 
-  my $pageName = $id;
-  $pageName =~ s/_/ /g if ($config->FreeLinks);
-
+  my $pageName = $pages->getName($id);
   $revision = GetParam('revision', '');
   if ($revision =~ /\D/) {
     # error bad revision
@@ -241,7 +257,8 @@ sub BrowsePage {
     return;
   }
     
-  $body = $page->getWikiHTML();
+  my $url = $config->ScriptName . '?' . $id;
+  $body = WikiHTML($id, $page->getTree(), $url);
 
   &updateVisitedPagesCache($id);
   if ($id eq $config->RCName) {
@@ -278,7 +295,6 @@ sub DoRc {
     my $starttime = 0;
     my $daysago;
     my @rcDays;
-
     foreach my $days (@{$config->RcDays}) {
         push @rcDays, { num => $days,
                         url => $config->ScriptName .
@@ -290,7 +306,7 @@ sub DoRc {
     else {
         $daysago = GetParam("days", GetParam("rcdays", $config->RcDefault));
         if ($daysago) {
-            $starttime = $Now - ((24*60*60)*$daysago);
+            $starttime = time - ((24*60*60)*$daysago);
         }
     }
     my $rcRef = $pages -> recentChanges($starttime);
@@ -326,9 +342,7 @@ sub DoRc {
                         daysAgo => $daysago,
                         rcDays => \@rcDays,
                         changesFrom => TimeToText($starttime),
-                        currentDate => TimeToText($Now),
                         recentChanges => \@recentChanges,
-                        lastEdited => TimeToText($Now),
                         pageUrl => $config->ScriptName . "?$id",
                         backlinksUrl => $config->ScriptName . "?search=$id",
                         editUrl => $config->ScriptName . "?action=edit&amp;id=$id",
@@ -565,7 +579,7 @@ sub DoOtherRequest {
   if ($action ne "") {
     $action = lc($action);
     if ($action eq "edit") {
-      DoEdit($id, 0, 0, "", 0)  if ValidIdOrDie($id);
+      DoEdit($id, 0, undef, 0)  if ValidIdOrDie($id);
     } elsif ($action eq "unlock") {
       DoUnlock();
     } elsif ($action eq "index") {
@@ -637,9 +651,15 @@ sub DoOtherRequest {
 }
 
 sub DoEdit {
-  my ($id, $isConflict, $oldTime, $newText, $preview) = @_;
+  my ($id, $isConflict, $newTree, $preview) = @_;
   my ($header, $editRows, $editCols, $revision, $oldText);
   my ($summary, $pageTime);
+  my $newText;
+  $newTree = $pages->getPage($id)->getTree() unless (defined($newTree));
+  if ($newTree) {
+    $newText = $newTree->view('wikitext');
+    $newText .= "\n"  unless (substr($newText, -1, "\n"));
+  }
 
   my $page;
   my $text;
@@ -691,22 +711,17 @@ sub DoEdit {
                           pageName => $pageName,
                           revision => $revision,
                           isConflict => $isConflict,
-                          lastSavedTime => TimeToText($oldTime),
-                          currentTime => TimeToText($Now),
                           pageTime => $pageTime,
                           oldrev => $oldrev,
-                          oldText => &QuoteHtml($page->getText()),
+                          oldText => &QuoteHtml($page->getTree()->view('wikihtml')),
                           newText => &QuoteHtml($newText),
                           revisionsUrl => $config->ScriptName
                                           . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editConflict');
   }
   elsif ($preview) {
-      my $wiki = $wikiParser->parse($newText, 'freelink' => $config->FreeLinks);
       my $url = $q->url(-full => 1) . '?' . $id;
-      my @languages = &preferredLanguages;
-      my $body = $wiki->view('wikihtml', url => $url, pageName => $id,
-                         languages => \@languages);
+      my $body = WikiHTML($id, $newTree, $url);
 
       $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
@@ -729,13 +744,20 @@ sub DoEdit {
                           pageName => $pageName,
                           revision => $revision,
                           pageTime => $pageTime,
+                          oldText => &QuoteHtml($newText),
                           oldrev => $oldrev,
-                          oldText => &QuoteHtml($page->getText()),
                           revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editPage');
   }
 
   $summary = GetParam("summary", "*");
+}
+
+sub WikiHTML {
+    my ($id, $wiki, $url) = @_;
+    return "<p>New page, edit to create</p>" unless $wiki;
+    $wiki->view('wikihtml', url => $url, pageName => $id,
+                languages => \[&preferredLanguages]);
 }
 
 sub DoEditPrefs {
@@ -746,7 +768,7 @@ sub DoEditPrefs {
   &DoNewLogin() if (!$user);
   $wikiTemplate->vars(&globalTemplateVars,
                       rcDefault => $config->RcDefault,
-                      serverTime => &TimeToText($Now - $TimeZoneOffset),
+                      serverTime => &TimeToText(time - $TimeZoneOffset),
                       tzOffset => &GetParam('tzoffset', 0));
   print GetHttpHeader() . $wikiTemplate->process('preferencesEdit');
 }
@@ -828,8 +850,8 @@ sub DoUpdatePrefs {
       $wikiTemplate->vars(&globalTemplateVars,
                           passwordRemoved => $passwordRemoved,
                           passwordChanged => $passwordChanged,
-                          serverTime => &TimeToText($Now-$TimeZoneOffset),
-                          localTime => &TimeToText($Now));
+                          serverTime => &TimeToText(time-$TimeZoneOffset),
+                          localTime => &TimeToText(time));
       print &GetHttpHeader . $wikiTemplate->process('preferencesUpdated');
   }
 }
@@ -872,7 +894,7 @@ sub DoNewLogin {
     # (maybe use "replace=1" parameter)
     $user = $userDb->createUser;
     $user->setField('rev', 1);
-    $user->createTime($Now);
+    $user->createTime(time);
     $user->createIp($ENV{REMOTE_ADDR});
     $userDb->saveUser($user);
 
@@ -884,7 +906,7 @@ sub CreateNewUser {  # same as DoNewLogin, but no login
     # (maybe use "replace=1" parameter)
     $user = $userDb->createUser;
     $user->setField('rev', 1);
-    $user->createTime($Now);
+    $user->createTime(time);
     $user->createIp($ENV{REMOTE_ADDR});
     $userDb->saveUser($user);
 
@@ -1044,12 +1066,10 @@ sub DoSearch {
 
 sub DoPost {
   my ($editDiff);
-  my $userName = $user ? $user->username : undef;
   my $userId = $user ? $user->id : undef;
   my $string = GetParam("text", undef);
   my $id = GetParam("title", "");
   my $summary = GetParam("summary", "");
-  my $editTime = $Now;
   my $authorAddr = $ENV{REMOTE_ADDR};
 
   # adjust the contents of $string with the wiki drivers to save purple
@@ -1058,12 +1078,11 @@ sub DoPost {
   # clean \r out of string
   $string =~ s/\r//g;
 
-  my $url = $q->url() . "?$id";
+  my $url = $config->ScriptName . "?$id";
   my $wiki = $wikiParser->parse($string,
                                 'add_node_ids'=>1,
                                 'url'=>$url,
                                 'freelink' => $config->FreeLinks);
-  $string = $wiki->view('wikitext');
 
   my $error_template = '';
   $error_template = 'errors/editNotAllowed'
@@ -1079,13 +1098,11 @@ sub DoPost {
 
   $summary =~ s/[\r\n]//g;
   # Add a newline to the end of the string (if it doesn't have one)
-  $string .= "\n"  if (!($string =~ /\n$/));
 
   my $preview = (GetParam("Preview", "") ne "");
   if ($preview) {
     my $page = $pages->getPage($id);
 
-    my $pgtime = $page->getTime();
     my $oldrev = GetParam("oldrev", "");
     my $currev = $page->getRevision();
     my $newAuthor;
@@ -1101,33 +1118,28 @@ sub DoPost {
     if (($currev > 0) && $newAuthor && ($oldrev != $currev)) {
 #print STDERR "OR: $oldrev CR: $currev\n";
       if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
-        DoEdit($id, 2, $pgtime, $string, 1);
+        DoEdit($id, 2, $wiki, 1);
       } else {
-        DoEdit($id, 1, $pgtime, $string, 1);
+        DoEdit($id, 1, $wiki, 1);
       }
       return;
     }
 
-    DoEdit($id, 0, $page->getTime(), $string, 1);
+    DoEdit($id, 0, $wiki, 1);
     return;
   }
 
-  if (!$pages->putPage(
-           id => $id,
-           wikitext => $string,
-           oldrev => GetParam("oldrev", ""),
-           summary => $summary,
-           host => GetRemoteHost(1),
-           ip => $ENV{REMOTE_ADDR},
-           username => $userName,
-           userid => $userId,
-           timestamp => $Now)) {
+  if ($pages->putPage(pageId => $id,
+                      tree => $wiki,
+                      oldrev => GetParam("oldrev", ""),
+                      changeSummary => $summary,
+                      host => GetRemoteHost(1),
+                      userId => $userId)) {
 
-    my $pgtime = $Now;
     if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
-      DoEdit($id, 2, $pgtime, $string, 0);
+      DoEdit($id, 2, $wiki, 0);
     } else {
-      DoEdit($id, 1, $pgtime, $string, 0);
+      DoEdit($id, 1, $wiki, 0);
     }
     return;
   }

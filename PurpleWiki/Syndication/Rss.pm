@@ -57,6 +57,7 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
+    my $urlbase = $self->{config}->ScriptName . '?';
     my $pages = $self->{config}->{pages};
     my $rcRef = $pages-> recentChanges();
     my @recentChanges = @{$rcRef};
@@ -74,8 +75,9 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $page = $pages->getPage($recentChange->{id});
-        my $bodyText = $page->getWikiHTML();
+        my $id = $recentChange->{id};
+        my $bodyText = $pages->getPage($id)
+                       ->getTree()->view('wikihtml', url => $urlbase.$id);
 
         $rss->add_item(
             title => $recentChange->{pageName},

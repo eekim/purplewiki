@@ -34,7 +34,7 @@ use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
 #use PurpleWiki::Database;
-#use PurpleWiki::Page;
+use PurpleWiki::Page 'getWikiWordLink';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -50,11 +50,11 @@ sub search {
     foreach my $page ($self->pages->allPages()) {
 	  my $name = $page->pageName;
         if ($name =~ /$query/i) {
-            push(@results, $page->searchResult($page));
+            push(@results, _searchResult($page));
         } else {
             my $text = $page->getText();
             if ($text->getText() =~ /$query/i) {
-                push(@results, $page->searchResult($page));
+                push(@results, _searchResult($page));
             }
         }
     }
@@ -63,6 +63,21 @@ sub search {
         @results;
 
     return @results;
+}
+
+PurpleWiki::Search::Result->new(page => $page));
+_searchResult {
+    my $page = shift;
+    my $result = PurpleWiki::Search::Result->new();
+    if ($page) {
+        my $name = $page->getID;
+        $result->title($name);
+        $result->{mtime} = ($page->getModTime());
+        $result->url(getWikiWordLink($name));
+        my $text = $page->getText();
+        $text =  (substr($text, 0, 99).'...') if (length($text) > 100);
+        $result->summary($text);
+    }
 }
 
 1;

@@ -103,8 +103,12 @@ sub get {
         } elsif (($host eq 'localhost' || $host eq $ENV{HTTP_HOST})
                  && $path =~ /$scriptName/) {
             my ($id) = ($url =~ /\?([^&]+)\b/);
-            $content=($self->{pages}->getPageNode($id, uc($nid)))
-                     || "transclusion index out of sync";
+            #$content=($self->{pages}->getPageNode($id, uc($nid)))
+            #         || "transclusion index out of sync";
+            my $page = $self->{pages}->getPage($id);
+            my $tree = $page->getTree();
+            $content = $tree ? $tree->view('subtree', 'nid' => uc($nid))
+                             : "transclusion index out of sync";
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));
