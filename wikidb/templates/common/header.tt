@@ -11,25 +11,25 @@
 [% title %]
 [% END %]
 </title>
-<link rel="stylesheet" href="/purplewiki.css" />
+<link rel="stylesheet" href="purplewiki.css" />
 </head>
 
 <body>
 
 <div id="header">
-<div id="left">
+<div class='left'>
 <h1>[% title %]</h1>
 </div>
-<div id="right">
+<div class='right'>
 <!-- img tag would go here if you have a logo -->
 </div>
 </div>
 
 <div id="menubar">
-<div id="left">
+<div class='left'>
 [% INCLUDE common/navbar.tt %]
 </div>
-<div id="right">
+<div class='right'>
 [% INCLUDE common/userbar.tt %]
 </div>
 </div>

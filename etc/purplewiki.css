@@ -21,12 +21,12 @@ table {
     font-size: 11pt;
 }
 
-#header #left {
+#header .left {
     float: left;
     width: 75%;
 }
 
-#header #right {
+#header .right {
     float: right;
 }
 
@@ -36,13 +36,13 @@ table {
     font-size: 11pt;
 }
 
-#menubar #left {
+#menubar .left {
     float: left;
     width: 50%;
     padding-bottom: 4px;
 }
 
-#menubar #right {
+#menubar .right {
     float: right;
     padding-bottom: 4px;
 }
@@ -68,7 +68,7 @@ table {
     padding-top: 10px;
 }
 
-#sidebar #box {
+#sidebar .box {
     background: #EEE;
     border: #000 1px solid;
     padding-left: 4px;
@@ -83,12 +83,12 @@ table {
     padding-top: 4px;
 }
 
-#footer #left {
+#footer .left {
     float: left;
     width: 75%;
 }
 
-#footer #right {
+#footer .right {
     float: right;
     text-align: right;
 }
