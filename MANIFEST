@@ -1,7 +1,10 @@
 ChangeLog
+Contributors
 LICENSE
 MANIFEST
 Makefile.PL
+PurpleWiki/Apache1Handler.pm
+PurpleWiki/Apache2Handler.pm
 PurpleWiki/Config.pm
 PurpleWiki/Database.pm
 PurpleWiki/Database/KeptRevision.pm
@@ -25,8 +28,6 @@ PurpleWiki/Sequence.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
-PurpleWiki/Apache1Handler.pm
-PurpleWiki/Apache2Handler.pm
 PurpleWiki/View/EventHandler.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/text.pm
@@ -40,14 +41,16 @@ etc/intermap
 etc/purple.css
 etc/purplewiki.css
 extras/blosxom/purple
+extras/mhonarc/README
+extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
 extras/purple
 extras/purpleConvert.pl
 extras/wiki_trans.pl
 extras/wikirss
-extras/wikiwhiteboard/wikiwhiteboard.pl
 extras/wikiwhiteboard/sketch.svg
+extras/wikiwhiteboard/wikiwhiteboard.pl
 t/config
 t/config.t
 t/database.t
