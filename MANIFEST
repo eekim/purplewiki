@@ -44,10 +44,10 @@ extras/mt/README
 extras/mt/purple.pl
 extras/purple
 extras/purpleConvert.pl
-extras/sketch.svg
 extras/wiki_trans.pl
 extras/wikirss
-extras/wikiwhiteboard.pl
+extras/wikiwhiteboard/wikiwhiteboard.pl
+extras/wikiwhiteboard/sketch.svg
 t/config
 t/config.t
 t/database.t

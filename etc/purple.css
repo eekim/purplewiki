@@ -1,5 +1,5 @@
 /* purple.css -- CSS for purple-generated HTML files. */
-/* $Id: purple.css,v 1.1 2003/01/17 08:18:18 eekim Exp $ */
+/* $Id: purple.css,v 1.2 2004/02/12 17:39:53 cdent Exp $ */
 
 body {
   padding-bottom: 50em;
@@ -37,3 +37,5 @@ a.nid {
   text-decoration: none;
   color: #C8A8FF;  /* light purple */
 }
+a.nid:before { "("; }
+a.nid:after {")"; }

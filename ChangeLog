@@ -1,12 +1,15 @@
 Revision history for PurpleWiki.
 
-0.9.1 -- February 11, 2004
+0.9.1 -- February 14, 2004
+	- Updated the provided css files in etc to use before and
+	  after elements of ( and ) to demonstrate how display of
+	  nids can be customized.
 	- Umask config option has been added so that wiki pages can be
 	  created group writable, if desired. Thanks to: Matthew O'Connor
 	- A bug with KeptRevisions causing an error fixed. Thanks to:
 	  Matthew O'Conner
 	- Boolean config option, ShowNid, that controls whether NIDs should
-	  be displayed as '#' or their value. T
+	  be displayed as '#' or their value.
 	- Support for WikiWhiteboard.  See
 	  http://www.xml.com/pub/a/2003/11/19/svgwiki.html
 	- SiteBase configuration variable now used correctly, if set. Thanks
@@ -16,6 +19,9 @@ Revision history for PurpleWiki.
 	  documentation and information.
         - Transclusions can now be presented as plain text rather than
 	  HTML. See PurpleWiki::Transclusion. Thanks to: Jason Cook
+	- Transclusions can be retrieved from sites requiring basic
+	  authentication.See PurpleWiki::Transclusion and set httpUser 
+	  and httpPass in config. Thanks to: Jason Cook
 	- mod_perl 1 and mod_perl 2 handlers for displaying raw wikitext
 	  files as xhtml are now included. See PurpleWiki::Apache1Handler
 	  and PurpleWiki::Apache2Handler. Intended for use with tools

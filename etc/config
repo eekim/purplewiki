@@ -33,6 +33,10 @@ KeepDays    = 14               # Days to keep old revisions
 #AdminPass   = ""              # Set to non-blank to enable password(s)
 #EditPass    = ""              # Like AdminPass, but for editing only
 
+# HttpAuth username and password
+# HttpUser   = ""
+# HttpPass   = ""
+
 # Email Notifications
 EmailFrom   = Wiki           # Text for "From: " field of email notes.
 SendMail    = /usr/sbin/sendmail   # Full path to sendmail executable

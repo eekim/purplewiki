@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.9 2004/01/24 02:30:22 cdent Exp $
+# $Id: Transclusion.pm,v 1.10 2004/02/12 17:39:53 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -98,6 +98,14 @@ sub get {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));
             my $request = new HTTP::Request('GET', $url);
+
+            # If we have the right config vars for authenticating
+            # trying authenticating the request. 
+            if ($self->{config}->HttpUser() && $self->{config}->HttpPass()) {
+                $request->authorization_basic($self->{config}->HttpUser(),
+                    $self->{config}->HttpPass());
+            }
+
             my $result = $ua->request($request);
     
             if ($result->is_success()) {
@@ -180,6 +188,10 @@ retrieve the page on which that NID is found. The retrieved page is
 parsed to gather the content associated with the NID. A string
 containing the content or an error message if it could not be obtained
 is returned.
+
+If the PurpleWiki::Config has defined httpUser and httpPass, that 
+information will be passed along with the HTTP request to authenticate.
+
 
 =head1 AUTHORS
 
