@@ -23,7 +23,7 @@ be saved.</b></p>
 
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 <input type="hidden" name="title" value="[% id %]" />
-<input type="hidden" name="oldtime" value="[% pageTime %]" />
+<input type="hidden" name="oldrev" value="[% oldrev %]" />
 <input type="hidden" name="oldconflict" value="[% isConflict %]" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />

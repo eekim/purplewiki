@@ -1,0 +1,91 @@
+Set-Cookie: TestWiki=e7c4b7c4e335722da16a6d4384462786; path=/cgi-bin/; expires=Tue, 28-Sep-2004 20:51:30 GMT
+Date: Tue, 21 Sep 2004 20:51:30 GMT
+Content-Type: text/html; charset=ISO-8859-1
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TestWiki: 
+Some Link Or Another</title>
+<link rel="stylesheet" href="/purplewiki.css" />
+</head>
+
+<body>
+
+<div id="header">
+<div class='left'>
+<h1>Editing Some Link Or Another</h1>
+</div>
+<div class='right'>
+<!-- img tag would go here if you have a logo -->
+</div>
+</div>
+
+<div id="menubar">
+<div class='left'>
+<a href="runlog.pl?FrontPage">FrontPage</a> |
+<a href="runlog.pl?RecentChanges">RecentChanges</a> |
+<a href="runlog.pl?action=index">Page Index</a>
+</div>
+<div class='right'>
+<a href="runlog.pl?action=login">Login</a>
+(<a href="runlog.pl?action=editprefs">create account</a>)
+</div>
+</div>
+
+<div id="main">
+<div id="body">
+
+
+<form method="post" action="runlog.pl" enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="title" value="Some_Link_Or_Another" />
+<input type="hidden" name="oldrev" value="0" />
+<input type="hidden" name="oldconflict" value="0" />
+
+<textarea name="text" rows="20" cols="80" style="width:100%">
+Describe the new page here.
+</textarea>
+
+<p class='editsubmit'>Summarize changes: <input type="text" name="summary" size="60" maxlength="200" /><br />
+<input type="checkbox" name="recent_edit" value="on" />This change is a minor edit.<br />
+<input type="submit" name="Save" value="Save" />
+  (<a href="runlog.pl?action=login">Login</a> if you already have an
+  account, or visit <a href="runlog.pl?action=editprefs">Preferences</a> to
+  create one.)
+<input type="submit" name="Preview" value="Preview" /></p>
+
+<div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
+
+</div>
+
+<div id="sidebar">
+
+
+<div class='box'>
+<div class="searchbar">
+<form method="get" action="runlog.pl"
+      enctype="application/x-www-form-urlencoded">
+<h3>Search</h3>
+<input type="text" name="search"  size="20" style="width:95%" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+</div>
+</div>
+</div>
+
+<div id="footer">
+<div class='left'>
+
+</div>
+<div class='right'>
+<a href="http://www.blueoxen.org/tools/purplewiki/">
+<span class="poweredby">PurpleWiki</span></a><br />
+<a href="runlog.pl?action=rss">
+<span class="syndicate">RSS</span></a>
+</div>
+</div>
+
+</body>
+</html>

@@ -49,8 +49,7 @@ sub exists {
     if ($config->FreeLinks) {
         $id = FreeToNormal($id, $config);
     }
-    my $page = $config->{pages}->getPage($id);
-    return $page->pageExists();
+    return $config->{pages}->pageExists($id);
 }
 
 sub siteExists {
@@ -112,8 +111,8 @@ sub GetPageOrEditLink {
   if ($config->FreeLinks) {
     $id = FreeToNormal($id);
   }
-  my $page = $config->{pages}->getPage($id);
-  if ($page->pageExists()) {      # Page file exists
+  
+  if ($config->{pages}->pageExists($id)) {      # Page file exists
     return GetPageLinkText($id, $name);
   }
   if ($config->FreeLinks) {

@@ -7,7 +7,7 @@ use Test;
 
 BEGIN { plan tests => 12};
 
-use PurpleWiki::Database::Page;
+use PurpleWiki::Database::Pages;
 use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
@@ -63,10 +63,8 @@ EOF
 
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
-my $database_package = $config->DatabasePackage
-                       || "PurpleWiki::Database::Page";
+my $database_package = $config->DatabasePackage;
 eval "require $database_package";
-$database_package .= "s" unless ($database_package =~ /s$/);
 my $pages = $database_package->new ($config);
 $config->{pages} = $pages;
 
@@ -84,8 +82,12 @@ ok($output, $expected_content);
 ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
 my $page = $pages->getPage($id);
 
+# unlock
+ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
+
 # stored id should be the same as what we gave it
-ok($page->getID(), $id);
+# getPage should fail and return null value
+ok($page->getID, $id);
 
 # stored text should be empty at this stage
 my $oldText = $page->getText();
@@ -100,16 +102,13 @@ my $timestamp = time;
 # add a new wikitext to the page
 
 
-$page = $pages->putPage(id => $id,
+my $result = $pages->putPage(id => $id,
                         wikitext => $output,
                         timestamp => $timestamp);
 ok(-f $idFilename);
+ok($result, 1);
 
-
-# get rid of lock
-ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 undef($page);
-
 
 # load the page up and make sure the id and text are right
 my $newPage = $pages->getPage($id);
@@ -133,5 +132,4 @@ ok($output, $second_expected_content);
 sub END {
     unlink('tDB/sequence');
     unlink($idFilename);
-    rmdir($lockdir);
 }

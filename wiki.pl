@@ -40,13 +40,11 @@ use CGI::Session;
 use Digest::MD5;
 use PurpleWiki::ACL;
 use PurpleWiki::Config;
-#use PurpleWiki::Database;
-#use PurpleWiki::Database::Page;
 use PurpleWiki::Database::User::UseMod;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Search::Engine;
 
-my $CONFIG_DIR='/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PURPLE_CONFIG_DIR} || '/home/gerry/purple/testdb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -92,7 +90,7 @@ umask(oct($config->Umask)) if defined $config->Umask;
 
 # The "main" program, called from the end of this script file.
 sub DoWikiRequest {
-  InitRequest() or return;
+  InitRequest(@_) or return;
 
   # Instantiate PurpleWiki parser.
 
@@ -102,19 +100,31 @@ sub DoWikiRequest {
   &logSession;
 }
 
+sub dumpParams {
+  my $q = shift;
+  my $F;
+  open($F, ">>/tmp/form_log");
+  print $F $q->url(-path_info=>1),"\n";
+  $q->save($F);
+  close $F;
+}
+
 # == Common and cache-browsing code ====================================
 
 sub InitRequest {
-  $CGI::POST_MAX = $config->MaxPost;
-  $CGI::DISABLE_UPLOADS = 1;  # no uploads
-  $q = new CGI;
-
+  my $req = shift;
+  if ($req) {
+    $q = $req;
+  } else {
+    $CGI::POST_MAX = $config->MaxPost;
+    $CGI::DISABLE_UPLOADS = 1;  # no uploads
+    $q = new CGI;
+#dumpParams($q);
+  }
   $Now = time;                     # Reset in case script is persistent
 
-  my $database_package = $config->DatabasePackage
-                         || "PurpleWiki::Database::Page";
+  my $database_package = $config->DatabasePackage;
   eval "require $database_package";
-  $database_package .= "s" unless ($database_package =~ /s$/);
   $pages = $database_package->new ($config);
            # Object representing a page database
 
@@ -153,28 +163,21 @@ sub InitCookie {
 
 sub DoBrowseRequest {
   my ($id, $action, $text);
-  my $page;
 
   if ($id = (!$q->param) ? $config->HomePage : GetParam('keywords', '')) {
-    $page = $pages->getPage($id);
-    if ($config->FreeLinks && (!$page->pageExists())) {
-      $id = FreeToNormal($id);
-    }
-    BrowsePage($page, $id)  if ValidIdOrDie($id);
+    $id = FreeToNormal($id) if ($config->FreeLinks);
+    BrowsePage($id) if ValidIdOrDie($id);
     return 1;
   }
                             
   $action = lc(GetParam('action', ''));
   $id = GetParam('id', $config->HomePage);
-  $page = $pages->getPage($id);
   if ($action eq 'browse') {
-    if ($config->FreeLinks && (!$page->pageExists())) {
-      $id = FreeToNormal($id);
-    }
-    BrowsePage($page, $id)  if ValidIdOrDie($id);
+    $id = FreeToNormal($id) if ($config->FreeLinks);
+    BrowsePage($id)  if ValidIdOrDie($id);
     return 1;
   } elsif ($action eq 'rc') {
-    BrowsePage($page, $config->RCName);
+    BrowsePage($config->RCName);
     return 1;
   } elsif ($action eq 'random') {
     DoRandom();
@@ -187,10 +190,10 @@ sub DoBrowseRequest {
 }
 
 sub BrowsePage {
-  my ($page, $id) = (shift, shift);
+  my ($id) = shift;
   my $body;
   my ($allDiff, $showDiff);
-  my ($revision, $goodRevision, $diffRevision);
+  my ($revision, $diffRevision);
 
   my ($text);
 
@@ -199,17 +202,17 @@ sub BrowsePage {
       $userId = $user->id;
       $username= $user->username;
   }
-  $page = $pages -> getPage($id);
 
   my $pageName = $id;
   $pageName =~ s/_/ /g if ($config->FreeLinks);
 
   $revision = GetParam('revision', '');
-  $goodRevision = '';      # Non-blank only if exists
-  if ($revision && $revision !~ /\D/ && $page->hasRevision($revision)) {
-    $goodRevision = $revision;
+  if ($revision =~ /\D/) {
+    # error bad revision
+    $revision = '';
   }
 
+  my $page = $pages->getPage($id, $revision);
   $allDiff  = GetParam('alldiff', 0);
 
   if ($allDiff != 0) {
@@ -224,12 +227,10 @@ sub BrowsePage {
 
   if ($config->UseDiff && $showDiff) {
     $diffRevision = GetParam('diffrevision', '');
-    my $from = ($diffRevision) ? $page->getText($diffRevision)
-                               : $page->getPrev($goodRevision);
-    my $diffText = DoDiff( $from, $page->getText($goodRevision) );
+    my $diffText = $pages->diff($id, $diffRevision, $revision);
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $pageName,
-                        revision => $diffRevision || $goodRevision,
+                        revision => $diffRevision || $revision,
                         diffs => getDiffs($diffText),
                         lastEdited => TimeToText($page->getTime),
                         pageUrl => $config->ScriptName . "?$id",
@@ -239,11 +240,12 @@ sub BrowsePage {
     print GetHttpHeader() . $wikiTemplate->process('viewDiff');
     return;
   }
-
+    
   $body = $page->getWikiHTML();
+
   &updateVisitedPagesCache($id);
   if ($id eq $config->RCName) {
-      DoRc($id, $pageName, $revision, $goodRevision, $body);
+      DoRc($id, $pageName, $revision, $body);
       return;
   }
 
@@ -251,31 +253,28 @@ sub BrowsePage {
   my $keywords = $id;
   $keywords =~ s/_/\+/g if ($config->FreeLinks);
 
-  my $editRevisionString = ($goodRevision) ? "&amp;revision=$goodRevision" : '';
+  my $editRevisionString = ($revision) ? "&amp;revision=$revision" : '';
 
   $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $pageName,
                       expandedPageName => &expandPageName($pageName),
                       visitedPages => \@vPages,
-                      showRevision => $revision,
-                      revision => $goodRevision,
+                      revision => $revision,
                       body => $body,
                       lastEdited => TimeToText($page->getTime),
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$keywords",
-                      editUrl =>
-                        $config->ScriptName . "?action=edit&amp;id=$id" .
-                        $editRevisionString,
+                      editUrl => $config->ScriptName
+                          . "?action=edit&amp;id=$id" .  $editRevisionString,
                       revisionsUrl =>
-                        $config->ScriptName . "?action=history&amp;id=$id",
-                      diffUrl =>
-                        $config->ScriptName .
-                        "?action=browse&amp;diff=1&amp;id=$id");
+                          $config->ScriptName . "?action=history&amp;id=$id",
+                      diffUrl => $config->ScriptName
+                          . "?action=browse&amp;diff=1&amp;id=$id");
   print GetHttpHeader() . $wikiTemplate->process('viewPage');
 }
 
 sub DoRc {
-    my ($id, $pageName, $revision, $goodRevision, $body) = @_;
+    my ($id, $pageName, $revision, $body) = @_;
     my $starttime = 0;
     my $daysago;
     my @rcDays;
@@ -294,7 +293,7 @@ sub DoRc {
             $starttime = $Now - ((24*60*60)*$daysago);
         }
     }
-    my $rcRef = $pages -> recentChanges(backto => $starttime);
+    my $rcRef = $pages -> recentChanges($starttime);
     my @recentChanges;
     my $prevDate;
     foreach my $page (@{$rcRef}) {
@@ -322,8 +321,7 @@ sub DoRc {
                         pageName => $pageName,
                         expandedPageName => &expandPageName($pageName),
                         visitedPages => \@vPages,
-                        showRevision => $revision,
-                        revision => $goodRevision,
+                        revision => $revision,
                         body => $body,
                         daysAgo => $daysago,
                         rcDays => \@rcDays,
@@ -352,12 +350,8 @@ sub DoHistory {
     my $page;
     my $text;
 
-    # we could supply user info just like in DoBrowseRequest?
-    $page = $pages -> getPage($id);
-
-
     my @vPages = &visitedPages;
-    my @pageHistory = $page->getRevisions();
+    my @pageHistory = $pages->getRevisions($id);
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $id,
                         visitedPages => \@vPages,
@@ -632,7 +626,7 @@ sub DoOtherRequest {
     return;
   }
   # Handle posted pages
-  if (GetParam("oldtime", "") ne "") {
+  if (GetParam("oldrev", "") ne "") {
     $id = GetParam("title", "");
     DoPost()  if ValidIdOrDie($id);
     return;
@@ -671,22 +665,22 @@ sub DoEdit {
       $userId = $user->id;
       $username = $user->username;
   }
-  $page = $pages->getPage($id);
+  $revision = GetParam('revision', '');
+  if ($revision =~ /\D/) {
+    # error bad revision
+    $revision = '';
+  }
 
-  if ($page->getLockState()) {
+  $page = $pages->getPage($id, $revision);
+  my $oldrev = $page->getRevision;
+
+  if ($pages->getLockState($id)) {
       $wikiTemplate->vars(&globalTemplateVars);
       print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
       return;
   }
 
-  $pageTime = $page->getTS() || 0;
-  
-  # Old revision handling
-  $revision = GetParam('revision', '');
-  my $goodRevision = '';      # Non-blank only if exists
-  if ($revision && $revision !~ /\D/ && $page->hasRevision($revision)) {
-    $goodRevision = $revision;
-  }
+  $pageTime = $page->getTime() || 0;
 
   my @vPages = &visitedPages;
 
@@ -700,14 +694,20 @@ sub DoEdit {
                           lastSavedTime => TimeToText($oldTime),
                           currentTime => TimeToText($Now),
                           pageTime => $pageTime,
-                          oldText => &QuoteHtml($page->getText($goodRevision)),
+                          oldrev => $oldrev,
+                          oldText => &QuoteHtml($page->getText()),
                           newText => &QuoteHtml($newText),
                           revisionsUrl => $config->ScriptName
                                           . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editConflict');
   }
   elsif ($preview) {
-      my $body = TextToHTML($id, $newText);
+      my $wiki = $wikiParser->parse($newText, 'freelink' => $config->FreeLinks);
+      my $url = $q->url(-full => 1) . '?' . $id;
+      my @languages = &preferredLanguages;
+      my $body = $wiki->view('wikihtml', url => $url, pageName => $id,
+                         languages => \@languages);
+
       $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
                           id => $id,
@@ -715,6 +715,7 @@ sub DoEdit {
                           revision => $revision,
                           isConflict => $isConflict,
                           pageTime => $pageTime,
+                          oldrev => $oldrev,
                           oldText => &QuoteHtml($newText),
                           body => $body,
                           revisionsUrl => $config->ScriptName
@@ -728,7 +729,8 @@ sub DoEdit {
                           pageName => $pageName,
                           revision => $revision,
                           pageTime => $pageTime,
-                          oldText => &QuoteHtml($page->getText($goodRevision)),
+                          oldrev => $oldrev,
+                          oldText => &QuoteHtml($page->getText()),
                           revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editPage');
   }
@@ -1079,67 +1081,59 @@ sub DoPost {
   # Add a newline to the end of the string (if it doesn't have one)
   $string .= "\n"  if (!($string =~ /\n$/));
 
-  if ($preview = (GetParam("Preview", "") ne "")) {
+  my $preview = (GetParam("Preview", "") ne "");
+  if ($preview) {
     my $page = $pages->getPage($id);
 
-    return if CheckConflict($page, $string, 1);
-    DoEdit($id, 0, $page->getTS(), $string, 1);
+    my $pgtime = $page->getTime();
+    my $oldrev = GetParam("oldrev", "");
+    my $currev = $page->getRevision();
+    my $newAuthor;
+    # Later extract comparison?
+    if ($user || ($page->getUserID() > 399))  {
+      $newAuthor = ($user->id ne $page->getUserID());       # known user(s)
+    } else {
+      $newAuthor = ($page->getIP() ne $authorAddr);  # hostname fallback
+    }
+    $newAuthor = 1  if ($oldrev == 0);  # New page
+    $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
+    # Detect editing conflicts and resubmit edit
+    if (($currev > 0) && $newAuthor && ($oldrev != $currev)) {
+#print STDERR "OR: $oldrev CR: $currev\n";
+      if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
+        DoEdit($id, 2, $pgtime, $string, 1);
+      } else {
+        DoEdit($id, 1, $pgtime, $string, 1);
+      }
+      return;
+    }
+
+    DoEdit($id, 0, $page->getTime(), $string, 1);
     return;
   }
 
-  # Consider extracting lock section into sub, and eval-wrap it?
-  # (A few called routines can die, leaving locks.)
-  my $page = $pages->getPage($id);
-
-  if ($page->getText() eq $string) {
-    ReBrowsePage($id);
-    return;
-  }
-
-  my $newAuthor;
-  return if CheckConflict($page, $string, 0, \$newAuthor);
-
-  $page = $pages->putPage(
+  if (!$pages->putPage(
            id => $id,
            wikitext => $string,
-           newauthor => $newAuthor,
+           oldrev => GetParam("oldrev", ""),
            summary => $summary,
            host => GetRemoteHost(1),
            ip => $ENV{REMOTE_ADDR},
            username => $userName,
            userid => $userId,
-           timestamp => $Now);
+           timestamp => $Now)) {
+
+    my $pgtime = $Now;
+    if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
+      DoEdit($id, 2, $pgtime, $string, 0);
+    } else {
+      DoEdit($id, 1, $pgtime, $string, 0);
+    }
+    return;
+  }
   &ReBrowsePage($id);
 }
 
-sub CheckConflict {
-  my ($page, $string, $preview, $authorRef) = @_;
-  my $newAuthor;
-  my $pgtime = $page->getTS();
-  my $oldtime = GetParam("oldtime", "");
-  my $oldrev = $page->getRevision();
-  # Later extract comparison?
-  if ($user || ($page->getUserID() > 399))  {
-    $newAuthor = ($user->id ne $page->getUserID());       # known user(s)
-  } else {
-    $newAuthor = ($page->getIP() ne $authorAddr);  # hostname fallback
-  }
-  $newAuthor = 1  if ($oldrev == 0);  # New page
-  $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
-  $$authorRef = $newAuthor if (ref($authorRef));
-  # Detect editing conflicts and resubmit edit
-  if (($oldrev > 0) && $newAuthor) && ($oldtime != $pgtime)) {
-    if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
-      DoEdit($id, 2, $pgtime, $string, $preview);
-    } else {
-      DoEdit($id, 1, $pgtime, $string, $preview);
-    }
-    return 1;
-  }
-  return 0;
-}
-
-# Note: all diff and recent-list operations should be done within locks.
 sub DoUnlock {
     my $forcedUnlock = 0;
 
@@ -1152,12 +1146,6 @@ sub DoUnlock {
 }
 
 # ==== Difference markup and HTML ====
-sub DoDiff {
-    require Text::Diff;
-    my ($old, $new) = @_;
-    Text::Diff::diff(\$old, \$new, {STYLE => "OldStyle"});
-}
-
 # @diffs = ( { type => (status|removed|added), text => [] }, ... )
 sub getDiffs {
     my $diffText = shift;
@@ -1290,6 +1278,7 @@ sub globalTemplateVars {
             preferencesUrl => $config->ScriptName . '?action=editprefs');
 }
 
-&DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.
+my $is_require = (caller($_))[7];
+&DoWikiRequest()  if (!$is_require && $config->RunCGI && ($_ ne 'nocgi'));   # Do everything.
 1; # In case we are loaded from elsewhere
 # == End of UseModWiki script. ===========================================
