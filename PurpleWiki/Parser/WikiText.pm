@@ -353,8 +353,9 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-            $currentNid = $1;
+            if ($nodeContent =~ s/\s+\{nid ([A-Z0-9]+)\}$//s) {
+                $currentNid = $1;
+            }
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent, %params));
             if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
@@ -508,8 +509,9 @@ sub _terminateNode {
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
         ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
         chomp ${$nodeContentRef};
-        ${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s;
-        $currentNid = $1;
+        if (${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s) {
+            $currentNid = $1;
+        }
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
