@@ -59,8 +59,6 @@ sub new {
     my $self = {};
     bless ($self, $class);
     my $config = PurpleWiki::Config->instance();
-    $self->{fs2} = $config->FS2 if ($config);
-    $self->{fs2} = "\xb32" unless ($self->{fs2});
     $self->_init(@_);
     return $self;
 }
@@ -172,7 +170,7 @@ sub _init {
 
     # If we have data to push in
     if (defined($args{data})) {
-        my $regexp = $self->{fs2};
+        my $regexp = $PurpleWiki::Archive::UseMod::fs2;
         my %tempHash = split(/$regexp/, $args{data}, -1);
 
         foreach my $key (keys(%tempHash)) {
@@ -201,7 +199,7 @@ sub serialize {
 
     my $textData = $self->{data}->serialize();
 
-    my $separator = $self->{fs2};
+    my $separator = $PurpleWiki::Archive::UseMod::fs2;
 
     my $data = join($separator, map {$_ . $separator .  ($self->{$_} || '')}
         ('name', 'version', 'id', 'username', 'ip', 'host',

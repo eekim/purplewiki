@@ -50,8 +50,6 @@ sub new {
     my $self = {};
     $self->{data} = $params{data};
     my $config = PurpleWiki::Config->instance();
-    $self->{fs3} = $config->FS3 if ($config);
-    $self->{fs3} = "\xb33" unless ($self->{fs3});
     bless ($self, $class);
 
     $self->_init();
@@ -133,7 +131,7 @@ sub _init {
     my $self = shift;
 
     if (defined($self->{data})) {
-        my $regexp = $self->{fs3};
+        my $regexp = $PurpleWiki::Archive::UseMod::fs3;
         my %tempHash = split(/$regexp/, $self->{data}, -1);
 
         foreach my $key (keys(%tempHash)) {
@@ -151,8 +149,9 @@ sub _init {
 sub serialize {
     my $self = shift;
 
-    my $data = join($self->{fs3}, map {$_ . $self->{fs3} .
-            $self->{$_}} ('text', 'minor', 'newauthor', 'summary'));
+    my $data = join($PurpleWiki::Archive::UseMod::fs3,
+                    map {$_ . $PurpleWiki::Archive::UseMod::fs3 . $self->{$_}}
+                        ('text', 'minor', 'newauthor', 'summary'));
 
     return $data;
 

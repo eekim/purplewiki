@@ -216,7 +216,8 @@ sub recentChanges {
                     # $entries[5] is garbage and so we ignore it...
 
                     # Get extra info
-                    my $fsexp = $config->FS2;
+                    my $fsexp = $PurpleWiki::Archive::UseMod::fs2;
+my $x = $entries[6]; $x =~ s/$fsexp/^/g; print STDERR "E6:$x:\n";
                     my %userInfo = split /$fsexp/, $entries[6];
                     if ($userInfo{id}) {
                         $pages{$name}->{userId} = $userInfo{id};

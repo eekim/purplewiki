@@ -104,7 +104,7 @@ sub putPage {
   my $tree = $args{tree};
   return "No data" unless (defined($tree));
   my $contents = $tree->view('wikitext');
-  $contents .= "\n"  unless (substr($contents, -1, "\n"));
+  $contents .= "\n"  unless (substr($contents, -1) eq "\n");
 
   my $id = $args{pageId};
 #for (keys %args) { print STDERR "PP:$_ = $args{$_}\n"; }
