@@ -1,0 +1,9 @@
+#!/usr/bin/perl
+
+use lib '/home/cdent/src/PurpleWiki';
+use PurpleWiki::Config;
+use PurpleWiki::Rss;
+
+my $config = new PurpleWiki::Config('/home/cdent/testpurple');
+my $rss = new PurpleWiki::Rss(config => $config);
+print $rss->getRSS();
