@@ -57,7 +57,8 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my $rcRef = $self ->{pages}-> recentChanges();
+    my $pages = $self->{config}->{pages};
+    my $rcRef = $pages-> recentChanges();
     my @recentChanges = @{$rcRef};
 
     my $rss = new XML::RSS;
@@ -73,7 +74,7 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $page = $self->{pages}->getPage($recentChange->{id})
+        my $page = $pages->getPage($recentChange->{id});
         my $bodyText = $page->getWikiHTML();
 
         $rss->add_item(
