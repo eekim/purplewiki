@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.15 2003/07/19 22:02:21 eekim Exp $
+# $Id: WikiText.pm,v 1.16 2003/08/12 02:17:07 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -417,34 +417,34 @@ sub _parseInlineNode {
     my ($text, %params) = @_;
     my (@inlineNodes);
 
-    my $rx = qq{
-        $rxTransclusion |
-        $rxNowiki |
-        $rxTt |
-        $rxFippleQuotes |
-        $rxB |
-        $rxTripleQuotes |
-        $rxI |
-        $rxDoubleQuotes |
-        \\\[$rxProtocols$rxAddress\\s*.*?\\\] |
-        $rxProtocols$rxAddress};
+    # This used to be an extended regular expression, but it wasn't
+    # working in some cases.
+    my $rx = qq{$rxNowiki|$rxTransclusion|$rxTt|$rxFippleQuotes|$rxB|};
+    $rx .= qq{$rxTripleQuotes|$rxI|$rxDoubleQuotes|};
+    $rx .= qq{\\\[$rxProtocols$rxAddress\\s*.*?\\\]|$rxProtocols$rxAddress};
     if ($params{wikiword}) {
-        $rx .= qq{ |
-        (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
-        [A-Z]\\w+:[^\\\]\\\#\\s"<>]+(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
-        $rxWikiWord(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
+        $rx .= qq{|(?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?};
+        $rx .= qq{$rxQuoteDelim|[A-Z]\\w+:[^\\\]\\\#\\s"<>]+};
+        $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim|$rxWikiWord};
+        $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
     }
     if ($params{freelink}) {
-        $rx .= qq{ |
-        $rxDoubleBracketed};
+        $rx .= qq{|$rxDoubleBracketed};
     }
-    my @nodes = split(/($rx)/xs, $text);
+    my @nodes = split(/($rx)/s, $text);
     foreach my $node (@nodes) {
         if ($node =~ /^$rxNowiki$/s) {
             $node =~ s/^<nowiki>//;
             $node =~ s/<\/nowiki>$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'nowiki',
                                                            'content'=>$node);
+        }
+        elsif ($node =~ /^$rxTransclusion$/s) {
+            # transclusion
+            my ($content) = ($node =~ /([A-Z0-9]+)/);
+            push @inlineNodes, PurpleWiki::InlineNode->new(
+                'type' => 'transclusion',
+                'content' => $content);
         }
         elsif ($node =~ /^$rxTt$/s) {
             $node =~ s/^<tt>//;
@@ -481,13 +481,6 @@ sub _parseInlineNode {
             $node =~ s/''$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
                 'children'=>&_parseInlineNode($node, %params));
-        }
-        elsif ($node =~ /^$rxTransclusion$/s) {
-            # transclusion
-            my ($content) = ($node =~ /([A-Z0-9]+)/);
-            push @inlineNodes, PurpleWiki::InlineNode->new(
-                'type' => 'transclusion',
-                'content' => $content);
         }
         elsif ($node =~ /^\[($rxProtocols$rxAddress)\s*(.*?)\]$/s) {
             # bracketed link
