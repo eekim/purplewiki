@@ -268,7 +268,9 @@ sub recentChanges {
 # if $from_revision is not supplied, try to use the previous version
 sub diff {
   my ($self, $id, $diffRevision, $goodRevision) = @_;
-  my $to = $self->getPage($id, $goodRevision)->_getText();
+  my $toPage = $self->getPage($id, $goodRevision);
+  my $to = $toPage->_getText();
+  $goodRevision = $toPage->getRevision if (!$goodRevision);
 
   my $fromrev = $diffRevision || $goodRevision - 1;
   my $from = $self->getPage($id, $fromrev)->_getText();
