@@ -18,6 +18,8 @@ RCName      = RecentChanges     # Name of changes page (change space to _)
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
+DefaultLanguage = en           # Default language to use
+
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
 RcDays      = 1                # List of days for links on RecentChanges

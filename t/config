@@ -25,6 +25,8 @@ RcDays      = 30
 RcDays      = 90
 KeepDays    = 14               # Days to keep old revisions
 
+DefaultLanguage = en
+
 # Password for administration and editing
 # FIXME: need better understanding of how these things are used
 #AdminPass   = ""              # Set to non-blank to enable password(s)
@@ -75,5 +77,6 @@ LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
+TemplateDir = $DataDir/templates
 
 # == End of Configuration =================================================

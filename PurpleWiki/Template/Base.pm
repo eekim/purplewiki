@@ -50,6 +50,15 @@ sub new {
     else {
         $self->{templateDir} = $config->TemplateDir;
     }
+    $self->{defaultLanguage} = $config->DefaultLanguage;
+    if ($options{language}) {
+        $self->{language} = &_setLanguage($self->{templateDir},
+                                          $self->{defaultLanguage},
+                                          @{$options{language}});
+    }
+    else {
+        $self->{language} = $self->{defaultLanguage};
+    }
     bless($self, $this);
     return $self;
 }
@@ -60,7 +69,7 @@ sub templateDir {
     my $self = shift;
 
     $self->{templateDir} = shift if @_;
-    return $self->{templateDir};
+    return $self->{templateDir} . '/' . $self->{language};
 }
 
 sub vars {
@@ -71,8 +80,38 @@ sub vars {
     return $self->{vars};
 }
 
+sub language {
+    my $self = shift;
+    my @languages = @_;
+
+    if (@languages) {
+        $self->{language} = &_setLanguage($self->{templateDir},
+                                          $self->{defaultLanguage},
+                                          @languages);
+    }
+    return $self->{language};
+}
+
 sub process {
-    die shift() . " didn't define a template method!";
+    die shift() . " didn't define a process method!";
+}
+
+### private
+
+sub _setLanguage {
+    my $templateDir = shift;
+    my $defaultLanguage = shift;
+    my @languages = @_;
+
+    my $language;
+    foreach my $lang (@languages) {
+        if (-d "$templateDir/$lang") {
+            $language = $lang;
+            last;
+        }
+    }
+    $language = $defaultLanguage if (!$language);
+    return $language;
 }
 
 1;

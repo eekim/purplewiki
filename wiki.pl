@@ -117,6 +117,8 @@ sub InitRequest {
       return 0;
   }
   InitCookie();         # Reads in user data
+  # tell the template object which language dir to use
+  $wikiTemplate->language(&preferredLanguages);
   return 1;
 }
 
@@ -136,6 +138,25 @@ sub InitCookie {
   }
 
   $visitedPagesCache = $session->param('visitedPagesCache') || {};
+}
+
+sub preferredLanguages {
+    my @langStrings = split(/\s*,\s*/, $q->http('Accept-Language'));
+    my @languages;
+    my @toSort;
+    foreach my $lang (@langStrings) {
+        if ($lang =~ /^\s*([^\;]+)\s*\;\s*q=(.+)\s*$/) {
+            push @toSort, { lang => $1, q => $2 };
+        }
+        else {
+            push @languages, $lang;
+        }
+    }
+    my @sorted = sort { $b->{q} <=> $a->{q} } @toSort;
+    foreach my $langHash (@sorted) {
+        push @languages, $langHash->{lang};
+    }
+    return @languages;
 }
 
 sub DoBrowseRequest {
@@ -283,6 +304,7 @@ sub BrowsePage {
   $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $pageName,
                       expandedPageName => &expandPageName($pageName),
+                      id => $id,
                       visitedPages => \@vPages,
                       showRevision => $revision,
                       revision => $goodRevision,
