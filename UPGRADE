@@ -13,9 +13,9 @@ great deal of new features.
 
 Perform the following required steps:
 
-1. Run:
+1. Run (from the distribution directory):
 
-    createUsernameIndex.pl /path/to/wikidb
+    perl extras/createUsernameIndex.pl /path/to/wikidb
 
    This will clean up your user database, consolidating duplicate
    usernames and removing user ID locks.  Make sure all of the files
@@ -27,7 +27,7 @@ Perform the following required steps:
 3. Copy the wikidb/templates directory included in the distribution
    into your old wikidb directory.
 
-   a. Adjust wikidb/templates/comment/header.tt so that the 
+   a. Adjust wikidb/templates/common/header.tt so that the 
       stylesheet link points to your preferred stylesheet.
       You may wish to use the etc/purplewiki.css file included
       in the distribution as a reference. The default templates
@@ -38,7 +38,7 @@ Perform the following required steps:
 
    b. If you display an image with your wikipages, this is now
       controlled by the templates instead of the config file.
-      Look in wikidb/templates/comment/header.tt for:
+      Look in wikidb/templates/common/header.tt for:
 
       <!-- img tag would go here if you have a logo -->
 
