@@ -1,0 +1,38 @@
+UPGRADING FROM V0.1
+===================
+
+PurpleWiki v0.9 has a new scheme for NIDs.  In PurpleWiki v0.1, NIDs
+were locally unique to each page.  In PurpleWiki v0.9, NIDs are unique
+across the entire site.  In other words, the NID of a paragraph on one
+Wiki page will not be used anywhere else on the site.
+
+This has a few ramifications.  First, the lastnid metadata tag is no
+longer required.  This will simplify things for users.  Second,
+copying and pasting nodes between pages is easier, because you don't
+have to worry about deleting and regenerating NIDs.  Third, it enables
+transclusions.
+
+PurpleWiki v0.9 also uses a new syntax for NIDs: braces instead of
+brackets.  See the thread starting at:
+
+  http://purplewiki.blueoxen.net/forums/devel/2003-07/msg00004.html
+
+for an explanation.
+
+Because of the new syntax and addressing scheme, users of PurpleWiki
+v0.1 will have to convert their site to the new format.  Additionally,
+we are using a new config file format.  The config format is
+straightforward; you should be able to manually convert your config
+file fairly easily.
+
+After you have converted your config file, you can use the
+purpleConvert.pl script (located in the extras directory) to convert
+your site's NID information:
+
+  purpleConvert.pl /path/to/wikidb http://your.host
+
+For the URL, just provide the hostname and port (if not 80).
+purpleConvert.pl will use the path specified by ScriptName in your
+config file.
+
+$Id: UPGRADE,v 1.1 2003/08/14 21:06:11 eekim Exp $
