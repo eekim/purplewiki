@@ -1,7 +1,7 @@
 # PurpleWiki::Search::IrcLogger.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: IrcLogger.pm,v 1.1 2003/12/31 23:46:12 cdent Exp $
+# $Id: IrcLogger.pm,v 1.2 2003/12/31 23:47:30 cdent Exp $
 #
 # A Search Module for irclogger (see
 # http://collab.blueoxen.net/forums/tools-yak/2003-12/msg00003.html
@@ -9,7 +9,7 @@
 #
 # A sublcass of the Arts module as they use the same file format.
 #
-# FIXME: Changes the Arts module to WikiText and make both Arts and
+# FIXME: Change the Arts module to WikiText and make both Arts and
 # IrcLogger subclasses of that.
 
 package PurpleWiki::Search::IrcLogger;
@@ -17,9 +17,7 @@ package PurpleWiki::Search::IrcLogger;
 use strict;
 use base 'PurpleWiki::Search::Arts';
 use PurpleWiki::Search::Result;
-use IO::File;
 use AppConfig;
-use Data::Dumper;
 
 # AppConfig values from the irclogger config file
 my @CONFIG = qw(channel wikiconfig url logfile);
