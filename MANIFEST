@@ -8,6 +8,7 @@ wiki.pl
 wiki_trans.pl
 etc/config
 etc/intermap
+etc/purple.css
 etc/purplewiki.css
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
