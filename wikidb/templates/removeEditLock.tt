@@ -2,8 +2,6 @@
            title = "Removing edit lock"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 <p>This operation may take several seconds...'</p>

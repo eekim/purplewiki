@@ -3,8 +3,6 @@
            titleUrl = backlinksUrl
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 [% IF showRevision %]

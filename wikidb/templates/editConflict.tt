@@ -2,8 +2,6 @@
            title = "Editing $pageName"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 [% IF revision %]

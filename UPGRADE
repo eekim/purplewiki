@@ -1,8 +1,15 @@
-
 If you are upgrading from version 0.1 please see the 'UPGRADING FROM
-V0.1' information, further below. 0.1 users will need to perform the 
-tasks listed in that section, followed by the tasks listed in the 
-'UPGRADING FROM V0.9' section.
+V0.1' information, further below. 0.1 users will need to perform all
+of the tasks listed in this document.
+
+UPGRADING FROM V0.9.1
+=====================
+
+There is one new directive in the PurpleWiki config file:
+LocalSequenceDir.  Make sure you add the following line to your config
+file when upgrading from v0.9.1:
+
+  LocalSequenceDir = $DataDir
 
 UPGRADING FROM V0.9
 ===================

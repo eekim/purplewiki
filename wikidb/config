@@ -7,18 +7,16 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /~cdent/testwiki.cgi # The name of the wiki script, for use in urls
-CookieName  = TestWiki      # Name for this wiki (for multi-wiki sites)
+ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
 SiteName    = TestWiki          # Name of site (used for titles)
-HomePage    = FrontPage       # Home page (change space to _)
-RCName      = RecentChanges   # Name of changes page (change space to _)
-LogoUrl     = /~cdent/images/Singapore.gif  # URL for site logo (empty for none)
-StyleSheet  = /~cdent/usemod.css  # URL for CSS stylesheet (like "/wiki.css")
-#SiteBase    = ""              # Full URL for <BASE> header
-#FullUrl     = ""              # Set if the auto-detected URL is wrong
-#ScriptTZ    = ""              # Local time zone
-#Umask       = 0002	       # the umask used when writing files
-LocalSequenceDir = $DataDir # The directory where purple number sequences live
+HomePage    = FrontPage         # Home page (change space to _)
+RCName      = RecentChanges     # Name of changes page (change space to _)
+StyleSheet  = /purplewiki.css   # URL for CSS stylesheet (like "/wiki.css")
+#SiteBase    = ""                # Full URL for <BASE> header
+#FullUrl     = ""                # Set if the auto-detected URL is wrong
+#ScriptTZ    = ""                # Local time zone
+#Umask       = 0002	             # the umask used when writing files
+LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
 # Recent Changes
@@ -36,17 +34,10 @@ KeepDays    = 14               # Days to keep old revisions
 #EditPass    = ""              # Like AdminPass, but for editing only
 
 # HttpAuth username and password
-# HttpUser   = ""
-# HttpPass   = ""
-
-# Email Notifications
-EmailFrom   = Wiki           # Text for "From: " field of email notes.
-SendMail    = /usr/sbin/sendmail   # Full path to sendmail executable
+#HttpUser    = ""
+#HttpPass    = ""
 
 # HTML additions and characteristics
-#FooterNote  = ""             # HTML for bottom of every page
-#EditNote    = ""             # HTML notice above buttons on edit page
-#UserGotoBar = ""             # HTML added to end of goto bar
 #HttpCharset = ""             # Charset for pages, like "iso-8859-2"
 
 # Post sizes
@@ -58,11 +49,8 @@ EditAllowed            # if set editing allowed
 UseDiff                # if set use diff features
 FreeLinks              # if set use [[word]] links
 WikiLinks              # if set use LinkPattern
-AdminDelete            # if set Admin only page
 RunCGI                 # if set Run script as CGI
 ShowNid                # if set value of Nid is shown
-#EmailNotify            # if set use email notices
-#EmbedWiki              # if set no headers/footers
 #NonEnglish             # non english characters in links?
 #SimpleLink
 
@@ -75,7 +63,6 @@ BracketText            # if set allow [URL text]
 UseAmPm                # if set use am/pm in times
 UseLookup              # if set lookup host names
 FreeUpper              # if set force upper case
-#LogoLeft              # if set logo on left
 #ShowEdits             # if set show minor edits
 
 # Search Modules:

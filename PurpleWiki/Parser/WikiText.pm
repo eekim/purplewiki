@@ -523,7 +523,7 @@ sub _parseInlineNode {
     $rx .= qq{\\\[$rxProtocols$rxAddress\\s*.*?\\\]|$rxProtocols$rxAddress};
     if ($params{wikiword}) {
         $rx .= qq{|(?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?};
-        $rx .= qq{$rxQuoteDelim|[A-Z]\\w+:[^\\\]\\\#\\s"<>]+};
+        $rx .= qq{$rxQuoteDelim|[A-Z]\\w+:[^\\\]\\\#\\s"<>\:]+};
         $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim|$rxWikiWord};
         $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
     }
@@ -602,6 +602,12 @@ sub _parseInlineNode {
                                                 'content'=>$node);
             }
         }
+        elsif ($params{freelink} && ($node =~ /$rxDoubleBracketed/s)) {
+            $node =~ s/^\[\[//;
+            $node =~ s/\]\]$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
+                                                           'content'=>$node);
+        }
         elsif ($params{wikiword} &&
                ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#[A-Z0-9]+)?$rxQuoteDelim$/s)) {
             $node =~ s/""$//;
@@ -676,12 +682,6 @@ sub _parseInlineNode {
                ($node =~ /$rxWikiWord(?:\#[A-Z0-9]+)?$rxQuoteDelim/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
-                                                           'content'=>$node);
-        }
-        elsif ($params{freelink} && ($node =~ /$rxDoubleBracketed/s)) {
-            $node =~ s/^\[\[//;
-            $node =~ s/\]\]$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
                                                            'content'=>$node);
         }
         elsif ($node ne '') {

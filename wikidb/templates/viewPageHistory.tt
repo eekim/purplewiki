@@ -2,8 +2,6 @@
            title = "History of $pageName"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 [% INCLUDE lib/pageHistory.tt %]

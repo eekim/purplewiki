@@ -41,3 +41,7 @@ Collab:WikiPage/Subpage#A1
 Collab:WikiPage/Subpage#1A
 
 Collab:WikiPage/Subpage#abc
+
+Foo::BarBaz
+
+Perplog::Weblog::LiveJournal

@@ -120,7 +120,7 @@ sub InitCookie {
   %SetCookie = ();
   $TimeZoneOffset = 0;
   undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
-  %UserCookie = $q->cookie($config->CookieName);
+  %UserCookie = $q->cookie($config->SiteName);
   $UserID = $UserCookie{'id'};
   $UserID =~ s/\D//g;  # Numeric only
   if ($UserID < 200) {
@@ -451,7 +451,7 @@ sub getRevisionHistory {
 sub GetHttpHeader {
   my $cookie;
   if (defined($SetCookie{'id'})) {
-    $cookie = $config->CookieName. "="
+    $cookie = $config->SiteName. "="
             . "rev&" . $SetCookie{'rev'}
             . "&id&" . $SetCookie{'id'}
             . "&randkey&" . $SetCookie{'randkey'};
@@ -1465,7 +1465,6 @@ sub getDiffs {
 
     my $added;
     my $removed;
-    my $html;
     foreach my $line (split /\n/, $diffText) {
         my $statusMessage;
         if ($line =~ /^(\d+.*[adc].*)/) {
@@ -1481,30 +1480,24 @@ sub getDiffs {
                 $statusType = 'Changed: ';
             }
             if ($added) {
-                $html = $wikiParser->parse($added,
-                    'freelink' => $config->FreeLinks,
-                    'config' => $config,
-                    'add_node_ids' => 0)->view('wikihtml', config => $config);
-                push @diffs, { type => 'added', text => $html };
+                $added = &QuoteHtml($added);
+                $added =~ s/\n/<br \/>\n/sg;
+                push @diffs, { type => 'added', text => $added };
                 $added = '';
             }
             elsif ($removed) {
-                $html = $wikiParser->parse($removed,
-                    'freelink' => $config->FreeLinks,
-                    'config' => $config,
-                    'add_node_ids' => 0)->view('wikihtml', config => $config);
-                push @diffs, { type => 'removed', text => $html };
+                $removed = &QuoteHtml($removed);
+                $removed =~ s/\n/<br \/>\n/sg;
+                push @diffs, { type => 'removed', text => $removed };
                 $removed = '';
             }
             push @diffs, { type => 'status', text => "$statusType$statusMessage" };
         }
         elsif ($line =~ /^</) { # removed
             if ($added) {
-                $html = $wikiParser->parse($added,
-                    'freelink' => $config->FreeLinks,
-                    'config' => $config,
-                    'add_node_ids' => 0)->view('wikihtml', config => $config);
-                push @diffs, { type => 'added', text => $html };
+                $added = &QuoteHtml($added);
+                $added =~ s/\n/<br \/>\n/sg;
+                push @diffs, { type => 'added', text => $added };
                 $added = '';
             }
             $line =~ s/^< //;
@@ -1512,11 +1505,9 @@ sub getDiffs {
         }
         elsif ($line =~ /^>/) { # added
             if ($removed) {
-                $html = $wikiParser->parse($removed,
-                    'freelink' => $config->FreeLinks,
-                    'config' => $config,
-                    'add_node_ids' => 0)->view('wikihtml', config => $config);
-                push @diffs, { type => 'removed', text => $html };
+                $removed = &QuoteHtml($removed);
+                $removed =~ s/\n/<br \/>\n/sg;
+                push @diffs, { type => 'removed', text => $removed };
                 $removed = '';
             }
             $line =~ s/^> //;
@@ -1524,19 +1515,15 @@ sub getDiffs {
         }
     }
     if ($added) {
-        $html = $wikiParser->parse($added,
-            'freelink' => $config->FreeLinks,
-            'config' => $config,
-            'add_node_ids' => 0)->view('wikihtml', config => $config);
-        push @diffs, { type => 'added', text => $html };
+        $added = &QuoteHtml($added);
+        $added =~ s/\n/<br \/>\n/sg;
+        push @diffs, { type => 'added', text => $added };
         $added = '';
     }
     elsif ($removed) {
-        $html = $wikiParser->parse($removed,
-            'freelink' => $config->FreeLinks,
-            'config' => $config,
-            'add_node_ids' => 0)->view('wikihtml', config => $config);
-        push @diffs, { type => 'removed', text => $html };
+        $removed = &QuoteHtml($removed);
+        $removed =~ s/\n/<br \/>\n/sg;
+        push @diffs, { type => 'removed', text => $removed };
         $removed = '';
     }
     return \@diffs;

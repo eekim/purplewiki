@@ -53,14 +53,12 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 # FIXME: AppConfig apparently requires definition of config file
 # variable outside the config file. That's painful.
 my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
-    WikiLinks AdminDelete RunCGI RecentTop UseDiffLog KeepMajor
-    KeepAuthor BracketText UseAmPm UseLookup FreeUpper EmailNotify
-    EmbedWiki LogoLeft ShowEdits NonEnglish SimpleLinks ShowNid);
-my @SCALAR_CONFIGS = qw( DataDir ScriptName CookieName SiteName
-    HomePage RCName LogoUrl
+    WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
+    BracketText UseAmPm UseLookup FreeUpper ShowEdits NonEnglish
+    SimpleLinks ShowNid);
+my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName 
     StyleSheet SiteBase FullUrl ScriptTZ RcDefault KeepDays AdminPass
-    EditPass EmailFrom SendMail FooterNote EditNote UserGotoBar
-    HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
+    EditPass HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile MovableTypeDirectory ArtsDirectory
     GoogleWSDL GoogleKey HttpUser HttpPass Umask LocalSequenceDir
     RemoteSequenceURL);

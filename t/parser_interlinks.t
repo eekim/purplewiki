@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 83 };
+BEGIN { plan tests => 93 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -28,17 +28,17 @@ sub readFile {
 
 #########################
 
-### tree_test10.txt -- Granular WikiWord links
+### tree_interlinks.txt -- Granular WikiWord links
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/txt/tree_test10.txt');
+my $wikiContent = &readFile('t/txt/tree_interlinks.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
 # Wiki content.  ( tests)
 ok(scalar @{$wiki->root->children} == 1);
 ok($wiki->root->children->[0]->type eq 'section');
-ok(scalar @{$wiki->root->children->[0]->children} == 22);
+ok(scalar @{$wiki->root->children->[0]->children} == 24);
 ok($wiki->root->children->[0]->children->[0]->type eq 'p');
 ok($wiki->root->children->[0]->children->[0]->content->[0]->type
     eq 'wikiword');
@@ -198,3 +198,23 @@ ok($wiki->root->children->[0]->children->[21]->content->[1]->type
     eq 'text');
 ok($wiki->root->children->[0]->children->[21]->content->[1]->content
     eq '#abc');
+
+ok($wiki->root->children->[0]->children->[22]->type eq 'p');
+ok($wiki->root->children->[0]->children->[22]->content->[0]->type
+    eq 'text');
+ok($wiki->root->children->[0]->children->[22]->content->[0]->content
+    eq 'Foo::');
+ok($wiki->root->children->[0]->children->[22]->content->[1]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[22]->content->[1]->content
+    eq 'BarBaz');
+
+ok($wiki->root->children->[0]->children->[23]->type eq 'p');
+ok($wiki->root->children->[0]->children->[23]->content->[0]->type
+    eq 'text');
+ok($wiki->root->children->[0]->children->[23]->content->[0]->content
+    eq 'Perplog::Weblog::');
+ok($wiki->root->children->[0]->children->[23]->content->[1]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[23]->content->[1]->content
+    eq 'LiveJournal');
