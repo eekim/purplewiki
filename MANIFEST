@@ -14,6 +14,7 @@ PurpleWiki/StructuralNode.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Parser/WikiText.pm
 PurpleWiki/View/Debug.pm
+PurpleWiki/View/text.pm
 PurpleWiki/View/WikiHTML.pm
 PurpleWiki/View/WikiText.pm
 t/inline_node.t
