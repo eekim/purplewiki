@@ -1,5 +1,5 @@
-PurpleWiki version 0.1 PRERELEASE
-=================================
+PurpleWiki version 0.1
+======================
 
 PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
 headers, lists, and other fine-grained elements on a Wiki page.  These
@@ -11,10 +11,10 @@ information about purple numbers are at:
 Currently, PurpleWiki consists of a rewritten parser that you drop
 into UseModWiki (http://www.usemod.com/cgi-bin/wiki.pl).  In addition
 to supporting purple numbers, the parser supports multiple output
-formats using drop-in modules.
+formats using drop-in modules.  With the proper output modules,
+PurpleWiki can be used as a document authoring system.
 
-PurpleWiki is currently alpha software.  More information will be
-available at:
+PurpleWiki is available at:
 
   http://www.blueoxen.org/tools/purplewiki/
 
@@ -26,23 +26,34 @@ To play, try:
   % ./wiki_trans.pl t/test04.txt
   % ./wiki_trans.pl t/test05.txt
 
-BUGS
-
-There are plenty, but no showstoppers (that we know of).  Note that
-make test is currently broken.
-
 INSTALLATION
 
-To install this module type the following:
+To install the modules, type the following:
 
-   perl Makefile.PL
-   make
-   make test
-   make install
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+To install the Wiki, copy wiki.pl to your cgi-bin directory.  Create a
+wikidb directory, and copy config and intermap there.  Copy
+purplewiki.css somewhere in your htdocs directory.
+
+You'll need to edit lines in wiki.pl.  First, if you have installed
+PurpleWiki in the default directories, you can remove the line:
+
+  use lib '/home/eekim/devel/PurpleWiki';
+
+Otherwise, change the value to point to the directory where the
+modules are installed.
+
+Second, change $DataDir to point to your wikidb directory.
+
+Finally, edit the config file.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2002 Blue Oxen Associates.
+Copyright (C) 2002-2003 Blue Oxen Associates.
 
 PurpleWiki is derived from:
 
@@ -83,4 +94,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.3 2002/11/25 03:05:04 eekim Exp $
+$Id: README,v 1.4 2003/01/02 06:04:25 eekim Exp $
