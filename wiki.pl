@@ -35,6 +35,7 @@ use strict;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
+use Digest::MD5;
 use URI::Escape;
 use XDI::SPIT;
 use PurpleWiki::Parser::WikiText;
@@ -51,8 +52,6 @@ my $CONFIG_DIR='/var/www/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
-
-my $RTNURL = 'http://planetwork.blueoxen.net/cgi-bin/wiki.pl?';
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
@@ -78,7 +77,7 @@ $config = new PurpleWiki::Config($CONFIG_DIR);
 $wikiParser = PurpleWiki::Parser::WikiText->new;
 # FIXME: would be cool if there were a way to factory this based off a
 #        config value.
-$wikiTemplate = new PurpleWiki::Template::TT(templateDir => "$CONFIG_DIR/templates");
+$wikiTemplate = new PurpleWiki::Template::TT;
 
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;
@@ -137,7 +136,7 @@ sub InitCookie {
   }
   else {
     $user = new PurpleWiki::Database::User('id' => $UserID);
-    if ($user->userExists()) {
+    if ($user->userExists) {
       if ($user->getField('id') != $session->param('userId')) {
         $UserID = 200;
         $session->param('userId', 200);
@@ -771,6 +770,12 @@ sub DoOtherRequest {
       &DoIndex();
     } elsif ($action eq "editprefs") {
       &DoEditPrefs();
+    } elsif ($action eq "getename") {
+      if ($UserID == 200) {
+          &DoGetEname();
+      }
+      else { # return an error
+      }
     } elsif ($action eq "login") {
       &DoEnterLogin();
     } elsif ($action eq "newlogin") {
@@ -801,6 +806,14 @@ sub DoOtherRequest {
     my $xsid = &GetParam('xri_xsid', '');
     &DoEname($ename, $xsid);
     return;
+  }
+
+  $ename = &GetParam("ename", "");
+  if ($ename) {
+      my $localId = &GetParam("local_id", "");
+      my $rrsid = &GetParam("rrsid", "");
+      &DoAssociateEname($ename, $localId, $rrsid);
+      return;
   }
   
   if (&GetParam("edit_prefs", 0)) {
@@ -1155,6 +1168,24 @@ sub DoNewLogin {
   $user->save;
 }
 
+sub CreateNewUser {  # same as DoNewLogin, but no login
+  # Later consider warning if cookie already exists
+  # (maybe use "replace=1" parameter)
+  $user = new PurpleWiki::Database::User;
+  $user->_openNewUser;
+  $user->setField('rev', 1);
+  # The cookie will be transmitted in the next header
+  $user->setField('createtime', $Now);
+  $user->setField('createip', $ENV{REMOTE_ADDR});
+  $user->save;
+  # go back to being a guest
+  my $localId = $session->param('userId');
+  $UserID = 200;
+  $user = new PurpleWiki::Database::User('id' => $UserID);
+  $session->param('userId', 200);
+  return $localId;
+}
+
 sub DoEnterLogin {
     $wikiTemplate->vars(siteName => $config->SiteName,
                         cssFile => $config->StyleSheet,
@@ -1223,6 +1254,29 @@ sub DoLogout {
     print $header . $wikiTemplate->process('logout');
 }
 
+sub DoGetEname {
+    my $localId = &CreateNewUser if ($UserID < 400);
+    my $spkey = $config->{ServiceProviderKey};
+    my $rtnUrl = $config->{ReturnUrl};
+    my $rsid = md5_hex("$UserID$spkey");
+    print "Location: http://dev.idcommons.net/register.html?registry=blueoxen&local_id=$localId&rsid=$rsid&rtn=$rtnUrl\n\n";
+}
+
+sub DoAssociateEname {
+    my ($ename, $localId, $rrsid) = @_;
+
+    if ( $rrsid = md5_hex($localId . $config->{ServiceProviderKey} . 'x') &&
+         ($UserID == 200) ) {
+        # associate ename with ID
+        $user = new PurpleWiki::Database::User('id' => $localId);
+        $user->setField('username', $ename);
+        $user->save;
+        # now login
+        my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->{ReturnUrl});
+        print "Location: $redirectUrl\n\n";
+    }
+}
+
 sub DoEname {
     my ($ename, $xsid) = @_;
 
@@ -1268,7 +1322,7 @@ sub DoEname {
             }
         }
         else {
-            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $RTNURL);
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->{ReturnUrl});
             print "Location: $redirectUrl\n\n";
         }
     }

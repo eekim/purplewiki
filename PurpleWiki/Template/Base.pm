@@ -31,6 +31,7 @@ package PurpleWiki::Template::Base;
 
 use 5.005;
 use strict;
+use PurpleWiki::Config;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -42,8 +43,13 @@ sub new {
     my %options = @_;
     my $self = {};
 
-    $self->{templateDir} = $options{templateDir}
-        if ($options{templateDir});
+    my $config = PurpleWiki::Config->instance;
+    if ($options{templateDir}) {
+        $self->{templateDir} = $options{templateDir};
+    }
+    else {
+        $self->{templateDir} = $config->TemplateDir;
+    }
     bless($self, $this);
     return $self;
 }

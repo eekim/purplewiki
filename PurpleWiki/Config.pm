@@ -59,9 +59,9 @@ my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
 my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName 
     StyleSheet SiteBase FullUrl ScriptTZ RcDefault KeepDays AdminPass
     EditPass HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
-    InterFile RcFile RcOldFile MovableTypeDirectory ArtsDirectory
-    GoogleWSDL GoogleKey HttpUser HttpPass Umask LocalSequenceDir
-    RemoteSequenceURL);
+    InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
+    ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
+    LocalSequenceDir RemoteSequenceURL ServiceProviderKey ReturnUrl);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching
