@@ -52,7 +52,9 @@ sub new {
     # Object State
     $self->{outputString} = "";
     $self->{pageName} = "";
-    $self->{sectionState} = [];
+#    $self->{sectionState} = [];
+    $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
     $self->{url} = $self->{url} || "";
     $self->{transcluder} = new PurpleWiki::Transclusion(
         config => $self->{config},
@@ -66,21 +68,24 @@ sub new {
 
 sub view {
     my ($self, $wikiTree) = @_;
-    $self->{sectionState} = [];
+#    $self->{sectionState} = [];
     $self->SUPER::view($wikiTree);
     return $self->{outputString};
 }
 
 sub sectionPre { 
     my $self = shift;
-    push @{$self->{sectionState}}, 'section';
+#    push @{$self->{sectionState}}, 'section';
+    $self->{sectionDepth}++;
     $self->_hardRule;
     $self->{isPrevSection} = 1;
 }
 
 sub sectionPost { 
     my $self = shift;
-    pop @{$self->{sectionState}}; 
+    $self->{depthLastClosedSection} = $self->{sectionDepth};
+    $self->{sectionDepth}--;
+#    pop @{$self->{sectionState}}; 
     $self->_hardRule;
     $self->{isStart} = 0;
 }
@@ -341,7 +346,8 @@ sub _quoteHtml {
 
 sub _headerLevel {
     my $self = shift;
-    my $headerLevel = scalar @{$self->{sectionState}} + 1;
+    my $headerLevel = $self->{sectionDepth} + 1;
+#    my $headerLevel = scalar @{$self->{sectionState}} + 1;
 
     $headerLevel = 6 if $headerLevel > 6;
     return $headerLevel;

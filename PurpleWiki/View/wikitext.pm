@@ -51,6 +51,7 @@ sub new {
     # Object State
     $self->{outputString} = "";
     $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
     $self->{indentDepth} = 0;
     $self->{listStack} = [];
     $self->{isPrevSection} = 0;
@@ -77,6 +78,7 @@ sub sectionPre {
 
 sub sectionPost {
     my $self = shift;
+    $self->{depthLastClosedSection} = $self->{sectionDepth};
     $self->{sectionDepth}--;
     $self->{lastInlineProcessed} = '';
     $self->_hardRule;
@@ -280,7 +282,8 @@ sub imagePost {
 sub _hardRule {
     my $self = shift;
 
-    if ($self->{isPrevSection}) {
+    if ( $self->{isPrevSection} && 
+        ($self->{sectionDepth} == $self->{depthLastClosedSection}) ) {
         if (!$self->{isStart}) {
             $self->{outputString} .= "----\n\n";
         }
@@ -396,7 +399,7 @@ by view().
 
 =head2 new(config => $config)
 
-Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
+Returns a new PurpleWiki::View::wikitext object  If config is not passed in
 then a fatal error occurs.  
 
 =head2 view($wikiTree)
