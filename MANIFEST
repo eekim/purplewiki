@@ -14,6 +14,7 @@ PurpleWiki/Page.pm
 PurpleWiki/Parser/WikiText.pm
 PurpleWiki/Search/Arts.pm
 PurpleWiki/Search/Engine.pm
+PurpleWiki/Search/Google.pm
 PurpleWiki/Search/Interface.pm
 PurpleWiki/Search/IrcLogger.pm
 PurpleWiki/Search/MovableType.pm
