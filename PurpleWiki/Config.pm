@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.2.2.2 2003/06/12 10:22:17 cdent Exp $
+# $Id: Config.pm,v 1.2.2.3 2003/06/13 19:54:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,11 +32,10 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.2.2.2 2003/06/12 10:22:17 cdent Exp $
+# $Id: Config.pm,v 1.2.2.3 2003/06/13 19:54:17 cdent Exp $
 
 use strict;
 use AppConfig;
-use Data::Dumper;
 
 # Field separators that delimit page storage
 my $FS  = "\xb3";      # The FS character is a superscript "3"
@@ -83,6 +82,7 @@ sub new {
 
 sub print {
     my $self = shift;
+    require Data::Dumper;
 
     my %varlist = $self->{AppConfig}->varlist('.*');
     no strict 'refs';
