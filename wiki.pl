@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.11 2003/08/28 17:17:34 eekim Exp $
+# $Id: wiki.pl,v 1.12 2003/12/31 08:02:51 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -38,6 +38,7 @@ use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
 use PurpleWiki::Database::User;
 use PurpleWiki::Database::KeptRevision;
+use PurpleWiki::Search::Engine;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 
@@ -1759,7 +1760,12 @@ sub DoSearch {
   }
   print &GetHeader('', &QuoteHtml("Search for: $string"), '');
   print '<br>';
-  &PrintPageList(&SearchTitleAndBody($string));
+
+  # do the new pluggable search
+  my $search = new PurpleWiki::Search::Engine(config => $config);
+  $search->search($string);
+  print $search->asHTML();
+
   print &GetCommonFooter();
 }
 

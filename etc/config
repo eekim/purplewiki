@@ -71,6 +71,14 @@ FreeUpper              # if set force upper case
 #LogoLeft              # if set logo on left
 #ShowEdits             # if set show minor edits
 
+# Search Modules:
+SearchModule	=	Wiki
+#SearchModule	=	MovableType
+
+# Search Additional Config
+#MovableTypeDirectory	= 	/home/cdent/www/mt/
+#MovableTypeBlogID	=	1
+
 # == You should not have to change anything below this line. =============
 PageDir     = $DataDir/page      # Stores page data
 UserDir     = $DataDir/user      # Stores user data
