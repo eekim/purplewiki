@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikitext.pm
 #
-# $Id: wikitext.pm,v 1.2.2.1 2003/01/20 21:06:46 eekim Exp $
+# $Id: wikitext.pm,v 1.2.2.2 2003/01/23 00:47:13 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -117,6 +117,7 @@ sub registerHandlers {
         sub { my $structuralNode = shift;
               my $outputString = &_nid($structuralNode->id) . "\n";
               $outputString .= "\n" if ($indentDepth == 0);
+              undef $lastInlineProcessed;
               return $outputString; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} =
