@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.13 2004/01/05 18:13:53 eekim Exp $
+# $Id: wiki.pl,v 1.14 2004/02/07 02:20:57 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -66,6 +66,9 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
 # we only need one of each these per run
 $wikiParser = PurpleWiki::Parser::WikiText->new;
 $config = new PurpleWiki::Config($CONFIG_DIR);
+
+# Set our umask if one was put in the config file. - matthew
+umask(oct($config->Umask)) if defined $config->Umask;
 
 # The "main" program, called from the end of this script file.
 sub DoWikiRequest {
@@ -509,7 +512,10 @@ sub DoHistory {
     config => $config);
   foreach my $section (reverse sort {$a->getRevision() <=> $b->getRevision()}
                     $keptRevision->getSections()) {
-    $html .= &GetHistoryLine($id, $section, $canEdit, 0);
+    # If KeptRevision == Current Revision don't print it. - matthew
+    if ($section->getRevision() != $page->getSection()->getRevision()) {
+      $html .= &GetHistoryLine($id, $section, $canEdit, 0);
+    }
   }
   print $html;
   print &GetCommonFooter();
@@ -1893,12 +1899,15 @@ sub DoPost {
     $page->setPageCache('oldauthor', $section->getRevision());
   }
 
+  # I removed the if statement and moved the 3 lines of code down below 
+  #     -matthew
+  #
   # only save section if it is not the first
-  if ($section->getRevision() > 0) {
-    $keptRevision->addSection($section, $Now);
-    $keptRevision->trimKepts($Now);
-    $keptRevision->save();
-  }
+  #if ($section->getRevision() > 0) {
+  #  $keptRevision->addSection($section, $Now);
+  #  $keptRevision->trimKepts($Now);
+  #  $keptRevision->save();
+  #}
 
   if ($config->UseDiff) {
     # FIXME: how many args does it take to screw a pooch?
@@ -1912,6 +1921,9 @@ sub DoPost {
   # FIXME: redundancy in data structure here
   $section->setRevision($section->getRevision() + 1);
   $section->setTS($Now);
+  $keptRevision->addSection($section, $Now);
+  $keptRevision->trimKepts($Now);
+  $keptRevision->save();
   $page->setRevision($section->getRevision());
   $page->setTS($Now);
   $page->save();
