@@ -14,7 +14,7 @@ PurpleWiki/Database/KeptRevision.pm
 PurpleWiki/Database/Page.pm
 PurpleWiki/Database/Section.pm
 PurpleWiki/Database/Text.pm
-PurpleWiki/Database/User.pm
+PurpleWiki/Database/User/UseMod.pm
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
 PurpleWiki/Parser/MoinMoin.pm
@@ -35,6 +35,7 @@ PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Template/Base.pm
 PurpleWiki/Template/TT.pm
+PurpleWiki/User.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/Filter.pm
@@ -84,6 +85,7 @@ t/parser_pre.t
 t/sequence.t
 t/structural_node.t
 t/tree.t
+t/userdb.t
 t/wikitext.t
 t/output/hr1.txt
 t/output/hr2.txt

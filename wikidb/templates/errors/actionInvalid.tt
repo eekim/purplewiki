@@ -2,8 +2,6 @@
            title = "Error!"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 <h2>Invalid action parameter [% action %]</h2>

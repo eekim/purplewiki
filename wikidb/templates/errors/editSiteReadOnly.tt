@@ -2,8 +2,6 @@
            title = "Editing Denied"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 <p>Editing not allowed: [% siteName %] is read-only.</p>

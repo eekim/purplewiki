@@ -2,8 +2,6 @@
            title = "Error!"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 <h2>[% pageName %] cannot be defined.</h2>

@@ -322,7 +322,7 @@ sub recentChanges {
             chomp $logEntry;
             my $fsexp = $config->FS3;
             my @entries = split /$fsexp/, $logEntry;
-            if (scalar @entries == 7 && $entries[0] >= $timeStamp) {  # Check timestamp
+            if (scalar @entries >= 6 && $entries[0] >= $timeStamp) {  # Check timestamp
                 my $name = $entries[1];
                 if ( $pages{$name} &&
                     ($pages{$name}->{timeStamp} > $entries[0]) ) {

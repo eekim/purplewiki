@@ -2,8 +2,6 @@
            title = "Error!"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 <h2>Invalid e-name.  Try again.</h2>

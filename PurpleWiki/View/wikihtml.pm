@@ -160,10 +160,10 @@ sub hPost {
 }
 
 sub pPre {
-    my $self = shift;
+    my ($self, $node) = @_;
 
     $self->_hardRule(0);
-    $self->_openTagWithNID(@_);
+    $self->_openTagWithNID($node);
 }
 
 sub liPre { shift->_openTagWithNID(@_) }
@@ -386,11 +386,10 @@ sub _nid {
 
     my $nidFace = '#';
 
-    if ($self->{config}->ShowNid) {
-        $nidFace = "($nid)";
-    }
-
     if ($nid) {
+        if ($self->{config}->ShowNid) {
+            $nidFace = "($nid)";
+        }
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
             'title="' . "$nid" . '" href="' .
             $self->{url} . '#nid' .

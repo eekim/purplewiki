@@ -61,7 +61,8 @@ my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName
     EditPass HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
-    LocalSequenceDir RemoteSequenceURL ServiceProviderKey ReturnUrl);
+    LocalSequenceDir RemoteSequenceURL ServiceProviderKey ReturnUrl
+    ScriptDir);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching

@@ -353,7 +353,7 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
+            $nodeContent =~  s/\s*\{nid ([A-Z0-9]+)\}$//s;
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent, %params));
@@ -508,8 +508,10 @@ sub _terminateNode {
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
         ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
         chomp ${$nodeContentRef};
-        ${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s;
-        $currentNid = $1;
+        if (${$nodeContentRef} =~ /\s*\{nid ([A-Z0-9]+)\}$/) {
+            $currentNid = $1;
+            ${$nodeContentRef} =~ s/\s*\{nid [A-Z0-9]+\}$//s;
+        }
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
@@ -557,7 +559,7 @@ sub _parseList {
         ${$listDepthRef}--;
     }
     if ($listType eq 'dl') {
-        $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
+        $nodeContents[0] =~  s/\s*\{nid ([A-Z0-9]+)\}$//s;
         my $currentNid = $1;
         $currentNode = $currentNode->insertChild(type=>'dt',
             content=>&_parseInlineNode($nodeContents[0], %{$paramRef}));

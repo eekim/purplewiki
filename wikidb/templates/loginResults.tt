@@ -5,9 +5,9 @@
 <hr />
 
 [% IF loginSuccess %]
-<p>Login for user ID [% userName %] complete.</p>
+<p>Login for [% userName %] complete.</p>
 [% ELSE %]
-<p>Login for user ID [% userName %] failed.</p>
+<p>Login for [% userName %] failed.</p>
 [% END %]
 
 <hr />

@@ -9,66 +9,20 @@
 
 <p><b>User Information:</b><br />
 Your User ID number: [% userId %]<br />
-UserName: <input type="text" name="p_username" value="[% userName %]" size="20" maxlength="50" />
-(blank to remove, or valid page name)<br />
+UserName: 
+[% IF userName %]
+[% userName %]
+[% ELSE %]
+<input type="text" name="p_username" size="20" maxlength="50" />
+(blank to remove, or valid page name)
+[% END %]
+<br />
 Set Password: <input type="password" name="p_password" value="*" size="15" maxlength="50" />
 (blank to remove password)<br />
 (Passwords allow sharing preferences between multiple systems. Passwords are completely optional.)</p>
 
-<hr />
-
 <p><b>RecentChanges:</b><br />
-Default days to display: <input type="text" name="p_rcdays" value="[% rcDefault %]" size="4" maxlength="9" /><br />
-[% IF recentTop %]
-<input type="checkbox" name="p_rcnewtop" value="on" checked="checked" />
-[% ELSE %]
-<input type="checkbox" name="p_rcnewtop" value="on" />
-[% END %]
-Most recent changes on top<br />
-<input type="checkbox" name="p_rcall" value="on" />
-Show all changes (not just most recent)<br />
-Minor edit display:
-<select name="p_rcshowedit">
-[% IF showEdits == 1 %]
-<option value="0">Hide minor edits</option>
-<option selected="selected" value="1">Show minor edits</option>
-<option value="2">Show only minor edits</option>
-[% ELSIF showEdits == 2 %]
-<option value="0">Hide minor edits</option>
-<option value="1">Show minor edits</option>
-<option selected="selected" value="2">Show only minor edits</option>
-[% ELSE %]
-<option selected="selected" value="0">Hide minor edits</option>
-<option value="1">Show minor edits</option>
-<option value="2">Show only minor edits</option>
-[% END %]
-</select><br />
-<input type="checkbox" name="p_rcchangehist" value="on" checked="checked" />Use "changes" as link to history</p>
-
-<hr />
-
-<p><b>Differences:</b><br />
-<input type="checkbox" name="p_diffrclink" value="on" checked="checked" /> Show (diff) links on RecentChanges<br />
-<input type="checkbox" name="p_alldiff" value="on" /> Show differences on all pages
-(<input type="checkbox" name="p_norcdiff" value="on" checked="checked" /> No differences on RecentChanges)<br />
-Default difference type:
-<select name="p_defaultdiff">
-[% IF defaultDiff == 1 %]
-<option selected="selected" value="1">Major</option>
-<option value="2">Minor</option>
-<option value="3">Author</option>
-[% ELSIF defaultDiff == 2 %]
-<option value="1">Major</option>
-<option selected="selected" value="2">Minor</option>
-<option value="3">Author</option>
-[% ELSE %]
-<option value="1">Major</option>
-<option value="2">Minor</option>
-<option selected="selected" value="3">Author</option>
-[% END %]
-</select></p>
-
-<hr />
+Default days to display: <input type="text" name="p_rcdays" value="[% rcDefault %]" size="4" maxlength="9" /></p>
 
 <p><b>Misc:</b><br />
 Server time: [% serverTime %]<br />
