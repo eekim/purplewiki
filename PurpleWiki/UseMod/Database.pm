@@ -47,12 +47,19 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 # to mortals.
 # Private.
 sub _RequestLockDir {
-    my ($name, $tries, $wait, $errorDie) = @_;
+    my ($name, $tries, $wait, $errorDie, $lockdir, $tempdir) = @_;
     my ($lockName, $n);
     my $config = PurpleWiki::Config->instance();
 
-    &PurpleWiki::Misc::CreateDir($config->TempDir);
-    $lockName = $config->LockDir . $name;
+    if ($config) {
+        $tempdir = $config->TempDir;
+        $lockdir = $config->LockDir;
+    } elsif (!$tempdir) {
+        $tempdir = (m|/[^/]+$|) ? $` : '';
+    }
+    die("No lockdir") unless $lockdir;
+    &PurpleWiki::Misc::CreateDir($tempdir);
+    $lockName = $lockdir . $name;
     $n = 0;
     while (mkdir($lockName, 0555) == 0) {
         if ($! != 17) {
@@ -68,34 +75,38 @@ sub _RequestLockDir {
 # Removes the locking directory, destroying the lock
 # Private
 sub _ReleaseLockDir {
-    my ($name) = @_;
+    my ($name, $lockdir) = @_;
     my $config = PurpleWiki::Config->instance();
-    rmdir($config->LockDir . $name);
+    if ($config) {
+        $lockdir = $config->LockDir;
+    }
+    die("No lockdir") unless $lockdir;
+    rmdir($lockdir . $name);
 }
 
 # Requests a general editing lock for the system.
 # Public
 sub RequestLock {
     # 10 tries, 3 second wait, die on error
-    return _RequestLockDir("main", 10, 3, 1);
+    return _RequestLockDir("main", 10, 3, 1, @_);
 }
 
 # Releases the general editing lock
 # Public
 sub ReleaseLock {
-    _ReleaseLockDir('main');
+    _ReleaseLockDir('main', @_);
 }
 
 # Forces the lock to be released
 # Public
 sub ForceReleaseLock {
-    my ($name) = @_;
+    my ($name) = shift;
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !_RequestLockDir($name, 5, 3, 0);
-    _ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
+    $forced = !_RequestLockDir($name, 5, 3, 0, @_);
+    _ReleaseLockDir($name, @_);  # Release the lock, even if we didn't get it.
     return $forced;
 }
 

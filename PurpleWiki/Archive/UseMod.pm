@@ -64,6 +64,8 @@ sub new {
     $self->{rcfile} = $config->RcFile;
     $self->{keepdays} = $config->KeepDays;
     $self->{keepdir} = $config->KeepDir;
+    $self->{tempdir} = $config->TempDir;
+    $self->{lockdir} = $config->LockDir;
   } else {
     my $x;
     $datadir = $args{DataDir};
@@ -72,9 +74,17 @@ sub new {
     $self->{fs2} = "\xb32";
     $self->{fs3} = "\xb33";
   }
-  $self->{pagedir} = "$datadir/page" unless defined($self->{pagedir});
-  $self->{keepdir} = "$datadir/keep" unless defined($self->{keepdir});
-  $self->{rcfile} = "$datadir/rclog" unless defined($self->{rcfile});
+  $self->{pagedir} = $args{PageDir} || "$datadir/page"
+      unless defined($self->{pagedir});
+  $self->{keepdir} = $args{KeepDir} || "$datadir/keep"
+      unless defined($self->{keepdir});
+  $self->{rcfile} = $args{RcFile} || "$datadir/rclog"
+      unless defined($self->{rcfile});
+  $self->{tempdir} = $args{TempDir} || "$datadir/temp"
+      unless defined($self->{tempdir});
+  $self->{lockdir} = $args{LockDir} || "$self->{tempdir}/lock"
+      unless defined($self->{lockdir});
+
   if ($args{create} && !-d $datadir) {
       mkdir $datadir;
   }
@@ -199,12 +209,12 @@ sub recentChanges {
 }
 
 sub _releaseLock {
-  PurpleWiki::UseMod::Database::ReleaseLock;
+  PurpleWiki::UseMod::Database::ReleaseLock($self->{lockdir});
 }
 
 sub _requestLock {
   # need to add code to force it when the lock is stale
-  PurpleWiki::UseMod::Database::RequestLock;
+  PurpleWiki::UseMod::Database::RequestLock($self->{lockdir}, $self->{tempdir});
 }
 
 sub _WriteRcLog {
