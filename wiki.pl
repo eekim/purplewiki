@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.6 2003/02/03 18:31:53 cdent Exp $
+# $Id: wiki.pl,v 1.6.2.1 2003/02/06 05:19:46 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -31,7 +31,7 @@
 #    Boston, MA 02111-1307 USA
 
 package UseModWiki;
-use lib '/home/cdent/src/PurpleWiki.refactor';
+use lib '/home/cdent/src/PurpleWiki.nidGen';
 use strict;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
