@@ -34,7 +34,7 @@ find(sub {-f && /^(\d+)\.db/ && push @userIds, $1}, ( $userDir ) );
 
 my @toDelete;
 
-my $userDb = new PurpleWiki::UseMod::User::UseMod;
+my $userDb = new PurpleWiki::UserDB::UseMod;
 foreach my $userId (sort @userIds) {
     my $user = $userDb->loadUser($userId);
     if ($user) {

@@ -54,9 +54,10 @@ sub siteExists {
 
 sub getWikiWordLink {
     my $id = shift;
+    my $archive = shift;
 
     my $results;
-    $results = GetPageOrEditLink($id, '');
+    $results = GetPageOrEditLink($id, '', $archive);
     return _makeURL($results);
 }
 
@@ -70,9 +71,10 @@ sub getInterWikiLink {
 
 sub getFreeLink {
     my $id = shift;
+    my $archive = shift;
 
     my $results;
-    $results = (GetPageOrEditLink($id, ''))[0];
+    $results = (GetPageOrEditLink($id, '', $archive))[0];
     return _makeURL($results);
 }
 
@@ -83,7 +85,7 @@ sub _makeURL {
 
 # FIXME: this is hackery 
 sub GetPageOrEditLink {
-  my ($id, $name) = @_;
+  my ($id, $name, $archive) = @_;
   my (@temp);
   my $config = PurpleWiki::Config->instance();
 
@@ -100,7 +102,7 @@ sub GetPageOrEditLink {
     $id = FreeToNormal($id);
   }
   
-  if ($config->{pages}->pageExists($id)) {      # Page file exists
+  if (!$archive || $archive->pageExists($id)) {      # Page file exists
     return GetPageLinkText($id, $name);
   }
   if ($config->FreeLinks) {
@@ -154,7 +156,7 @@ sub ScriptLink {
   my ($action, $text) = @_;
   my $config = PurpleWiki::Config->instance();
 
-  my $scriptName = $config->ScriptName;
+  my $scriptName = $config->BaseURL;
   return "<a href=\"$scriptName?$action\">$text</a>";
 }
 

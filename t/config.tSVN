@@ -7,14 +7,13 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /example/testwiki.cgi # The name of the wiki script, for use in urls
-ScriptDir   = /cgi-bin/
+BaseURL  = /example/testwiki.cgi # The name of the wiki script, for use in urls
+CookieDir   = /cgi-bin/
 SiteName    = TestWiki        # Name of site (used for titles)
 HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
-#FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
-DatabasePackage = PurpleWiki::Archive::Subversion
+ArchiveDriver = PurpleWiki::Archive::Subversion
 ReposPath   = /wiki
 DataDir     = t/tDB
 LocalSequenceDir = $DataDir
@@ -68,6 +67,19 @@ UseAmPm                # if set use am/pm in times
 FreeUpper              # if set force upper case
 #ShowEdits             # if set show minor edits
 
+# PurpleWiki Modules
+# other drivers: request spit search
+Driver wikiparser   = PurpleWiki::Parser::WikiText
+Driver template     = PurpleWiki::Template::TT
+Driver userdb       = PurpleWiki::UserDB::UseMod
+Driver acl          = PurpleWiki::ACL
+Driver archive      = PurpleWiki::Archive::Subversion
+
+Action rss    = PupleWiki::Action::Rss.pm
+Action search = PupleWiki::Action::Search.pm
+Action unlock = PupleWiki::Action::Unlock.pm
+Action user   = PupleWiki::Action::User.pm
+Action wiki   = PupleWiki::Action::Wiki.pm
 # == You should not have to change anything below this line. =============
 UserDir     = $DataDir/user      # Stores user data
 TempDir     = $DataDir/temp      # Temporary files and locks

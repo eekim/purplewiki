@@ -12,7 +12,7 @@
 # To use this script you must first translate your existing
 # config to the new format. The easiest thing to do to do 
 # that is to take the new example format and port your config
-# to it. It is especially important that you get the ScriptName
+# to it. It is especially important that you get the BaseURL
 # configuration variable set correctly. If you do not, transclusion
 # will not work correctly.
 #
@@ -27,7 +27,7 @@
 #
 # For the URL portion you just provide the protocol, host and port
 # (if not 80) information. Do not provide the path. That comes
-# from the ScriptName in the config.
+# from the BaseURL in the config.
 #
 
 use PurpleWiki::Config;
@@ -71,7 +71,7 @@ foreach $id (@pageList) {
     $oldText =~ s/\s+\[nid\s+\d+\]//gs;
     $oldText =~ s/\[lastnid\s+\d+\]\n?//gs;
 
-    my $fullUrl = $url . $config->ScriptName . '?' . $id;
+    my $fullUrl = $url . $config->BaseURL . '?' . $id;
     my $wiki = $wikiParser->parse(
         $oldText,
         add_node_ids => 1,

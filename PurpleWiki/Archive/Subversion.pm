@@ -372,7 +372,7 @@ sub getRevisions {
     $u =~ s/:.*$//;
 #print STDERR "histlog (r=>$r, u=>$u, t=>$t, s=>$l) $#$response\n";
     push( @$response, {revision=>$r, userId=>$u,
-                      dateTime=>UseModWiki::TimeToText($t), summary=>$l} );
+                      dateTime=>PurpleWiki::TimeToText($t), summary=>$l} );
   }
 
   my $repos = $self->{repos_ptr};

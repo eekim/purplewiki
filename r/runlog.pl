@@ -187,7 +187,7 @@ my ($child, $kid);
     } else {
         # in child, run the test and exit
         require "./wiki.pl";
-        &UseModWiki::DoWikiRequest($q);
+        &PurpleWiki::DoCGIRequest($q);
         exit;
     }
     close STDOUT;

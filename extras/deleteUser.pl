@@ -27,7 +27,7 @@ else {
 }
 
 my $config = new PurpleWiki::Config($CONFIG);
-my $userDb = new PurpleWiki::UseMod::User::UseMod;
+my $userDb = new PurpleWiki::UserDB::UseMod;
 $userDb->deleteUser($userName);
 
 =head1 NAME

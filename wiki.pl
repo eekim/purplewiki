@@ -30,9 +30,11 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package UseModWiki;
-use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
+package PurpleWiki;
+
 use strict;
+use lib '/home/gerry/purple/blueoxen/branches/action-plugins';
+
 my $useCap=0;
 eval "use Authen::Captcha; $useCap=1;";
 use CGI;
@@ -40,16 +42,13 @@ use CGI::Carp qw(fatalsToBrowser);
 use PurpleWiki::Config;
 use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/var/www/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-local $| = 1;  # Do not buffer output (localized for mod_perl)
-
 my $InterSiteInit = 0;
 my %InterSite;
-my $user;               # our reference to the logged in user
 my $visitedPagesCache;
 my $visitedPagesCacheSize = 7;
 
@@ -57,33 +56,36 @@ my $q;                  # CGI query reference
 
 # we only need one of each these per run
 my $config = new PurpleWiki::Config($CONFIG_DIR);
-my $context = {};
+my %context = ();
 $context{config} = $config;
 
-my @modules = qw( wikiparser pages userdb template request acl spit search );
-my %modules = $config->Module;
+my @modules = qw( wikiparser archive userdb template request acl spit search );
+my $modules = $config->Driver;
 my @loaderror = ();
 
 for my $module (@modules) {
-    loadModule($modules{$module});
+    loadModule($module, $modules->{$module});
 }
 
-for my $module (keys %modules) {
-    loadModule($modules{$module}) unless ($context{$module});
+for my $module (keys %$modules) {
+    loadModule($module, $modules->{$module}) unless ($context{$module});
 }
 
-sub loadModule {
-    my $class = shift;
-    return unless $class;
+my $actions = $config->Action;
+my $requestHandler = $context{request};
+
+for my $action (keys %$actions) {
+    my $class = $actions->{$action};
+    next unless $class;
     eval "require $class";
     if ($@) {
-        push(@$loadErrors, "Error $@ loading $class for $module\n");
+print STDERR "Error $@ loading $class for $action\n";
+        push(@loaderror, "Error $@ loading $class for $action\n");
         next;
     }
-    $class .= 's' if ($module eq 'pages' && substr($class,-1,1) ne 's');
-    unless ($context{$module} = $class->new($config)) {
-        push(@loaderror, "Error loading $class for $module");
-    }
+#print STDERR "Loaded Action $action ${class}::register(\$requestHandler)\n";
+    eval "${class}::register(\$requestHandler)";
+#print STDERR "register($@)\n" if ($@);
 }
 
 #my $wikiParser = $context{wikiparser};
@@ -91,62 +93,123 @@ sub loadModule {
 my $userDb = $context{userdb};
 #my $acl = $context{acl};
 
+# check for i-names support ???
+if ($config->UseINames) {
+    require XDI::SPIT;
+}
+
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;
 
-sub DoCommandRequest {
-    my $request = InitCommandRequest();
-    my $action = $request->action() || 'browse';
-    my $actionClass = $config->Action->{$action};
-    $actionClass->$action($request) if ($actionClass);
-    &logSession($request);
-}
-
-sub InitCommandRequst {
-    if (@loaderror) {
-        print STDERR join("\n",@loaderror),"\n";
-        die "Error initializing modules";
+sub loadModule {
+    my $module = shift;
+    my $class = shift;
+    return unless $class;
+#print STDERR "Loading Module $module $class\n";
+    eval "require $class";
+    if ($@) {
+        push(@loaderror, "Error $@ loading $class for $module\n");
+        next;
     }
-    my $request = $context->{request}->parseRequest($context, argv => \@ARGV);
-    $request->{tzoffset} = 0;
-}
-
-sub DoCGIRequest {
-    my $request = InitCGIRequest();
-    my $action = $request->action() || 'browse';
-    my $actionClass = $config->Action->{$action};
-    if ($actionClass) {
-        $actionClass->$action($request);
+    unless ($context{$module} = ($module eq 'archive')
+                                ? $class->new($config, create => 1)
+                                : $class->new($config)) {
+        push(@loaderror, "Error loading $class for $module");
+        $context{$module} = 1;
     }
-    &logSession($request);
 }
 
+# CGI requests
 sub InitCGIRequest {
-    my $q = new CGI;
+    my $req = shift;
+    my $q;
+    if ($req) {
+        $q = $req;
+    } else {
+        $CGI::POST_MAX = $config->MaxPost;
+        $CGI::DISABLE_UPLOADS = 1;  # no uploads
+        $q = new CGI;
+        #dumpParams($q);
+    }
+
     if (@loaderror) {
-        $context->{template}->vars(&globalTemplateVars, error => \@loaderror);
-        print GetHttpHeader($q), $context->{template}->process('errors/internalError');
+print STDERR "Loading errors:\n",@loaderror,"\n";
+        $context{template}->vars(error => \@loaderror);
+        print "Context-Type: text/html\n\n";
+        print $context{template}->process('errors/internalError');
         return 0;
     }
-    my $request = $context->{request}->parseRequest($context, cgi => $q);
-    $request->{tzoffset} = 0;
+    my $tzoffset = 0;
     undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
 
     my $sid = ($config->CookieName) ? $q->cookie($config->CookieName)
                                     : $q->cookie($config->SiteName);
-    $session = PurpleWiki::Session->new($sid);
+    my $session = PurpleWiki::Session->new($sid);
     my $userId = $session->param('userId');
-    $request->{user} = $userDb->loadUser($userId) if ($userId);
+    my $user;
+    $user = $userDb->loadUser($userId) if ($userId);
     $session->clear(['userId']) if (!$user);
-    $request->session($session);
 
     if ($user && $user->tzOffset != 0) {
-        $request->{tzoffset} = $user->tzOffset * (60 * 60);
+        $tzoffset = $user->tzOffset * (60 * 60);
     }
 
+#print STDERR "Parse request $user $session $q\n";
+    my $request = $context{request}->parseRequest(\%context, $user, cgi => $q,
+                    user => $user, session => $session, tzoffset => $tzoffset);
     $visitedPagesCache = $session->param('visitedPagesCache') || {};
+    $request;
 }
 
+sub DoCGIRequest {
+    my $request = InitCGIRequest(@_);
+print STDERR "Warning: missing request\n" unless $request;
+    return unless $request;
+    my $context = $request->context();
+    my $template = $context->{template};
+    my $error = $request->error();
+    if ($error) {
+        $request->getHttpHeader;
+        $template->vars(&globalTemplateVars($request),
+                        pageName => $request->id());
+        print $template->process("errors/$error");
+        return;
+    }
+
+#print STDERR "R:",ref($request)," :$request->{action}:\n";
+    my $actionMethod = $request->action();
+    if (ref($actionMethod)) {
+        &$actionMethod($request);
+    } else {
+        $template->vars(&globalTemplateVars($request),
+                          error => "Action $actionMethod not specified\n");
+        $request->getHttpHeader;
+        print $template->process('errors/internalError');
+        return 0;
+    }
+    &logSession($request);
+}
+
+# handle requests from command line invocation.
+sub InitCommandRequst {
+    die join("\n",@loaderror)."\nError initializing modules\n" if (@loaderror);
+
+    my $request = $context{request}->parseRequest(\%context, undef, argv => \@ARGV);
+    $request;
+}
+
+sub DoCommandRequest {
+    my $request = InitCommandRequest();
+    my $actionMethod = $requestHandler->action();
+    if (ref($actionMethod)) {
+        &$actionMethod($request);
+        &logSession($request);
+    } else {
+        die "Action $actionMethod not specified\n";
+    }
+}
+
+# debugging only
 sub dumpParams {
   my $q = shift;
   my $F;
@@ -156,27 +219,11 @@ sub dumpParams {
   close $F;
 }
 
-sub parseRequest {
-  my ($context) = shift;
-  my %args = @_;
-  my ($id, $action, $text, $urlPage);
-
-  if ($urlPage = (!$req->param) ? $self->{homepage}
-                                : $self->getParam($req, 'keywords', '')) {
-    $self->{urlPage} = $urlPage;
-    $id = $self->getId();
-    $page = $self->{pages}->newPageId($id);
-    $self->{page} =
-    BrowsePage($page, $id)  if ValidIdOrDie($id);
-    return 1;
-  }
-                            
-  $self->{action} = lc(GetParam('action', ''));
-  $self->{id} = GetParam('id', $config->HomePage);
-  $self->{revision} = $request->revision();
-}
+##### Common support #####
 
 sub preferredLanguages {
+    my $request = shift;
+    my $q = $request->CGI();
     my @langStrings = split(/\s*,\s*/, $q->http('Accept-Language'));
     my @languages;
     my @toSort;
@@ -196,18 +243,24 @@ sub preferredLanguages {
 }
 
 sub logSession {
-    my $request = shift;
-    my $q = $request->CGI();
-    open FH, ">>$CONFIG_DIR/session_log";
+  my $request = shift;
+  my $q = $request->CGI();
+  open FH, ">>$CONFIG_DIR/session_log" || return;
+  if ($q) {
     print FH time, "\t", $request->session->id, "\t", $q->request_method, "\t";
     print FH $q->query_string if ($q->request_method ne 'POST');
     print FH "\t", $q->remote_host, "\t", $request->session->param('userId'),
              "\t",  $q->referer . "\n";
-    close FH;
+  } else {
+    print FH time,"\t\tCOMMAND\t";
+    print FH join(", ", $request->ARGS()),"\n";
+  }
+  close FH;
 }
 
 sub updateVisitedPagesCache {
-    my $id = shift;
+    my $request = shift;
+    my $id = $request->id();
 
     my @pages = keys %{$visitedPagesCache};
     if (!defined $visitedPagesCache->{$id} &&
@@ -240,8 +293,33 @@ sub visitedPages {
     return @pages;
 }
 
+sub expandPageName {
+    my $pageName = shift;
+
+    if ($pageName !~ / /) {
+        $pageName =~ s/([a-z0-9])([A-Z])/$1 $2/g;
+        $pageName =~ s/([a-z])([0-9])/$1 $2/g;
+    }
+    return $pageName;
+}
+
+sub globalTemplateVars {
+    my $request = shift;
+    my $user = $request->user();
+    my $session = $request->session();
+    my $config = $request->context()->{config};
+
+    return (siteName => $config->SiteName,
+            baseUrl => $config->BaseURL,
+            homePage => $config->HomePage,
+            userName => $user ? $user->username : undef,
+            userId => $user ? $user->id : undef,
+            preferencesUrl => $config->BaseURL . '?action=editprefs',
+            sessionId => $session ? $session->id : undef);
+}
+
 my $is_require = (caller($_))[7];
-&DoCGIRequest()  if (!$is_require && $config->RunCGI && $ENV{SCRIPT_NAME} && $q = CGI new);
+&DoCGIRequest()  if (!$is_require && $config->RunCGI && $ENV{SCRIPT_NAME});
 &DoCommandRequest() if (!$is_require && @ARGV);
 
 1;

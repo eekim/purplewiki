@@ -72,13 +72,17 @@ EOF
 
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
-my $database_package = $config->DatabasePackage;
+my $database_package = $config->Driver->{archive};
 print STDERR "Error in Package: $database_package\nError:$@"
     unless (eval "require $database_package");
 my $pages = $database_package->new ($config, create => 1);
 $config->{pages} = $pages;
 
-my $parser = PurpleWiki::Parser::WikiText->new();
+my $parser_package = $config->Driver()->{wikiparser};
+print STDERR "Error in Package: $parser_package\nError:$@"
+    unless (eval "require $parser_package");
+my $parser = $parser_package->new ($config);
+
 my $wiki = $parser->parse($content, add_node_ids => 1);
 my $output = $wiki->view('wikitext');
 $output =~ s/\r//g;

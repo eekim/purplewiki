@@ -17,6 +17,11 @@ config changes:
 
   TemplateDriver = TT   -->   TemplateDriver = PurpleWiki::Template::TT
 
+rename parameter:
+
+  ScriptName     -->  BaseURL
+  ScriptDir      -->  CookieDir
+
 add:
 
   DefaultLanguage    = en
@@ -88,11 +93,11 @@ Perform the following required steps:
 
 4. Edit the config file.
 
-   a. Change ScriptName to include the entire URL.
+   a. Change BaseURL to include the entire URL.
 
    b. Add the following variables:
 
-      ScriptDir
+      CookieDir
       TemplateDriver
       TemplateDir
     
@@ -221,7 +226,7 @@ your site's NID information:
   purpleConvert.pl /path/to/wikidb http://your.host
 
 For the URL, just provide the hostname and port (if not 80).
-purpleConvert.pl will use the path specified by ScriptName in your
+purpleConvert.pl will use the path specified by BaseURL in your
 config file.
 
 $Id: UPGRADE,v 1.2 2004/01/21 23:24:08 cdent Exp $

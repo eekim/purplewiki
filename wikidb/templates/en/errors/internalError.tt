@@ -1,0 +1,8 @@
+[% INCLUDE common/header.tt
+           title = "Error!"
+%]
+
+<h2>Error loading module</h2>
+
+[% IF error %][% error %][% END %]
+[% INCLUDE common/footer.tt %]

@@ -7,23 +7,39 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
-ScriptDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
+BaseURL  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
+CookieDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
 SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
 RCName      = RecentChanges     # Name of changes page (change space to _)
-#FullUrl     = ""                # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""                # Local time zone
 #Umask       = 0002	             # the umask used when writing files
-DatabasePackage = PurpleWiki::Archive::PlainText
-#DatabasePackage = PurpleWiki::Archive::UseMod
-#DatabasePackage = PurpleWiki::Archive::Subversion
-#ReposPath = /wiki   # needed for Subversion back end
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
 DefaultLanguage = en           # Default language to use
 #CookieName = YourWiki         # Cookie name.
+
+# Captcha
+CaptchaDataDir = $DataDir/captcha
+CaptchaOutputDir = /var/www/htdocs/captcha
+CaptchaWebDir = /captcha
+
+# PurpleWiki Modules
+# request spit search
+Driver wikiparser   = PurpleWiki::Parser::WikiText
+Driver template     = PurpleWiki::Template::TT
+Driver userdb       = PurpleWiki::UserDB::UseMod
+Driver acl          = PurpleWiki::ACL
+Driver archive      = PurpleWiki::Archive::PlainText
+Driver request      = PurpleWiki::ParseRequest
+#ReposPath = /wiki   # needed for Subversion back end
+
+Action rss    = PurpleWiki::Action::Rss
+Action search = PurpleWiki::Action::Search
+Action unlock = PurpleWiki::Action::Unlock
+Action user   = PurpleWiki::Action::User
+Action wiki   = PurpleWiki::Action::Wiki
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
@@ -78,25 +94,26 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
-# PurpleWiki Modules
-ParserDriver        = PurpleWiki::Parser::WikiText
-TemplateDriver      = PurpleWiki::Template::TT
-UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
-ACLDriver           = PurpleWiki::ACL
-
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
 #MovableTypeBlogID	=	1
+#BlosxomEntriesCache =
+#BlosxomDataDir      =
+#BlosxomUrl          =
 #ArtsDirectory		=	/usr/local/etc/
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbdev.config
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbeditors.config
 #GoogleWSDL             =       /home/cdent/lib/GoogleSearch.wsdl
 #GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# Identity Commons e-names
+# Identity Commons i-names
 #ServiceProviderName = "blueoxen"
 #ServiceProviderKey = ""
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
+
+# Login redirect.  An optional URL for handling site-wide login in place
+# of the default action=login.
+#LoginRedirect = 
 
 # == You should not have to change anything below this line. =============
 UserDir     = $DataDir/user      # Stores user data
@@ -106,7 +123,4 @@ InterFile   = $DataDir/intermap  # Interwiki site->url map
 SessionDir  = $DataDir/sessions  # sessions
 TemplateDir = $DataDir/templates # templates
 LocaleFile  = $DataDir/messages.l10n # Localization messages
-CaptchaDataDir = $DataDir/captcha
-CaptchaOutputDir = /var/www/htdocs/captcha
-CaptchaWebDir = /captcha
 # == End of Configuration =================================================

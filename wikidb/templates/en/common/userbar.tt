@@ -3,6 +3,6 @@
  (<a href="[% preferencesUrl %]">preferences</a> |
 <a href="[% baseUrl %]?action=logout">logout</a>)
 [% ELSE %]
-<a href="[% baseUrl %]?action=login">Login</a>
+<a href="[% baseUrl %]?action=login[% IF id %]&fromPage=[% id %][% END %]">Login</a>
 (<a href="[% preferencesUrl %]">create account</a>)
 [% END %]

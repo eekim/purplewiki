@@ -413,13 +413,13 @@ sub _getRevisionHistory {
     $ts = $section->getTS();
 
     if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
-        $summary = UseModWiki::QuoteHtml($summary);
+        $summary = PurpleWiki::QuoteHtml($summary);
     }
     else {
         $summary = '';
     }
     return { revision => $rev,
-             dateTime => UseModWiki::TimeToText($ts),
+             dateTime => PurpleWiki::TimeToText($ts),
              host => $host,
              userId => $uid,
              summary => $summary };

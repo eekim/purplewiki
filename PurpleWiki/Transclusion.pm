@@ -57,7 +57,6 @@ sub new {
     my $self = { @_ };
     $self->{config} = PurpleWiki::Config->instance()
         unless (defined($self->{config}));
-    $self->{pages} = $self->{config}->{pages} unless (defined($self->{pages}));
     bless ($self, $class);
 
     return $self;
@@ -88,7 +87,7 @@ sub get {
         # is fine.
         # FIXME: assumes that anything not the wiki
         # is static content
-        my $scriptName = $self->{config}->ScriptName;
+        my $scriptName = $self->{config}->BaseURL;
         $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
         my ($host, $path);
         if ($url =~ m'^http://([^/]+)/') {
@@ -104,7 +103,7 @@ sub get {
             my ($id) = ($url =~ /\?([^&]+)\b/);
             #$content=($self->{pages}->getPageNode($id, uc($nid)))
             #         || "transclusion index out of sync";
-            my $page = $self->{pages}->getPage($id);
+            my $page = $self->{archive}->getPage($id);
             my $tree = $page->getTree();
             $content = $tree ? $tree->view('subtree', 'nid' => uc($nid))
                              : "transclusion index out of sync";

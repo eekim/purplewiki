@@ -21,10 +21,10 @@ ok($config->UseSubpage, 1);
 ok($config->RCName, 'RecentChanges');
 ok($config->FS1, "\xb31");
 
-my $mod = $config->Module;
+my $mod = $config->Driver;
 ok(ref($mod), "HASH");
-ok($mod->{database}, "PurpleWiki::Database::Page");
+ok($mod->{archive}, "PurpleWiki::Archive::PlainText");
 my $action = $config->Action;
 ok(ref($action), "HASH");
-ok($action->{edit}, "PurpleWiki::Action::Edit");
+ok($action->{wiki}, "PurpleWiki::Action::Wiki");
 

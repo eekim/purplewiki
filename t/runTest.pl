@@ -8,7 +8,7 @@ my ($q, $out) = @_;
         print ERR "Error: error: $!\n";
         return;
     }
-    &UseModWiki::DoWikiRequest($q);
+    &PurpleWiki::DoCGIRequest($q);
     close STDOUT;
     close STDERR;
     if (!-z "error") {

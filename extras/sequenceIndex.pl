@@ -30,8 +30,6 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
-
 use strict;
 use PurpleWiki::Sequence;
 use PurpleWiki::Archive::Sequence;

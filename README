@@ -77,7 +77,7 @@ To install the Wiki:
 
   4. Edit the config file:
 
-    + Change ScriptName to the URL path of the Wiki CGI
+    + Change BaseURL to the URL path of the Wiki CGI
       (e.g. http://foo.bar/cgi-bin/wiki.pl).  It must be a fully
       qualified URL.
 

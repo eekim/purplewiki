@@ -30,9 +30,9 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package UseModWiki;
+package PurpleWiki;
 use strict;
-use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
+use lib '/home/gerry/purple/blueoxen/branches/action-plugins';
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
