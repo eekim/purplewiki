@@ -339,6 +339,9 @@ sub recentChanges {
                     if ($entries[2] ne '' && $entries[2] ne '*') {
                         $pages{$name}->{summary} = $entries[2];
                     }
+                    else {
+                        $pages{$name}->{summary} = '';
+                    }
                     $pages{$name}->{minorEdit} = $entries[3];
                     $pages{$name}->{host} = $entries[4];
 
