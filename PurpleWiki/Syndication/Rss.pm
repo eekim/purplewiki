@@ -73,7 +73,7 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $page = $self->{pages}->newPageId($recentChange->{id})
+        my $page = $self->{pages}->getPage($recentChange->{id})
         my $bodyText = $page->getWikiHTML();
 
         $rss->add_item(

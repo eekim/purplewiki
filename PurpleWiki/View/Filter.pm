@@ -124,7 +124,7 @@ PurpleWiki::View::Filter - A Quick Access View Filter.
     my $parser = new PurpleWiki::Parser::WikiText;
     my $filter = new PurpleWiki::View::Filter();
 
-    my $page = $pages -> newPageId($pageName);
+    my $page = $pages -> getPage($pageName);
 
     die "$page does not exist!\n" if not $page->pageExists();
     $page->openPage();

@@ -95,7 +95,7 @@ sub get {
             $content = q(Transclusion loop, please remove.);
         } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
             my ($id) = ($url =~ /\?([^&]+)\b/);
-            $content=($self->{pages}->newPageId($id)
+            $content=($self->{pages}->getPage($id)
                            ->getPageNode($id, uc($nid)))
                      || "transclusion index out of sync";
         } else {

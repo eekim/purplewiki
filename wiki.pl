@@ -156,7 +156,7 @@ sub DoBrowseRequest {
   my $page;
 
   if ($id = (!$q->param) ? $config->HomePage : GetParam('keywords', '')) {
-    $page = $pages->newPageId($id);
+    $page = $pages->getPage($id);
     if ($config->FreeLinks && (!$page->pageExists())) {
       $id = FreeToNormal($id);
     }
@@ -166,7 +166,7 @@ sub DoBrowseRequest {
                             
   $action = lc(GetParam('action', ''));
   $id = GetParam('id', $config->HomePage);
-  $page = $pages->newPageId($id);
+  $page = $pages->getPage($id);
   if ($action eq 'browse') {
     if ($config->FreeLinks && (!$page->pageExists())) {
       $id = FreeToNormal($id);
@@ -199,9 +199,7 @@ sub BrowsePage {
       $userId = $user->id;
       $username= $user->username;
   }
-  $page = $pages -> newPage('id' => $id, 'now' => $Now,
-                            'userID' => $userId,
-                            'username' => $username);
+  $page = $pages -> getPage($id);
 
   my $pageName = $id;
   $pageName =~ s/_/ /g if ($config->FreeLinks);
@@ -355,7 +353,7 @@ sub DoHistory {
     my $text;
 
     # we could supply user info just like in DoBrowseRequest?
-    $page = $pages -> newPage('id' => $id, 'now' => $Now);
+    $page = $pages -> getPage($id);
 
 
     my @vPages = &visitedPages;
@@ -673,9 +671,7 @@ sub DoEdit {
       $userId = $user->id;
       $username = $user->username;
   }
-  $page = $pages->newPage('id' => $id, 'now' => $Now,
-                                 'username' => $username,
-                                 'userID' => $userId);
+  $page = $pages->getPage($id);
 
   if ($page->getLockState()) {
       $wikiTemplate->vars(&globalTemplateVars);
@@ -711,8 +707,7 @@ sub DoEdit {
       print GetHttpHeader() . $wikiTemplate->process('editConflict');
   }
   elsif ($preview) {
-      my $page = $pages->newPageText($id, $newText);
-      my $body = $page->getWikiHTML();
+      my $body = TextToHTML($id, $newText);
       $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
                           id => $id,
@@ -1046,14 +1041,12 @@ sub DoSearch {
 }
 
 sub DoPost {
-  my ($editDiff, $old, $newAuthor, $pgtime, $oldrev, $preview);
+  my ($editDiff);
   my $userName = $user ? $user->username : undef;
   my $userId = $user ? $user->id : undef;
   my $string = GetParam("text", undef);
   my $id = GetParam("title", "");
   my $summary = GetParam("summary", "");
-  my $oldtime = GetParam("oldtime", "");
-  my $oldconflict = GetParam("oldconflict", "");
   my $editTime = $Now;
   my $authorAddr = $ENV{REMOTE_ADDR};
 
@@ -1086,45 +1079,27 @@ sub DoPost {
   # Add a newline to the end of the string (if it doesn't have one)
   $string .= "\n"  if (!($string =~ /\n$/));
 
-  $preview = (GetParam("Preview", "") ne "");
-  # Lock before getting old page to prevent races
-  $preview or $pages->requestLock() or die('Could not get editing lock');
+  if ($preview = (GetParam("Preview", "") ne "")) {
+    my $page = $pages->getPage($id);
+
+    return if CheckConflict($page, $string, 1);
+    DoEdit($id, 0, $page->getTS(), $string, 1);
+    return;
+  }
+
   # Consider extracting lock section into sub, and eval-wrap it?
   # (A few called routines can die, leaving locks.)
-  my $page = $pages->newPage('id' => $id, 'now' => $Now);
-  $old = $page->getText();
-  $oldrev = $page->getRevision();
-  $pgtime = $page->getTS();
+  my $page = $pages->getPage($id);
 
-  if (!$preview && ($old eq $string)) {  # No changes (ok for preview)
-    $pages->releaseLock();
+  if ($page->getText() eq $string) {
     ReBrowsePage($id);
     return;
   }
-  # Later extract comparison?
-  if ($user || ($page->getUserID() > 399))  {
-    $newAuthor = ($user->id ne $page->getUserID());       # known user(s)
-  } else {
-    $newAuthor = ($page->getIP() ne $authorAddr);  # hostname fallback
-  }
-  $newAuthor = 1  if ($oldrev == 0);  # New page
-  $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
-  # Detect editing conflicts and resubmit edit
-  if (($oldrev > 0) && ($newAuthor && ($oldtime != $pgtime))) {
-    $preview or $pages->releaseLock();
-    if ($oldconflict>0) {  # Conflict again...
-      DoEdit($id, 2, $pgtime, $string, $preview);
-    } else {
-      DoEdit($id, 1, $pgtime, $string, $preview);
-    }
-    return;
-  }
-  if ($preview) {
-    DoEdit($id, 0, $pgtime, $string, 1);
-    return;
-  }
 
-  $page = $pages->newPage(
+  my $newAuthor;
+  return if CheckConflict($page, $string, 0, \$newAuthor);
+
+  $page = $pages->putPage(
            id => $id,
            wikitext => $string,
            newauthor => $newAuthor,
@@ -1134,9 +1109,34 @@ sub DoPost {
            username => $userName,
            userid => $userId,
            timestamp => $Now);
-  $page->save();
-  $pages->releaseLock();
   &ReBrowsePage($id);
+}
+
+sub CheckConflict {
+  my ($page, $string, $preview, $authorRef) = @_;
+  my $newAuthor;
+  my $pgtime = $page->getTS();
+  my $oldtime = GetParam("oldtime", "");
+  my $oldrev = $page->getRevision();
+  # Later extract comparison?
+  if ($user || ($page->getUserID() > 399))  {
+    $newAuthor = ($user->id ne $page->getUserID());       # known user(s)
+  } else {
+    $newAuthor = ($page->getIP() ne $authorAddr);  # hostname fallback
+  }
+  $newAuthor = 1  if ($oldrev == 0);  # New page
+  $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
+  $$authorRef = $newAuthor if (ref($authorRef));
+  # Detect editing conflicts and resubmit edit
+  if (($oldrev > 0) && $newAuthor) && ($oldtime != $pgtime)) {
+    if (GetParam("oldconflict", 0) > 0) {  # Conflict again...
+      DoEdit($id, 2, $pgtime, $string, $preview);
+    } else {
+      DoEdit($id, 1, $pgtime, $string, $preview);
+    }
+    return 1;
+  }
+  return 0;
 }
 
 # Note: all diff and recent-list operations should be done within locks.

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 13};
+BEGIN { plan tests => 12};
 
 use PurpleWiki::Database::Page;
 use PurpleWiki::Database::KeptRevision;
@@ -82,7 +82,7 @@ ok($output, $expected_content);
 ## we'll do the whole bag
 # lock
 ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
-my $page = $pages->newPage('id' => $id, 'now' => time);
+my $page = $pages->getPage($id);
 
 # stored id should be the same as what we gave it
 ok($page->getID(), $id);
@@ -98,17 +98,13 @@ ok($oldrev, 0);
 my $timestamp = time;
 
 # add a new wikitext to the page
-$page = $pages->newPage(id => $id,
+
+
+$page = $pages->putPage(id => $id,
                         wikitext => $output,
                         timestamp => $timestamp);
-my $getText = $page->getText();
-ok($getText, $expected_content);
+ok(-f $idFilename);
 
-# adding the wikitext should make a new version
-ok($page->getRevision(), 1);
-
-# save page
-ok($page->save(), -f $idFilename);
 
 # get rid of lock
 ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
@@ -116,7 +112,11 @@ undef($page);
 
 
 # load the page up and make sure the id and text are right
-my $newPage = $pages->newPageId($id);
+my $newPage = $pages->getPage($id);
+
+# adding the wikitext should make a new version
+ok($newPage->getRevision(), 1);
+
 my $ts = $newPage->getTS();
 ok($ts, $timestamp);
 ok($newPage->getID(), $id);

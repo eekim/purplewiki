@@ -45,34 +45,23 @@ sub new {
   $self->{pagedir} = $config->PageDir;
   $self->{usediff} = $config->UseDiff;
   $self->{rcfile} = $config->RcFile;
-  $self->{keepdays}->KeepDays;
+  $self->{keepdays} = $config->KeepDays;
   bless $self, $class;
   $self;
 }
 
-sub newPageId {
+sub getPage {
   my $self = shift;
   my $id = shift;
   PurpleWiki::Database::Page->new(id => $id, pages => $self);
 }
 
-sub newPageText {
-  my ($self, $id, $wikitext) = @_;
-  PurpleWiki::Database::Page->new(id => $id,
-                                  pages => $self,
-                                  wikitext => $wikitext);
-}
-
-sub newPage {
+sub putPage {
   my $self = shift;
 
   my $page = PurpleWiki::Database::Page->new(pages => $self, @_);
-  $self->_newRevision($page) if (defined($page->{wikitext}));
-  $page;
-}
+  return unless (defined($page->{wikitext}));
 
-sub _newRevision {
-my ($self, $page) = @_;
   use PurpleWiki::Database::KeptRevision;
   my $fsexp = $self->{fs};
   my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $page->{id});
@@ -108,6 +97,7 @@ my ($self, $page) = @_;
   $page->{ts} = $now;
   $self->_WriteRcLog($page->{id}, $page->{summary}, $now,
                     $self->{username}, $page->{host} || $page->{ip});
+  $page->save();
 }
 
 sub allPages {
@@ -188,7 +178,6 @@ my $DATA_VERSION = 3;            # the data format version
 # page->new ( named parameters )
 #    id        => Page Identifier, the database key for reading and writing
 #    wikitext  => If present, this is the source, not the DB
-#    newauthor => New author flag 
 #    summary   => The change description
 #    host      => Hostname of the post request
 #    username  => User's name
@@ -330,6 +319,7 @@ sub getPrev {
     my $self = shift;
     my $rev = "";
     my $prev = 0;
+    my $psection;
     $rev = ((@_) ? shift : $self->getRevision()) - 1;
     $self->_openPage() unless ($self->{open});
     my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
