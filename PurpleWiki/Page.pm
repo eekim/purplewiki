@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.9.6.3 2003/06/12 10:22:17 cdent Exp $
+# $Id: Page.pm,v 1.9.6.4 2003/06/12 21:24:35 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,7 +35,7 @@ use PurpleWiki::Config;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.9.6.3 2003/06/12 10:22:17 cdent Exp $
+# $Id: Page.pm,v 1.9.6.4 2003/06/12 21:24:35 cdent Exp $
 
 sub exists {
     my $id = shift;
@@ -69,9 +69,10 @@ sub getWikiWordLink {
 
 sub getInterWikiLink {
     my $id = shift;
+    my $config = shift;
     
     my $results;
-    $results = (&InterPageLink($id, ''))[0];
+    $results = (&InterPageLink($id, $config))[0];
     return _makeURL($results);
 }
 
@@ -176,14 +177,14 @@ sub GetEditLink {
 }
 
 sub InterPageLink {
-    my ($id) = @_;
+    my ($id, $config) = @_;
     my ($name, $site, $remotePage, $url, $punct);
 
     ($id, $punct) = &SplitUrlPunct($id);
 
     $name = $id;
     ($site, $remotePage) = split(/:/, $id, 2);
-    $url = siteExists($site);
+    $url = siteExists($site, $config);
     return ("", $id . $punct)  if ($url eq "");
     $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
     $url .= $remotePage;

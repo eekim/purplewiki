@@ -32,7 +32,7 @@ use MT::Entry;
 use MT::Comment;
 use MT::Template::Context;
 
-my $CONFIG_FILE = '/home/cdent/testwiki';
+my $CONFIG_DIR = '/home/cdent/testwiki';
 my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords
 
 ##### PRESENTATION #####
