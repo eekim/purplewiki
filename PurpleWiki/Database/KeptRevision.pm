@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.1.2.4 2003/01/30 08:31:48 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.5 2003/01/31 05:48:04 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.1.2.4 2003/01/30 08:31:48 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.5 2003/01/31 05:48:04 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -55,6 +55,8 @@ sub new {
     return $self;
 }
 
+# Retrieves a list of references to the Sections in
+# this KeptRevision
 sub getSections {
     my $self = shift;
 
@@ -62,7 +64,7 @@ sub getSections {
 }
 
 
-# Determines if this collection of kepts has the given revision
+# Determines if this collection of KeptRevisions has the given revision
 sub hasRevision {
     my $self = shift;
     my $revision = shift;
@@ -70,13 +72,14 @@ sub hasRevision {
     return (ref($self->{sections}->[$revision - 1]));
 }
 
-# Retrieves the Section related to a particular revision
+# Retrieves the Section representing to a particular revision
 sub getRevision {
     my $self = shift;
     my $revision = shift;
-    return $self->{sections}->[$revision - 1]; # computers v people counting
+    return $self->{sections}->[$revision - 1]; 
 }
 
+# Adds the provided Section to this KeptRevision
 sub addSection {
     my $self = shift;
     my $section = shift;
@@ -85,6 +88,8 @@ sub addSection {
     push(@{$self->{sections}}, $section);
 }
 
+# Trims this KeptRevision to include only those
+# less than $KeepDays old
 sub trimKepts {
     my $self = shift;
     my $now = shift;
@@ -99,6 +104,7 @@ sub trimKepts {
     }
 }
 
+# Tests to see if kept file for this KeptRevision exists
 sub keptFileExists {
     my $self = shift;
 
@@ -111,56 +117,48 @@ sub keptFileExists {
 sub getKeepFile {
     my $self = shift;
 
-    return $KeepDir . '/' . $self->getPageDirectory() . '/' .
+    return $KeepDir . '/' . $self->getKeepDirectory() . '/' .
         $self->getID() . '.kp';
 }
 
+# Starts the process of creating the list of Sections
+# that make up this KeptRevision by reading in the
+# KeepFile and sending it to _parseData()
 sub _makeKeptList {
     my $self = shift;
     my $data;
 
     if ($self->keptFileExists()) {
         my $filename = $self->getKeepFile();
-        # FIXME: nasty call out
         $data = PurpleWiki::Database::ReadFileOrDie($filename);
         $self->_parseData($data);
     }
 }
 
+# Parses the KeepFile, turning the contents into
+# Sections.
 sub _parseData {
     my $self = shift;
     my $data = shift;
-    my $count = 0;
 
     foreach my $section (split(/$FS1/, $data, -1)) {
-        push(@{$self->{sections}}, 
-            new PurpleWiki::Database::Section('data' => $section));
+        # because of the usemod way of saving data, the first
+        # field is empty
+        if (length($section)) {
+            push(@{$self->{sections}}, 
+                new PurpleWiki::Database::Section('data' => $section));
+        }
     }
+
 }
 
+# Retrieves the page ID associated with this KeptRevision
 sub getID {
     my $self = shift;
     return $self->{id};
 }
 
-
-
-
-# Determines the directory of this page.
-# FIXME: duplicated from Page.pm
-sub getPageDirectory {
-    my $self = shift;
-
-    my $directory = 'other';
-
-    if ($self->getID() =~ /^([a-zA-Z])/) {
-        $directory = uc($1);
-    }
-
-    return $directory;
-}
-
-# we go ahead and rewrite the whole thing
+# Save the KeptRevision by rewriting the entire file.
 sub save {
     my $self = shift;
     my $data = $self->serialize();
@@ -169,6 +167,9 @@ sub save {
     PurpleWiki::Database::WriteStringToFile($self->getKeepFile(), $data);
 }
 
+# Creats the directory where KeptRevisions are stored. Uses
+# Database::CreateDir which only creates the directory if it
+# is not there.
 sub _createKeepDir {
     my $self = shift;
     my $id = $self->getID();
@@ -185,6 +186,8 @@ sub _createKeepDir {
     }
 }
 
+# Determines the directory where this KeptRevisions is
+# saved.
 sub getKeepDirectory {
     my $self = shift;
 
@@ -197,19 +200,17 @@ sub getKeepDirectory {
     return $directory;
 }
     
+# Serializes the list of Sections to a string that can 
+# be written to disk.
 sub serialize {
     my $self = shift;
 
     my $data;
     my $section;
     foreach $section ($self->getSections()) {
-        # FIXME: shouldn't need to do this...
-        next if (!defined($section));
-        $data .= $section->serialize();
         $data .= $FS1;
+        $data .= $section->serialize();
     }
-
-    $data =~ s/$FS1$//;
 
     return $data;
 }
