@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikihtml.pm
 #
-# $Id: wikihtml.pm,v 1.1.2.1 2003/01/20 21:06:46 eekim Exp $
+# $Id: wikihtml.pm,v 1.1.2.2 2003/01/20 23:01:10 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -37,7 +37,7 @@ use PurpleWiki::View::EventHandler;
 
 # globals
 
-my @sectionState;
+use vars qw(@sectionState);
 
 # structural node event handlers
 
