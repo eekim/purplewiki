@@ -126,16 +126,18 @@ sub InitCookie {
                                {Directory => "$CONFIG_DIR/sessions"});
   $UserID = $session->param('userId');
   $UserID =~ s/\D//g;  # Numeric only
-  if ($UserID < 200) {
-    $UserID = 111;
+  if ($UserID < 1001) {
+    $UserID = 200;
     $user = new PurpleWiki::Database::User('id' => $UserID);
+    $session->param('userId', 200);
   }
   else {
     $user = new PurpleWiki::Database::User('id' => $UserID);
     if ($user->userExists()) {
-        if ($user->getID() != $session->param('userId')) {
-            $UserID = 113;
-        }
+      if ($user->getField('id') != $session->param('userId')) {
+        $UserID = 200;
+        $session->param('userId', 200);
+      }
     }
   }
   if ($user->getField('tzoffset') != 0) {
@@ -763,6 +765,8 @@ sub DoOtherRequest {
     } elsif ($action eq "newlogin") {
       $UserID = 0;
       &DoEditPrefs();  # Also creates new ID
+    } elsif ($action eq "logout") {
+      &DoLogout;
     } elsif ($action eq 'rss') {
       my $rss = new PurpleWiki::Syndication::Rss;
       print $q->header(-type => 'text/xml') .
@@ -1108,10 +1112,8 @@ sub DoNewLogin {
   # Later consider warning if cookie already exists
   # (maybe use "replace=1" parameter)
   $user = new PurpleWiki::Database::User(config => $config);
-  my $randkey = int(rand(1000000000));
-  $session->param('userId', $user->getID());
-  $session->param('rev', 1);
-#  $user->setField('randkey', $randkey);
+  $user->_openNewUser;
+  $session->param('userId', $user->getID);
   $user->setField('rev', 1);
   $UserID = $session->param('userId');
   # The cookie will be transmitted in the next header
@@ -1144,7 +1146,6 @@ sub DoLogin {
       if (defined($user->getField('password')) &&
           ($user->getField('password') eq $password)) {
           $session->param('userId', $uid);
-          $session->param('rev', 1);
           $success = 1;
       }
     }
@@ -1160,6 +1161,28 @@ sub DoLogin {
   print &GetHttpHeader . $wikiTemplate->process('loginResults');
 }
 
+sub DoLogout {
+    $session->delete;
+    my $userName = $user->getField('username');
+    my $cookie = $q->cookie(-name => $config->SiteName,
+                            -value => '',
+                            -path => '/cgi-bin/',
+                            -expires => '-1d');
+    my $header;
+    if ($config->HttpCharset ne '') {
+        $header = $q->header(-cookie=>$cookie,
+                             -type=>"text/html; charset=" . $config->HttpCharset);
+    }
+    $header = $q->header(-cookie=>$cookie);
+    $wikiTemplate->vars(siteName => $config->SiteName,
+                        cssFile => $config->StyleSheet,
+                        siteBase => $config->SiteBase,
+                        baseUrl => $config->ScriptName,
+                        homePage => $config->HomePage,
+                        userName => $userName,
+                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    print $header . $wikiTemplate->process('logout');
+}
 
 sub DoSearch {
     my ($string) = @_;

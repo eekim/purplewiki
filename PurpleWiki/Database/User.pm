@@ -31,6 +31,7 @@
 package PurpleWiki::Database::User;
 
 use strict;
+use DB_File;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 
@@ -70,8 +71,10 @@ sub _init {
         my $filename = $self->getUserFile();
         my $data = PurpleWiki::Database::ReadFileOrDie($filename);
         $self->_parseData($data);
-    } else {
-        $self->_openNewUser();
+    }
+    else {
+        $self->_openGuestUser();
+#        $self->_openNewUser();
     }
 }
 
@@ -84,6 +87,17 @@ sub _parseData {
 
     foreach my $key (keys(%tempHash)) {
         $self->{$key} = $tempHash{$key};
+    }
+}
+
+sub _openGuestUser {
+    my $self = shift;
+    $self->setField('id', 200);
+    if (!$self->userFileExists) {
+        &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
+        $self->createUserDir();
+        &PurpleWiki::Database::WriteStringToFile($self->getUserFile(200), "lock");  # reserve the ID
+        &PurpleWiki::Database::ReleaseLock();
     }
 }
 
@@ -172,6 +186,14 @@ sub save {
     $self->createUserDir();
 
     PurpleWiki::Database::WriteStringToFile($self->getUserFile(), $data);
+    my %users;
+    my $userDir = $self->{config}->UserDir;
+#    &PurpleWiki::Database::RequestLock() or die('Could not get usernames.db lock');
+    tie %users, "DB_File", "$userDir/usernames.db",
+        O_RDWR|O_CREAT, 0666, $DB_HASH;
+    $users{$self->getUsername} = $self->getID;
+    untie %users;
+#    &PurpleWiki::Database::ReleaseLock;
 }
 
 # Creates the directory where user information
