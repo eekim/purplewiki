@@ -1351,6 +1351,9 @@ sub DoSearch {
     my $search = new PurpleWiki::Search::Engine(config => $config);
     $search->search($string);
 
+    my $username;
+    $username = $user->username if ($user);
+
     $wikiTemplate->vars(siteName => $config->SiteName,
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
