@@ -58,7 +58,7 @@ sub new {
   my ($reposdir, $reposPath) = ('', '');
   if ($config) {
     $reposdir = $config->DataDir;
-    $reposPath =  $config->ReposPath || '';
+    $reposPath =  $config->ReposPath;
     $self->{sequrl} = $config->RemoteSequenceURL;
     $self->{seqdir} = $config->LocalSequenceDir;
   } else {
@@ -67,10 +67,10 @@ sub new {
     $reposPath = $x if (defined($x=$args{ReposPath}));
   }
   die "No config or data dir defined\n" unless $reposdir;
-  $self->{seqdir} = $datadir unless ($self->{seqdir});
+  $self->{seqdir} = $reposdir unless ($self->{seqdir});
 
   substr($reposPath,-1) = '' if (substr($reposPath,-1) eq '/');
-  $self->{reposPath} = $reposPath;
+  $self->{reposPath} = $reposPath || '';
 #print STDERR "P:$reposPath\n";
   $self->{repository} = $reposdir;
   bless $self, $class;
@@ -120,11 +120,11 @@ sub getPage {
 
   my $curRev = $rev || $self->_currentRev;
   $rev = $root->node_created_rev($path);
-  my $lastmod = _svn_time($fs = $self->{fs_ptr}->revision_prop($rev, "svn:date"));
+  my $lastmod = _svn_time($self->{fs_ptr}->revision_prop($rev, "svn:date"));
   local $/ = '';
   my $contents = '';
+  my $chunk = '';
   do {
-    my $chunk = '';
     $file->read($chunk, 1024);
     $contents .= $chunk;
   } while (length($chunk) == 1024);
@@ -182,7 +182,7 @@ sub putPage {
   my $user = $args{userId};
   my $root = $self->_get_root();
   my $check = $root->check_path($repos_path);
-  my $page = $self->getPage($id, $rev);
+  my $page = $self->getPage($id);
   my $old_contents = $page->_getText();
 
   return "" if ($contents eq $old_contents);
@@ -192,7 +192,7 @@ sub putPage {
   # need to deal with that later.
   my $rev = $args{oldrev} || $self->_currentRev;
   my $repos = $self->{repos_ptr};
-  $args{host} =  $ENV{REMOTE_ADDR} unless ($args{host});
+  my $host = $args{host} || $ENV{REMOTE_ADDR};
   my $log_msg = $args{changeSummary};
   my $cur = $self->_currentRev;
 #print STDERR "Txn[$id]$rev:$cur\n";
@@ -277,10 +277,10 @@ sub allPages {
 sub recentChanges {
   my $self = shift;
   my $starttime = shift;
-  local @rc = ();
+  my $rc = [];
   my $done = 0;
   my $rpath = $self->{reposPath};
-  local $pages = {};
+  my $pages = {};
   sub receiver1 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
     return if ($done);
@@ -290,15 +290,15 @@ sub recentChanges {
       $done = 1;
       return;
     }
-#print STDERR "Log:",join(":",@_),"\n";
+#print STDERR "RC-Log:",join(":",@_),"\n";
     for my $p (keys %$h) {
       next unless ($p =~ /^$rpath\//);
-      $id = $';
+      my $id = $';
       $id =~ s|\+|/|g;
       if (defined($pages->{$p})) {
         $pages->{$p}->{numChanges}++;
       } else {
-        push(@rc, $p);
+        push(@$rc, $p);
         $pages->{$p} = { numChanges => 1, pageId => $id };
 #print STDERR "Got $id ",$$h{$p}->action,"\n";
         $pages->{$p}->{timeStamp} = $t;
@@ -313,8 +313,8 @@ sub recentChanges {
   $starttime = 0 unless $starttime;
   #$repos->get_logs([paths],start,end,disc,strict,&receiver);
   $self->{repos_ptr}->get_logs("", $self->_currentRev, 1, 1, 1, \&receiver1);
-  my $r = [ map($pages->{$_}, @rc) ];
-#print STDERR "Rc:",join(":", @rc),"\n::\nPP:",join(":", @$r),"\n";
+  my $r = [ map($pages->{$_}, @$rc) ];
+#print STDERR "Rc:",join(":", @$rc),"\n::\nPP:",join(":", @$r),"\n";
   $r;
 }
 
@@ -359,24 +359,27 @@ sub getRevisions {
   my $maxcount = shift || 0;
   my $count = 1;
 
-  local @response = ();
+  my $response;
   sub receiver2 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
     my ($p, $r, $u, $t, $l) = @_;
     return if ($maxcount && $maxcount < $count++);
     $t = _svn_time($t);
     $u =~ s/:.*$//;
-#print STDERR "log (r=>$r, u=>$u, t=>$t, s=>$l) $#response\n";
-    push( @response, {revision=>$r, userId=>$u,
+print STDERR "histlog (r=>$r, u=>$u, t=>$t, s=>$l) $#$response\n";
+    push( @$response, {revision=>$r, userId=>$u,
                       dateTime=>UseModWiki::TimeToText($t), summary=>$l} );
   }
 
   my $repos = $self->{repos_ptr};
   my $path = $self->_repos_path($id);
   my $curRev = $self->_currentRev;
-  $repos->get_logs($path, $curRev, 1, 0, 1, \&receiver2);
+  $response = [] unless $response;
+  @$response = ();
+print STDERR "get_logs($path, $curRev, ...) $#$response\n";
+  $repos->get_logs($path, $curRev, 1, 0, 1, \&receiver2) if $curRev;
 
-  return @response;
+  return @$response;
 }
 
 package PurpleWiki::Archive::SubversionPage;
