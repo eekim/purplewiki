@@ -64,7 +64,8 @@ sub canEdit {
     my $self = shift;
     my ($user, $pageId) = @_;
 
-    return 0 if ($self->{config}->LoginToEdit && !defined $user);
+    return 0 if ($self->{config}->LoginToEdit && !defined $user 
+                 && defined $pageId);
     # check ban list
     my ($status, $data) = PurpleWiki::Misc::ReadFile($self->{config}->DataDir . "/banlist");
     return 1 if (!$status);  # No file exists, so no ban

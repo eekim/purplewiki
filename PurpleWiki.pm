@@ -32,7 +32,7 @@ package PurpleWiki;
 use 5.005;
 use strict;
 
-our $VERSION = 0.95;
+our $VERSION = 0.96;
 
 1;
 __END__

@@ -346,3 +346,6 @@ http://www\.ixmx\.net
 http://[^\.]+\.51dragon\.com
 http://wangyi\.ygci\.com
 http://www\.romanfr\.com
+http://www\.[^\.]+\.u-tokyo\.ac\.jp
+http://[^\.]+\.mycv\.com\.cn
+http://[^\.]+\.t35\.com
