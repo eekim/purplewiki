@@ -30,10 +30,6 @@
 
 package PurpleWiki::Database::User;
 
-# PurpleWiki User Data Access
-
-# $Id$
-
 use strict;
 use PurpleWiki::Config;
 use PurpleWiki::Database;

@@ -43,6 +43,7 @@ use PurpleWiki::Syndication::Rss;
 use PurpleWiki::Template::TT;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
+use CGI::Session;
 
 my $CONFIG_DIR='/var/www/wikidb';
 
@@ -58,8 +59,7 @@ my $config;             # our PurpleWiki::Config reference
 my $InterSiteInit = 0;
 my %InterSite;
 my $user;               # our reference to the logged in user
-my %UserCookie;         # The cookie received from the user
-my %SetCookie;          # The cookie to be sent to the user
+my $session;            # CGI::Session object
 
 my $q;                  # CGI query reference
 my $Now;                # The time at the beginning of the request
@@ -118,22 +118,24 @@ sub InitRequest {
 }
 
 sub InitCookie {
-  %SetCookie = ();
   $TimeZoneOffset = 0;
   undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
-  %UserCookie = $q->cookie($config->SiteName);
-  $UserID = $UserCookie{'id'};
+
+  my $sid = $q->cookie($config->SiteName);
+  $session = CGI::Session->new("driver:File", $sid,
+                               {Directory => "$CONFIG_DIR/sessions"});
+  $UserID = $session->param('userId');
   $UserID =~ s/\D//g;  # Numeric only
   if ($UserID < 200) {
     $UserID = 111;
     $user = new PurpleWiki::Database::User('id' => $UserID);
-  } else {
+  }
+  else {
     $user = new PurpleWiki::Database::User('id' => $UserID);
     if ($user->userExists()) {
-      if (($user->getID() != $UserCookie{'id'}) ||
-          ($user->getField('randkey') != $UserCookie{'randkey'})) {
-        $UserID = 113;
-      }
+        if ($user->getID() != $session->param('userId')) {
+            $UserID = 113;
+        }
     }
   }
   if ($user->getField('tzoffset') != 0) {
@@ -450,23 +452,15 @@ sub getRevisionHistory {
 
 # ==== page-oriented functions ====
 sub GetHttpHeader {
-  my $cookie;
-  if (defined($SetCookie{'id'})) {
-    $cookie = $config->SiteName. "="
-            . "rev&" . $SetCookie{'rev'}
-            . "&id&" . $SetCookie{'id'}
-            . "&randkey&" . $SetCookie{'randkey'};
-    $cookie .= ";expires=Fri, 08-Sep-2010 19:48:23 GMT";
+    my $cookie = $q->cookie(-name => $config->SiteName,
+                            -value => $session->id,
+                            -path => '/cgi-bin/',
+                            -expires => '+7d');
     if ($config->HttpCharset ne '') {
-      return $q->header(-cookie=>$cookie,
-                        -type=>"text/html; charset=" . $config->HttpCharset);
+        return $q->header(-cookie=>$cookie,
+                          -type=>"text/html; charset=" . $config->HttpCharset);
     }
     return $q->header(-cookie=>$cookie);
-  }
-  if ($config->HttpCharset ne '') {
-    return $q->header(-type=>"text/html; charset=" . $config->HttpCharset);
-  }
-  return $q->header();
 }
 
 # Returns the URL of a page after it has 
@@ -1115,13 +1109,11 @@ sub DoNewLogin {
   # (maybe use "replace=1" parameter)
   $user = new PurpleWiki::Database::User(config => $config);
   my $randkey = int(rand(1000000000));
-  $SetCookie{'id'} = $user->getID();
-  $SetCookie{'randkey'} = $randkey;
-  $SetCookie{'rev'} = 1;
-  $user->setField('randkey', $randkey);
+  $session->param('userId', $user->getID());
+  $session->param('rev', 1);
+#  $user->setField('randkey', $randkey);
   $user->setField('rev', 1);
-  %UserCookie = %SetCookie;
-  $UserID = $SetCookie{'id'};
+  $UserID = $session->param('userId');
   # The cookie will be transmitted in the next header
   $user->setField('createtime', $Now);
   $user->setField('createip', $ENV{REMOTE_ADDR});
@@ -1151,10 +1143,9 @@ sub DoLogin {
     if ($user->userExists()) {
       if (defined($user->getField('password')) &&
           ($user->getField('password') eq $password)) {
-        $SetCookie{'id'} = $uid;
-        $SetCookie{'randkey'} = $user->getField('randkey');
-        $SetCookie{'rev'} = 1;
-        $success = 1;
+          $session->param('userId', $uid);
+          $session->param('rev', 1);
+          $success = 1;
       }
     }
   }
