@@ -8,9 +8,9 @@ BEGIN { plan tests => 4 };
 use IO::File;
 use PurpleWiki::Sequence;
 
-my $datafile = "/tmp/sequence.dat";
+my $datadir = '/tmp';
 
-my $sequence = new PurpleWiki::Sequence($datafile);
+my $sequence = new PurpleWiki::Sequence($datadir);
 ok(ref $sequence eq 'PurpleWiki::Sequence');
 ok($sequence->getNext() eq '000001');
 
@@ -24,7 +24,7 @@ for (0..24) {
 }
 ok($sequence->getNext() eq '000010');
 
-unlink($datafile);
+unlink("$datadir/sequence");
 
 # FIXME: there should be a test here for overflow
 # but I don't know how to deal with an intentionally failing test

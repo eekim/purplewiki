@@ -7,6 +7,8 @@ BEGIN { plan tests => 33 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Config;
+my $configdir = 't';
 
 sub readFile {
     my $fileName = shift;
@@ -31,9 +33,10 @@ sub readFile {
 ### Entire structural node is a special inline node (e.g. entire
 ### first paragraph is bold).  Nested inline nodes.
 
+my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/tree_test07.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent);
+my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
 ok(scalar @{$wiki->root->children} == 1);
 ok($wiki->root->children->[0]->type eq 'section');

@@ -8,6 +8,8 @@ BEGIN { plan tests => 249 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Config;
+my $configfile = 't';
 
 sub readFile {
     my $fileName = shift;
@@ -29,9 +31,10 @@ sub readFile {
 
 ### tree_test01.txt
 
+my $config = new PurpleWiki::Config($configfile);
 my $wikiContent = &readFile('t/tree_test01.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent);
+my $wiki = $wikiParser->parse($wikiContent, config => $config);
 $wiki->title('Tree Test 1');
 
 # Document.  (Tests 1-4)

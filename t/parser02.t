@@ -7,6 +7,8 @@ BEGIN { plan tests => 9 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Config;
+my $configdir = 't';
 
 sub readFile {
     my $fileName = shift;
@@ -28,9 +30,10 @@ sub readFile {
 
 ### tree_test06.txt -- Single character headers.
 
+my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/tree_test06.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent);
+my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
 ok(scalar @{$wiki->root->children} == 1);
 ok($wiki->root->children->[0]->type eq 'section');
