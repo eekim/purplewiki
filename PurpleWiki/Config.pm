@@ -240,12 +240,21 @@ PurpleWiki::Config - Configuration object.
 Parses the PurpleWiki config file, which is in AppConfig format.
 Configuration variables are made available in methods.
 
+The PurpleWiki::Config module inherits from Singleton, so you should only have
+to create one new PurpleWiki::Config module per process.  Subsequent instances
+can be gotten from a call to the instance() method.
+
 =head1 METHODS
 
 =head2 new($directory)
 
 Parses "$directory/config", and creates methods for each variable
 using AUTOLOAD.
+
+=head2 instance()
+
+Returns the current instance of the PurpleWiki::Config object, or undef if
+no such instance exists.
 
 =head1 AUTHORS
 

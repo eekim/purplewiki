@@ -3,7 +3,7 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
+# Copyright (c) Matthew O'Connor 2004.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -145,7 +145,8 @@ method name.  For example:  PurpleWiki::Singleton->instance();
 
 =item instance()
 
-Returns the last instance of the class saved by setInstance().
+Returns the last instance of the class saved by setInstance().  If no
+such instance exists then undef is returned.
 
 =item setInstance()
 
