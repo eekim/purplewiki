@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.2 2002/12/11 03:06:00 cdent Exp $
+# $Id: WikiText.pm,v 1.3 2002/12/19 06:25:03 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -129,7 +129,7 @@ sub parse {
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
-        elsif ($line =~ /^(\=+)\s+(\S.+)\s+\=+/) {  # header/section
+        elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
             $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
                                                 \$biggestNidSeen);
             while ($listDepth > 0) {
