@@ -73,6 +73,7 @@ t/config.t
 t/database.t
 t/inline_node.t
 t/intermap
+t/messages.l10n
 t/page.t
 t/parser01.t
 t/parser02.t
