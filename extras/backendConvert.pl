@@ -23,22 +23,24 @@ use PurpleWiki::Archive::Sequence;
 ### read parameters
 
 my %opts;
-getopts('vro:n:', \%opts);
+getopts('chvrs:o:n:', \%opts);
 
 my $oldBackend = ($opts{'o'}) ? $opts{'o'} : 'PurpleWiki::Archive::UseMod';
 my $newBackend = ($opts{'n'}) ? $opts{'n'} : 'PurpleWiki::Archive::PlainText';
 my $verbose = $opts{'v'};
+my $copySeq = !$opts{'c'};
 
-if (scalar @ARGV < 3) {
+if ($opts{'h'} || scalar @ARGV < 3) {
     print "Usage:\n";
     print "    $0 [-v] [-o oldBackend] [-n newBackend] \\\n";
-    print "        oldDataDir newDataDir baseUrl\n";
+    print "        [-s sequenceDir] oldDataDir newDataDir baseUrl\n";
     exit -1;
 }
 
 my $oldDataDir = shift @ARGV;
 my $newDataDir = shift @ARGV;
 my $url = shift @ARGV;
+my $sequenceDir = $opts{'s'} || $newDataDir;
 
 ### create page objects
 
@@ -46,22 +48,25 @@ local $| = 1;  # Do not buffer output
 
 print "Database Package $newBackend\nError: $@\n"
     unless (defined(eval "require $newBackend"));
-my $newpages = $newBackend->new(DataDir => $newDataDir, create => 1);
-         # Object representing a page database
-
+my $newpages = $newBackend->new(DataDir => $newDataDir,
+                                SequenceDir => $sequenceDir,
+                                create => 1);
 $newpages || die "Can't open input database $newDataDir\n";
+    # Object representing a page database
 
 print "Database Package $oldBackend\nError: $@\n"
     unless (defined(eval "require $oldBackend"));
 my $pages = $oldBackend->new(DataDir => $oldDataDir);
-         # Object representing a page database
+    # Object representing a page database
 
 $pages || die "Can't open input database $oldDataDir\n";
 
 ### convert database
 
-copy("$oldDataDir/sequence", "$newDataDir/sequence");
-copy("$oldDataDir/sequence.index", "$newDataDir/sequence.index");
+if ($copySeq) {
+    copy("$oldDataDir/sequence", "$sequenceDir/sequence");
+    copy("$oldDataDir/sequence.index", "$sequenceDir/sequence.index");
+}
 
 my ($rev, $host, $summary, $user);
 my %all = ();
@@ -120,16 +125,20 @@ backendConvert.pl - Converts data into a different backend format
 =head1 SYNOPSIS
 
   backendConvert.pl [-v] [-o oldBackend] [-n newBackend] [-u url] \
-      oldDataDir newDataDir
+      [-s sequenceDir ] oldDataDir newDataDir baseUrl
 
 defaults:
 fromBackend = UseMod
 toBackend = PlainText
+sequenceDir = newDataDir
 v = verbose (0)
+c = copy (don't copy if -c present)
 
 =head1 DESCRIPTION
 
-
+Reads all Wiki page revisions and writes them to a new page archive with a
+different archive module.  Also copies and re-inserts to the sequence index
+(after optionally copying the sequence index and current).
 
 =head1 AUTHORS
 
