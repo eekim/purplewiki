@@ -190,7 +190,7 @@ sub serialize {
 
     my $separator = $self->{config}->FS2;
 
-    my $data = join($separator, map {$_ . $separator .  $self->{$_}}
+    my $data = join($separator, map {$_ . $separator .  ($self->{$_} || '')}
         ('name', 'version', 'id', 'username', 'ip', 'host',
             'ts', 'tscreate', 'keepts', 'revision'));
     $data .= $separator . 'data' . $separator . $textData;

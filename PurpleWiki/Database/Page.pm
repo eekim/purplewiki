@@ -300,7 +300,7 @@ sub serialize {
 
     my $separator = $self->{config}->FS1;
 
-    my $data = join($separator, map {$_ . $separator . $self->{$_}} 
+    my $data = join($separator, map {$_ . $separator . ($self->{$_} || '')} 
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',
          'cache_diff_default_major', 'cache_diff_default_minor',
          'ts_create', 'ts'));
