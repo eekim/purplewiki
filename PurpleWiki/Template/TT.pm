@@ -39,15 +39,11 @@ use Template;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-# command-line version of PHP
-my $PHP = '/home/eekim/www/local/bin/php';
-
 sub process {
     my $self = shift;
     my $file = shift;
     my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ],
-				   POST_CHOMP => 1,
-                                   FILTERS => { 'php' => \&_phpFilter } }) ||
+                                   POST_CHOMP => 1 }) ||
         die Template->error(), "\n";
     my $output;
 
@@ -57,37 +53,6 @@ sub process {
         die $template->error(), "\n";
     }
     # FIXME: Need to exit gracefully if error is returned.
-}
-
-sub _phpFilter {
-    my $text = shift;
-    my $newText;
-    my ($cmd_in, $cmd_out, $cmd_err);
-
-    ### Perl Cookbook (2nd ed) Recipe 16.9
-    my $pid = open3($cmd_in, $cmd_out, $cmd_err, $PHP);
-#    $SIG{CHLD} = sub {
-#        print "REAPER: status $? on $pid\n" if waitpid($pid, 0) > 0
-#    };
-    print $cmd_in $text;
-    close $cmd_in;
-
-    my $selector = IO::Select->new;
-    $selector->add($cmd_err, $cmd_out);
-    while (my @ready = $selector->can_read) {
-        foreach my $fh (@ready) {
-            if (defined $cmd_err && (fileno($fh) == fileno($cmd_err)) ) {
-                # do something with STDERR
-            }
-            else {
-                $newText .= scalar <$cmd_out>;
-            }
-            $selector->remove($fh) if eof($fh);
-        }
-    }
-    close $cmd_out if defined $cmd_out;
-    close $cmd_err if defined $cmd_err;
-    return $newText;
 }
 
 1;
