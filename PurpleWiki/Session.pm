@@ -49,7 +49,7 @@ sub new {
         mkdir $self->{config}->SessionDir;
     }
     $self->{session} = CGI::Session->new("driver:File", $sid,
-                                         {Directory => $self->{config}->SessionDir);
+                                         {Directory => $self->{config}->SessionDir});
     bless($self, $this);
     return $self;
 }
