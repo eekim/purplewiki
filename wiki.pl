@@ -274,6 +274,12 @@ sub BrowsePage {
   my @vPages = &visitedPages;
   my $keywords = $id;
   $keywords =~ s/_/\+/g if ($config->FreeLinks);
+
+  my $editRevisionString = '';
+  if ($goodRevision) {
+      $editRevisionString = "&amp;revision=$revision";
+  }
+
   $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $pageName,
                       expandedPageName => &expandPageName($pageName),
@@ -285,7 +291,8 @@ sub BrowsePage {
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$keywords",
                       editUrl =>
-                        $config->ScriptName . "?action=edit&amp;id=$id",
+                        $config->ScriptName . "?action=edit&amp;id=$id" .
+                        $editRevisionString,
                       revisionsUrl =>
                         $config->ScriptName . "?action=history&amp;id=$id",
                       diffUrl =>

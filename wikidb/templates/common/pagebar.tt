@@ -1,6 +1,7 @@
 [% IF editUrl %]
 <div class="pagebar">
 [% IF revision %]
+<a href="[% editUrl %]">Recover this text</a> |
 <a href="[% pageUrl %]">View current revision</a>
 </div>
 [% ELSE %]
