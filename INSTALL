@@ -6,11 +6,8 @@ install and configures the scripts you will use.
 PurpleWiki has several requirements:
 
   * A web server that can run CGI programs.
-
   * Perl version 5.6.0 or greater.
-
   * The following CPAN modules:
-
     + AppConfig
     + Algorithm::Diff
     + Authen::Captcha
@@ -36,10 +33,10 @@ the following commands:
 To install the Wiki:
 
   1. Copy the wikidb directory included in the distribution wherever
-     you want it.  Copy the directory and all its contents, including
-     subdirectories. This directory must be writeable by the web server
-     when running CGI scripts.  It should not be in the publically
-     accessible htdocs directory.
+     you want it.  Copy the directory and all its contents.  This
+     directory must be writeable by the web server when running CGI
+     scripts.  It should not be in the publically accessible htdocs
+     directory.
 
   2. Edit wiki.pl, changing $CONFIG_DIR to the directory you just
      created.  You can also set this value by setting the environment
@@ -61,7 +58,12 @@ To install the Wiki:
 
     + Change SiteName to the name of the Wiki.
 
-  5. If you would like to change the look-and-feel of the site, edit
+  5. If you have Authen::Captcha installed (recommended), you'll need
+     to create a captcha subdirectory in wikidb and in your htdocs.
+     This directory must be writeable by your Web server.  When you've
+     created these directories, edit your config file accordingly.
+
+  6. If you would like to change the look-and-feel of the site, edit
      the templates in wikidb/templates.  All of the Wiki's HTML output
      -- including links to the CSS stylesheet -- is stored in these
      templates.  More information is available in docs/Templates.wiki.

@@ -40,9 +40,16 @@ CreateLinkText from config, and move wikidb/messages.l10n into your
 wikidb.  Add LocaleFile to your config with the location of the
 messages.l10n file.
 
-We made several changes to the config file.  Your best bet is to copy
-the new sample file from wikidb/config and to customize accordingly.
-The following summarizes the changes to the file:
+v0.95 also supports Authen::Captcha in account creation, which tries
+to guarantee that the thing creating the account is a human and not a
+spambot.  To use, you'll need to create a captcha subdirectory in both
+wikidb and your htdocs directories.  These subdirectories must be
+writeable by your Web server.  You'll also need to set the appropriate
+config variables that specify these locations.
+
+Finally, we made several changes to the config file.  Your best bet is
+to copy the new sample file from wikidb/config and to customize
+accordingly.  The following summarizes the changes to the file:
 
   TemplateDriver = TT   -->   TemplateDriver = PurpleWiki::Template::TT
 
