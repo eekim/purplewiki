@@ -33,11 +33,13 @@ $VERSION = sprintf("%d", q$Id: DefaultArchive.pm 506 2004-09-22 07:31:44Z gerry 
 
 package PurpleWiki::Archive::PlainText;
 
+use strict;
+use base 'PurpleWiki::Archive::Base';
+
 use Fcntl ':mode';
 use IO::Dir;
 use IO::File;
 use File::Path;
-
 use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
@@ -150,7 +152,7 @@ sub deletePage {
   my $idSub = ($id =~ /^[A-Z]/i) ? uc($&) : 'misc';
   my $path = "$datadir/$idSub/$id";
   my %dir;
-  if (tie(%dir, IO::Dir, $path)) {
+  if (tie(%dir, 'IO::Dir', $path)) {
     for my $rev (keys %dir) {
       unlink "$path/$rev";
     }
@@ -165,7 +167,7 @@ sub _find_txt {
   my $oldest = shift;
   my %dir;
 #print STDERR "_find_txt($dir, $#{$array_ref}, $oldest)\n";
-  if (tie %dir, IO::Dir, $dir) {
+  if (tie %dir, 'IO::Dir', $dir) {
     for my $entry (keys %dir) {
       next if (substr($entry,0,1) eq '.');
       my $a = $dir{$entry};
@@ -188,8 +190,8 @@ sub allPages {
   my $a_ref = [];
   my %ids = ();
   for my $subdir ('A'..'Z', 'misc') {
-    my $dir = $dir = $self->{datadir} . '/' . $subdir;
-    _find_txt($dir, $a_ref, $starttime) if (-d $dir);
+    my $dir = $self->{datadir} . '/' . $subdir;
+    _find_txt($dir, $a_ref, undef) if (-d $dir);
   }
   for (@$a_ref) {
     if (m|/([^/]+)/[^/]+\.txt$|) {
@@ -209,7 +211,7 @@ sub recentChanges {
   # find $self->{datadir} -type f -name \*.txt -newer $starttime
   my $a_ref = [];
   for my $subdir ('A'..'Z', 'misc') {
-    my $dir = $dir = $self->{datadir} . '/' . $subdir;
+    my $dir = $self->{datadir} . '/' . $subdir;
     _find_txt($dir, $a_ref, $starttime) if (-d $dir);
   }
   for (@$a_ref) {
@@ -231,7 +233,7 @@ sub recentChanges {
           $pages{$id}->{changeSummary} = (!$summary || $summary eq '*') ? ''
                                    : $page->{changeSummary};
           $pages{$id}->{userId} = $page->getUserID || '';
-          $pages{$id}->{host} = $page->{host} || '';
+          $pages{$id}->{host} = $page->getHost || '';
       }
     }
   }
@@ -281,7 +283,7 @@ sub getRevisions {
     my $idSub = ($id =~ /^[A-Z]/i) ? uc($&) : 'misc';
     my $path = "$datadir/$idSub/$id";
     my %dir;
-    if (tie(%dir, IO::Dir, $path)) {
+    if (tie(%dir, 'IO::Dir', $path)) {
       for my $rev (keys %dir) {
         push(@revs, $`+0) if ($rev =~ /\.txt$/);
       }
@@ -299,7 +301,7 @@ sub getRevisions {
       push( @revisions,
             { revision => $rev,
               dateTime => UseModWiki::TimeToText($pageTime),
-              host => $page->{host},
+              host => $page->getHost,
               userId => $page->getUserID(),
               summary => ($summary && ($summary ne "*"))
                           ? UseModWiki::QuoteHtml($summary) : '',
@@ -315,6 +317,7 @@ package PurpleWiki::Archive::PlainTextPage;
 # $Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $
 
 use strict;
+use base 'PurpleWiki::Page';
 
 sub new {
     my $proto = shift;
@@ -359,6 +362,13 @@ sub getTime {
     my $self = shift;
     $self->_readMeta();
     $self->{timeStamp};
+}
+
+# Gets the hostname or IP
+sub getHost {
+    my $self = shift;
+    $self->_readMeta();
+    $self->{host};
 }
 
 #

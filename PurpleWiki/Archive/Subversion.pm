@@ -33,6 +33,9 @@ $VERSION = sprintf("%d", q$Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $ =~
 
 package PurpleWiki::Archive::Subversion;
 
+use base 'PurpleWiki::Archive::Base';
+use strict;
+
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Archive::Sequence;
@@ -383,6 +386,7 @@ package PurpleWiki::Archive::SubversionPage;
 # $Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $
 
 use strict;
+use base 'PurpleWiki::Page';
 
 sub new {
     my $proto = shift;
@@ -392,8 +396,8 @@ sub new {
     return $self;
 }
 
-# page->getIP()
-sub getIP {
+# page->getHost()
+sub getHost {
   my $self = shift;
   $self->{ip};
 }
@@ -437,6 +441,11 @@ sub getTree {
 # Retrieves the page id.
 sub getID {
     return shift->{id};
+}
+
+# Retrieves the page id.
+sub getSummary {
+    return shift->{changeSummary};
 }
 
 1;
