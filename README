@@ -20,8 +20,11 @@ available at:
 
 To play, try:
 
-  % ./purplewiki.pl t/test01.txt
-  % ./purplewiki.pl t/test02.txt
+  % ./wiki_trans.pl t/test01.txt
+  % ./wiki_trans.pl t/test02.txt
+  % ./wiki_trans.pl t/test03.txt
+  % ./wiki_trans.pl t/test04.txt
+  % ./wiki_trans.pl t/test05.txt
 
 BUGS
 
@@ -80,4 +83,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.2 2002/11/22 21:34:59 eekim Exp $
+$Id: README,v 1.3 2002/11/25 03:05:04 eekim Exp $
