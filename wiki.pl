@@ -5,7 +5,7 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -32,8 +32,9 @@
 
 package UseModWiki;
 use strict;
-my $useCap=0;
-eval "use Authen::Captcha; $useCap=1;";
+my $useCap = 0;
+eval "use Authen::Captcha";
+$useCap = 1 if (!$@);
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use Digest::MD5;
@@ -244,7 +245,7 @@ sub BrowsePage {
 
   $showDiff = GetParam('diff', $allDiff);
 
-  if ($config->UseDiff && $showDiff) {
+  if ($showDiff) {
     $diffRevision = GetParam('diffrevision', '');
     my $diffText = $pages->diff($id, $diffRevision, $revision);
     $wikiTemplate->vars(&globalTemplateVars,
@@ -907,12 +908,10 @@ sub DoUpdatePrefs {
   UpdatePrefCheckbox("rcchangehist");
   UpdatePrefCheckbox("editwide");
 
-  if ($config->UseDiff) {
-    UpdatePrefCheckbox("norcdiff");
-    UpdatePrefCheckbox("diffrclink");
-    UpdatePrefCheckbox("alldiff");
-    UpdatePrefNumber("defaultdiff", 1, 1, 3);
-  }
+  UpdatePrefCheckbox("norcdiff");
+  UpdatePrefCheckbox("diffrclink");
+  UpdatePrefCheckbox("alldiff");
+  UpdatePrefNumber("defaultdiff", 1, 1, 3);
 
   UpdatePrefNumber("rcshowedit", 1, 0, 2);
   UpdatePrefNumber("tzoffset", 0, -999, 999);
