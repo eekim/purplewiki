@@ -413,7 +413,7 @@ sub DoHistory {
 
 sub getRevisionHistory {
     my ($id, $section, $isCurrent) = @_;
-    my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl);
+    my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
 
     my $text = $section->getText();
     $rev = $section->getRevision();
@@ -436,6 +436,8 @@ sub getRevisionHistory {
           "?action=browse&amp;id=$id&amp;revision=$rev";
         $diffUrl = $config->ScriptName .
             "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
+        $editUrl = $config->ScriptName .
+            "?action=edit&amp;id=$id&amp;revision=$rev";
     }
     if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
         $summary = QuoteHtml($summary);   # Thanks Sunir! :-)
@@ -449,7 +451,8 @@ sub getRevisionHistory {
              user => $user,
              summary => $summary,
              pageUrl => $pageUrl,
-             diffUrl => $diffUrl };
+             diffUrl => $diffUrl,
+             editUrl => $editUrl };
 }
 
 # ==== page-oriented functions ====
