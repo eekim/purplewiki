@@ -41,7 +41,7 @@ use File::Path;
 use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
-use PurpleWiki::View::Filter;
+use PurpleWiki::Archive::Sequence;
 
 sub new {
   my $proto = shift;
@@ -127,8 +127,8 @@ sub putPage {
   $page->{revision} = $rev+1;
   $page->_writePage($contents);
 
-  my $url;
-  $self->_updateNIDs($url, $tree) if ($url = $args{url});
+  my $url = $args{url};
+  &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
 
   $args{host} = $ENV{REMOTE_ADDR} unless ($args{host});
   for my $pname ('userId', 'host', 'changeSummary', 'timeStamp') {
@@ -140,37 +140,6 @@ sub putPage {
 
   $page->_releaseLock();
   return "";
-}
-
-sub _updateNIDs {
-  my ($self, $url, $tree) = @_;
-  my $seq = $self->_getSequencer;
-  my @nids;
-  my $filter = PurpleWiki::View::Filter->new(
-    useOO => 1,
-    start => sub {
-      shift->{nids} = \@nids;
-    }
-  );
-  $filter->setFilters(Main =>
-    sub {
-      my $self = shift;
-      my $node = shift;
-      my $nid = $node->id();
-      push (@{$self->{nids}}, $nid) if $nid;
-    }
-  );
-  $filter->process($tree);
-
-  $seq->updateURL($url, \@nids);
-}
-
-sub _getSequencer {
-  my $self = shift;
-  my $ret;
-  return $ret if (defined($ret = $self->{sequence}));
-
-  $self->{sequence} = new PurpleWiki::Sequence($self->{seqdir}, $self->{sequrl});
 }
 
 sub deletePage {
