@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.1.2.5 2003/01/30 08:31:48 cdent Exp $
+# $Id: Page.pm,v 1.1.2.6 2003/01/31 05:59:47 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.1.2.5 2003/01/30 08:31:48 cdent Exp $
+# $Id: Page.pm,v 1.1.2.6 2003/01/31 05:59:47 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -44,7 +44,10 @@ use PurpleWiki::Database::Text;
 my $DATA_VERSION = 3;            # the data format version
 
 # Creates a new page reference, may be a
-# a new one or an existing one.
+# a new one or an existing one. Expects args of
+# at least 'id', will also take 'now' for the time of
+# the current CGI request and 'userID' and 'username' to
+# be passed to Section for the creation of new Text.
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -54,7 +57,7 @@ sub new {
     return $self;
 }
 
-# A stub to facillitate other callers
+# A shim to facillitate other callers
 sub pageExists {
     my $self = shift;
     return $self->pageFileExists();
@@ -70,28 +73,33 @@ sub pageFileExists {
     return (-f $filename);
 }
 
+# Returns the revision of this Page.
 sub getRevision {
     my $self = shift;
     return $self->{revision};
 }
 
+# Sets the revision of this Page.
 sub setRevision {
     my $self = shift;
     my $revision = shift;
     $self->{revision} = $revision;
 }
 
+# Gets the timestamp of this Page. 
 sub getTS {
     my $self = shift;
     return $self->{ts};
 }
 
+# Sets the timestamp of this Page.
 sub setTS {
     my $self = shift;
     my $ts = shift;
     $self->{ts} = $ts;
 }
 
+# Gets one of a few different cache data items for this Page.
 sub getPageCache {
     my $self = shift;
     my $cache = shift;
@@ -99,6 +107,8 @@ sub getPageCache {
     return $self->{"cache_$cache"};
 }
 
+# Sets one of a few different cache data items for this Page
+# to the provided value.
 sub setPageCache {
     my $self = shift;
     my $cache = shift;
@@ -107,7 +117,7 @@ sub setPageCache {
     $self->{"cache_$cache"} = $revision;
 }
 
-# Opens the page file associated with this id of this
+# Opens the page file associated with the id of this
 # Page.
 sub openPage {
     my $self = shift;
@@ -127,7 +137,7 @@ sub openPage {
 }
 
 # Retrieves the default text data by getting the
-# section and then the text in that section.
+# Section and then the text in that Section.
 # Or creates a new one.
 sub getText {
     my $self = shift;
@@ -140,7 +150,9 @@ sub getText {
     }
 }
 
-# Retrieves the section data.
+# Retrieves the Section if it already
+# exists. If not a new one is created
+# and returned.
 sub getSection {
     my $self = shift;
 
@@ -175,14 +187,6 @@ sub getID {
     return $self->{id};
 }
 
-# Retrieves the name of this page.
-# FIXME: this is probably always the same as the id but being 
-# prepared
-sub getName {
-    my $self = shift;
-    return $self->{id};
-}
-
 # Retrieves the now of when this page was asked for.
 sub getNow {
     my $self = shift;
@@ -197,7 +201,7 @@ sub getPageFile {
         $self->getID() . '.db';
 }
 
-# Determines the directory of this page.
+# Determines the directory of this Page.
 sub getPageDirectory {
     my $self = shift;
 
@@ -220,12 +224,15 @@ sub _updatePageVersion {
 }
 
 # Parses the data read in from a page file.
+# FIXME: the profiler considers this sub
+# somewhat more expensive than some others. Can
+# the multi step name be collapsed?
 sub _parseData {
     my $self = shift;
     my $data = shift;
 
     my %tempHash = split(/$FS1/, $data, -1);
-
+    
     foreach my $key (keys(%tempHash)) {
         $self->{$key} = $tempHash{$key};
     }
@@ -233,6 +240,7 @@ sub _parseData {
     $self->{text_default} = $self->getSection();
 }
 
+# Sets the minium data fields necessary for a Page.
 sub _openNewPage {
     my $self = shift;
 
@@ -242,7 +250,8 @@ sub _openNewPage {
     $self->{ts} = $self->getNow();
 }
 
-# we go ahead and rewrite the whole thing
+# Saves the Page by serialize it and its constituent parts to
+# a string and then writing to disk.
 sub save {
     my $self = shift;
 
@@ -252,12 +261,15 @@ sub save {
     PurpleWiki::Database::WriteStringToFile($self->getPageFile(), $data);
 }
 
+# Gets the path and filename for the lock file for 
+# this page.
 sub getLockedPageFile {
     my $self = shift;
     my $id = $self->getID();
     return $PageDir . '/' . $self->getPageDirectory() . "/$id.lck";
 }
 
+# Creates the directory where this Page is stored.
 sub _createPageDir {
     my $self = shift;
     my $id = $self->getID();
@@ -274,8 +286,8 @@ sub _createPageDir {
     }
 }
 
-
-
+# Serializes the data structure to a string. Calls serialize
+# on Section which in turns calls serialize on Text.
 sub serialize {
     my $self = shift;
 
