@@ -1025,7 +1025,7 @@ sub DoUpdatePrefs {
   if (length($username) > 50) {  # Too long
       $errorUserName = 1;
   }
-  elsif ($userDb->idFromUsername) {   # already used
+  elsif ($userDb->idFromUsername($username)) {   # already used
       $errorUserName = 1;
   }      
   else {
