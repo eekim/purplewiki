@@ -774,28 +774,23 @@ sub GetHttpHeader {
 
 sub GetHtmlHeader {
   my ($title) = @_;
-  my ($dtd, $bgcolor, $html, $bodyExtra);
+  my ($dtd, $html);
 
   $html = '';
   $dtd = '-//IETF//DTD HTML//EN';
-  $bgcolor = 'white';  # Later make an option
   $html = qq(<!DOCTYPE HTML PUBLIC "$dtd">\n);
   $title = $q->escapeHTML($title);
-  $html .= "<HTML><HEAD><TITLE>$title</TITLE>\n";
+  $html .= "<html><head><title>$title</title>\n";
   if ($config->SiteBase ne "") {
-    $html .= qq(<BASE HREF=") . $config->SiteBase . qq(">\n);
+    $html .= qq(<base href=") . $config->SiteBase . qq(">\n);
   }
   if ($config->StyleSheet ne '') {
-    $html .= qq(<LINK REL="stylesheet" HREF=") . $config->StyleSheet . qq(">\n);
-  }
-  # Insert other header stuff here (like inline style sheets?)
-  $bodyExtra = '';
-  if ($bgcolor ne '') {
-    $bodyExtra = qq( BGCOLOR="$bgcolor");
+    $html .= qq(<link rel="stylesheet" href=") . $config->StyleSheet .
+    qq(" />\n);
   }
   # Insert any other body stuff (like scripts) into $bodyExtra here
   # (remember to add a space at the beginning to separate from prior text)
-  $html .= "</HEAD><BODY$bodyExtra>\n";
+  $html .= "</head><body>\n";
   return $html;
 }
 
