@@ -10,14 +10,10 @@ sub new {
     my (%attrib) = @_;
     my $self = {};
 
-    ### Need to add type checking here. -eek
+    # TODO: Type checking.
     $self->{'type'} = $attrib{'type'} if ($attrib{'type'});
     $self->{'id'} = $attrib{'id'} if ($attrib{'id'});
-    if ($attrib{'content'}) {
-        $self->{'content'} =
-            PurpleWiki::InlineNode->new('data'=>$attrib{'content'});
-    }
-
+    $self->{'content'} = $attrib{'content'} if ($attrib{'content'});
     bless $self, $this;
     return $self;
 }
@@ -68,9 +64,7 @@ sub id {
 sub content {
     my $this = shift;
 
-    if (@_) {
-        $this->{'content'} = PurpleWiki::InlineNode->new('data'=>shift);
-    }
+    $this->{'content'} = shift if @_;
     return $this->{'content'};
 }
 

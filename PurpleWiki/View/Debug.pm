@@ -22,8 +22,17 @@ sub _traverseStructural {
                  ($node->type eq 'dl') ) {
                 print "\n";
             }
-            &_traverseInline($node->content->data, $indentLevel)
-                if ($node->content);
+            if ($node->content) {
+                foreach my $inlineNode (@{$node->content}) {
+                    print uc($inlineNode->type) . ':' if ($inlineNode->type ne 'text');
+                    if ($inlineNode->children) {
+                        &_traverseInline($inlineNode->children, $indentLevel);
+                    }
+                    else {
+                        print $inlineNode->content . "\n";
+                    }
+                }
+            }
             &_traverseStructural($node->children, $indentLevel + 1);
         }
     }
@@ -33,12 +42,12 @@ sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
 
     foreach my $node (@{$nodeListRef}) {
-        if (ref $node) {
-            print uc($node->type) . ':';
-            &_traverseInline($node->data, $indentLevel);
+        if (defined $node->content) {
+            print $node->content . "\n";
         }
         else {
-            print "$node\n";
+            print uc($node->type) . ':';
+            &_traverseInline($node->children, $indentLevel);
         }
     }
 }

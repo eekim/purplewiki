@@ -1,6 +1,7 @@
 package PurpleWiki::Tree;
 
 use strict;
+use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
 use PurpleWiki::View::XHTML;
@@ -98,7 +99,7 @@ sub parse {
                 $indentDepth--;
             }
             $currentNode = $currentNode->insertChild('type'=>'p',
-                                                     'content'=>$nodeContent);
+                'content'=>&_parseInlineNode($nodeContent));
             $currentNode = $currentNode->parent;
             undef $nodeContent;
             $isStart = 0 if ($isStart);
@@ -131,7 +132,8 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            $currentNode->insertChild('type'=>'h', 'content'=>$nodeContent);
+            $currentNode->insertChild('type'=>'h',
+                'content'=>&_parseInlineNode($nodeContent));
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
@@ -189,7 +191,7 @@ sub _terminateParagraph {
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
         chomp ${$nodeContentRef};
-        $currentNode->content(${$nodeContentRef});
+        $currentNode->content(&_parseInlineNode(${$nodeContentRef}));
         undef ${$nodeContentRef};
         return $currentNode->parent;
     }
@@ -210,18 +212,141 @@ sub _parseList {
     }
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
-                                                 'content'=>$nodeContents[0]);
+            'content'=>&_parseInlineNode($nodeContents[0]));
         $currentNode = $currentNode->parent;
         $currentNode = $currentNode->insertChild('type'=>'dd',
-                                                 'content'=>$nodeContents[1]);
+            'content'=>&_parseInlineNode($nodeContents[1]));
         return $currentNode->parent;
     }
     else {
         $currentNode = $currentNode->insertChild('type'=>'li',
-                                                 'content'=>$nodeContents[0]);
+            'content'=>&_parseInlineNode($nodeContents[0]));
         return $currentNode->parent;
     }
     return $currentNode;
+}
+
+sub _parseInlineNode {
+    my $text = shift;
+    my (@inlineNodes);
+
+    # markup regular expressions
+    my $rxNowiki = '<nowiki>.*?<\/nowiki>';
+    my $rxTt = '<tt>.*?<\/tt>';
+    my $rxFippleQuotes = "'''''.*?'''''";
+    my $rxB = '<b>.*?<\/b>';
+    my $rxTripleQuotes = "'''.*?'''";
+    my $rxI = '<i>.*?<\/i>';
+    my $rxDoubleQuotes = "''.*?''";
+    # link regular expressions
+    my $rxAddress = '[^]\s]*[\w/]';
+    my $rxProtocols = '(?i)(?:http|https|ftp|afs|news|mid|cid|nntp|mailto|wais):';
+    my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
+    my $rxSubpage = '[A-Z]+[a-z]+\w*';
+    my $rxQuoteDelim = '(?:"")?';
+    my $rxDoubleBracketed = '\[\[\w[\w\s]+\]\]';
+
+    # For some reason, the split below results in a lot of empty list
+    # members.  Hence the grep.
+    my @nodes = grep(!/^$/,
+        split(/(?:
+                ($rxNowiki) |
+                ($rxTt) |
+                ($rxFippleQuotes) |
+                ($rxB) |
+                ($rxTripleQuotes) |
+                ($rxI) |
+                ($rxDoubleQuotes) |
+                (\[$rxProtocols$rxAddress\s*.*?\]) |
+                ($rxProtocols$rxAddress) |
+                ((?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim) |
+                ([A-Z]\w+:$rxWikiWord$rxQuoteDelim) |
+                ($rxWikiWord$rxQuoteDelim) |
+                ($rxDoubleBracketed)
+                )/xs, $text)
+        );
+    foreach my $node (@nodes) {
+        if ($node =~ /^$rxNowiki$/s) {
+            $node =~ s/^<nowiki>//;
+            $node =~ s/<\/nowiki>$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'nowiki',
+                                                           'content'=>$node);
+        }
+        elsif ($node =~ /^$rxTt$/s) {
+            $node =~ s/^<tt>//;
+            $node =~ s/<\/tt>$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'tt',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /^$rxFippleQuotes$/s) {
+            $node =~ s/^'''//;
+            $node =~ s/'''$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /^$rxB$/s) {
+            $node =~ s/^<b>//;
+            $node =~ s/<\/b>$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /^$rxTripleQuotes$/s) {
+            $node =~ s/^'''//;
+            $node =~ s/'''$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /^$rxI$/s) {
+            $node =~ s/^<i>//;
+            $node =~ s/<\/i>$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /^$rxDoubleQuotes$/s) {
+            $node =~ s/^''//;
+            $node =~ s/''$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
+                'children'=>&_parseInlineNode($node));
+        }
+        elsif ($node =~ /\[($rxProtocols$rxAddress)\s*(.*?)\]/s) {
+            # bracketed link
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'href'=>$1,
+                                                           'content'=>$2);
+        }
+        elsif ($node =~ /^$rxProtocols$rxAddress$/) {
+            # URL
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'href'=>$node,
+                                                           'content'=>$node);
+        }
+        elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim/s) {
+            $node =~ s/""$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'content'=>$node);
+        }
+        elsif ($node =~ /[A-Z]\w+:$rxWikiWord$rxQuoteDelim/s) {
+            $node =~ s/""$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'content'=>$node);
+        }
+        elsif ($node =~ /$rxWikiWord$rxQuoteDelim/s) {
+            $node =~ s/""$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'content'=>$node);
+        }
+        elsif ($node =~ /$rxDoubleBracketed/s) {
+            $node =~ s/^\[\[//;
+            $node =~ s/\]\]$//;
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+                                                           'content'=>$node);
+        }
+        else {
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'text',
+                                                           'content'=>$node);
+        }
+    }
+    return \@inlineNodes;
 }
 
 sub view {
