@@ -273,14 +273,16 @@ sub allPages {
   (sort @l);
 }
 
+my $rc = [];
+my $done;
+my $starttime;
+my $pages = {};
 # pages->recentChanges($starttime)
 sub recentChanges {
   my $self = shift;
-  my $starttime = shift;
-  my $rc = [];
-  my $done = 0;
+  $starttime = shift;
+  $done = 0;
   my $rpath = $self->{reposPath};
-  my $pages = {};
   sub receiver1 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
     return if ($done);
@@ -300,7 +302,7 @@ sub recentChanges {
       } else {
         push(@$rc, $p);
         $pages->{$p} = { numChanges => 1, pageId => $id };
-#print STDERR "Got $id ",$$h{$p}->action,"\n";
+#print STDERR "Got $id ",$$h{$p}->action," ($#$rc)\n";
         $pages->{$p}->{timeStamp} = $t;
         $pages->{$p}->{changeSummary} = $_[4];
         $pages->{$p}->{userId} = $_[2];
@@ -311,7 +313,9 @@ sub recentChanges {
   }
 
   $starttime = 0 unless $starttime;
-  #$repos->get_logs([paths],start,end,disc,strict,&receiver);
+  #$self->{repos_ptr}->get_logs([paths],start,end,disc,strict,&receiver);
+  @$rc = ();
+  %$pages = ();
   $self->{repos_ptr}->get_logs("", $self->_currentRev, 1, 1, 1, \&receiver1);
   my $r = [ map($pages->{$_}, @$rc) ];
 #print STDERR "Rc:",join(":", @$rc),"\n::\nPP:",join(":", @$r),"\n";
@@ -352,6 +356,7 @@ sub getName {
     $pageName;
 }
 
+my $response = [];
 # $pages->getRevisions($id)
 sub getRevisions {
   my $self = shift;
@@ -359,14 +364,13 @@ sub getRevisions {
   my $maxcount = shift || 0;
   my $count = 1;
 
-  my $response;
   sub receiver2 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
     my ($p, $r, $u, $t, $l) = @_;
     return if ($maxcount && $maxcount < $count++);
     $t = _svn_time($t);
     $u =~ s/:.*$//;
-print STDERR "histlog (r=>$r, u=>$u, t=>$t, s=>$l) $#$response\n";
+#print STDERR "histlog (r=>$r, u=>$u, t=>$t, s=>$l) $#$response\n";
     push( @$response, {revision=>$r, userId=>$u,
                       dateTime=>UseModWiki::TimeToText($t), summary=>$l} );
   }
@@ -374,9 +378,8 @@ print STDERR "histlog (r=>$r, u=>$u, t=>$t, s=>$l) $#$response\n";
   my $repos = $self->{repos_ptr};
   my $path = $self->_repos_path($id);
   my $curRev = $self->_currentRev;
-  $response = [] unless $response;
   @$response = ();
-print STDERR "get_logs($path, $curRev, ...) $#$response\n";
+#print STDERR "get_logs($path, $curRev, ...) $#$response\n";
   $repos->get_logs($path, $curRev, 1, 0, 1, \&receiver2) if $curRev;
 
   return @$response;
