@@ -384,7 +384,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
     [11]->children->[2]->content} == 12);
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [2]->content->[0]->type eq 'link');
+    [2]->content->[0]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [2]->content->[0]->content eq 'UseModWiki');
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
@@ -504,7 +504,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[0]->content eq 'How about a paragraph with some ');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[1]->type eq 'link');
+    [1]->content->[1]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[1]->content eq 'WikiWords');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -512,7 +512,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[2]->content eq '?  How about a ');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[3]->type eq 'link');
+    [1]->content->[3]->type eq 'freelink');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[3]->content eq "double\nbracketed free link");
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -530,7 +530,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[6]->content eq '.  What about the URL itself, like ');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[7]->type eq 'link');
+    [1]->content->[7]->type eq 'url');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[7]->href eq 'http://www.eekim.com/');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -548,7 +548,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[10]->content eq ". How about a\n");
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[11]->type eq 'link');
+    [1]->content->[11]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[11]->content eq 'UseMod:InterWiki');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -556,7 +556,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[12]->content eq " link?  Finally, how about separating a\n");
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[13]->type eq 'link');
+    [1]->content->[13]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[13]->content eq 'WordFromNumbers');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -573,7 +573,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[0]->content eq 'How about some funkier URLs like ');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [2]->content->[1]->type eq 'link');
+    [2]->content->[1]->type eq 'url');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[1]->href eq 'http://www.burningchrome.com:81/');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -583,7 +583,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[2]->content eq "?  Or,\n");
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [2]->content->[3]->type eq 'link');
+    [2]->content->[3]->type eq 'url');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[3]->href eq 'http://www.eekim.com/cgi-bin/dkr?version=2&date=20021225');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->

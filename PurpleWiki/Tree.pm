@@ -4,8 +4,9 @@ use strict;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
-use PurpleWiki::View::XHTML;
 use PurpleWiki::View::WikiHTML;
+use PurpleWiki::View::WikiText;
+use PurpleWiki::View::XHTML;
 
 ### constructor
 
@@ -390,29 +391,29 @@ sub _parseInlineNode {
         }
         elsif ($node =~ /^$rxProtocols$rxAddress$/) {
             # URL
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'url',
                                                            'href'=>$node,
                                                            'content'=>$node);
         }
         elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim/s) {
             $node =~ s/""$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
         elsif ($node =~ /[A-Z]\w+:$rxWikiWord$rxQuoteDelim/s) {
             $node =~ s/""$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
         elsif ($node =~ /$rxWikiWord$rxQuoteDelim/s) {
             $node =~ s/""$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
         elsif ($node =~ /$rxDoubleBracketed/s) {
             $node =~ s/^\[\[//;
             $node =~ s/\]\]$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
+            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
                                                            'content'=>$node);
         }
         else {
@@ -435,6 +436,9 @@ sub view {
     } 
     elsif (lc($driver) eq 'wikihtml') {
         &PurpleWiki::View::WikiHTML::view($this, %params);
+    }
+    elsif (lc($driver) eq 'wiki') {
+        &PurpleWiki::View::WikiText::view($this, %params);
     }
 }
 

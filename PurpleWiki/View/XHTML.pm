@@ -173,7 +173,8 @@ sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
 
     foreach my $inlineNode (@{$nodeListRef}) {
-        if ($inlineNode->type eq 'link') {
+        if ($inlineNode->type eq 'link' || $inlineNode->type eq 'wikiword' ||
+            $inlineNode->type eq 'url' || $inlineNode->type eq 'freelink') {
             print '<a href="' . $inlineNode->href . '">';
             print &_quoteHtml($inlineNode->content);
             print '</a>';
@@ -207,13 +208,17 @@ sub _headerLevel {
 
 sub _printAnchor {
     my $nid = shift;
-    print '<a name="0' . $nid . '" id="0' . $nid . '"></a>';
+
+    print '<a name="0' . $nid . '" id="0' . $nid . '"></a>' if ($nid);
 }
 
 sub _printNid {
     my $nid = shift;
-    print ' &nbsp;&nbsp; <a class="nid" href="#0' . $nid . '">';
-    print "(0$nid)</a>";
+
+    if ($nid) {
+        print ' &nbsp;&nbsp; <a class="nid" href="#0' . $nid . '">';
+        print "(0$nid)</a>";
+    }
 }
 
 sub _printHeader {
