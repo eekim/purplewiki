@@ -1,0 +1,12 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title><TMPL_VAR name=siteName>: <TMPL_VAR name=pageName></title>
+<TMPL_IF name=siteBase>
+  <base href="<TMPL_VAR name=siteBase>" />
+</TMPL_IF>
+<TMPL_IF name=cssFile>
+<link rel="stylesheet" href="<TMPL_VAR name=cssFile>" />
+</TMPL_IF>
+</head>
+<body>

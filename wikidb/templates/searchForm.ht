@@ -1,0 +1,8 @@
+<div id='searchForm'>
+<form method="get" action="<TMPL_VAR name=baseUrl>"
+      enctype="application/x-www-form-urlencoded">
+Search:
+<input type="text" name="search"  size="20" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>

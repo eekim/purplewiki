@@ -1,0 +1,14 @@
+<div id='wikiPageActions'>
+<a id='homePageLink' href="<TMPL_VAR name=baseUrl>?<TMPL_VAR name=homePage>">
+  <TMPL_VAR name=homePage>
+</a> |
+<a id='recentChagesLink' href="<TMPL_VAR name=baseUrl>?RecentChanges">
+  RecentChanges
+</a> |
+<a id='pageIndexLink' href="<TMPL_VAR name=baseUrl>?action=index">
+  Page Index
+</a> |
+<a id='preferencesLink' href="<TMPL_VAR name=preferencesUrl>">
+  Preferences
+</a>
+</div>

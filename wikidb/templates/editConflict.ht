@@ -1,0 +1,84 @@
+<TMPL_INCLUDE name=header.ht>
+<TMPL_IF name=revision>
+<h1>Editing revision <TMPL_VAR name=revision> of <TMPL_VAR name=pageName></h1>
+<TMPL_ELSE>
+<h1>Editing <TMPL_VAR name=pageName></h1>
+</TMPL_IF>
+
+<TMPL_INCLUDE name=wikiPageActions.ht>
+
+<div id='revisionWarning'>
+<TMPL_IF name=revision>
+<p><b>Editing old revision <TMPL_VAR name=revision>. Saving this page will
+replace the latest revision with this text.</b></p>
+</TMPL_IF>
+</div>
+
+<!-- hrmmm need more css ability! -->
+<h2>Edit Conflict!</h2>
+
+<!-- FIXME: this section doesn't work in HTML::Template 
+[% IF editConflict > 1 %]
+<h3>(This is a new conflict.)</h3>
+[% END %]
+-->
+
+<p><b>Someone saved this page after you started editing. The top
+textbox contains the saved text. Only the text in the top textbox will
+be saved.</b></p>
+
+<p>Scroll down to see your edited text.</p>
+
+<p>Last save time: <TMPL_VAR name=lastSavedTime>
+(Current time is: <TMPL_VAR name=currentTime>)</p>
+
+<form method="post" action="<TMPL_VAR name=baseUrl>"
+ enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="title" value="<TMPL_VAR name=pageName>" />
+<input type="hidden" name="oldtime" value="<TMPL_VAR name=pageTime>" />
+<input type="hidden" name="oldconflict" value="<TMPL_VAR name=isConflict>" />
+<TMPL_IF name=revision>
+  <input type="hidden" name="revision" value="<TMPL_VAR name=revision>" />
+</TMPL_IF>
+
+<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:100%">
+<TMPL_VAR name=oldText>
+</textarea>
+
+<p>Summary:
+<input type="text" name="summary" value="*" size="60" maxlength="200" />
+<br />
+<input type="checkbox" name="recent_edit" value="on" />
+This change is a minor edit.
+<br />
+<input type="submit" name="Save" value="Save" />
+<TMPL_IF name=userName>
+  (Your user name is
+  <a href="<TMPL_VAR name=baseUrl>?<TMPL_VAR name=userName>">
+  <TMPL_VAR name=userName>
+  </a>.)
+<TMPL_ELSE>
+  (Visit <a href="<TMPL_VAR name=preferencesUrl>">Preferences</a>
+  to set your user name.)
+</TMPL_IF>
+<input type="submit" name="Preview" value="Preview" /></p>
+
+<hr />
+
+<p><b>This is the text you submitted:</b></p>
+
+<textarea name="newtext" rows="10" cols="65" wrap="virtual" style="width:100%">
+<TMPL_VAR name=newText>
+</textarea>
+
+<div>
+<input type="hidden" name=".cgifields" value="recent_edit" />
+</div>
+</form>
+
+</div>
+
+<div>
+<a href="<TMPL_VAR name=revisionsUrl>">View other revisions</a>
+</div>
+<TMPL_INCLUDE name=footer.ht>

@@ -1,0 +1,37 @@
+<!-- FIXME: there are issues with how the second half of a title
+     is passed through to the templates. See also error.ht -->
+<TMPL_INCLUDE name=header.ht>
+<h1>Index of all pages</h1>
+
+<TMPL_INCLUDE name=wikiPageActions.ht>
+
+<!-- FIXME: HTML::Template cannot access this data structure
+<h2>[% pages.size %] pages found:</h2>
+-->
+
+<p>
+<!-- FIXME: HTML::Template cannot access this data either. A loop
+     must be on a list of hashes with named elements, in this case
+     pageName would be the key of the hash.
+
+     Also, there's no  FOREACH, only LOOPs (thus the need for
+     the hash).
+
+     And finally, by default a TMPL_LOOP is a new scope, you 
+     can't see baseUrl inside the loop. To get it visible you
+     have to use the global_vars option to new()
+
+     To avoid an error here, die_on_bad_params option would
+     need to be zero, but leaving that off to catch other
+     errors. This means calling the page index causes a 
+     server error.
+
+[% FOREACH pageName = pages %]
+<a href="[% baseUrl %]?[% pageName %]">[% pageName %]</a><br />
+[% END %]
+-->
+</p>
+
+
+<TMPL_INCLUDE name=searchForm.ht>
+<TMPL_INCLUDE name=footer.ht>

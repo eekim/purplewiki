@@ -1,0 +1,8 @@
+<div id='pageCommands'>
+<TMPL_IF name=revision>
+<a href="<TMPL_VAR name=pageUrl>">View current revision</a>
+<TMPL_ELSE>
+<a href="<TMPL_VAR name=editUrl>">Edit text of this page</a> |
+<a href="<TMPL_VAR name=revisionsUrl>">View other revisions</a>
+</TMPL_IF>
+</div>

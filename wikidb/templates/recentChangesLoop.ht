@@ -1,0 +1,27 @@
+<div id='recentChanges'>
+<!-- FIXME: some functionality removed to get working version -->
+<TMPL_LOOP name=recentChanges>
+<p><b><TMPL_VAR name=date></b></p>
+<ul>
+  <TMPL_LOOP name=pages>
+  <li><a href="<TMPL_VAR name=diffUrl>">(diff)</a>
+      <a href="<TMPL_VAR name=baseUrl>?<TMPL_VAR name=name>">
+         <TMPL_VAR name=name></a> <TMPL_VAR name=time>
+      (<TMPL_VAR name=numChanges>
+      <a href="<TMPL_VAR name=changeUrl>">changes</a>)
+      <TMPL_IF name=summary>
+        <b>[<TMPL_VAR name=summary>]</b>
+      </TMPL_IF>
+      . . . . .
+      <TMPL_IF name=userName>
+      <a href="<TMPL_VAR name=baseUrl>?<TMPL_VAR name=userName>"
+        title="ID <TMPL_VAR name=userId> from <TMPL_VAR name=host>">
+	  <TMPL_VAR name=userName></a>
+      <TMPL_ELSE>
+        <TMPL_VAR name=host>
+      </TMPL_IF>
+  </li>
+  </TMPL_LOOP>
+</ul>
+</TMPL_LOOP>
+</div>

@@ -1,0 +1,14 @@
+<!-- FIXME: the title as passed won't work here. We should abstract
+     title either to a single string for each top level template
+     of do a siteName:title pairing where title is not the pageName -->
+<TMPL_INCLUDE name=header.ht>
+<h1>[% errorTitle %]</a></h1>
+
+<TMPL_INCLUDE name=wikiPageActions.ht>
+
+<div id='errorMessage'>
+<p>[% errorMessage %]</p>
+</div>
+
+<TMPL_INCLUDE name=searchForm.ht>
+<TMPL_INCLUDE name=footer.ht>

@@ -1,0 +1,20 @@
+<TMPL_INCLUDE name=header.ht>
+<h1 id='wikiPageTitle'>
+  <a href="<TMPL_VAR name=backlinksUrl>"><TMPL_VAR name=pageName></a>
+</h1>
+
+<TMPL_INCLUDE name=wikiPageActions.ht>
+
+<TMPL_INCLUDE name=showRevision.ht>
+
+<div id='wikiBody'>
+<TMPL_VAR name=body>
+</div>
+
+
+<TMPL_INCLUDE name=pageCommands.ht>
+<TMPL_INCLUDE name=revisionInfo.ht>
+
+<TMPL_INCLUDE name=searchForm.ht>
+
+<TMPL_INCLUDE name=footer.ht>

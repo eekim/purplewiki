@@ -1,0 +1,32 @@
+<TMPL_INCLUDE name=header.ht>
+<h1><a href="<TMPL_VAR name=backlinksUrl>"><TMPL_VAR name=pageName></a></h1>
+
+<TMPL_INCLUDE name=wikiPageActions.ht>
+
+<TMPL_INCLUDE name=showRevision.ht>
+
+<TMPL_VAR name=body>
+
+<TMPL_IF name=daysAgo>
+<h2>Updates in the last <TMPL_VAR name=daysAgo> days</h2>
+<TMPL_ELSE>
+<h2>Updates since <TMPL_VAR name=changesFrom></h2>
+</TMPL_IF>
+
+<p>
+<TMPL_LOOP name=rcDays>
+<a href="<TMPL_VAR name=url>"><TMPL_VAR name=num> days</a>
+<!-- FIXME: what does this do? [% IF NOT loop.last %]|[% END %] -->
+</TMPL_LOOP>
+</p>
+
+<TMPL_INCLUDE name=recentChangesLoop.ht>
+
+<p>Page generated <TMPL_VAR name=currentDate></p>
+<hr />
+
+<TMPL_INCLUDE name=pageCommands.ht>
+<TMPL_INCLUDE name=revisionInfo.ht>
+
+<TMPL_INCLUDE name=searchForm.ht>
+<TMPL_INCLUDE name=footer.ht>

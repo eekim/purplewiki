@@ -72,6 +72,8 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
 # we only need one of each these per run
 $config = new PurpleWiki::Config($CONFIG_DIR);
 $wikiParser = PurpleWiki::Parser::WikiText->new;
+# FIXME: would be cool if there were a way to factory this based off a 
+#        config value.
 $wikiTemplate = new PurpleWiki::Template::TT(templateDir => "$CONFIG_DIR/templates");
 
 # Set our umask if one was put in the config file. - matthew
