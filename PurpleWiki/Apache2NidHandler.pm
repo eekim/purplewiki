@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2NidHandler.pm,v 1.1.2.1 2004/02/05 07:20:22 cdent Exp $
+# $Id: Apache2NidHandler.pm,v 1.1.2.2 2004/02/05 07:23:33 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -57,6 +57,10 @@ sub handler {
     $pathInfo = $r->path_info();
     $pathInfo =~ s/^\///;
     ($count, $url) = split('/', $pathInfo, 2);
+
+    # put the double slash back in the url after the protocol
+    # FIXME: do encoding of the passed url?
+    $url =~ s/^(\w+:\/)(?!\/)/$1\//;
 
     if (!defined($url)) {
         $nid = $count;
