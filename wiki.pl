@@ -35,13 +35,10 @@ use strict;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use Digest::MD5;
-use PurpleWiki::ACL;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
 use PurpleWiki::Database::KeptRevision;
-use PurpleWiki::Database::User::UseMod;
-use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Session;
 
@@ -68,17 +65,25 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
 
 # we only need one of each these per run
 my $config = new PurpleWiki::Config($CONFIG_DIR);
-my $wikiParser = PurpleWiki::Parser::WikiText->new;
-# FIXME: would be cool if there were a way to factory these based off a
-#        config value.
-my $userDb = PurpleWiki::Database::User::UseMod->new;
-my $acl = PurpleWiki::ACL->new;
 
-# Select and load a  template driver
-my $templateDriver = $config->TemplateDriver();
-my $templateClass = "PurpleWiki::Template::$templateDriver";
-eval "require $templateClass";
-my $wikiTemplate = $templateClass->new;
+my $parserDriver = $config->ParserDriver;
+my $templateDriver = $config->TemplateDriver;
+my $userDbDriver = $config->UserDatabaseDriver;
+my $aclDriver = $config->ACLDriver;
+
+eval "require $parserDriver";
+die "$@" if ($@);
+eval "require $templateDriver";
+die "$@" if ($@);
+eval "require $userDbDriver";
+die "$@" if ($@);
+eval "require $aclDriver";
+die "$@" if ($@);
+
+my $wikiParser = $parserDriver->new;
+my $wikiTemplate = $templateDriver->new;
+my $userDb = $userDbDriver->new;
+my $acl = $aclDriver->new;
 
 # check for i-names support
 if ($config->UseINames) {
@@ -206,6 +211,11 @@ sub BrowsePage {
 
   my ($page, $section, $text, $keptRevision, $keptSection);
 
+  if (!$acl->canRead($user, $id)) {
+      $wikiTemplate->vars(&globalTemplateVars);
+      print GetHttpHeader . $wikiTemplate->process('errors/viewNotAllowed');
+      return;
+  }
   my ($userId, $username);
   if ($user) {
       $userId = $user->id;
@@ -312,9 +322,9 @@ sub BrowsePage {
                       lastEdited => $lastEdited,
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$keywords",
-                      editUrl =>
+                      editUrl => $acl->canEdit($user, $id) ?
                         $config->ScriptName . "?action=edit&amp;id=$id" .
-                        $editRevisionString,
+                        $editRevisionString : undef,
                       revisionsUrl =>
                         $config->ScriptName . "?action=history&amp;id=$id",
                       diffUrl =>
@@ -398,7 +408,8 @@ sub DoRc {
                         lastEdited => $lastEdited,
                         pageUrl => $config->ScriptName . "?$id",
                         backlinksUrl => $config->ScriptName . "?search=$id",
-                        editUrl => $config->ScriptName . "?action=edit&amp;id=$id",
+                        editUrl => $acl->canEdit($user, $id) ?
+                            $config->ScriptName . "?action=edit&amp;id=$id" : undef,
                         revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id",
                         diffUrl => $config->ScriptName . "?action=browse&amp;diff=1&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewRecentChanges');
@@ -442,7 +453,7 @@ sub DoHistory {
 
 sub getRevisionHistory {
     my ($id, $section, $isCurrent) = @_;
-    my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
+    my ($rev, $summary, $host, $username, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
 
     my $text = $section->getText();
     $rev = $section->getRevision();
@@ -453,7 +464,7 @@ sub getRevisionHistory {
         $host = $section->getIP();
         $host =~ s/\d+$/xxx/;      # Be somewhat anonymous (if no host)
     }
-    $user = $section->getUsername();
+    $username = $section->getUsername();
     $uid = $section->getID();
     $ts = $section->getTS();
 
@@ -465,8 +476,10 @@ sub getRevisionHistory {
           "?action=browse&amp;id=$id&amp;revision=$rev";
         $diffUrl = $config->ScriptName .
             "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
-        $editUrl = $config->ScriptName .
-            "?action=edit&amp;id=$id&amp;revision=$rev";
+        if ($acl->canEdit($user, $id)) {
+            $editUrl = $config->ScriptName .
+                "?action=edit&amp;id=$id&amp;revision=$rev";
+        }
     }
     if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
         $summary = QuoteHtml($summary);   # Thanks Sunir! :-)
@@ -477,7 +490,7 @@ sub getRevisionHistory {
     return { revision => $rev,
              dateTime => TimeToText($ts),
              host => $host,
-             user => $user,
+             user => $username,
              summary => $summary,
              pageUrl => $pageUrl,
              diffUrl => $diffUrl,
@@ -486,7 +499,9 @@ sub getRevisionHistory {
 
 # ==== page-oriented functions ====
 sub GetHttpHeader {
-    my $cookie = $q->cookie(-name => $config->SiteName,
+    my $cookieName = ($config->CookieName) ? $config->CookieName :
+        $config->SiteName;
+    my $cookie = $q->cookie(-name => $cookieName,
                             -value => $session->id,
                             -path => $config->ScriptDir,
                             -expires => '+7d');
@@ -1190,7 +1205,7 @@ sub DoSearch {
         return;
     }
     # do the new pluggable search
-    my $search = new PurpleWiki::Search::Engine(config => $config);
+    my $search = new PurpleWiki::Search::Engine;
     $search->search($string);
 
     $wikiTemplate->vars(&globalTemplateVars,
@@ -1588,7 +1603,9 @@ sub globalTemplateVars {
             baseUrl => $config->ScriptName,
             homePage => $config->HomePage,
             userName => $user ? $user->username : undef,
-            preferencesUrl => $config->ScriptName . '?action=editprefs');
+            userId => $user ? $user->id : undef,
+            preferencesUrl => $config->ScriptName . '?action=editprefs',
+            sessionId => $session ? $session->id : undef);
 }
 
 &DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.

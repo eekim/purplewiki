@@ -78,8 +78,11 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
-# Template Modules
-TemplateDriver = TT
+# PurpleWiki Modules
+ParserDriver        = PurpleWiki::Parser::WikiText
+TemplateDriver      = PurpleWiki::Template::TT
+UserDatabaseDriver  = PurpleWiki::Database::User::UseMod
+ACLDriver           = PurpleWiki::ACL
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/

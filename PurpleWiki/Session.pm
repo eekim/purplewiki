@@ -39,8 +39,6 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 ### constructor
 
-# loads or creates session with session ID $sid.  if $sid does not exist, creates one.
-
 sub new {
     my $this = shift;
     my $sid = shift;
@@ -65,8 +63,6 @@ sub clear {
     my $self = shift;
     return $self->{session}->clear(@_);
 }
-
-# returns session ID
 
 sub id {
     my $self = shift;

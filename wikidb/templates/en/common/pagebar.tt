@@ -9,7 +9,11 @@
 <a href="[% revisionsUrl %]">View other revisions</a>
 </div>
 [% END %]
-[% ELSIF showDiff %]
+[% ELSIF revision %]
+<div class="pagebar">
+<a href="[% pageUrl %]">View current revision</a>
+</div>
+[% ELSIF revisionsUrl %]
 <div class="pagebar">
 <a href="[% revisionsUrl %]">View other revisions</a>
 </div>

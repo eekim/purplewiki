@@ -207,6 +207,7 @@ wikidb/templates/en/errors/pageNameTooManyChars.tt
 wikidb/templates/en/errors/pageNameTooManySlashes.tt
 wikidb/templates/en/errors/urlInvalid.tt
 wikidb/templates/en/errors/usernameInvalid.tt
+wikidb/templates/en/errors/viewNotAllowed.tt
 wikidb/templates/en/errors/xsidInvalid.tt
 wikidb/templates/en/lib/diffs.tt
 wikidb/templates/en/lib/pageHistory.tt

@@ -62,6 +62,7 @@ my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
     LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
+    ParserDriver UserDatabaseDriver ACLDriver
     ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
