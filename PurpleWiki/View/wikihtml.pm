@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.8 2003/08/28 17:17:35 eekim Exp $
+# $Id: wikihtml.pm,v 1.9 2003/08/29 18:40:50 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -78,12 +78,12 @@ sub sketch {
     my $node = shift;
     my %params = @_;
 
-    return q{<form name="SvgForm" action="/cgi-bin/wikiwhiteboard.pl" method="POST" onsubmit="from=document.forms['SvgForm'];frm.svg.value= window.getSVG(); return true;">} . "\n" .
+    return q{<form name="SvgForm" action="/cgi-bin/wikiwhiteboard.pl" method="POST" onsubmit="frm=document.forms['SvgForm'];frm.svg.value= window.getSVG(); return true;">} . "\n" .
         '<input type="submit" value="Save" />' . "\n" .
         '<input type="hidden" name="pageName" value="' . $params{pageName} .
         '" />' . "\n" .
         '<input type="hidden" name="svg" value="" />' . "\n" .
-        '<input type="submit" name="submit" value="clear" />' . "\n" .
+        '<input type="submit" name="submit" value="Clear" />' . "\n" .
         "</form>\n" .
         '<embed src="/cgi-bin/wikiwhiteboard.pl?' . $params{pageName} .
         '" width="500" height="300" pluginspage="http://www.adobe.com/svg/viewer/install" />' . "\n";
