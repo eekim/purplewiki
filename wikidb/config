@@ -21,6 +21,11 @@ LocalSequenceDir = $DataDir     # The directory where purple number sequences li
 DefaultLanguage = en           # Default language to use
 #CookieName = YourWiki         # Cookie name.
 
+# Captcha
+CaptchaDataDir = $DataDir/captcha
+CaptchaOutputDir = /var/www/htdocs/captcha
+CaptchaWebDir = /captcha
+
 # PurpleWiki Modules
 ParserDriver        = PurpleWiki::Parser::WikiText
 TemplateDriver      = PurpleWiki::Template::TT
@@ -96,15 +101,14 @@ SearchModule	=	Wiki
 #GoogleWSDL             =       /home/cdent/lib/GoogleSearch.wsdl
 #GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-# Identity Commons e-names
+# Identity Commons i-names
 #ServiceProviderName = "blueoxen"
 #ServiceProviderKey = ""
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 
-# Captcha
-CaptchaDataDir = $DataDir/captcha
-CaptchaOutputDir = /var/www/htdocs/captcha
-CaptchaWebDir = /captcha
+# Login redirect.  An optional URL for handling site-wide login in place
+# of the default action=login.
+#LoginRedirect = 
 
 # == You should not have to change anything below this line. =============
 UserDir     = $DataDir/user      # Stores user data

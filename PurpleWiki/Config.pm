@@ -65,7 +65,8 @@ my @SCALAR_CONFIGS = qw( ArchiveDriver
     LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
     ParserDriver UserDatabaseDriver ACLDriver LocaleFile
     ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage
-    CaptchaDataDir CaptchaOutputDir CaptchaWebDir);
+    LoginRedirect CaptchaDataDir CaptchaOutputDir CaptchaWebDir
+    BlosxomEntriesCache BlosxomDataDir BlosxomUrl);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching

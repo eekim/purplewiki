@@ -645,7 +645,12 @@ sub DoOtherRequest {
       else { # return an error
       }
     } elsif ($action eq "login") {
-      DoEnterLogin(&GetParam("fromPage", ""));
+      if ($config->LoginRedirect) {
+          print 'Location: ' . $config->LoginRedirect . "\n\n";
+      }
+      else {
+          DoEnterLogin(&GetParam("fromPage", ""));
+      }
     } elsif ($action eq "newlogin") {
       $user = undef;
       DoEditPrefs();  # Also creates new ID
