@@ -80,7 +80,7 @@ sub sectionPre {
 
 sub sectionPost { 
     my $self = shift;
-    pop @{shift->{sectionState}}; 
+    pop @{$self->{sectionState}}; 
     $self->_hardRule;
     $self->{isStart} = 0;
 }
