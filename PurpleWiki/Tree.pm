@@ -2,13 +2,14 @@ package PurpleWiki::Tree;
 
 use strict;
 use PurpleWiki::StructuralNode;
+use PurpleWiki::View::Debug;
 use PurpleWiki::View::XHTML;
 
 ### constructor
 
 sub new {
     my $this = shift;
-    my ($fname, %options) = @_;
+    my (%options) = @_;
     my $self;
 
     $self = {};
@@ -227,8 +228,11 @@ sub view {
     my $this = shift;
     my ($driver, %params) = @_;
 
-    if ($driver eq 'XHTML') {
+    if (lc($driver) eq 'xhtml') {
         &PurpleWiki::View::XHTML::view($this, %params);
+    }
+    elsif (lc($driver) eq 'debug') {
+        &PurpleWiki::View::Debug::view($this, %params);
     }
 }
 
