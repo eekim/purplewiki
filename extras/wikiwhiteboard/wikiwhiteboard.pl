@@ -2,7 +2,7 @@
 #
 # wikiwhiteboard.pl -- perl port of Danny Ayers's WikiWhiteboard
 #
-# $Id: wikiwhiteboard.pl,v 1.3 2004/02/11 20:50:14 eekim Exp $
+# $Id: wikiwhiteboard.pl,v 1.1 2004/02/11 20:52:03 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
