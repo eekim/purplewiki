@@ -30,6 +30,7 @@ use MT::Comment;
 
 my $CONFIG_DIR = '/home/cdent/testwiki';
 my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords anywhere
+my @TEXT_SECTIONS = qw(text text_more);
 
 ##### PRESENTATION #####
 
@@ -104,27 +105,15 @@ my $commentSaveSub = sub {
 
     my $comment = shift;
 
-    my $text = $comment->text;
     
     # for retrieving the permalink of the associated entry
     my $entry = MT::Entry->load($comment->entry_id);
 
     my $blog = MT::Blog->load($entry->blog_id);
     if (grep /^purpleIN$/, @{$blog->comment_text_filters}) {
-        require PurpleWiki::Config;
-        require PurpleWiki::Parser::WikiText;
-
-        # process text
-        $text =~ s/\r//g;
-        my $config = new PurpleWiki::Config($CONFIG_DIR);
-        my $parser = PurpleWiki::Parser::WikiText->new();
-        my $wiki = $parser->parse($text, 'add_node_ids' => 1,
-            config => $config,
-            'url' => $entry->permalink);
-        $text = $wiki->view('wikitext', config => $config);
-        $text =~ s/\r//g;
-
         # save it
+        my $text = $comment->text;
+        $text = plugins::purple::_processText($text, $entry->permalink);
         $comment->text($text);
     }
 
@@ -156,23 +145,36 @@ my $entrySaveSub = sub {
     # which is only created after a save.
     # Only do this if the entry is purpleIN text format
     if ($entry->convert_breaks =~ /purpleIN/) {
-        require PurpleWiki::Config;
-        require PurpleWiki::Parser::WikiText;
-        my $text = $entry->text;
-        $text =~ s/\r//g;
-        my $config = new PurpleWiki::Config($CONFIG_DIR);
-        my $parser = PurpleWiki::Parser::WikiText->new();
-        my $wiki = $parser->parse($text, 'add_node_ids' => 1,
-            config => $config,
-            'url' => $entry->permalink);
-        $text = $wiki->view('wikitext', config => $config);
-        $text =~ s/\r//g;
-        $entry->text($text);
+        foreach my $section (@TEXT_SECTIONS) {
+            my $text = $entry->$section;
+            $text = plugins::purple::_processText($text, $entry->permalink);
+            $entry->$section($text);
+        }
         $entry->SUPER::save(@_) or return;
     }
 
     1;
 };
+
+sub _processText {
+    my $text = shift;
+    my $permalink = shift;
+
+    require PurpleWiki::Config;
+    require PurpleWiki::Parser::WikiText;
+
+    # process text
+    $text =~ s/\r//g;
+    my $config = new PurpleWiki::Config($CONFIG_DIR);
+    my $parser = PurpleWiki::Parser::WikiText->new();
+    my $wiki = $parser->parse($text, 'add_node_ids' => 1,
+        config => $config,
+        'url' => $permalink);
+    $text = $wiki->view('wikitext', config => $config);
+    $text =~ s/\r//g;
+
+    return $text;
+}
 
 *MT::Entry::save = $entrySaveSub;
 
