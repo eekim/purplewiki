@@ -17,7 +17,7 @@ if (@ARGV == 2) {
     print $wiki->view($ARGV[1]);
 }
 else {
-    print $wiki->view('Debug');
+    print $wiki->view('debug');
 }
 
 #$wiki->view('XHTML','collapse'=>[2]);

@@ -2,7 +2,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.4 2003/01/09 06:26:18 eekim Exp $
+# $Id: wiki.pl,v 1.5 2003/01/18 05:23:45 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -1174,11 +1174,12 @@ sub GetRedirectPage {
 }
 
 # ==== Common wiki markup ====
-sub WikiToHTML {  # Use the PurpleWiki::View::WikiHTML driver to parse wiki pages to HTML
+sub WikiToHTML {
+  # Use the PurpleWiki::View::wikihtml driver to parse wiki pages to HTML
   my ($pageText) = @_;
 
   my $wiki = $wikiParser->parse($pageText);
-  return $wiki->view('WikiHTML');
+  return $wiki->view('wikihtml');
 }
 
 sub CommonMarkup {
@@ -3206,7 +3207,7 @@ sub DoPost {
   $string =~ s/\r//g;
 
   my $wiki = $wikiParser->parse($string, 'add_node_ids'=>1);
-  my $output = $wiki->view('wiki');
+  my $output = $wiki->view('wikitext');
 
   $string = $output;
 

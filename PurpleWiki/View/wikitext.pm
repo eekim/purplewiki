@@ -1,6 +1,6 @@
-# PurpleWiki::View::WikiText.pm
+# PurpleWiki::View::wikitext.pm
 #
-# $Id: WikiText.pm,v 1.10 2003/01/17 06:26:11 eekim Exp $
+# $Id: wikitext.pm,v 1.1 2003/01/18 05:23:45 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -27,7 +27,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::View::WikiText;
+package PurpleWiki::View::wikitext;
 
 use 5.005;
 use strict;
@@ -293,11 +293,11 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::View::WikiText - WikiText view driver
+PurpleWiki::View::wikitext - WikiText view driver
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::View::WikiText;
+  use PurpleWiki::View::wikitext;
 
 =head1 DESCRIPTION
 

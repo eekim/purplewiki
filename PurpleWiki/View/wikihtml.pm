@@ -1,6 +1,6 @@
-# PurpleWiki::View::WikiHTML.pm
+# PurpleWiki::View::wikihtml.pm
 #
-# $Id: WikiHTML.pm,v 1.12 2003/01/02 06:07:10 eekim Exp $
+# $Id: wikihtml.pm,v 1.1 2003/01/18 05:23:45 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -27,7 +27,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::View::WikiHTML;
+package PurpleWiki::View::wikihtml;
 
 use PurpleWiki::Page;
 use PurpleWiki::Tree;
@@ -306,11 +306,11 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::View::WikiHTML - WikiHTML view driver
+PurpleWiki::View::wikihtml - WikiHTML view driver
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::View::WikiHTML;
+  use PurpleWiki::View::wikihtml;
 
 =head1 DESCRIPTION
 

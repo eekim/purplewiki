@@ -15,10 +15,10 @@ PurpleWiki/Page.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Parser/WikiText.pm
-PurpleWiki/View/Debug.pm
+PurpleWiki/View/debug.pm
 PurpleWiki/View/text.pm
-PurpleWiki/View/WikiHTML.pm
-PurpleWiki/View/WikiText.pm
+PurpleWiki/View/wikihtml.pm
+PurpleWiki/View/wikitext.pm
 t/inline_node.t
 t/parser01.t
 t/parser02.t

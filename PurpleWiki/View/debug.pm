@@ -1,6 +1,6 @@
-# PurpleWiki::View::Debug.pm
+# PurpleWiki::View::debug.pm
 #
-# $Id: Debug.pm,v 1.6 2003/01/02 06:07:10 eekim Exp $
+# $Id: debug.pm,v 1.1 2003/01/18 05:23:45 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -27,7 +27,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::View::Debug;
+package PurpleWiki::View::debug;
 
 use 5.005;
 use strict;
@@ -97,11 +97,11 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::View::Debug - Debug view driver
+PurpleWiki::View::debug - Debug view driver
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::View::Debug;
+  use PurpleWiki::View::debug;
 
 =head1 DESCRIPTION
 
