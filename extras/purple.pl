@@ -23,7 +23,6 @@ $VERSION = 0.2;
 use strict;
 no warnings 'redefine';
 
-use lib '/home/cdent/src/pwManage/purplewiki.nidGen';
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use MT;
