@@ -1,3 +1,33 @@
+# PurpleWiki::API.pm
+# vi:ai:sw=4:ts=4:et:sm
+#
+# $Id$
+#
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
+#
+# This file is part of PurpleWiki.  PurpleWiki is derived from:
+#
+#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
+#   AtisWiki v0.3             (c) Markus Denker 1998
+#   CVWiki CVS-patches        (c) Peter Merel 1997
+#   The Original WikiWikiWeb  (c) Ward Cunningham
+#
+# PurpleWiki is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the
+#    Free Software Foundation, Inc.
+#    59 Temple Place, Suite 330
+#    Boston, MA 02111-1307 USA
+#
 package PurpleWiki::API;
 use strict;
 use warnings;
@@ -26,46 +56,6 @@ sub getAllPages {
     return PurpleWiki::Database::AllPagesList();
 }
 
-sub getRecentChanges {
-    my ($self, $timeStamp) = @_;
-    my @RCInfo = ();
-
-    # Default to showing all changes.
-    $timeStamp = 0 if not defined $timeStamp;
-
-    open(IN, $self->{config}->RcFile)
-        || croak $self->{config}->RCName." log error: $!";
-
-    for my $logEntry (<IN>) {
-        chomp $logEntry;
-        my $fsexp = $self->{config}->FS3;
-        my @entries = split /$fsexp/, $logEntry;
-        if (@entries >= 7 && $entries[0] >= $timeStamp) {  # Check timestamp
-            my %info;
-            $info{name} = $entries[1];
-            $info{summary} = $entries[2];
-            $info{minorEdit} = $entries[3];
-            $info{host} = $entries[4];
-            $info{author} = "";
-
-            # $entries[5] is garbage and so we ignore it...
-
-            # Get extra info
-            my $fsexp = $self->{config}->FS2;
-            @entries = split /$fsexp/, $entries[6];
-            if (@entries == 2) {
-                $info{userID} = $entries[0];
-                $info{author} = $info{username} = $entries[1];
-            }
-
-            push @RCInfo, \%info;
-        }
-    }
-
-    close(IN);
-    return @RCInfo;
-}
-
 sub getPageInfo {
     my ($self, $pageName) = @_;
     return $self->getPageInfoVersion($pageName, -1);
@@ -73,23 +63,21 @@ sub getPageInfo {
 
 sub getPageInfoVersion {
     my ($self, $pageName, $version) = @_;
-    my $page = new PurpleWiki::Database::Page('id' => $pageName);
-    my $keptRev = new PurpleWiki::Database::KeptRevision('id' => $pageName);
     my $section;
     my %pageInfo;
 
-    croak "$pageName not found" if not $page->pageExists();
-    $page->openPage();
+    if (not $self->pageExistsVersion($pageName, $version)) {
+        croak "$pageName not found";
+    }
 
     # Handle version specific stuffs.
     if ($version >= 0) { # An old version
-        if ($keptRev->hasRevision($version)) {
-            $section = $keptRev->getRevision($version);
-            $pageInfo{version} = $version;
-        } else {
-            die "Could not find version $version of $pageName\n";
-        }
+        my $keptRev = $self->getKeptRevision($pageName);
+        $section = $keptRev->getRevision($version);
+        $pageInfo{version} = $version;
     } else { # Current version
+        my $page = $self->getPageObject($pageName);
+        $page->openPage();
         $section = $page->getSection();
         $pageInfo{version} = $section->getRevision();
     }
@@ -105,19 +93,24 @@ sub getPageInfoVersion {
     return %pageInfo;
 }
 
-sub getPage {
+sub getKeptRevision {
     my ($self, $pageName) = @_;
-    return new PurpleWiki::Database::Page(id => $pageName);
+    return new PurpleWiki::Database::KeptRevision('id' => $pageName);
 }
 
-sub getPageVersion {
+sub getPageObject {
+    my ($self, $pageName) = @_;
+    return $self->getPageObjectVersion($pageName, -1);
+}
+
+sub getPageObjectVersion {
     my ($self, $pageName, $version) = @_;
-    my $keptRev = new PurpleWiki::Database::KeptRevision('id' => $pageName);
+    my $keptRev = $self->getKeptRevision($pageName);
     my $page;
 
-    return $self->getPage($pageName) if $version < 0;
-
-    if ($keptRev->hasRevision($version)) {
+    if ($version < 0) {
+        $page = $self->getPageObject(id => $pageName);
+    } elsif ($keptRev->hasRevision($version)) {
         $page = $keptRev->getRevision($version);
     } else {
         croak "Could not find version $version of $pageName";
@@ -137,28 +130,73 @@ sub getTreeVersion {
     my $page;
 
     if (not $self->pageExistsVersion($pageName, $version)) {
-        croak "Version $version of $pageName could not be found";
+        my $error = "$pageName could not be found";
+        $error = "Version $version of ".$error if $version >= 0;
+        croak $error;
     }
 
-    $page = $self->getPageVersion($pageName, $version);
+    $page = $self->getPageObjectVersion($pageName, $version);
     $page->openPage();
     return $parser->parse($page->getText()->getText(),
                           'add_node_ids' => 0,
                           'url' => $self->{config}->FullUrl."?".$pageName);
 }
 
+sub pageExists {
+    my ($self, $pageName) = @_;
+    return $self->pageExistsVersion($pageName, -1);
+}
+
+sub pageExistsVersion {
+    my ($self, $pageName, $version) = @_;
+    my $page = $self->getPageObject($pageName);
+    my $keptRev = $self->getKeptRevision($pageName);
+
+    return ($page->pageExists() and 
+            ($version < 0 or $keptRev->hasRevision($version)));
+}
+
+sub getFormattedPage {
+    my ($self, $pageName, $format) = @_;
+    return $self->getFormattedPageVersion($pageName, -1, $format);
+}
+
+sub getFormattedPageVersion {
+    my ($self, $pageName, $version, $format) = @_;
+    return $self->getTreeVersion($pageName, $version)->view($format);
+}
+
+sub getNodes {
+    return shift->getNodesVersion(shift, -1, @_);
+}
+
+sub getNodesVersion {
+    my ($self, $pageName, $version, $typeRegex) = @_;
+    my @nodes = ();
+    my $filter;
+    my $handler;
+
+    $typeRegex = '.*' if not defined $typeRegex;
+    $handler = sub { 
+        my $nodeRef = shift;
+        push @nodes, $nodeRef if $nodeRef->type =~ /$typeRegex/;
+    };
+
+    $filter = new PurpleWiki::View::Filter("Main" => $handler);
+    $filter->process($self->getTreeVersion($pageName, $version));
+
+    return @nodes;
+}
 
 sub getLinks {
     my ($self, $pageName) = @_;
-    my @pageLinks = ();
-    my @types = qw(wikiword freelink image url link);
-    my $extractor = sub { push @pageLinks, shift };
-    my $filter;
+    $self->getLinksVersion($pageName, -1);
+}
 
-    $filter = new PurpleWiki::View::Filter(map { $_ => $extractor } @types);
-    $filter->process($self->getTree($pageName));
-
-    return @pageLinks;
+sub getLinksVersion {
+    my ($self, $pageName, $version) = @_;
+    my $regex = "wikiword|freelink|image|url|link";
+    return $self->getNodes($pageName, $version, $regex);
 }
 
 sub getBackLinks {
@@ -166,10 +204,8 @@ sub getBackLinks {
     my @backLinks = ();
 
     for my $page ($self->getAllPages()) {
-        for my $linkInfo ($self->getLinks($page)) {
-            if ($linkInfo->{type} =~ /wikiword|freelink/) {
-                push @backLinks, $page if $linkInfo->{content} eq $pageName;
-            }
+        for my $nodeRef ($self->getNodes("wikiword|freelink")) {
+            push @backLinks, $page if $nodeRef->content eq $pageName;
         }
     }
 
@@ -177,7 +213,6 @@ sub getBackLinks {
 }
 
 sub putPage {
-    use Data::Dumper;
     my ($self, $pageName, $newContent, %attributes) = @_;
     my $page;     # A PurpleWiki::Database::Page that represents $pageName
     my $keptRev;  # A PurpleWiki:Database::KeptRevision history for $pageName
@@ -227,12 +262,11 @@ sub putPage {
     $newContent = $tree->view("wikitext");
 
     # Request a lock before we start pulling out old information.
-    &PurpleWiki::Database::RequestLock()
-        || croak "Failed to get a lock on the Wiki database";
+    $self->requestLock();
 
     # Load up object representations of the page and its revision history.
-    $page = $self->getPage($pageName);
-    $keptRev = new PurpleWiki::Database::KeptRevision('id' => $pageName);
+    $page = $self->getPageObject($pageName);
+    $keptRev = $self->getKeptRevision($pageName);
 
     # Open the page and pull out its old content.
     $page->openPage();
@@ -243,7 +277,7 @@ sub putPage {
 
     # See if any changes were made to the input
     if ($oldContent eq $newContent) {
-        &PurpleWiki::Database::ReleaseLock();
+        $self->releaseLock();
         return;
     }
 
@@ -260,13 +294,13 @@ sub putPage {
     if ($section->getRevision() > 0) {
         # Make sure we ahev a timeStamp
         if (not $attributes{timeStamp}) {
-            &PurpleWiki::Database::ReleaseLock();
+            $self->releaseLock();
             croak "No timestamp found in attributes.";
         }
 
         # Make sure timestamps haven't changed.
         if ($attributes{timeStamp} ne $oldTimeStamp) {
-            &PurpleWiki::Database::ReleaseLock($self->{config});
+            $self->releaseLock();
             croak "Given time stamp \"".$attributes{timeStamp}."\" and found". 
                   " time stamp \"$oldTimeStamp\"";
         }
@@ -313,7 +347,7 @@ sub putPage {
     }
 
     # Release our lock;
-    &PurpleWiki::Database::ReleaseLock();
+    $self->releaseLock();
 }
 
 sub validPageName {
@@ -358,28 +392,44 @@ sub validPageName {
     return 1;
 }
 
-sub pageExists {
-    my ($self, $pageName) = @_;
-    return $self->pageExistsVersion($pageName, -1);
-}
+sub getRecentChanges {
+    my ($self, $timeStamp) = @_;
+    my @RCInfo = ();
 
-sub pageExistsVersion {
-    my ($self, $pageName, $version) = @_;
-    my $page = $self->getPage($pageName);
-    my $keptRev = new PurpleWiki::Database::KeptRevision('id' => $pageName);
+    # Default to showing all changes.
+    $timeStamp = 0 if not defined $timeStamp;
 
-    return ($page->pageExists() and 
-            ($version < 0 or $keptRev->hasRevision($version)));
-}
+    open(IN, $self->{config}->RcFile)
+        || croak $self->{config}->RCName." log error: $!";
 
-sub getFormattedPage {
-    my ($self, $pageName, $format) = @_;
-    return $self->getFormattedPageVersion($pageName, $format, -1);
-}
+    for my $logEntry (<IN>) {
+        chomp $logEntry;
+        my $fsexp = $self->{config}->FS3;
+        my @entries = split /$fsexp/, $logEntry;
+        if (@entries >= 7 && $entries[0] >= $timeStamp) {  # Check timestamp
+            my %info;
+            $info{name} = $entries[1];
+            $info{summary} = $entries[2];
+            $info{minorEdit} = $entries[3];
+            $info{host} = $entries[4];
+            $info{author} = "";
 
-sub getFormattedPageVersion {
-    my ($self, $pageName, $format, $version) = @_;
-    return $self->getTreeVersion($pageName, $version)->view($format);
+            # $entries[5] is garbage and so we ignore it...
+
+            # Get extra info
+            my $fsexp = $self->{config}->FS2;
+            @entries = split /$fsexp/, $entries[6];
+            if (@entries == 2) {
+                $info{userID} = $entries[0];
+                $info{author} = $info{username} = $entries[1];
+            }
+
+            push @RCInfo, \%info;
+        }
+    }
+
+    close(IN);
+    return @RCInfo;
 }
 
 sub putRecentChanges {
@@ -420,14 +470,296 @@ sub putRecentChanges {
 
     # Write the changes out:
     open(OUT, ">>".$self->{config}->RcFile)
-        || die $self->{config}->RCName." log error: $!\n";
+        || croak $self->{config}->RCName." log error: $!";
     print OUT $logEntry."\n";
     close(OUT);
 }
 
-sub DESTROY {
+sub requestLock {
+    &PurpleWiki::Database::RequestLock()
+        || croak "Failed to get a lock on the Wiki database";
+}
+
+sub releaseLock {
     &PurpleWiki::Database::ReleaseLock();
+}
+
+sub DESTROY {
+    shift->releaseLock();
 }
 
 1;
 __END__
+
+=head1 NAME
+
+PurpleWiki::API - PurpleWiki Application Programming Interface
+
+=head1 SYNOPSIS
+
+    #!/usr/bin/perl
+    use strict;
+    use warnings;
+    use PurpleWiki::Config;
+    use PurpleWiki::API;
+
+    PurpleWiki::Config->new('/path/to/wikidb/');
+
+    my $api = new PurpleWiki::API;
+    my $pageName = shift || die "Usage: $0 pagename\n";
+    for my $imageNodeRef ($api->getNodes($pageName, "image")) {
+        print $imageNodeRef->href, "\n";
+    }
+
+=head1 DESCRIPTION
+
+This object provides an idiomatic entry point into the PurpleWiki libraries.
+It provides methods to do many of the common tasks a programmer would want
+to do with the Wiki.
+
+=head1 METHODS
+
+=over
+
+=item new()
+
+Creates a new instance of the PurpleWiki::API object.  new() does not take
+any arguments, but will save any key/value pairs passed in to its internal
+state and then subsequently ignore them.
+
+=item getAllPages()
+
+Returns a list of all local pages on the Wiki, sorted alphabetically.
+
+=item getPageInfo($pageName)
+
+Returns information on the current version of the page with name $pageName.  If
+the page does not exist than a fatal error occurs.  The page information is
+returned in a hash with the following fields:
+
+=over
+
+=item author
+
+The name of last person to author the page.  Empty string if unknown.
+
+=item name
+
+The name of the page.  Equal to $pageName.
+
+=item lastModified
+
+The date, in UTC format, of the last modification of the page.
+
+=item timeStamp
+
+Time in seconds since January 1st 1970 GMT of the last modification date of the
+page.
+
+=item host
+
+Hostname of the last user to edit the page.  Empty string if unknown.
+
+=item ip
+
+IP address of the last user to edit the page.  Empty string if unknown.
+
+=item userID
+
+Username of the last user to edit the page.  Empty string if unknown.
+
+=item version
+
+The version number of the page.
+
+=back
+
+=item getPageInfoVersion($pageName, $version)
+
+Same as getPageInfo() except the information for version $version is returned
+instead.  If $version is negative then the most recent version is used.
+
+=item getKeptRevision($pageName)
+
+Returns the PurpleWiki::Database::KeptRevision object associated with the page
+named $pageName.
+
+=item getPageObject($pageName)
+
+Returns the PurpleWiki::Database::Page object associated with the page named
+$pageName.
+
+=item getPageObjectVersion($pageName, $version)
+
+Same as getPageObject() except version $version of the page named $pageName is
+returned.  It is a fatal error if the version doesn't exist.  If $version is
+negative then the most recent version is returned.
+
+=item getTree($pageName)
+
+Returns the PurpleWiki::Tree associated with the current version of the page
+named $pageName.
+
+=item getTreeVersion($pageName, $version)
+
+Same as getTree() except returns version $version.  It is a fatal error if
+the version doesn't exist.  If $version is negative then the most  recent
+version is returned.
+
+=item pageExists($pageName)
+
+Returns true if the page named $pageName exists, otherwise false.
+
+=item pageExistsVersion($pageName, $version)
+
+Returns true if version $version of the paged named $pageName exists, otherwise
+false.  If $version is negative then the most recent version is assumed.
+
+=item getFormattedPage($pageName, $format)
+
+Returns the current version of the page named $pageName rendered in the format
+specified by $format.  $format can be any of the valid view driver formats,
+defer to driver specific documentation for help.
+
+=item getFormattedPageVersion($pageName, $version, $format)
+
+Same as getFormattedPage() except version $version of the page named $pageName
+is used.  If the version doesn't exist a fatal error occurs.  If $version is
+negative then the most recent version of the page named $pageName is used.
+
+=item getNodes($pageName, $regex)
+
+Returns a list of PurpleWiki::*Node objects whos' type field match the regex
+specified by $regex.
+
+=item getNodesVersion($pageName, $version, $regex)
+
+Same as getNodes() except version $version of the page named $pageName is used.
+If the version does not exist then a fatal error occurs.  If $version is 
+negative then the most recent version is used.
+
+=item getLinks($pageName)
+
+Returns a list of PurpleWiki::InlineNode references representing all the links
+in the page named $pageName.  Links include wikiwords, freelinks, images, urls,
+etc.  Each node reference supports a href, content, and type method which
+can be used to extract the corresponding information.
+
+=item getLinksVersion($pageName, $version)
+
+Same as getLinks() except version $version of the page named $pageName is
+used.  If the version does not exist then an error occurs.  If $version is
+negative then the most recent version is used.
+
+=item getBackLinks($pageName)
+
+Returns a list of page names whose current version contain a wikiword or
+freelink which references the page named $pageName.
+
+=item putPage($pageName, $newContent, %attributes)
+
+Places the content stored in $newContent into the page named $pageName.  If
+the page named $pageName doesn't exist it is created.  The hash %attributes
+has the following keys:
+
+=over
+
+=item timeStamp
+
+The time in seconds since January 1st 1970 GMT of the last modification of the
+current version of the page named $pageName.  The timeStamp is the only
+required attribute and it is only required if the page named $pageName
+previously existed.
+
+=item minorEdit
+
+Set to a true value if the change is a minor change.  Defaults to false.
+
+=item summary
+
+The summary information to be used in RecentChanges for the update.
+
+=item username
+
+The Wiki username of the person making the change.
+
+=item userID
+
+The user ID of the person making the change.
+
+=item host
+
+The hostname of the person making the change.
+
+=item updateRC
+
+Set to a true value if RecentChanges should be updated.  Defaults to true.
+   
+=back
+
+=item validPageName($pageName)
+
+Returns true if the string represented by $pageName is a valid name to be
+used in the Wiki.  Returns false otherwise.
+
+=item getRecentChanges($timeStamp)
+
+Returns a list of hash refrences representing all of the changes before or
+on the date represented by the time stamp $timeStamp, which is in seconds
+since January 1st 1970.  The hashes contain the following fields, which
+are set to the empty string if not present:
+
+=over
+
+=item name
+
+The name of the page whos entry this hash represents.
+
+=item summary
+
+The summary text of the change associated with the page.
+
+=item minorEdit
+
+True if the user marked the changes as being minor, false otherwise.
+
+=item host
+
+Hostname of the user who last edited the page.
+
+=item author
+
+Name of the user who last edited the page.
+
+=item userID
+
+User ID of the user who last edited the page.
+
+=back
+
+=item putRecentChanges($pageName, $timeStamp, %attributes)
+
+Writes out an entry to the RecentChanges file for the page named $pageName. The
+date of the entry is represented by $timeStamp, which is in seconds since
+January 1st, 1970.   The %attributes hash has the same fields as the hash
+references returned for getRecentChanges().
+
+=item requestLock()
+
+Gets a lock on the Wiki Database.  A fatal error occurs if the lock fails.
+
+=item releaseLock()
+
+Gives up a lock on the Wiki Database.
+
+=back
+
+=head1 AUTHORS
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut
