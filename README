@@ -1,12 +1,32 @@
-PurpleWiki version 0.1
-======================
+PurpleWiki version 0.1 PRERELEASE
+=================================
 
-See http://boa.blueoxen.net/cgi-bin/wiki.pl?PurpleWiki for now.
+PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
+headers, lists, and other fine-grained elements on a Wiki page.  These
+numbers can be used to create links to these specific elements.  More
+information about purple numbers are at:
+
+  http://www.eekim.com/software/purple/
+
+Currently, PurpleWiki consists of a rewritten parser that you drop
+into UseModWiki (http://www.usemod.com/cgi-bin/wiki.pl).  In addition
+to supporting purple numbers, the parser supports multiple output
+formats using drop-in modules.
+
+PurpleWiki is currently alpha software.  More information will be
+available at:
+
+  http://www.blueoxen.org/tools/purplewiki/
 
 To play, try:
 
   % ./purplewiki.pl t/test01.txt
   % ./purplewiki.pl t/test02.txt
+
+BUGS
+
+There are plenty, but no showstoppers (that we know of).  Note that
+make test is currently broken.
 
 INSTALLATION
 
@@ -17,14 +37,47 @@ To install this module type the following:
    make test
    make install
 
-DEPENDENCIES
-
-This module requires these other modules and libraries:
-
-  blah blah blah
-
 COPYRIGHT AND LICENCE
 
-GPL (derivative of UseModWiki)
-
 Copyright (C) 2002 Blue Oxen Associates.
+
+PurpleWiki is derived from:
+
+  UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
+  AtisWiki v0.3             (c) Markus Denker 1998
+  CVWiki CVS-patches        (c) Peter Merel 1997
+  The Original WikiWikiWeb  (c) Ward Cunningham
+
+PurpleWiki is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the:
+
+   Free Software Foundation, Inc.
+   59 Temple Place, Suite 330
+   Boston, MA 02111-1307 USA
+
+ACKNOWLEDGEMENTS
+
+PurpleWiki was inspired by two other derivatives of UseModWiki:
+
+  Wookee
+    http://wiki.beyondunreal.com/wiki/Wookee
+
+  TmNetWiki
+    http://www.technomanifestos.net/index.pl?The_Network/Source
+
+AUTHORS
+
+Chris Dent <cdent@blueoxen.org>
+Eugene Eric Kim <eekim@blueoxen.org>
+
+$Id: README,v 1.2 2002/11/22 21:34:59 eekim Exp $
