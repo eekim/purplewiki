@@ -75,15 +75,15 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $id = $recentChange->{id};
+        my $id = $recentChange->{pageName};
         my $bodyText = $pages->getPage($id)
                        ->getTree()->view('wikihtml', url => $urlbase.$id);
 
         $rss->add_item(
-            title => $recentChange->{pageName},
-            link  => $self->{config}->ScriptName . '?' .$recentChange->{id},
+            title => $id,
+            link  => $self->{config}->ScriptName . '?' .$id,
             dc => {
-                creator => $recentChange->{userName},
+                creator => $recentChange->{userId},
             },
             description => "<![CDATA[$bodyText]]>\n",
         );

@@ -34,6 +34,7 @@ use warnings;
 use Carp;
 use PurpleWiki::Transclusion;
 use PurpleWiki::View::Driver;
+use PurpleWiki::Misc;
 
 ############### Package Globals ###############
 
@@ -324,19 +325,19 @@ sub _wikiLink {
     }
 
     if ($nodeRef->content =~ /:/) {
-        $linkString .= '<a href="' .
-            PurpleWiki::Page::getInterWikiLink($pageName);
+        $linkString .= '<a href="'
+                       . PurpleWiki::Misc::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
     }
-    elsif (&PurpleWiki::Page::exists($pageName)) {
+    elsif ($self->{config}->{pages}->pageExists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
-            $linkString .= '<a href="' .  
-                PurpleWiki::Page::getFreeLink($nodeRef->content) . 
-                '" class="freelink">';
+            $linkString .= '<a href="'
+                           . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                           . '" class="freelink">';
         } else {
-            $linkString .= '<a href="' . 
-            PurpleWiki::Page::getWikiWordLink($pageName);
+            $linkString .= '<a href="'
+                           . PurpleWiki::Misc::getWikiWordLink($pageName);
             $linkString .= "#nid$pageNid" if $pageNid;
             $linkString .= '" class="wikiword">';
         }
@@ -347,9 +348,9 @@ sub _wikiLink {
         if ($nodeRef->type eq 'freelink') {
             if ($createLinkText) {
                 my $linkText .= '[' . $nodeRef->content . ']';
-                my $createLink = '<a href="' .
-                    PurpleWiki::Page::getFreeLink($nodeRef->content) .
-                    '" class="freelink">' . "$createLinkText</a>";
+                my $createLink = '<a href="'
+                         . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                               . qq{" class="freelink">$createLinkText</a>};
                 if ($self->{config}->CreateLinkBefore) {
                     $linkString .= $createLink . $linkText;
                 }
@@ -360,18 +361,17 @@ sub _wikiLink {
             else {
                 # the bracket syntax isn't necessary, because the
                 # entire text is linked
-                $linkString .= '<a href="' .
-                    PurpleWiki::Page::getFreeLink($nodeRef->content) .
-                    '" class="create">' . $nodeRef->content .
-                    '</a>';
+                $linkString .= '<a href="'
+                         . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                         . qq{" class="create">$nodeRef->content</a>};
             }
         }
         else {
             if ($createLinkText) {
                 my $linkText .= $nodeRef->content;
-                my $createLink .= '<a href="' .
-                    &PurpleWiki::Page::getWikiWordLink($pageName) .
-                    '" class="wikiword">' . "$createLinkText</a>";
+                my $createLink .= '<a href="'
+                          . PurpleWiki::Misc::getWikiWordLink($pageName)
+                          . qq{" class="wikiword">$createLinkText</a>};
                 if ($self->{config}->CreateLinkBefore) {
                     $linkString .= $createLink . $linkText;
                 }
@@ -380,9 +380,9 @@ sub _wikiLink {
                 }
             }
             else {
-                $linkString .= '<a href="' .
-                    &PurpleWiki::Page::getWikiWordLink($pageName) .
-                    '" class="create">' . $nodeRef->content . '</a>';
+                $linkString .= '<a href="'
+                     . PurpleWiki::Misc::getWikiWordLink($pageName)
+                     . '" class="create">' . $nodeRef->content . '</a>';
             }
         }
     }

@@ -1,4 +1,4 @@
-# PurpleWiki::Page.pm
+# PurpleWiki::Misc.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
 # $Id$
@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Page;
+package PurpleWiki::Misc;
 
 use PurpleWiki::Config;
 use PurpleWiki::Database;
@@ -40,17 +40,6 @@ use PurpleWiki::Database;
 our $MainPage;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
-
-sub exists {
-    my $id = shift;
-    my $config = PurpleWiki::Config->instance();
-
-    $id =~ s|^/|$MainPage/| if defined($MainPage);
-    if ($config->FreeLinks) {
-        $id = FreeToNormal($id, $config);
-    }
-    return $config->{pages}->pageExists($id);
-}
 
 sub siteExists {
     my $site = shift;

@@ -49,7 +49,7 @@ if ($split) {
             chomp($url = <IN>);
             my $q = new CGI(IN);
             runTest($q, $test_out);
-            my $diff = diffOutput($test_out, $compare);
+            my $diff = diffOutput($compare, $test_out);
             if ($diff) {
                 print ERR "Seq $seq differs:\n";
                 print ERR $diff;

@@ -34,7 +34,7 @@ use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
 #use PurpleWiki::Database;
-use PurpleWiki::Page 'getWikiWordLink';
+use PurpleWiki::Misc 'getWikiWordLink';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);

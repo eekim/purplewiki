@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 13};
+BEGIN { plan tests => 11};
 
 use PurpleWiki::Database::Pages;
 use PurpleWiki::Database::KeptRevision;
@@ -13,9 +13,8 @@ use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $lockdir = 'tDB/temp/lockmain';
+#my $lockdir = 'tDB/temp/lockmain';
 my $id = 'WikiPage';
-my $idFilename = 'tDB/page/W/WikiPage.db';
 my $newcontent = "Describe the new page here.\n";
 my $content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord.
@@ -64,7 +63,8 @@ EOF
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
 my $database_package = $config->DatabasePackage;
-eval "require $database_package";
+print STDERR "Error in Package: $database_package\nError:$@"
+    unless (eval "require $database_package");
 my $pages = $database_package->new ($config);
 $config->{pages} = $pages;
 
@@ -76,14 +76,14 @@ $output =~ s/\r//g;
 # is what we parsed what we expected
 ok($output, $expected_content);
 
-## now save it, be amazed how complicated this is...
-## we'll do the whole bag
+## now save it
+
 # lock
-ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
+#ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
 my $page = $pages->getPage($id);
 
 # unlock
-ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
+#ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 
 # stored id should be the same as what we gave it
 # getPage should fail and return null value
@@ -101,10 +101,9 @@ my $timestamp = time;
 
 # add a new wikitext to the page
 
-
 my $result = $pages->putPage(pageId => $id,
                              tree => $wiki);
-ok(-f $idFilename);
+ok($pages->pageExists($id));
 ok($result, "");
 
 undef($page);
@@ -118,7 +117,6 @@ ok($newPage->getRevision(), 1);
 my $ts = $newPage->getTime();
 my $timediff = $ts - $timestamp;
 $timediff = -$timediff if ($timediff < 0);
-print "TD:$timediff\n";
 ok($timediff < 100);
 ok($newPage->getID(), $id);
 ok($newPage->getTree()->view('wikitext'), $expected_content);
@@ -133,5 +131,4 @@ ok($output, $second_expected_content);
 
 sub END {
     unlink('tDB/sequence');
-    unlink($idFilename);
 }

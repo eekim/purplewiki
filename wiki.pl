@@ -122,7 +122,8 @@ sub InitRequest {
   }
 
   my $database_package = $config->DatabasePackage;
-  eval "require $database_package";
+  print STDERR "Database Package $database_package\nError: $@\n"
+      unless (defined(eval "require $database_package"));
   $pages = $database_package->new ($config);
            # Object representing a page database
 
@@ -693,12 +694,6 @@ sub DoEdit {
 
   $page = $pages->getPage($id, $revision);
   my $oldrev = $page->getRevision;
-
-  if ($pages->getLockState($id)) {
-      $wikiTemplate->vars(&globalTemplateVars);
-      print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
-      return;
-  }
 
   $pageTime = $page->getTime() || 0;
 

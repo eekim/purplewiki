@@ -33,7 +33,7 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 package PurpleWiki::Database::Pages;
 
-use PurpleWiki::Page;
+#use PurpleWiki::Misc;
 use PurpleWiki::Database;
 use PurpleWiki::Config;
 use PurpleWiki::Database::Section;
@@ -133,7 +133,7 @@ sub putPage {
   $text->setSummary($args{changeSummary});
   $section->setHost($host);
   my $newRev = $page->getRevision() + 1;
-#print STDERR "putPage($wikitext) rev -> $newRev\n";
+#print STDERR "putPage($id, $newRev, $now)\n";
   $section->setRevision($newRev);
   $section->setTS($now);
   $section->setUsername($userName);
@@ -324,13 +324,6 @@ sub _parseData {
     while (my ($k, $v) = each(%data)) { $page->{$k} = $v; }
 #print STDERR ">>\n"; for (keys %$page) { print STDERR " $_ -> $page->{$_}\n"; }
     $page->{text_default} = $page->_getSection();
-}
-
-# $pages->getLockState($id)
-sub getLockState {
-    my $self = shift;
-    my $id = shift;
-    return (-f $self->_getLockedPageFile($id));
 }
 
 # $pages->getRevisions($id)

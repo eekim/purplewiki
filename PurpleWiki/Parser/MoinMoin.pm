@@ -37,7 +37,7 @@ use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;
 use PurpleWiki::Sequence;
-use PurpleWiki::Page;
+use PurpleWiki::Misc;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -702,7 +702,7 @@ sub _parseInlineNode {
                ($node =~ /^([A-Z]\w+):([^\]\#\:\s"<>]+(?:\#[A-Z0-9]+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
-            if (&PurpleWiki::Page::siteExists($site)) {
+            if (&PurpleWiki::Misc::siteExists($site)) {
                 $node =~ s/""$//;
                 push @inlineNodes,
                     PurpleWiki::InlineNode->new('type'=>'wikiword',

@@ -31,22 +31,24 @@
 our $VERSION;
 $VERSION = sprintf("%d", q$Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
 
-package PurpleWiki::SVNDatabase::Pages;
+package PurpleWiki::SVNArchive;
 
 use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
 
-use "SVN::Fs";
-use "SVN::Delta";
-use "SVN::Repos";
-use "SVN::Core";
+use SVN::Fs;
+use SVN::Delta;
+use SVN::Repos;
+use SVN::Core;
 
 sub new {
   my $proto = shift;
+  my $config = shift;
+  die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
-  my $config = (@_) ? shift : PurpleWiki::Config->instance();
+
   $self->{script} = $config->ScriptName;
   my $dir = $self->{repos_dir} = $config->ReposDir;
   my $loc = $config->DataDir;
@@ -96,7 +98,7 @@ sub _get_page {
                                    SVN::Core::REVISION_DATE);
   my $contents = $file->read();
   $file->close();
-  return PurpleWiki::Page->new(wikitext=>$contents, time=>$lastmod, rev=>$rev);
+  return PurpleWiki::SVNPage->new(wikitext=>$contents, time=>$lastmod, rev=>$rev);
 }
 
 sub _get_root {
@@ -247,7 +249,7 @@ sub getRevisions {
 #  ""
 #}
 
-package PurpleWiki::SVNDatabase::Page;
+package PurpleWiki::SVNPage;
 
 # PurpleWiki Page Data Access
 
