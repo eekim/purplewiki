@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.3 2002/12/19 06:25:03 eekim Exp $
+# $Id: WikiText.pm,v 1.4 2002/12/29 22:48:09 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -318,31 +318,26 @@ sub _parseInlineNode {
     my $rxDoubleQuotes = "''.*?''";
     # link regular expressions
     my $rxAddress = '[^]\s]*[\w/]';
-    my $rxProtocols = '(?i)(?:http|https|ftp|afs|news|mid|cid|nntp|mailto|wais):';
+    my $rxProtocols = '(?i:http|https|ftp|afs|news|mid|cid|nntp|mailto|wais):';
     my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
     my $rxSubpage = '[A-Z]+[a-z]+\w*';
     my $rxQuoteDelim = '(?:"")?';
     my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
 
-    # For some reason, the split below results in a lot of empty list
-    # members.  Hence the grep.
-    my @nodes = grep(!/^$/,
-        split(/(?:
-                ($rxNowiki) |
-                ($rxTt) |
-                ($rxFippleQuotes) |
-                ($rxB) |
-                ($rxTripleQuotes) |
-                ($rxI) |
-                ($rxDoubleQuotes) |
-                (\[$rxProtocols$rxAddress\s*.*?\]) |
-                ($rxProtocols$rxAddress) |
-                ((?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim) |
-                ([A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim) |
-                ($rxWikiWord(?:\#\d+)?$rxQuoteDelim) |
-                ($rxDoubleBracketed)
-                )/xs, $text)
-        );
+    my @nodes = split(/($rxNowiki |
+			$rxTt |
+			$rxFippleQuotes |
+			$rxB |
+			$rxTripleQuotes |
+			$rxI |
+			$rxDoubleQuotes |
+			\[$rxProtocols$rxAddress\s*.*?\] |
+			$rxProtocols$rxAddress |
+			(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim |
+			[A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim |
+			$rxWikiWord(?:\#\d+)?$rxQuoteDelim |
+			$rxDoubleBracketed
+			)/xs, $text);
     foreach my $node (@nodes) {
         if ($node =~ /^$rxNowiki$/s) {
             $node =~ s/^<nowiki>//;
@@ -451,7 +446,7 @@ sub _parseInlineNode {
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
                                                            'content'=>$node);
         }
-        else {
+        elsif ($node ne '') {
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'text',
                                                            'content'=>$node);
         }
