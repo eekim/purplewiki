@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Wiki.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Wiki.pm,v 1.4 2004/01/10 01:43:21 cdent Exp $
+# $Id: Wiki.pm,v 1.5 2004/01/13 02:11:15 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -44,11 +44,11 @@ sub search {
 
     my $name;
 
-    foreach $name (PurpleWiki::Database::AllPagesList($self->{config})) {
+    foreach $name (PurpleWiki::Database::AllPagesList($self->config())) {
         if ($name =~ /$query/i) {
             my $page = $self->_getAndOpenPage($name);
             push(@results, $self->_getResult($page));
-        } elsif ($self->{config}->FreeLinks() && ($name =~ m/_/)) {
+        } elsif ($self->config()->FreeLinks() && ($name =~ m/_/)) {
             my $freeName = $name;
             $freeName =~ s/_/ /g;
             if ($freeName =~ /$query/i) {
@@ -77,7 +77,7 @@ sub _getAndOpenPage {
 
     my $page = new PurpleWiki::Database::Page(id => $name,
          now => time,
-         config => $self->{config});
+         config => $self->config());
     $page->openPage();
 
     return $page;
@@ -92,7 +92,7 @@ sub _getResult {
     my $result = new PurpleWiki::Search::Result();
     $result->setTitle($name);
     $result->setModifiedTime($page->getTS());
-    $result->setURL(PurpleWiki::Page::getWikiWordLink($name, $self->{config}));
+    $result->setURL(PurpleWiki::Page::getWikiWordLink($name, $self->config()));
     $result->setSummary(substr($text->getText(), 0, 99) . '...');
 
     return $result;
@@ -108,15 +108,22 @@ PurpleWiki::Search::Wiki - Search The Wiki Text and Titles
 
 =head1 SYNOPSIS
 
-
+Searches the text and titles of the local wiki pages.
 
 =head1 DESCRIPTION
 
+This module moves code from the core CGI of the Wiki out into the
+pluggable search module system.
 
+It is turned on by default in new (0.9.1 and after) versions of 
+PurpleWiki. In upgraded systems a line should be added to the
+PuprleWiki configuration file, F<config>:
+
+  SearchModule = Wiki
 
 =head1 METHODS
 
-
+See L<PurpleWiki::Search::Interface>
 
 =head1 AUTHOR
 
@@ -129,5 +136,3 @@ L<PurpleWiki::Search::Engine>.
 L<PurpleWiki::Search::Result>.
 
 =cut
-
-

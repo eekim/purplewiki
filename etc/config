@@ -77,6 +77,7 @@ SearchModule	=	Wiki
 #SearchModule	=	Blosxom
 #SearchModule	=	Arts
 #SearchModule	=	IrcLogger
+#SearchModule	=	Google
 
 
 # Search Additional Config
@@ -85,6 +86,9 @@ SearchModule	=	Wiki
 #ArtsDirectory		=	/usr/local/etc/
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbdev.config
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbeditors.config
+#GoogleWSDL             =       /home/cdent/lib/GoogleSearch.wsdl
+#GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
 
 # == You should not have to change anything below this line. =============
 PageDir     = $DataDir/page      # Stores page data

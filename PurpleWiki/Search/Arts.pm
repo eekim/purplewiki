@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Arts.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Arts.pm,v 1.4 2004/01/10 01:43:21 cdent Exp $
+# $Id: Arts.pm,v 1.5 2004/01/13 02:11:15 cdent Exp $
 #
 # A Search Module for Arts (http://arts.sourceforge.net/) files
 # that have been formatted as PurpleWiki wikitext.
@@ -121,7 +121,7 @@ sub _initRepository {
 
     # open the arts config file and evaluate it as perl
     my %config;
-    my $configFile = $self->{config}->ArtsDirectory() . 'arts.pl';
+    my $configFile = $self->config()->ArtsDirectory() . 'arts.pl';
 
     my $configRef = new IO::File;
     $configRef->open($configFile) or die "unable to open $configFile: $!";
@@ -158,15 +158,36 @@ PurpleWiki::Search::Arts - Search Arts Repositories
 
 =head1 SYNOPSIS
 
-
+This module add searching of Arts repositories to the PurpleWiki
+module search system. Arts repositories are made up of flat
+text files in PurpleWiki wikitext format.
 
 =head1 DESCRIPTION
 
+Arts was originally written to be a lightweight knowledge base
+system with an email gateway for submissions. When PurpleWiki
+was developed Arts was extended to keeps its files in PurpleWiki
+wikitext format so the files could easily use PurpleNumbers. This
+modified Arts system is currently unavailable for release. Interested
+parties should contact the author of this module.
 
+This module is provided in part as a demonstration of ways to 
+search text files with the PurpleWiki Search system.
+
+To use this module additions are required to the PurpleWiki
+configuation file: F<config>. The changes are:
+
+  SearchModule = Arts
+  ArtsDirectory = /directory/containing/arts.pl/
+
+The trailing slash is required.
+
+Multiple repositories may be searched if they are all listed in the 
+same F<arts.pl> Arts configuration file.
 
 =head1 METHODS
 
-
+See L<PurpleWiki::Search::Interface>
 
 =head1 AUTHOR
 

@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Result.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Result.pm,v 1.2 2004/01/05 22:11:28 eekim Exp $
+# $Id: Result.pm,v 1.3 2004/01/13 02:11:15 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -100,15 +100,90 @@ PurpleWiki::Search::Result - Class for search results.
 
 =head1 SYNOPSIS
 
-
+Encapsulates a single search result to be used by the 
+L<PurpleWiki::Search::Engine> module search system.
 
 =head1 DESCRIPTION
 
+PurpleWiki::Search::Results provides an extensible class for
+containing search results, one result per object.
 
+Each object contains the following required fields:
+
+=over 4
+
+=item URL
+
+The URL of the entity where the content of the result can be found.
+
+=back
+
+In addition there are the following optional fields:
+
+=over 4
+
+=item Title
+
+The title of the entity where the content of the result can be 
+found. If no title is provided, the URL will be displayed in
+the results.
+
+=item Summary
+
+A short textual summary string from the content of the result. Some
+modules use the first N characters. Others use text surrounding the
+query string.
+
+=item Modified Time
+
+A epoch time representation of the last modified date of the result
+entity.
+
+=back
+
+Classes which subclass L<PurpleWiki::Search::Interface> return a 
+list of PurpleWiki::Search::Result objects. Those classes are
+responsible for filling in the fields of each object and ordering
+the resulting list.
 
 =head1 METHODS
 
+=over 4
 
+=item new()
+
+Creates a new Result object.
+
+=item setURL($url)
+
+Sets the URL of the object. No checking is performed.
+
+=item setTitle($title)
+
+Sets the title of the object. There are no explicit length
+restrictions.
+
+=item setSummary($summary)
+
+Sets the summary of the object. There are no explicit length
+restrictions.
+
+=item setModifiedTime($epochTime)
+
+Sets the Modified Time of the object to the provide epoch time
+(number of seconds since midnight, 1st of January 1970).
+
+=item getURL, getTitle, getSummary, getModifiedTime
+
+Access the stored URL, Title, Summary and Modified Time values.
+
+=back
+
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Search::Engine>
+L<PurpleWiki::Search::Interface>
 
 =head1 AUTHOR
 

@@ -1,7 +1,7 @@
 # PurpleWiki::Search::IrcLogger.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: IrcLogger.pm,v 1.3 2004/01/07 01:20:14 cdent Exp $
+# $Id: IrcLogger.pm,v 1.4 2004/01/13 02:11:15 cdent Exp $
 #
 # A Search Module for irclogger (see
 # http://collab.blueoxen.net/forums/tools-yak/2003-12/msg00003.html
@@ -58,7 +58,7 @@ sub _initRepository {
     # and translate it to arts style
     my %config;
 
-    foreach my $configFile (@{$self->{config}->IrcLogConfig()}) {
+    foreach my $configFile (@{$self->config()->IrcLogConfig()}) {
         my $configRef = $self->_initConfig($configFile);
 
         my $channel = $configRef->channel();
@@ -129,15 +129,35 @@ PurpleWiki::Search::IrcLogger - Search IrcLogger Repositories
 
 =head1 SYNOPSIS
 
-
+This module adds searching of IrcLogger log files to the 
+PurpleWiki modular search system. IrcLogger files are stored as
+flat text files in PurpleWiki wikitext format.
 
 =head1 DESCRIPTION
 
+IrcLogger is a tool to log irc conversations. IRC text is saved
+to text files in PurpleWiki wikitext format. More information
+on IrcLogger is available at:
+  
+  http://collab.blueoxen.net/forums/tools-yak/2003-12/msg00003.html
 
+To add an IrcLogger collection to a PurpleWiki search the IrcLogger
+should be using the same L<PurpleWiki::Sequence> as the wiki. In 
+addition the following should be added to the PurpleWiki configuration
+file F<config>:
+
+  SearchModule = IrcLogger
+  IrcLogConfig = /path/to/irclogger.config
+
+This module is a subclass of L<PurpleWiki::Search::Arts>. Most of the
+work is done there. This module gathers configuration information.
+
+Multiple IRC logs can be search by adding additional IrcLogConfig lines
+to the F<config> file.
 
 =head1 METHODS
 
-
+See L<PurpleWiki::Search::Interface>.
 
 =head1 AUTHOR
 
@@ -146,6 +166,7 @@ Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 =head1 SEE ALSO
 
 L<PurpleWiki::Search::Arts>.
+L<PurpleWiki::Search::Interface>.
 
 =cut
 

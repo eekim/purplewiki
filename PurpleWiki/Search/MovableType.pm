@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.7 2004/01/10 01:43:21 cdent Exp $
+# $Id: MovableType.pm,v 1.8 2004/01/13 02:11:15 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -46,7 +46,7 @@ sub search {
     $self->_initMT();
 
     # make our hash of blog ids we care about
-    foreach my $id (@{$self->{config}->MovableTypeBlogId()}) {
+    foreach my $id (@{$self->config()->MovableTypeBlogId()}) {
         $includedBlogs{$id}++;
     }
 
@@ -107,8 +107,8 @@ sub _search_hit {
 sub _initMT() {
     my $self = shift;
 
-    unshift @INC, $self->{config}->MovableTypeDirectory() . 'lib';
-    unshift @INC, $self->{config}->MovableTypeDirectory() . 'extlib';
+    unshift @INC, $self->config()->MovableTypeDirectory() . 'lib';
+    unshift @INC, $self->config()->MovableTypeDirectory() . 'extlib';
 
     require MT::Object;
     require MT::ConfigMgr;
@@ -117,7 +117,7 @@ sub _initMT() {
 
     # FIXME: this is an ugly uninformed way of doing things
     my $cfg = MT::ConfigMgr->instance;
-    $cfg->read_config($self->{config}->MovableTypeDirectory() . 'mt.cfg') or
+    $cfg->read_config($self->config()->MovableTypeDirectory() . 'mt.cfg') or
         die $cfg->errstr;
 
     MT::Object->set_driver($cfg->ObjectDriver);
@@ -134,15 +134,41 @@ PurpleWiki::Search::MovableType - Search MovableType blogs
 
 =head1 SYNOPSIS
 
-
+This module allows searching of a MovableType installation from
+within PurpleWiki. Multiple blogs from one MovableType configuration
+may be searched.
 
 =head1 DESCRIPTION
 
+MovableType (see http://www.movabletype.org) is a publishing system
+commonly used for weblogs. PurpleWiki includes a plugin that allows
+MovableType content to be saved in PurpleWiki wikitext format with
+PurpleNumbers, TransClusion, and linked WikiWords. This combination
+makes a very powerful WikiBlog.
 
+This search module provides searching of a MovableType weblog from a 
+PurpleWiki installation on the same server as the weblog. Running the
+plugin mentioned above is not required.
+
+To use the module add the following to the PurpleWiki configuration file
+F<config>:
+
+  SearchModule = MovableType
+  MovableTypeDirectory = /path/to/mt/configuration/directory/
+  MovableTypeBlogID = <blog id numeral>
+
+MovableTypeDirectory points to the directory where mt.cfg can be found.
+The trailing slash is required.
+
+MovableTypeBlogID is the numeric identifier of the blog or blogs to be
+searched. More than one may be searched by adding additional
+MovableTypeBlogID lines to the config file. To find the ID, look in
+the URL in the location box when using the administrative interface
+to MT.
 
 =head1 METHODS
 
-
+See L<PurpleWiki::Search::Interface>.
 
 =head1 AUTHOR
 
