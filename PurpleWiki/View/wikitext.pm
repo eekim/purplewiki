@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.5 2003/07/09 08:07:13 eekim Exp $
+# $Id: wikitext.pm,v 1.6 2003/07/31 04:21:53 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -177,7 +177,7 @@ sub registerHandlers {
         sub { $lastInlineProcessed = 'nowiki'; return '</nowiki>'; };
 
     $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} =
-        sub { my $inlineNode = shift; return '[t'; };
+        sub { my $inlineNode = shift; return '[t '; };
     $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContent;
     $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{post} =
         sub { $lastInlineProcessed = 'transclusion'; return ']'; };
