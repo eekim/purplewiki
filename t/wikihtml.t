@@ -33,12 +33,7 @@ sub readFile {
 my $config = new PurpleWiki::Config($configdir);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my ($input, $output, $shouldBe, $wiki, $diff);
-
-my $database_package = $config->Driver()->{archive};
-print STDERR "Error in Package: $database_package\nError:$@"
-    unless (eval "require $database_package");
-my $pages = $database_package->new ($config);
-$config->{pages} = $pages;
+my $pages = $config->{pages};
 
 # FIXME: move those files not yet used into the live @files
 #        as willpower allows.

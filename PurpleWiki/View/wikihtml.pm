@@ -335,7 +335,7 @@ sub _wikiLink {
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
     }
-    elsif ($self->{archive}->pageExists($pageId)) {
+    elsif ($self->{archive} && $self->{archive}->pageExists($pageId)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="'
              .PurpleWiki::Misc::getFreeLink($nodeRef->content, $self->{archive})

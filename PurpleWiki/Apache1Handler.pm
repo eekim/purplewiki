@@ -59,10 +59,9 @@ sub handler {
     );
 
     # select and load a template driver
-    my $templateDriver = $purpleConfig->TemplateDriver();
-    my $templateClass = "PurpleWiki::Template::$templateDriver";
-    eval "require $templateClass";
-    my $wikiTemplate = $templateClass->new;
+    my $templateDriver = $purpleConfig->Driver->{template};
+    eval "require $templateDriver";
+    my $wikiTemplate = $templateDriver->new;
     $wikiTemplate->vars( body => $wiki->view('wikihtml', 
                                               wikiword => 1,
                                               url => $url),

@@ -61,6 +61,7 @@ sub new {
   } else {
     my $x;
     $datadir = $x if (defined($x=$args{DataDir}));
+    $self->{seqdir} = (defined($x=$args{SequenceDir})) ? $x : $datadir;
   }
     die "No config or data dir defined\n" unless $datadir;
   substr($datadir,-1) = '' if (substr($datadir,-1) eq '/');
@@ -103,7 +104,7 @@ sub putPage {
   my $tree = $args{tree};
   return "No data" unless (defined($tree));
   my $contents = $tree->view('wikitext');
-  $contents .= "\n"  unless (substr($contents, -1, "\n"));
+  $contents .= "\n"  unless (substr($contents, -1) eq "\n");
 
   my $id = $args{pageId};
 #for (keys %args) { print STDERR "PP:$_ = $args{$_}\n"; }
@@ -174,7 +175,7 @@ sub _find_txt {
       next unless ref($a);
       my ($mode, $mtime) = ($a->mode, $a->mtime);
       if (S_ISDIR($mode)) {
-        _find_txt("$dir/$entry", $array_ref);
+        _find_txt("$dir/$entry", $array_ref, $oldest);
       } elsif (S_ISREG($mode)) {
 #print STDERR "$oldest :: $mtime ($entry)\n" if (!$oldest && $entry =~ /\.txt$/);
         push @$array_ref, "$dir/$entry"

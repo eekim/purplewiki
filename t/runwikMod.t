@@ -1,10 +1,11 @@
 #!/usr/bin/perl
 
 use Test;
+$^W = 0;
 require "t/runlog.pl";
 require "t/runTest.pl";
 
-BEGIN { plan tests => 82 };
+BEGIN { plan tests => 85 };
 END {
     system('cp t/config.tDef t/config');
     system('cp -r t/rDB t/useModDB');
@@ -16,6 +17,8 @@ my $keep_errors = 1;
 my $testdir = 't/out';
 system('cp t/config.runMod t/config');
 
+local (*OUT);
+
 {
     require "wiki.pl";
     use CGI;
@@ -25,12 +28,12 @@ system('cp t/config.runMod t/config');
     open(OUT, ">&STDOUT") || die "Error open $!\n";
 
     my ($test_in, $test_out, $compare);
-    for my $seq (0..81) {
+    for my $seq (0..84) {
         $test_in = "$testdir/request.$seq";
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";
         if (open(IN, $test_in)) {
-            chomp($url = <IN>);
+            <IN>;
             my $q = new CGI(IN);
             close IN;
             close STDOUT;

@@ -45,7 +45,12 @@ sub search {
     my @results;
 
     my $nameHash;
-    my $pages = $self->{config}->{pages};
+    my $pages = $self->{archive};
+unless ($pages) {
+use Carp;
+Carp::confess("FIX: missing archive attribute, can't search the wiki\n");
+}
+    return unless $pages;
 
     foreach my $id ($pages->allPages()) {
         my $page = $pages->getPage($id);

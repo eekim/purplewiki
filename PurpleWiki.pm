@@ -1,9 +1,8 @@
+# PurpleWiki.pm
 #
-# runTest.pl - PurpleWiki
+# $Id$
 #
-# $Id: runTest.pl 567 2004-11-17 17:13:33Z gerry $
-#
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -28,31 +27,33 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-#
-# runTest -- used by r/runlogm.pl and t/runwik*.t tests
-#
-# This version of the test harness runs each request sequentially in a single
-# process.  The r/runlog.pl version forks a process for each test and does not
-# use this function which does it in-process.
-#
-sub runTest {
-my ($q, $out) = @_;
-    if (!open(STDOUT, ">$out")) {
-        print ERR "Error: $out: $!\n";
-        return;
-    }
-    if (!open(STDERR, ">error")) {
-        print ERR "Error: error: $!\n";
-        return;
-    }
-    &PurpleWiki::DoCGIRequest($q);
-    close STDOUT;
-    close STDERR;
-    if (!-z "error") {
-        print ERR "Error file:\n";
-        $err = `cat error`;
-        print ERR $err;
-    }
-}
+package PurpleWiki;
+
+use 5.005;
+use strict;
+
+our $VERSION = 0.95;
 
 1;
+__END__
+
+=head1 NAME
+
+PurpleWiki - A Wiki with Purple Numbers.
+
+=head1 DESCRIPTION
+
+This file stores the version information for PurpleWiki.  At some
+point, we should incorporate the documentation for PurpleWiki here;
+for now, see the individual modules and the README file for detailed
+documentation, as well as the community site:
+
+  http://purplewiki.blueoxen.net/
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut

@@ -13,9 +13,10 @@
 # Usage:
 #
 #   moinConvert.pl /path/to/moinmoin /path/to/wikidb
+#
+# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 
 use strict;
-use lib '/home/eekim/devel/PurpleWiki/trunk';
 use PurpleWiki::Config;
 use PurpleWiki::Misc;
 use PurpleWiki::UseMod::KeptRevision;

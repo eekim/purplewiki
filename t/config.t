@@ -17,9 +17,9 @@ my $config = new PurpleWiki::Config($configdir);
 
 ok(ref $config, 'PurpleWiki::Config');
 
-ok($config->UseSubpage, 1);
-ok($config->RCName, 'RecentChanges');
-ok($config->FS1, "\xb31");
+ok($config->UseSubpage == 1);
+ok($config->RCName eq 'RecentChanges');
+ok($config->ArchiveDriver, 'PurpleWiki::Archive::PlainText');
 
 my $mod = $config->Driver;
 ok(ref($mod), "HASH");

@@ -65,6 +65,7 @@ sub new {
     my $x;
     $reposdir = $x if (defined($x=$args{DataDir}));
     $reposPath = $x if (defined($x=$args{ReposPath}));
+    $self->{seqdir} = (defined($x=$args{SequenceDir})) ? $x : $reposdir;
   }
   die "No config or data dir defined\n" unless $reposdir;
   $self->{seqdir} = $reposdir unless ($self->{seqdir});

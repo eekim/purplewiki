@@ -3,6 +3,7 @@
 use Test;
 require "t/runlog.pl";
 require "t/runTest.pl";
+$^W = 0;
 
 BEGIN {
     eval { require SVN::Repos; };
@@ -10,7 +11,7 @@ BEGIN {
         print STDERR "Could not find Subversion modules, skipping tests\n";
         exit;
     }
-    plan tests => 82;
+    plan tests => 85;
 };
 
 END {
@@ -23,6 +24,8 @@ my $keep_errors = 1;
 my $testdir = 't/out1';
 system('cp t/config.runSVN t/config');
 
+local (*OUT);
+
 {
     require "wiki.pl";
     use CGI;
@@ -32,12 +35,12 @@ system('cp t/config.runSVN t/config');
     open(OUT, ">&STDOUT") || die "Error open $!\n";
 
     my ($test_in, $test_out, $compare);
-    for my $seq (0..81) {
+    for my $seq (0..84) {
         $test_in = "$testdir/request.$seq";
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";
         if (open(IN, $test_in)) {
-            chomp($url = <IN>);
+            <IN>;
             my $q = new CGI(IN);
             close IN;
             close STDOUT;

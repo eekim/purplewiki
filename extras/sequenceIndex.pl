@@ -33,32 +33,23 @@
 use strict;
 use PurpleWiki::Sequence;
 use PurpleWiki::Archive::Sequence;
+use Getopt::Std;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id: sequenceIndex.pl 535 2004-11-04 07:06:22Z gerry $ =~ /\s(\d+)\s/);
 
-my $dataDir='.';
-my $sequencDir='.';
-my $backend='PurpleWiki::Archive::PlainText';
-my $url = '';
-my $verb=0;
-while (@ARGV) {
-  $a = shift(@ARGV);
-  if ($a =~ /^-v/) {
-    $verb = 1;
-  } elsif ($a =~ /^-u/) {
-    $url = $' || shift(@ARGV);
-  } elsif ($a =~ /^-d/) {
-    $dataDir = $' || shift(@ARGV);
-  } elsif ($a =~ /^-b/) {
-    $backend = $' || shift(@ARGV);
-    if ($backend !~ /:/) {
-        $backend = "PurpleWiki::Archive::$backend";
-    }
-  }
-}
+my %opts;
+getopts('hvu:d:b:s:', \%opts);
 
-die "No url\n" unless $url;
+my $url = ($opts{'u'}) ? $opts{'u'} : '';
+my $dataDir = ($opts{'d'}) ? $opts{'d'} : '.';
+my $sequenceDir = ($opts{'s'}) ? $opts{'s'} : $dataDir;
+my $backend = ($opts{'b'}) ? $opts{'b'} : 'PurpleWiki::Archive::PlainText';
+$backend = "PurpleWiki::Archive::$backend" if ($backend !~ /:/);
+my $verbose = $opts{'v'};
+
+ie "Usage: sequenceIndex.pl [-v] -u url [-d dataDir] [-s sequenceDir] [-b backend]\n"
+   if ($opts{'h'} || !$url);
 
 local $| = 1;  # Do not buffer output
 
@@ -66,7 +57,7 @@ my $pages;
 
 print STDERR "Database Package $backend\nError: $@\n"
     unless (defined(eval "require $backend"));
-$pages = $backend->new(DataDir => $dataDir);
+$pages = $backend->new(DataDir => $dataDir, SequenceDir => $sequenceDir);
          # Object representing a page database
 
 $pages || die "Can't open input database $dataDir\n";
@@ -85,3 +76,26 @@ for my $id ($pages->allPages()) {
 
 &PurpleWiki::Archive::Sequence::setCurrentValue($pages, $maxNID, $origNID);
 print "Max: $maxNID Count: $count\n";
+__END__
+ 
+=head1 NAME
+  
+sequenceIndex.pl - Add index entries for a Wiki.
+   
+=head1 SYNOPSIS
+    
+sequenceIndex.pl [-v] -u url [-d dataDir] [-s sequenceDir] [-b backend]
+       
+=head1 DESCRIPTION
+        
+Generates index entries for a Wiki database and appends to the sequence index.
+Updates the sequence number to max of current value and all NIDs loaded.
+dataDir defaults to '.', and sequenceDir defaults to dataDir.  backend default
+to PurpleWiki::Archive::Plaintext.  If backend doesn't have any ':' chars in
+it, prepend PurpleWiki::Archive:: to it.
+         
+=head1 AUTHORS
+          
+Gerry Gleason, E<lt>gerry@geraldgleason.com<gt>
+           
+=cut

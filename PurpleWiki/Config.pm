@@ -52,9 +52,8 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 # inject them into the config.
 # FIXME: AppConfig apparently requires definition of config file
 # variable outside the config file. That's painful.
-my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
-    WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
-    UseAmPm FreeUpper ShowEdits NonEnglish 
+my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed FreeLinks
+    WikiLinks RunCGI UseAmPm FreeUpper ShowEdits NonEnglish 
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
 my @SCALAR_CONFIGS = qw( 
     DataDir ReposPath BaseURL SiteName HomePage RCName SessionDir
@@ -107,20 +106,21 @@ sub _init {
     # because it is expanded in the file
     $self->{AppConfig}->set('DataDir', $directory);
 
-    $self->{AppConfig}->file($file) || die "unable to parse config file";
+    $self->{AppConfig}->file($file) || die "unable to parse config file: $file";
     $self->_initLinkPatterns();
-
-    # set the File Separators
-    $self->{AppConfig}->set('FS', $FS);
-    $self->{AppConfig}->set('FS1', $FS1);
-    $self->{AppConfig}->set('FS2', $FS2);
-    $self->{AppConfig}->set('FS3', $FS3);
 
     # make sure LocalSequenceDir is set to DataDir if it
     # wasn't already set
     if (!defined($self->{AppConfig}->get('LocalSequenceDir'))) {
         $self->{AppConfig}->set('LocalSequenceDir',
             $self->{AppConfig}->get('DataDir'));
+    }
+
+    my $archiveDriver;
+    if (defined($archiveDriver = $self->{AppConfig}->get('ArchiveDriver'))) {
+        print STDERR "Error in Package: $archiveDriver\nError:$@"
+            unless (eval "require $archiveDriver");
+        $self->{pages} = $archiveDriver->new($self, create => 1);
     }
 
     return $self;

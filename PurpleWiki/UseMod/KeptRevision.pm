@@ -171,7 +171,7 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    my $regexp = $self->{fs1};
+    my $regexp = $PurpleWiki::Archive::UseMod::fs1;
     foreach my $section (split(/$regexp/, $data, -1)) {
         # because of the usemod way of saving data, the first
         # field is empty
@@ -242,7 +242,7 @@ sub serialize {
     my @secs = $self->getSections();
 
     foreach $section (@secs) {
-        $data .= $self->{fs1};
+        $data .= $PurpleWiki::Archive::UseMod::fs1;
         $data .= $section->serialize();
     }
 

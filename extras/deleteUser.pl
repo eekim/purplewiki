@@ -7,6 +7,8 @@
 # Cleans out locked and duplicate user IDs and renumbers users.
 # Generates a username -> userID lookup table from wikidb/user
 # directory
+#
+# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 
 use strict;
 use DB_File;

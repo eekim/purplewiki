@@ -59,6 +59,7 @@ sub getRSS {
     my $string;
 
     my $urlbase = $self->{config}->BaseURL . '?';
+    return unless $archive;
     my $rcRef = $archive-> recentChanges();
     my @recentChanges = @{$rcRef};
 

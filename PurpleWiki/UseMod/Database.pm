@@ -52,8 +52,8 @@ sub _RequestLockDir {
     my $config = PurpleWiki::Config->instance();
 
     if ($config) {
-        $tempdir = $config->TempDir;
-        $lockdir = $config->LockDir;
+        $tempdir = $config->TempDir || $config->DataDir . "/temp";
+        $lockdir = $config->LockDir || $config->DataDir . "/lock";
     } elsif (!$tempdir) {
         $tempdir = (m|/[^/]+$|) ? $` : '';
     }
@@ -78,7 +78,7 @@ sub _ReleaseLockDir {
     my ($name, $lockdir) = @_;
     my $config = PurpleWiki::Config->instance();
     if ($config) {
-        $lockdir = $config->LockDir;
+        $lockdir = $config->LockDir || $config->DataDir . "/lock";
     }
     die("No lockdir") unless $lockdir;
     rmdir($lockdir . $name);
@@ -182,7 +182,7 @@ sub recentChanges {
     # parse logfile into pages hash
         while (my $logEntry = <IN>) {
             chomp $logEntry;
-            my $fsexp = $config->FS3;
+            my $fsexp = $PurpleWiki::Archive::UseMod::fs3;
             my @entries = split /$fsexp/, $logEntry;
             if (scalar @entries >= 6 && $entries[0] >= $timeStamp) {  # Check timestamp
                 my $name = $entries[1];
@@ -216,7 +216,7 @@ sub recentChanges {
                     # $entries[5] is garbage and so we ignore it...
 
                     # Get extra info
-                    my $fsexp = $config->FS2;
+                    my $fsexp = $PurpleWiki::Archive::UseMod::fs2;
                     my %userInfo = split /$fsexp/, $entries[6];
                     if ($userInfo{id}) {
                         $pages{$name}->{userId} = $userInfo{id};

@@ -1,96 +1,73 @@
 #!/usr/bin/perl
 # vi:et:tw=0:sm:ai:ts=2:sw=2
 #
-# convert.pl - PurpleWiki
+# backendConvert.pl - PurpleWiki
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 #
-# This file is part of PurpleWiki.  PurpleWiki is derived from:
-#
-#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
-#   AtisWiki v0.3             (c) Markus Denker 1998
-#   CVWiki CVS-patches        (c) Peter Merel 1997
-#   The Original WikiWikiWeb  (c) Ward Cunningham
-#
-# PurpleWiki is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the
-#    Free Software Foundation, Inc.
-#    59 Temple Place, Suite 330
-#    Boston, MA 02111-1307 USA
+# Converts data from one backend format to another.
 
-package PurpleWiki;
+package PurpleWiki;  # nasty hack?
 use strict;
+
 use lib '/home/gerry/purple/blueoxen/branches/action-plugins';
+
+use File::Copy;
+use Getopt::Std;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Sequence;
+use PurpleWiki::Archive::Sequence;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'r';
-my $NEW_CONFIG = 'new';
+### read parameters
 
-our $VERSION;
-$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
+my %opts;
+getopts('chvrs:o:n:', \%opts);
 
-my $fromDataDir='';
-my $toDataDir='';
-my $fromBackend='PurpleWiki::Archive::UseMod';
-my $toBackend='PurpleWiki::Archive::PlainText';
-my $umask='';
-my $verb=0;
-while (@ARGV) {
-  $a = shift(@ARGV);
-  if ($a =~ /^-v/) {
-    $verb = 1;
-  } elsif ($a =~ /^-o/) {
-    $fromDataDir = $' || shift(@ARGV);
-  } elsif ($a =~ /^-O/) {
-    $fromBackend = $' || shift(@ARGV);
-    if ($fromBackend !~ /:/) {
-        $fromBackend = "PurpleWiki::Archive::$fromBackend";
-    }
-  } elsif ($a =~ /^-n/) {
-    $toDataDir = $' || shift(@ARGV);
-  } elsif ($a =~ /^-N/) {
-    $toBackend = $' || shift(@ARGV);
-    if ($toBackend !~ /[:\.]/) {
-        $toBackend = "PurpleWiki::Archive::$toBackend";
-    }
-  } elsif ($a =~ /^-u/) {
-    $umask = $' || shift(@ARGV);
-  }
+my $oldBackend = ($opts{'o'}) ? $opts{'o'} : 'PurpleWiki::Archive::UseMod';
+my $newBackend = ($opts{'n'}) ? $opts{'n'} : 'PurpleWiki::Archive::PlainText';
+my $verbose = $opts{'v'};
+my $copySeq = !$opts{'c'};
+
+if ($opts{'h'} || scalar @ARGV < 3) {
+    print "Usage:\n";
+    print "    $0 [-v] [-o oldBackend] [-n newBackend] \\\n";
+    print "        [-s sequenceDir] oldDataDir newDataDir baseUrl\n";
+    exit -1;
 }
+
+my $oldDataDir = shift @ARGV;
+my $newDataDir = shift @ARGV;
+my $url = shift @ARGV;
+my $sequenceDir = $opts{'s'} || $newDataDir;
+
+### create page objects
 
 local $| = 1;  # Do not buffer output
 
-my $pages;
-my $newpages;
+print "Database Package $newBackend\nError: $@\n"
+    unless (defined(eval "require $newBackend"));
+my $newpages = $newBackend->new(DataDir => $newDataDir,
+                                SequenceDir => $sequenceDir,
+                                create => 1);
+$newpages || die "Can't open input database $newDataDir\n";
+    # Object representing a page database
 
-umask(oct($umask)) if $umask;
+print "Database Package $oldBackend\nError: $@\n"
+    unless (defined(eval "require $oldBackend"));
+my $pages = $oldBackend->new(DataDir => $oldDataDir);
+    # Object representing a page database
 
-print STDERR "Database Package $toBackend\nError: $@\n"
-    unless (defined(eval "require $toBackend"));
-$newpages = $toBackend->new(DataDir => $toDataDir, create => 1);
-         # Object representing a page database
+$pages || die "Can't open input database $oldDataDir\n";
 
-$newpages || die "Can't open input database $toDataDir\n";
+### convert database
 
-print STDERR "Database Package $fromBackend\nError: $@\n"
-    unless (defined(eval "require $fromBackend"));
-$pages = $fromBackend->new(DataDir => $fromDataDir);
-         # Object representing a page database
-
-$pages || die "Can't open input database $fromDataDir\n";
+if ($copySeq) {
+    copy("$oldDataDir/sequence", "$sequenceDir/sequence");
+    copy("$oldDataDir/sequence.index", "$sequenceDir/sequence.index");
+}
 
 my ($rev, $host, $summary, $user);
 my %all = ();
@@ -103,7 +80,7 @@ for my $id ($pages->allPages()) {
         $all{$pageTime} = [ $id, $rev, $host, $summary, $userId ];
         last;
       }
-      print STDERR "Dup time: $pageTime\n";
+      print "Dup time: $pageTime\n" if ($verbose);
       $pageTime++;
     }
   }
@@ -114,22 +91,59 @@ my $goodCount = 0;
 my $badCount = 0;
 
 for my $pageTime (sort { $a <=> $b } (keys %all)) {
-  my ($id, $rev, $host, $summary, $userId) = @{$all{$pageTime}};
-  my $page = $pages->getPage($id, $rev);
-  print "$id, $rev\n" if $verb;
-  if ($err = $newpages->putPage( pageId => $id,
-                                 tree => $page->getTree(),
-                                 changeSummary => $summary,
-                                 host => $host,
-                                 timeStamp => $pageTime,
-                                 userId => $userId )) {
-    print STDERR "$id :: $rev -> $err\n";
-    $badCount++;
-  } else { $goodCount++; }
+    my ($id, $rev, $host, $summary, $userId) = @{$all{$pageTime}};
+    my $page = $pages->getPage($id, $rev);
+    print "$id, $rev\n" if $verbose;
+    if ($err = $newpages->putPage( pageId => $id,
+                                   tree => $page->getTree(),
+                                   changeSummary => $summary,
+                                   host => $host,
+                                   timeStamp => $pageTime,
+                                   userId => $userId,
+                                   url => "$url?$id")) {
+        print "$id :: $rev -> $err\n";
+        $badCount++;
+    }
+    else {
+        $goodCount++;
+    }
 }
 
-print STDERR "Copy $goodCount records ($badCount errors)\n";
+print "Copy $goodCount records ($badCount errors)\n";
+
+### more nasty hack
 
 sub TimeToText { return shift; }
 sub QuoteHtml { return shift; }
 
+### fini
+
+__END__
+=head1 NAME
+
+backendConvert.pl - Converts data into a different backend format
+
+=head1 SYNOPSIS
+
+  backendConvert.pl [-v] [-o oldBackend] [-n newBackend] [-u url] \
+      [-s sequenceDir ] oldDataDir newDataDir baseUrl
+
+defaults:
+fromBackend = UseMod
+toBackend = PlainText
+sequenceDir = newDataDir
+v = verbose (0)
+c = copy (don't copy if -c present)
+
+=head1 DESCRIPTION
+
+Reads all Wiki page revisions and writes them to a new page archive with a
+different archive module.  Also copies and re-inserts to the sequence index
+(after optionally copying the sequence index and current).
+
+=head1 AUTHORS
+
+Gerry Gleason, E<lt>gerry@geraldgleason.comE<gt>
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut

@@ -1,5 +1,24 @@
 Revision history for PurpleWiki.
 
+0.95 -- December 1, 2004
+	- Pluggable backends.  We've replaced the old default UseMod
+	  backend with a PlainText backend.  There's also an experimental
+	  Subversion backend, and it's easy to write your own as well.
+	  The new default backend fixes some bugs and untoward behavior in
+	  old versions, and should be much more stable.
+	- Fully localized.  Supports multilingual output and templates.
+	- Integrated Authen::Captcha into account creation, which attempts
+	  to confirm that the person creating an account is a human, not a
+	  spambot.
+	- Updates the NID database correctly, so transclusions will still
+	  work, even if content is moved to different pages.
+	- Extensive modularization.  You can now customize even more of
+	  PurpleWiki's behavior.  Also further streamlined the config file
+	  so that it is less confusing.
+	- More rigorous testing framework.  Gets rid of bugs, and they
+	  don't come back!
+	- Fixed many bugs.
+
 0.94 -- August 11, 2004
 	- A bug fix release.  Re-added a feature that allows you to easily
 	  recover vandalized/spammed pages.  Included some documentation in

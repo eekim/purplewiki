@@ -48,6 +48,11 @@ use PurpleWiki::Archive::Sequence;
 # defaults for Text Based data structure
 my $DATA_VERSION = 3;            # the data format version
 
+our $fs = "\xb3";
+our $fs1 = "\xb31";
+our $fs2 = "\xb32";
+our $fs3 = "\xb33";
+
 sub new {
   my $proto = shift;
   my $config;
@@ -58,11 +63,6 @@ sub new {
 
   my $datadir;
   if ($config) {
-    $datadir = $config->DataDir;
-    $self->{fs1} = $config->FS1;
-    $self->{fs2} = $config->FS2;
-    $self->{fs3} = $config->FS3;
-    $self->{fs} = $config->FS;
     $datadir = $config->DataDir;
     $self->{pagedir} = $config->PageDir;
     $self->{rcfile} = $config->RcFile;
@@ -75,10 +75,7 @@ sub new {
   } else {
     my $x;
     $datadir = $args{DataDir};
-    $self->{fs} = "\xb3";
-    $self->{fs1} = "\xb31";
-    $self->{fs2} = "\xb32";
-    $self->{fs3} = "\xb33";
+    $self->{seqdir} = (defined($x=$args{SequenceDir})) ? $x : $datadir;
   }
   $self->{pagedir} = $args{PageDir} || "$datadir/page"
       unless defined($self->{pagedir});
@@ -131,7 +128,7 @@ sub putPage {
   my $tree = $args{tree};
   return "No Data" unless (defined($tree));
   my $wikitext = $tree->view('wikitext');
-  $wikitext .= "\n"  unless (substr($wikitext, -1, "\n"));
+  $wikitext .= "\n"  unless (substr($wikitext, -1) eq "\n");
   my $host = $args{host} || $ENV{REMOTE_ADDR};
 
   my $id = $args{pageId};
@@ -141,7 +138,7 @@ sub putPage {
   # Success, but don't do anything if no change
   my $page = $self->_openPage($id);
   my $old = $page->_getText();
-  return "" if ($old eq $args{wikitext});
+  return "" if ($old eq $wikitext);
 
   # Fail on detecting edit conflicts
   if (($page->getRevision > 0) && ($args{oldrev} != $page->getRevision())) {
@@ -160,12 +157,12 @@ sub putPage {
                  text_default => $section,
                  userid => $userId );
 
-  my $fsexp = $self->{fs};
   my $keptRevision = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
   my $text = $section->getText();
 
-  $wikitext =~ s/$fsexp//g;
-  $args{changeSummary} =~ s/$fsexp//g;
+  $wikitext =~ s/$fs//g;
+  $args{changeSummary} ||= '';
+  $args{changeSummary} =~ s/$fs//g;
   $text->setText($wikitext);
   $text->setNewAuthor(1);
   $text->setSummary($args{changeSummary});
@@ -232,13 +229,9 @@ sub _WriteRcLog {
   my ($self, $id, $summary, $editTime, $userId, $rhost) = @_;
   my ($extraTemp, %extra);
 
-  %extra = ();
-  $extra{'id'} = $userId;
-  $extra{'name'} = "";
-  $extraTemp = join($self->{fs2}, %extra);
   # The two fields at the end of a line are kind and extension-hash
-  my $rc_line = join($self->{fs3}, $editTime, $id, $summary,
-                     0, $rhost, "0", $extraTemp);
+  my $rc_line = join($fs3, $editTime, $id, $summary, 0, $rhost, "0", 
+                     join($fs2, (id => $userId, name => '')));
   my $rc_file = $self->{rcfile};
   if (!open(OUT, ">>$rc_file")) {
     die("Recent Changes log error($rc_file): $!");
@@ -309,7 +302,7 @@ sub _serialize {
 
     my $sectionData = $page->_getSection()->serialize();
 
-    my $separator = $self->{fs1};
+    my $separator = $fs1;
 
     my $data = join($separator, map {$_ . $separator . ($page->{$_} || '')}
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',
@@ -366,7 +359,7 @@ sub _parseData {
     my ($self, $page, $data) = @_;
 
 #print STDERR "_parseData()\n"; for (keys %$page) { print STDERR " $_ -> $page->{$_}\n"; }
-    my %data = (split(/$self->{fs1}/o, $data, -1));
+    my %data = (split(/$fs1/o, $data, -1));
     while (my ($k, $v) = each(%data)) { $page->{$k} = $v; }
 #print STDERR ">>\n"; for (keys %$page) { print STDERR " $_ -> $page->{$_}\n"; }
     $page->{text_default} = $page->_getSection();
@@ -382,13 +375,13 @@ sub getRevisions {
     my $page = $self->_openPage($id);
 
     my $currentSection = $page->_getSection();
-    push @pageHistory, $self->_getRevisionHistory($id, $currentSection, 1);
+    push @pageHistory, $self->_getRevisionHistory($id, $currentSection);
     my $krev = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
     foreach my $section ( sort {($b->getRevision() <=> $a->getRevision())}
                                $krev->getSections() ) {
         # If KeptRevision == Current Revision don't print it. - matthew
         if ($section->getRevision() != $currentSection->getRevision()) {
-            push @pageHistory, $self->_getRevisionHistory($id, $section, 0);
+            push @pageHistory, $self->_getRevisionHistory($id, $section);
         }
         last if ($maxcount && ++$count >= $maxcount);
     }
@@ -396,7 +389,7 @@ sub getRevisions {
 }
 
 sub _getRevisionHistory {
-    my ($self, $id, $section, $isCurrent) = @_;
+    my ($self, $id, $section) = @_;
     my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
 
     my $text = $section->getText();
@@ -424,21 +417,6 @@ sub _getRevisionHistory {
              userId => $uid,
              summary => $summary };
 }
-
-# Retrieves the default text data by getting the
-# Section and then the text in that Section.
-# pages->getPageNode($Id, $nid)
-#
-# get just one node
-#
-#sub getPageNode {
-#  my ($self, $id, $nid) = @_;
-#  my $page = $self->getPage($id);
-#  my $tree = $page->getTree();
-#print STDERR "getPageNode:$pages Pg:$page Tr:$tree Id:$id Nid:$nid\n";
-#  return $tree->view('subtree', 'nid' => uc($nid)) if ($tree);
-#  ""
-#}
 
 package PurpleWiki::Archive::ModPage;
 
@@ -514,7 +492,9 @@ sub getSummary {
 sub _getText {
     my $self = shift;
     my $selectrevision = $self->{selectrevision};
-    if ($selectrevision && ($selectrevision != $self->{revision})) {
+    my $section = $self->_getSection();
+    my $crev = $section->getRevision();
+    if ($selectrevision && ($selectrevision != $crev)) {
         my $krev = new PurpleWiki::UseMod::KeptRevision($self->{pages},
                                                         id=>$self->{id});
         for my $section ($krev->getSections()) {
@@ -526,8 +506,8 @@ sub _getText {
         }
         return "";  # no revision found
     } else {
-        my $section = $self->_getSection();
         my $text = $section->getText();
+        $self->{revision} = $crev;
         return (ref($text)) ? $text->getText() : $text;
     }
 }

@@ -57,6 +57,10 @@ sub new {
     my $self = { @_ };
     $self->{config} = PurpleWiki::Config->instance()
         unless (defined($self->{config}));
+    unless (defined($self->{archive})) {
+        my $archive = $self->{config}->{archive};
+        $self->{archive} = $archive if (defined($archive));
+    }
     bless ($self, $class);
 
     return $self;
@@ -87,6 +91,7 @@ sub get {
         # is fine.
         # FIXME: assumes that anything not the wiki
         # is static content
+        my $archive = $self->{archive};
         my $scriptName = $self->{config}->BaseURL;
         $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
         my ($host, $path);
@@ -98,12 +103,11 @@ sub get {
         if ((($path =~ /$scriptName/) || ($path =~ /\.wiki$/)) &&
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
-        } elsif ((!$host || $host eq 'localhost' || $host eq $ENV{HTTP_HOST})
+        } elsif ($archive
+                 && (!$host || $host eq 'localhost' || $host eq $ENV{HTTP_HOST})
                  && $path =~ /$scriptName/) {
             my ($id) = ($url =~ /\?([^&]+)\b/);
-            #$content=($self->{pages}->getPageNode($id, uc($nid)))
-            #         || "transclusion index out of sync";
-            my $page = $self->{archive}->getPage($id);
+            my $page = $archive->getPage($id);
             my $tree = $page->getTree();
             $content = $tree ? $tree->view('subtree', 'nid' => uc($nid))
                              : "transclusion index out of sync";

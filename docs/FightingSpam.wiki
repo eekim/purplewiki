@@ -1,4 +1,4 @@
-= Fighting WikiSpam =
+= Recovering From WikiSpam =
 
 In an ideal Wiki world, the Wiki community is so active, its members
 manually fix vandalism as soon as it happens.  To make this recovery
@@ -18,8 +18,10 @@ version of the page with the old text.
 If your Wiki does not host the ideal Wiki community (and most don't),
 there are other mechanisms for fighting WikiSpam.  One is to identify
 the responsible IP address or hostname and place it in a file called
-{{{banlist}}} in your {{{wikidb}}} directory.  Be careful that you are
-not banning an address that is also the source of legitimate users.
+{{{banlist}}} in your {{{wikidb}}} directory.  (We've included a
+{{{banlist}}} of known spammers in the wikidb directory of the
+distribution.)  Be careful that you are not banning an address that is
+also the source of legitimate users.
 
 Another is to require login to edit pages.  To do this, simply
 uncomment {{{<nowiki>LoginToEdit</nowiki>}}} in your config file.
