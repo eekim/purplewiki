@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.12 2003/12/31 08:02:51 cdent Exp $
+# $Id: wiki.pl,v 1.13 2004/01/05 18:13:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -1988,30 +1988,6 @@ END_MAIL_CONTENT
     # $EmailFrom string needn't be a real email address.
     &SendEmail($address, $config->EmailFrom, $address, $subject, $content);
   }
-}
-
-sub SearchTitleAndBody {
-  my ($string) = @_;
-  my ($name, $freeName, @found);
-  my $page;
-  my $text;
-
-  foreach $name (&PurpleWiki::Database::AllPagesList($config)) {
-    $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now, 
-      config => $config);
-    $page->openPage();
-    $text = $page->getText();
-    if (($text->getText() =~ /$string/i) || ($name =~ /$string/i)) {
-      push(@found, $name);
-    } elsif ($config->FreeLinks && ($name =~ m/_/)) {
-      $freeName = $name;
-      $freeName =~ s/_/ /g;
-      if ($freeName =~ /$string/i) {
-        push(@found, $name);
-      }
-    }
-  }
-  return @found;
 }
 
 # Note: all diff and recent-list operations should be done within locks.
