@@ -926,6 +926,8 @@ sub DoEdit {
 
   $oldText = $text->getText();
 
+  my @vPages = &visitedPages;
+
   if ($preview && !$isConflict) {
     $oldText = $newText;
   }
@@ -935,6 +937,7 @@ sub DoEdit {
                           cssFile => $config->StyleSheet,
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
+                          visitedPages => \@vPages,
                           homePage => $config->HomePage,
                           id => $id,
                           pageName => $pageName,
@@ -956,6 +959,7 @@ sub DoEdit {
                           cssFile => $config->StyleSheet,
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
+                          visitedPages => \@vPages,
                           homePage => $config->HomePage,
                           userName => $username,
                           escapedUserName => uri_escape($username),
@@ -975,6 +979,7 @@ sub DoEdit {
                           cssFile => $config->StyleSheet,
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
+                          visitedPages => \@vPages,
                           homePage => $config->HomePage,
                           userName => $username,
                           escapedUserName => uri_escape($username),
