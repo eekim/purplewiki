@@ -330,10 +330,9 @@ by view().
 
 =head1 METHODS
 
-=head2 new(config => $config)
+=head2 new()
 
-Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
-then a fatal error occurs.  
+Returns a new PurpleWiki::View::wikihtml object.
 
 =head2 view($wikiTree)
 

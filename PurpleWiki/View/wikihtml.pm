@@ -318,10 +318,9 @@ by view().
 
 =head1 METHODS
 
-=head2 new(config => $config, url => $url, pageName => $pageName)
+=head2 new(url => $url, pageName => $pageName)
 
-Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
-then a fatal error occurs.  
+Returns a new PurpleWiki::View::wikihtml object.
 
 url is the URL prepended to NIDs, defaults to the empty string. 
 

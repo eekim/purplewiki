@@ -146,11 +146,10 @@ call for it.
 
 =head1 METHODS
 
-=head2 new(config => $config, useOO => $boolean, start => $subRef, 
-           stop => $subRef, methodName => $subRef, ...)
+=head2 new(useOO => $boolean, start => $subRef, stop => $subRef, methodName =>
+           $subRef, ...)
 
-Returns a new PurpleWiki::View::Filter object.  $config is the standard
-PurpleWiki::Config object. 
+Returns a new PurpleWiki::View::Filter object.
 
 useOO is a boolean variable, if it's true then the subroutines are called with
 $self as their first argument, otherwise they're called like normal functions.

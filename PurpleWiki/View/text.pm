@@ -185,11 +185,11 @@ by view().
 
 =head1 METHODS
 
-=head2 new(config => $config, show_links => true/false, columns => $columns)
+=head2 new(show_links => true/false, columns => $columns)
 
-Returns a new PurpleWiki::View::text object  If config is not passed in then a
-fatal error occurs.  show_links and columns are not required and default to
-true and 72 respectively.  show_links can also be written as showLinks.
+Returns a new PurpleWiki::View::text object.  show_links and columns are not
+required and default to true and 72 respectively.  show_links can also be
+written as showLinks.
 
 If show_links is true then links are marked with "[n]" style references, where
 n is an integer.  At the bottom of the output the references show what 

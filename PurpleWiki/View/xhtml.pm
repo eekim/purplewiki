@@ -135,11 +135,9 @@ L<PurpleWiki::View::wikihtml>.
 
 =head1 METHODS
 
-=head2 new(config => $config, url => $url, pageName => $pageName, 
-           css_file => $CSS)
+=head2 new(url => $url, pageName => $pageName, css_file => $CSS)
 
-Returns a new PurpleWiki::View::xhtml object  If config is not passed in
-then a fatal error occurs.  
+Returns a new PurpleWiki::View::xhtml object.
 
 url is the URL prepended to NIDs, defaults to the empty string. 
 
