@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.4 2003/07/19 09:08:41 eekim Exp $
+# $Id: wikihtml.pm,v 1.5 2003/07/23 04:39:42 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -45,7 +45,7 @@ use vars qw(@sectionState);
 sub openTag {
     my $node = shift;
 
-    return '<' . $node->type . ">\n";
+    return '<' . $node->type . '>';
 }
 
 sub closeTag {
@@ -98,8 +98,6 @@ sub openLinkTag {
     my $outputString;
 
     $outputString = '<a class="extlink" href="' . $node->href . '">';
-    # FIXME: chris doesn't like bracketed external links
-    #$outputString .= '[' if ($node->type eq 'link');
     return $outputString;
 }
 
@@ -107,8 +105,6 @@ sub closeLinkTag {
     my $node = shift;
     my $outputString;
 
-    # FIXME: chris doesn't like bracketed external links
-    #$outputString = ']' if ($node->type eq 'link');
     $outputString .= '</a>';
     return $outputString;
 }
