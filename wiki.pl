@@ -360,9 +360,9 @@ sub DoRc {
               userId => $page->{userId},
               host => $page->{host},
               diffUrl => $config->ScriptName .
-                  '?action=browse&diff=1&id=' . $page->{name},
+                  '?action=browse&diff=1&id=' . $page->{id},
               changeUrl => $config->ScriptName .
-                  '?action=history&id=' . $page->{name} };
+                  '?action=history&id=' . $page->{id} };
     }
     my @vPages = &visitedPages;
     $wikiTemplate->vars(siteName => $config->SiteName,
@@ -1382,7 +1382,7 @@ sub DoSearch {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
-                        userName => $user->username,
+                        userName => $username,
                         escapedUserName => uri_escape($username),
                         keywords => $string,
                         modules => $search->modules,

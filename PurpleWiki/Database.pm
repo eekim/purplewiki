@@ -195,14 +195,24 @@ sub AllPagesList {
         foreach $id (@pageFiles) {
             next  if (($id eq '.') || ($id eq '..'));
             if (substr($id, -3) eq '.db') {
-                push(@pages, substr($id, 0, -3));
+		my $pageName = substr($id, 0, -3);
+		$pageName =~ s/_/ /g if ($config->FreeLinks);
+                push(@pages, {
+		    'id' => substr($id, 0, -3),
+		    'pageName' => $pageName,
+                });
             } elsif (substr($id, -4) ne '.lck') {
                 opendir(PAGELIST, "$directory/$id");
                 @subpageFiles = readdir(PAGELIST);
                 closedir(PAGELIST);
                 foreach $subId (@subpageFiles) {
                     if (substr($subId, -3) eq '.db') {
-                        push(@pages, "$id/" . substr($subId, 0, -3));
+			my $pageName = "$id/" . substr($subId, 0, -3);
+			$pageName =~ s/_/ /g if ($config->FreeLinks);
+			push(@pages, {
+			    'id' => "$id/" . substr($subId, 0, -3),
+			    'pageName' => $pageName,
+			});
                     }
                 }
             }

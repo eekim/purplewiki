@@ -7,8 +7,8 @@
 <h2>[% pages.size %] pages found:</h2>
 
 <p>
-[% FOREACH pageName = pages %]
-<a href="[% baseUrl %]?[% pageName %]">[% pageName %]</a><br />
+[% FOREACH page = pages %]
+<a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a><br />
 [% END %]
 </p>
 
