@@ -37,5 +37,11 @@ a.nid {
   text-decoration: none;
   color: #C8A8FF;  /* light purple */
 }
-a.nid:before { "("; }
-a.nid:after {")"; }
+
+a.nid:before {
+    content: "(";
+}
+
+a.nid:after {
+    content: ")";
+}
