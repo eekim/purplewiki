@@ -3,6 +3,7 @@ LICENSE
 Makefile.PL
 MANIFEST
 README
+purple
 wiki.pl
 wiki_trans.pl
 etc/config
