@@ -16,11 +16,16 @@ changes, ''it does not overwrite the old revision.''  It creates a new
 version of the page with the old text.
 
 If your Wiki does not host the ideal Wiki community (and most don't),
-there are other mechanisms for fighting WikiSpam.  One is to require
-login to edit pages.  To do this, simply uncomment
-{{{<nowiki>LoginToEdit</nowiki>}}} in your config file.  You'll also
-want to modify the common/pagebar.tt so that the "Edit" link does not
-appear if {{{userName}}} is not defined (additions in '''bold'''):
+there are other mechanisms for fighting WikiSpam.  One is to identify
+the responsible IP address or hostname and place it in a file called
+{{{banlist}}} in your {{{wikidb}}} directory.  Be careful that you are
+not banning an address that is also the source of legitimate users.
+
+Another is to require login to edit pages.  To do this, simply
+uncomment {{{<nowiki>LoginToEdit</nowiki>}}} in your config file.
+You'll also want to modify the common/pagebar.tt so that the "Edit"
+link does not appear if {{{userName}}} is not defined (additions in
+'''bold'''):
 
 {{{
 [% IF editUrl %]
