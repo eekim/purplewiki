@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.6 2003/08/18 07:10:53 eekim Exp $
+# $Id: Transclusion.pm,v 1.7 2004/01/13 22:47:40 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -57,6 +57,7 @@ sub new {
 
     $self->{config} = $params{config};
     $self->{url} = $params{url};
+    $self->{outputType} = $params{outputType};
 
     $self->_tieHash($self->{config}->DataDir() . '/' . $INDEX_FILE);
 
@@ -74,6 +75,7 @@ sub get {
     my $self = shift;
     my $nid = shift;
     my $nidLong = "nid$nid";
+    my $outputType = $self->{outputType} || '';
 
     # get the URL that hosts this nid out of the the db
     my $url = $self->{db}->{$nid}; 
@@ -106,10 +108,12 @@ sub get {
         }
     }
 
-    $content = qq(<span id="$nidLong" class="transclusion">) .
-               qq($content&nbsp;<a class="nid" title="$nid" ) .
-               qq(href="$url#$nidLong">T</a></span>);
-
+    
+    if ($outputType !~ /plaintext/) {
+      $content = qq(<span id="$nidLong" class="transclusion">) .
+        qq($content&nbsp;<a class="nid" title="$nid" ) .
+          qq(href="$url#$nidLong">T</a></span>);
+    }
     return $content;
 }
 
@@ -137,7 +141,8 @@ PurpleWiki::Transclusion - Transclusion object.
   my $config = PurpleWiki::Config->new('/var/www/wikidb');
   my $transclusion = PurpleWiki::Transclusion->new(
      config => $config,
-     url => 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?HomePage');
+     url => 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?HomePage',
+     ouput_type => 'plaintext');
 
   $transclusion->get('2H1');  # retrieves content of NID 2H1
 
@@ -156,11 +161,13 @@ Creates a new Transclusion object associated with the sequence.index
 in the DataDir. The index is used to find the URL from which a
 particular NID originates. See get() for more.
 
-There are two parameters:
+There are three parameters:
 
-  config -- PurpleWiki::Config object
+       config -- PurpleWiki::Config object
 
-     url -- The URL requesting the transclusion
+          url -- The URL requesting the transclusion
+
+   outputType -- plaintext, xhtml or undef (defaults to xhtml)
 
 =head2 get($nid)
 
