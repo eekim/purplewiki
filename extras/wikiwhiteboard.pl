@@ -2,7 +2,7 @@
 #
 # wikiwhiteboard.pl -- perl port of Danny Ayers's WikiWhiteboard
 #
-# $Id: wikiwhiteboard.pl,v 1.2 2003/08/29 18:45:13 eekim Exp $
+# $Id: wikiwhiteboard.pl,v 1.3 2004/02/11 20:50:14 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
@@ -32,8 +32,12 @@
 use CGI;
 use IO::File;
 
+### Configuration variables.  Change these as needed. ###
+
 my $configDir = '/home/eekim/www/local/wikidb';
 my $uriBase = 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?';
+
+### End configuration variables. ########################
 
 my $q = new CGI;
 
@@ -78,3 +82,68 @@ else {
 
     print $q->redirect("$uriBase$pageName");
 }
+
+__END__
+
+=head1 NAME
+
+wikiwhiteboard.pl - Perl implementation of Danny Ayer's WikiWhiteboard
+
+=head1 DESCRIPTION
+
+A Perl implementation of Danny Ayer's WikiWhiteboard (as described in
+"Creating an SVG Wiki", November 19, 2003):
+
+  http://www.xml.com/pub/a/2003/11/19/svgwiki.html
+
+This script is used to save and display the SVG picture.
+
+=head1 USING
+
+To use wikiwhiteboard.pl, edit the configuration variables in the
+file.  Copy sketch.svg into your $configDir directory (typically
+wikidb) and wikiwhiteboard.pl into your cgi-bin directory.  PurpleWiki
+assumes wikiwhiteboard.pl is accessible at the URL:
+
+  http://foo/cgi-bin/wikiwhiteboard.pl
+
+where foo is the domain name of your Wiki.  This is currently
+hard-coded, although it should be configurable in later versions.
+
+=head1 HOW IT WORKS
+
+WikiWhiteboard consists of three parts:
+
+=over
+
+=item sketch.svg
+
+This stores both the drawing and the drawing functionality.  Most of
+the hard work is done here.
+
+=item wikiwhiteboard.pl
+
+Saves and displays the SVG file.
+
+=item PurpleWiki
+
+This version of PurpleWiki has been modified to replace "{sketch}"
+with the appropriate HTML and JavaScript trickery to make all this
+work.  To see how this has been integrated, see
+L<PurpleWiki::Parser::WikiText>, L<PurpleWiki::View::wikitext>, and
+L<PurpleWiki::View::wikihtml>.
+
+=back
+
+=head1 TO DO
+
+Move configurable items into config file.
+
+Implement a generic plug-in syntax/system for adding new elements like
+{sketch}.
+
+=head1 AUTHOR
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut
