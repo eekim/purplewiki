@@ -1304,7 +1304,7 @@ sub DoEname {
         if ($xsid) {
             if ($spit->validateSession($idBroker, $ename, $xsid)) {
                 $session->param('xsid', $xsid);
-                my $userId = $user->idFromUsername($ename);
+                my $userId = $userDb->idFromUsername($ename);
                 if ($userId) {
                     $user = $userDb->loadUser($userId);
                     $session->param('userId', $userId);
