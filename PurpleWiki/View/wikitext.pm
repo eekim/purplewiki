@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
+# $Id: wikitext.pm,v 1.4 2003/07/03 01:24:47 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -40,7 +40,7 @@ use PurpleWiki::View::EventHandler;
 my $sectionDepth = 0;
 my $indentDepth = 0;
 my @listStack;
-my $lastInlineProcessed;
+my $lastInlineProcessed = '';
 my @sectionState;
 
 # structural node event handlers
@@ -54,13 +54,13 @@ sub startList {
 
 sub endList {
     pop @listStack;
-    undef $lastInlineProcessed;
+    $lastInlineProcessed = '';
     return "\n" if (scalar @listStack == 0);
 }
 
 sub showNid {
     my $structuralNode = shift;
-    undef $lastInlineProcessed;
+    $lastInlineProcessed = '';
     my $outputString = &_nid($structuralNode->id);
     if ($structuralNode->type eq 'dt') {
         return $outputString;
@@ -87,13 +87,15 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::structuralHandler{section}->{pre} =
         sub { $sectionDepth++; return ''; };
     $PurpleWiki::View::EventHandler::structuralHandler{section}->{post} =
-        sub { $sectionDepth--; undef $lastInlineProcessed; return ''; };
+        sub { $sectionDepth--;
+              $lastInlineProcessed = '';
+              return ''; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} =
         sub { $indentDepth++; return ''; };
     $PurpleWiki::View::EventHandler::structuralHandler{indent}->{post} =
         sub { $indentDepth--;
-              undef $lastInlineProcessed;
+              $lastInlineProcessed = '';
               return "\n" if ($indentDepth == 0); };
 
     $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&startList;
@@ -109,7 +111,7 @@ sub registerHandlers {
         sub { return '=' x $sectionDepth . ' '; };
     $PurpleWiki::View::EventHandler::structuralHandler{h}->{post} =
         sub { my $structuralNode = shift;
-              undef $lastInlineProcessed;
+              $lastInlineProcessed = '';
               return &_nid($structuralNode->id) . ' ' . '=' x $sectionDepth . "\n\n"; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} =
@@ -118,7 +120,7 @@ sub registerHandlers {
         sub { my $structuralNode = shift;
               my $outputString = &_nid($structuralNode->id) . "\n";
               $outputString .= "\n" if ($indentDepth == 0);
-              undef $lastInlineProcessed;
+              $lastInlineProcessed = '';
               return $outputString; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} =
@@ -223,7 +225,7 @@ sub _nid {
 
 sub _textHeader {
     my ($wikiTree, %params) = @_;
-    my $outputString;
+    my $outputString = '';
 
     # FIXME: this can be a loop
     if ($wikiTree->title) {
