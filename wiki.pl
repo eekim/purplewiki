@@ -2,7 +2,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.2 2002/11/25 06:10:49 eekim Exp $
+# $Id: wiki.pl,v 1.3 2002/12/11 03:07:54 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -59,6 +59,9 @@ use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
   %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
   $OpenPageName @KeptList @IndexList $IndexInit
   $q $Now $UserID $TimeZoneOffset $ScriptName $BrowseCode $OtherCode);
+
+# the global value of the wikiParser we use in this session
+use vars qw($wikiParser);
 
 # == Configuration =====================================================
 $DataDir     = "/home/eekim/www/local/purplewikidb"; # Main wiki directory
@@ -137,7 +140,7 @@ $RcOldFile   = "$DataDir/oldrclog"; # Old RecentChanges logfile
 $IndexFile   = "$DataDir/pageidx";  # List of all pages
 
 # Instantiate PurpleWiki parser.
-our $wikiParser = PurpleWiki::Parser::WikiText->new;
+$wikiParser = PurpleWiki::Parser::WikiText->new;
 
 # The "main" program, called at the end of this script file.
 sub DoWikiRequest {
