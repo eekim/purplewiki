@@ -43,8 +43,6 @@ use Apache::Const -compile => qw(OK);
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $CONFIG = '/home/cdent/wikidb';
-
 sub handler {
     my $r = shift;
 
@@ -54,6 +52,7 @@ sub handler {
     my $url = $r->construct_url();
 
     my $content = readFile($file);
+    my $CONFIG = $ENV{WIKIDB};
     my $purpleConfig = new PurpleWiki::Config($CONFIG);
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
@@ -100,6 +99,7 @@ PurpleWiki::Apache2Handler - Wiki text display handler for mod_perl 2
   PerlRequire /path/to/PurpleWiki/Apache2Handler.pm
   <FilesMatch *\.wiki>
       SetHandler perl-script
+      PerlSetEnv WIKIDB /path/to/wikidb
       PerlResponseHandler  PurpleWiki::Apache2Handler
   </FilesMatch>
 
