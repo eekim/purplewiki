@@ -1,6 +1,6 @@
 Revision history for PurpleWiki.
 
-0.95 -- November 23, 2004
+0.95 -- November 24, 2004
 	- Pluggable backends.  We've replaced the old default UseMod
 	  backend with a PlainText backend.  There's also an experimental
 	  Subversion backend, and it's easy to write your own as well.
