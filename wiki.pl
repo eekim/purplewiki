@@ -920,8 +920,8 @@ sub DoEdit {
                           pageTime => $pageTime,
                           userName => $userName,
                           escapedUserName => uri_escape($userName),
-                          oldText => $oldText,
-                          newText => $newText,
+                          oldText => &QuoteHtml($oldText),
+                          newText => &QuoteHtml($newText),
                           preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&id=$id");
       print &GetHttpHeader . $wikiTemplate->process('editConflict');
@@ -938,7 +938,7 @@ sub DoEdit {
                           revision => $revision,
                           isConflict => $isConflict,
                           pageTime => $pageTime,
-                          oldText => $oldText,
+                          oldText => &QuoteHtml($oldText),
                           body => &WikiToHTML($id, $oldText),
                           preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&id=$id");
@@ -955,7 +955,7 @@ sub DoEdit {
                           pageName => $id,
                           revision => $revision,
                           pageTime => $pageTime,
-                          oldText => $oldText,
+                          oldText => &QuoteHtml($oldText),
                           preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&id=$id");
       print &GetHttpHeader . $wikiTemplate->process('editPage');
