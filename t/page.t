@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 11};
+BEGIN { plan tests => 12};
 
 use PurpleWiki::Database::Page;
 use PurpleWiki::Database::KeptRevision;
@@ -20,28 +20,52 @@ my $newcontent = "Describe the new page here.\n";
 my $content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord.
 
+== Header Injection ==
+
 * this is a list one
 * this is a list two
 
 [http://www.burningchrome.com/ this is a link]
 EOF
 
-# need an extra line for some reason
 my $expected_content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord. {nid 1}
 
-* this is a list one {nid 2}
-* this is a list two {nid 3}
+== Header Injection {nid 2} ==
 
-[http://www.burningchrome.com/ this is a link] {nid 4}
+* this is a list one {nid 3}
+* this is a list two {nid 4}
+
+[http://www.burningchrome.com/ this is a link] {nid 5}
 EOF
 
-# parse it
+my $second_content=<<"EOF";
+Hello this is a wiki page, using WikiPage as a WikiWord. {nid 1}
+
+== Header Injection ==
+
+* this is a list one {nid 3}
+* this is a list two {nid 4}
+
+[http://www.burningchrome.com/ this is a link] {nid 5}
+EOF
+
+my $second_expected_content=<<"EOF";
+Hello this is a wiki page, using WikiPage as a WikiWord. {nid 1}
+
+== Header Injection {nid 6} ==
+
+* this is a list one {nid 3}
+* this is a list two {nid 4}
+
+[http://www.burningchrome.com/ this is a link] {nid 5}
+EOF
+
+# parse first content
 my $config = new PurpleWiki::Config($configdir);
 my $parser = PurpleWiki::Parser::WikiText->new();
-my $wiki = $parser->parse($content, add_node_ids => 1,
-	config => $config);
-my $output = $wiki->view('wikitext', config => $config);
+my $wiki = $parser->parse($content, add_node_ids => 1);
+my $output = $wiki->view('wikitext');
 $output =~ s/\r//g;
 
 # is what we parsed what we expected
@@ -50,13 +74,11 @@ ok($output, $expected_content);
 ## now save it, be amazed how complicated this is...
 ## we'll do the whole bag
 # lock
-ok(PurpleWiki::Database::RequestLock($config) && -d $lockdir);
+ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
 my $keptRevision = new PurpleWiki::Database::KeptRevision(
-    id => $id,
-    config => $config);
+    id => $id);
 my $page = new PurpleWiki::Database::Page('id' => $id,
-                                          'now' => time,
-                                          'config' => $config);
+                                          'now' => time);
 $page->openPage();
 
 # stored id should be the same as what we gave it
@@ -83,14 +105,22 @@ ok($section->setRevision($section->getRevision() + 1), 1);
 ok($page->save(), -f $idFilename);
 
 # get rid of lock
-ok(PurpleWiki::Database::ReleaseLock($config) && ! -d $lockdir);
+ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 undef($page);
 
 # load the page up and make sure the id and text are right
-my $newPage = new PurpleWiki::Database::Page('id' => $id, 'config' => $config);
+my $newPage = new PurpleWiki::Database::Page('id' => $id);
 $newPage->openPage();
 ok($newPage->getID(), $id);
 ok($newPage->getText()->getText(), $expected_content);
+
+# parse second content
+$wiki = $parser->parse($second_content, add_node_ids => 1);
+$output = $wiki->view('wikitext');
+$output =~ s/\r//g;
+
+# is what we parsed what we expected
+ok($output, $second_expected_content);
 
 sub END {
     unlink('t/sequence');

@@ -34,7 +34,7 @@ sub readFile {
 my $config = new PurpleWiki::Config($configfile);
 my $wikiContent = &readFile('t/txt/tree_test01.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent, config => $config);
+my $wiki = $wikiParser->parse($wikiContent);
 $wiki->title('Tree Test 1');
 
 # Document.  (Tests 1-4)

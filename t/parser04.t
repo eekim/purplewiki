@@ -34,7 +34,7 @@ sub readFile {
 my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/txt/tree_test08.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent, config => $config);
+my $wiki = $wikiParser->parse($wikiContent);
 
 # Metadata.  (8 tests)
 ok($wiki->title eq 'Treatise on World Peace');

@@ -34,7 +34,7 @@ sub readFile {
 my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/txt/tree_pre.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent, config => $config);
+my $wiki = $wikiParser->parse($wikiContent);
 
 # Wiki content.  ( tests)
 ok(scalar @{$wiki->root->children} == 1);

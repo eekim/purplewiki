@@ -43,7 +43,7 @@ my @files = qw(tree_freelinks tree_hr tree_interlinks tree_lists tree_pre
 foreach my $filename (@files) {
     $input = &readFile("t/txt/$filename.txt");
     $shouldBe = &readFile("t/output/$filename.txt");
-    $wiki = $wikiParser->parse($input, config => $config);
-    $output = $wiki->view('wikitext', config => $config);
+    $wiki = $wikiParser->parse($input);
+    $output = $wiki->view('wikitext');
     ok($output eq $shouldBe);
 }

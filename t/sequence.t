@@ -11,9 +11,10 @@ use PurpleWiki::Sequence;
 
 my $datadir = '/tmp';
 
-# make sure any existence sequence is killed
+# make sure any existing sequence is killed
 unlink('/tmp/sequence');
 
+### test sequence incrementing
 my $sequence = new PurpleWiki::Sequence($datadir);
 ok(ref $sequence eq 'PurpleWiki::Sequence');
 ok($sequence->getNext() eq '1');

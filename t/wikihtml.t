@@ -49,8 +49,8 @@ foreach my $filename (@files) {
     print $filename, "\n";
     $input = &readFile("t/txt/$filename.txt");
     $shouldBe = &readFile("t/output/$filename.html");
-    $wiki = $wikiParser->parse($input, config => $config);
-    $output = $wiki->view('wikihtml', config => $config);
+    $wiki = $wikiParser->parse($input);
+    $output = $wiki->view('wikihtml');
     $diff = Text::Diff::diff(\$shouldBe, \$output, {STYLE => 'Unified'});
     ok($diff, '');
 }
