@@ -61,6 +61,7 @@ sub new {
   } else {
     my $x;
     $datadir = $x if (defined($x=$args{DataDir}));
+    $self->{seqdir} = (defined($x=$args{SequenceDir})) ? $x : $datadir;
   }
     die "No config or data dir defined\n" unless $datadir;
   substr($datadir,-1) = '' if (substr($datadir,-1) eq '/');

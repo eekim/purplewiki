@@ -79,6 +79,7 @@ sub new {
     $self->{fs1} = "\xb31";
     $self->{fs2} = "\xb32";
     $self->{fs3} = "\xb33";
+    $self->{seqdir} = (defined($x=$args{SequenceDir})) ? $x : $datadir;
   }
   $self->{pagedir} = $args{PageDir} || "$datadir/page"
       unless defined($self->{pagedir});

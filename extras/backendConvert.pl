@@ -84,13 +84,10 @@ my $err;
 my $goodCount = 0;
 my $badCount = 0;
 
-my $maxNID = &PurpleWiki::Archive::Sequence::getCurrentValue($newpages);
-my $origNID = $maxNID;
-
 for my $pageTime (sort { $a <=> $b } (keys %all)) {
     my ($id, $rev, $host, $summary, $userId) = @{$all{$pageTime}};
     my $page = $pages->getPage($id, $rev);
-    print "$id, $rev, $maxNID\n" if $verbose;
+    print "$id, $rev\n" if $verbose;
     if ($err = $newpages->putPage( pageId => $id,
                                    tree => $page->getTree(),
                                    changeSummary => $summary,
@@ -106,9 +103,7 @@ for my $pageTime (sort { $a <=> $b } (keys %all)) {
     }
 }
 
-&PurpleWiki::Archive::Sequence::setCurrentValue($pages, $maxNID, $origNID);
 print "Copy $goodCount records ($badCount errors)\n";
-print "MaxNID: $maxNID\n";
 
 ### more nasty hack
 
