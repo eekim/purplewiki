@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.1.2.3 2003/01/28 07:58:42 cdent Exp $
+# $Id: Page.pm,v 1.1.2.4 2003/01/30 02:54:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.1.2.3 2003/01/28 07:58:42 cdent Exp $
+# $Id: Page.pm,v 1.1.2.4 2003/01/30 02:54:00 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -111,14 +111,11 @@ sub setPageCache {
 # Page.
 sub openPage {
     my $self = shift;
-    my $filename;
-    my $data;
-
-    $filename = $self->getPageFile();
 
     if ($self->pageFileExists()) {
+        my $filename = $self->getPageFile();
         # FIXME: there should be a utility class of some kind
-        $data = PurpleWiki::Database::ReadFileOrDie($filename);
+        my $data = PurpleWiki::Database::ReadFileOrDie($filename);
         $self->_parseData($data);
     } else {
         $self->_openNewPage();
@@ -250,9 +247,32 @@ sub save {
 
     my $data = $self->serialize();
 
-    PurpleWiki::Database::CreatePageDir($PageDir, $self->getID());
+    $self->_createPageDir();
     PurpleWiki::Database::WriteStringToFile($self->getPageFile(), $data);
 }
+
+sub getLockedPageFile {
+    my $self = shift;
+    my $id = $self->getID();
+    return $PageDir . '/' . $self->getPageDirectory() . "/$id.lck";
+}
+
+sub _createPageDir {
+    my $self = shift;
+    my $id = $self->getID();
+    my $dir = $PageDir;
+    my $subdir;
+
+    PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
+    $subdir = $dir . '/' . $self->getPageDirectory();
+    PurpleWiki::Database::CreateDir($subdir);
+
+    if ($id =~ m|([^/]+)/|) {
+        $subdir = $subdir . '/' . $1;
+        PurpleWiki::Database::CreateDir($subdir);
+    }
+}
+
 
 
 sub serialize {

@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.3 2003/01/30 02:54:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.3 2003/01/30 02:54:00 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -108,7 +108,6 @@ sub keptFileExists {
 
     my $filename = $self->getKeepFile();
 
-    print STDERR "kept file: $filename\n";
     return (-f $filename);
 }
 
@@ -170,8 +169,36 @@ sub save {
     my $self = shift;
     my $data = $self->serialize();
 
-    PurpleWiki::Database::CreatePageDir($KeepDir, $self->getID());
+    $self->_createKeepDir();
     PurpleWiki::Database::WriteStringToFile($self->getKeepFile(), $data);
+}
+
+sub _createKeepDir {
+    my $self = shift;
+    my $id = $self->getID();
+    my $dir = $KeepDir;
+    my $subdir;
+
+    PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
+    $subdir = $dir . '/' . $self->getKeepDirectory();
+    PurpleWiki::Database::CreateDir($subdir);
+
+    if ($id =~ m|([^/]+)/|) {
+        $subdir = $subdir . '/' . $1;
+        PurpleWiki::Database::CreateDir($subdir);
+    }
+}
+
+sub getKeepDirectory {
+    my $self = shift;
+
+    my $directory = 'other';
+
+    if ($self->getID() =~ /^([a-zA-Z])/) {
+        $directory = uc($1);
+    }
+
+    return $directory;
 }
     
 sub serialize {

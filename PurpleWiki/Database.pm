@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.5 2003/01/29 08:31:24 cdent Exp $
+# $Id: Database.pm,v 1.1.2.6 2003/01/30 02:54:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,40 +32,10 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.5 2003/01/29 08:31:24 cdent Exp $
+# $Id: Database.pm,v 1.1.2.6 2003/01/30 02:54:00 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
-
-# === User Functions follow ===
-sub LoadUserData {
-  my $userid = shift;
-  my $userdatahash = shift;
-  my ($data, $status);
-
-  ($status, $data) = &ReadFile(&UserDataFilename($userid));
-  if (!$status) {
-    return 0;
-  }
-  %$userdatahash = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  return 1;
-}
-
-sub UserDataFilename {
-  my ($id) = @_;
-
-  return ""  if ($id < 1);
-  return $UserDir . "/" . ($id % 10) . "/$id.db";
-}
-
-sub GetPageDirectory {
-  my ($id) = @_;
-
-  if ($id =~ /^([a-zA-Z])/) {
-    return uc($1);
-  }
-  return "other";
-}
 
 sub ReadFileOrDie {
   my $fileName = shift;
@@ -89,33 +59,6 @@ sub ReadFile {
     return (1, $data);
   }
   return (0, "");
-}
-
-# Later get user-level lock
-sub SaveUserData {
-    my $userdatahash = shift;
-    my $userid = shift;
-    my ($userFile, $data);
-
-    &CreateUserDir();
-    $userFile = &UserDataFilename($userid);
-    $data = join($FS1, %$userdatahash);
-    &WriteStringToFile($userFile, $data);
-}
-
-# Creates the directory where user information
-# is store.
-sub CreateUserDir {
-    my ($n, $subdir);
-
-    if (!(-d "$UserDir/0")) {
-        &CreateDir($UserDir);
-
-        foreach $n (0..9) {
-            $subdir = "$UserDir/$n";
-            &CreateDir($subdir);
-        }
-    }
 }
 
 sub CreateDir {
@@ -144,13 +87,6 @@ sub GetDiff {
     # No need to unlink temp files--next diff will just overwrite.
     return $diff_out;
 }
-
-sub GetLockedPageFile {
-    my ($id) = @_;
-
-    return $PageDir . "/" . GetPageDirectory($id) . "/$id.lck";
-}
-
 
 sub RequestLockDir {
     my ($name, $tries, $wait, $errorDie) = @_;
@@ -221,19 +157,6 @@ sub AppendStringToFile {
     close(OUT);
 }
 
-sub CreatePageDir {
-    my ($dir, $id) = @_;
-    my $subdir;
-
-    &CreateDir($dir);  # Make sure main page exists
-    $subdir = $dir . "/" . GetPageDirectory($id);
-    &CreateDir($subdir);
-    if ($id =~ m|([^/]+)/|) {
-        $subdir = $subdir . "/" . $1;
-        &CreateDir($subdir);
-    }
-}
-
 sub AllPagesList {
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
@@ -266,29 +189,6 @@ sub AllPagesList {
         }
     }
     return sort(@pages);
-}
-
-sub GetNewUserId {
-    my ($id);
-
-    $id = 1001;
-    while (-f &UserDataFilename($id+1000)) {
-        $id += 1000;
-    }
-    while (-f &UserDataFilename($id+100)) {
-        $id += 100;
-    }
-    while (-f &UserDataFilename($id+10)) {
-        $id += 10;
-    }
-    &RequestLock() or die('Could not get user-ID lock');
-    while (-f &UserDataFilename($id)) {
-        $id++;
-    }
-    print STDERR "id: $id\n";
-    &WriteStringToFile(&UserDataFilename($id), "lock");  # reserve the ID
-    &ReleaseLock();
-    return $id;
 }
 
 sub UpdateDiffs {

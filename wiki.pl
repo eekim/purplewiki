@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.8 2003/01/29 08:31:24 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.9 2003/01/30 02:54:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -37,6 +37,7 @@ use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
+use PurpleWiki::Database::User;
 use PurpleWiki::Database::KeptRevision;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
@@ -44,13 +45,14 @@ use CGI::Carp qw(fatalsToBrowser);
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
 # Global variables:
-use vars qw(%UserCookie %SetCookie %UserData $MainPage
+use vars qw(%UserCookie %SetCookie $MainPage
   $q $Now $UserID $TimeZoneOffset );
 
 my $ScriptName;         # the name by which this script is called
 my $wikiParser;         # the reference to the PurpleWiki Parser
 my $InterSiteInit = 0;
 my %InterSite;
+my $user;               # our reference to the logged in user
 
 # The "main" program, called from the end of this script file.
 sub DoWikiRequest {
@@ -112,16 +114,16 @@ sub InitCookie {
   if ($UserID < 200) {
     $UserID = 111;
   } else {
-    if (&PurpleWiki::Database::LoadUserData($UserID, \%UserData)) {
-      if (($UserData{'id'}       != $UserCookie{'id'})      ||
-        ($UserData{'randkey'}  != $UserCookie{'randkey'})) {
+    $user = new PurpleWiki::Database::User('id' => $UserID);
+    if ($user->userExists()) {
+      if (($user->getID() != $UserCookie{'id'}) ||
+          ($user->getField('randkey') != $UserCookie{'randkey'})) {
         $UserID = 113;
-        %UserData = ();   # Invalid.  Later consider warning message.
       }
     }
   }
-  if ($UserData{'tzoffset'} != 0) {
-    $TimeZoneOffset = $UserData{'tzoffset'} * (60 * 60);
+  if ($user->getField('tzoffset') != 0) {
+    $TimeZoneOffset = $user->getField('tzoffset') * (60 * 60);
   }
 }
 
@@ -177,7 +179,6 @@ sub BrowsePage {
 
   my ($page, $section, $text, $keptRevision, $keptSection);
 
-  print STDERR "id: $id\n";
   $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
                                     'userID' => $UserID, 
                                     'username' => GetParam("username", ""));
@@ -1071,10 +1072,13 @@ sub UserCanEdit {
   my ($id, $deepCheck) = @_;
 
   # Optimized for the "everyone can edit" case (don't check passwords)
-  if (($id ne "") && (-f &PurpleWiki::Database::GetLockedPageFile($id))) {
-    return 1  if (&UserIsAdmin());  # Requires more privledges
-    # Later option for editor-level to edit these pages?
-    return 0;
+  if ($id ne "") {
+    my $page = new PurpleWiki::Database::Page('id' => $id);
+    if (-f $page->getLockedPageFile()) {
+      return 1  if (&UserIsAdmin());  # Requires more privledges
+      # Later option for editor-level to edit these pages?
+      return 0;
+    }
   }
   if (!$EditAllowed) {
     return 1  if (&UserIsEditor());
@@ -1185,8 +1189,8 @@ sub GetParam {
 
   $result = $q->param($name);
   if (!defined($result)) {
-    if (defined($UserData{$name})) {
-      $result = $UserData{$name};
+    if (length($user->getField($name))) {
+      $result = $user->getField($name);
     } else {
       $result = $default;
     }
@@ -1573,8 +1577,11 @@ sub DoUpdatePrefs {
   # All link bar settings should be updated before printing the header
   &UpdatePrefCheckbox("toplinkbar");
   &UpdatePrefCheckbox("linkrandom");
+
   print &GetHeader('','Saving Preferences', '');
+
   print '<br>';
+
   if ($UserID < 1001) {
     print '<b>',
           "Invalid UserID $UserID, preferences not saved.</b>";
@@ -1585,15 +1592,18 @@ sub DoUpdatePrefs {
     print &GetCommonFooter();
     return;
   }
+
   $username = &GetParam("p_username",  "");
+
   if ($FreeLinks) {
     $username =~ s/^\[\[(.+)\]\]/$1/;  # Remove [[ and ]] if added
     $username =  &FreeToNormal($username);
     $username =~ s/_/ /g;
   }
+
   if ($username eq "") {
     print 'UserName removed.', '<br>';
-    undef $UserData{'username'};
+    $user->setField('username', undef);
   } elsif ((!$FreeLinks) && (!($username =~ /^$LinkPattern$/))) {
     print "Invalid UserName $username: not saved.<br>\n";
   } elsif ($FreeLinks && (!($username =~ /^$FreeLinkPattern$/))) {
@@ -1602,24 +1612,27 @@ sub DoUpdatePrefs {
     print 'UserName must be 50 characters or less. (not saved)', "<br>\n";
   } else {
     print "UserName $username saved.<br>";
-    $UserData{'username'} = $username;
+    $user->setField('username', $username);
   }
+
   $password = &GetParam("p_password",  "");
+
   if ($password eq "") {
     print 'Password removed.', '<br>';
-    undef $UserData{'password'};
+    $user->setField('password', undef);
   } elsif ($password ne "*") {
     print 'Password changed.', '<br>';
-    $UserData{'password'} = $password;
+    $user->setField('password', $password);
   }
+
   if ($AdminPass ne "") {
     $password = &GetParam("p_adminpw",  "");
     if ($password eq "") {
       print 'Administrator password removed.', '<br>';
-      undef $UserData{'adminpw'};
+      $user->setField('adminpw', undef);
     } elsif ($password ne "*") {
       print 'Administrator password changed.', '<br>';
-      $UserData{'adminpw'} = $password;
+      $user->setField('adminpw', $password);
       if (&UserIsAdmin()) {
         print 'User has administrative abilities.', '<br>';
       } elsif (&UserIsEditor()) {
@@ -1631,30 +1644,37 @@ sub DoUpdatePrefs {
       }
     }
   }
+
   if ($EmailNotify) {
     &UpdatePrefCheckbox("notify");
     &UpdateEmailList();
   }
+
   &UpdatePrefNumber("rcdays", 0, 0, 999999);
   &UpdatePrefCheckbox("rcnewtop");
   &UpdatePrefCheckbox("rcall");
   &UpdatePrefCheckbox("rcchangehist");
   &UpdatePrefCheckbox("editwide");
+
   if ($UseDiff) {
     &UpdatePrefCheckbox("norcdiff");
     &UpdatePrefCheckbox("diffrclink");
     &UpdatePrefCheckbox("alldiff");
     &UpdatePrefNumber("defaultdiff", 1, 1, 3);
   }
+
   &UpdatePrefNumber("rcshowedit", 1, 0, 2);
   &UpdatePrefNumber("tzoffset", 0, -999, 999);
   &UpdatePrefNumber("editrows", 1, 1, 999);
   &UpdatePrefNumber("editcols", 1, 1, 999);
+
   print 'Server time:', ' ', &TimeToText($Now-$TimeZoneOffset), '<br>';
   $TimeZoneOffset = &GetParam("tzoffset", 0) * (60 * 60);
   print 'Local time:', ' ', &TimeToText($Now), '<br>';
 
-  &PurpleWiki::Database::SaveUserData(\%UserData, $UserID);
+  print STDERR "saving: " . $user->getID() . "\n";
+  $user->save();
+
   print '<b>', 'Preferences saved.', '</b>';
   print &GetCommonFooter();
 }
@@ -1664,8 +1684,9 @@ sub UpdateEmailList {
   my (@old_emails);
 
   local $/ = "\n";  # don't slurp whole files in this sub.
-  if (my $new_email = $UserData{'email'} = &GetParam("p_email", "")) {
-    my $notify = $UserData{'notify'};
+  # FIXME: this isn't what they mean is it?
+  if (my $new_email = $user->getField('email') = &GetParam("p_email", "")) {
+    my $notify = $user->getField('notify');
     if (-f "$DataDir/emails") {
       open(NOTIFY, "$DataDir/emails")
         or die("Could not read from $DataDir/emails: $!\n");
@@ -1676,15 +1697,15 @@ sub UpdateEmailList {
     }
     my $already_in_list = grep /$new_email/, @old_emails;
     if ($notify and (not $already_in_list)) {
-      &RequestLock() or die('Could not get mail lock');
+      PurpleWiki::Database::RequestLock() or die('Could not get mail lock');
       open(NOTIFY, ">>$DataDir/emails")
         or die("Could not append to $DataDir/emails: $!\n");
       print NOTIFY $new_email, "\n";
       close(NOTIFY);
-      &PurpleWiki::Database::ReleaseLock();
+      PurpleWiki::Database::ReleaseLock();
     }
     elsif ((not $notify) and $already_in_list) {
-      &RequestLock() or die('Could not get mail lock');
+      &PurpleWiki::Database::RequestLock() or die('Could not get mail lock');
       open(NOTIFY, ">$DataDir/emails")
         or die("Could not overwrite $DataDir/emails: $!\n");
       foreach (@old_emails) {
@@ -1700,8 +1721,8 @@ sub UpdatePrefCheckbox {
   my ($param) = @_;
   my $temp = &GetParam("p_$param", "*");
 
-  $UserData{$param} = 1  if ($temp eq "on");
-  $UserData{$param} = 0  if ($temp eq "*");
+  $user->setField($param, 1)  if ($temp eq "on");
+  $user->setField($param, 0)  if ($temp eq "*");
   # It is possible to skip updating by using another value, like "2"
 }
 
@@ -1714,7 +1735,7 @@ sub UpdatePrefNumber {
   $temp =~ s/\..*//  if ($integer);
   return  if ($temp eq "");
   return  if (($temp < $min) || ($temp > $max));
-  $UserData{$param} = $temp;
+  $user->setField($param, $temp);
   # Later consider returning status?
 }
 
@@ -1729,17 +1750,19 @@ sub DoIndex {
 sub DoNewLogin {
   # Later consider warning if cookie already exists
   # (maybe use "replace=1" parameter)
-  &PurpleWiki::Database::CreateUserDir();
-  $SetCookie{'id'} = &PurpleWiki::Database::GetNewUserId;
-  $SetCookie{'randkey'} = int(rand(1000000000));
+  $user = new PurpleWiki::Database::User();
+  my $randkey = int(rand(1000000000));
+  $SetCookie{'id'} = $user->getID();
+  $SetCookie{'randkey'} = $randkey;
   $SetCookie{'rev'} = 1;
+  $user->setField('randkey', $randkey);
+  $user->setField('rev', 1);
   %UserCookie = %SetCookie;
   $UserID = $SetCookie{'id'};
   # The cookie will be transmitted in the next header
-  %UserData = %UserCookie;
-  $UserData{'createtime'} = $Now;
-  $UserData{'createip'} = $ENV{REMOTE_ADDR};
-  &PurpleWiki::Database::SaveUserData(\%UserData, $UserID);
+  $user->setField('createtime', $Now);
+  $user->setField('createip', $ENV{REMOTE_ADDR});
+  $user->save();
 }
 
 sub DoEnterLogin {
@@ -1768,11 +1791,12 @@ sub DoLogin {
   $password = &GetParam("p_password",  "");
   if (($uid > 199) && ($password ne "") && ($password ne "*")) {
     $UserID = $uid;
-    if (&PurpleWiki::Database::LoadUserData($UserID, \%UserData)) {
-      if (defined($UserData{'password'}) &&
-          ($UserData{'password'} eq $password)) {
+    $user = new PurpleWiki::Database::User('id' => $UserID);
+    if ($user->userExists()) {
+      if (defined($user->getField('password')) &&
+          ($user->getField('password') eq $password)) {
         $SetCookie{'id'} = $uid;
-        $SetCookie{'randkey'} = $UserData{'randkey'};
+        $SetCookie{'randkey'} = $user->getField('randkey');
         $SetCookie{'rev'} = 1;
         $success = 1;
       }
@@ -2111,7 +2135,7 @@ sub DoEditLock {
   return  if (!&UserIsAdminOrError());
   $fname = "$DataDir/noedit";
   if (&GetParam("set", 1)) {
-    &WriteStringToFile($fname, "editing locked.");
+    PurpleWiki::Database::WriteStringToFile($fname, "editing locked.");
   } else {
     unlink($fname);
   }
@@ -2135,9 +2159,10 @@ sub DoPageLock {
     return;
   }
   return  if (!&ValidIdOrDie($id));       # Later consider nicer error?
-  $fname = &PurpleWiki::Database::GetLockedPageFile($id);
+  my $page = new PurpleWiki::Database::Page('id' => $id);
+  $fname = $page->getLockedPageFile();
   if (&GetParam("set", 1)) {
-    &WriteStringToFile($fname, "editing locked.");
+    PurpleWiki::Database::WriteStringToFile($fname, "editing locked.");
   } else {
     unlink($fname);
   }
@@ -2189,7 +2214,7 @@ sub DoUpdateBanned {
     unlink($fname);
     print "<p>Removed banned list";
   } else {
-    &WriteStringToFile($fname, $newList);
+    PurpleWiki::Database::WriteStringToFile($fname, $newList);
     print "<p>Updated banned list";
   }
   print &GetCommonFooter();
