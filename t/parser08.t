@@ -1,4 +1,4 @@
-# parser.t
+# parser08.t
 
 use strict;
 use Test;
@@ -28,10 +28,10 @@ sub readFile {
 
 #########################
 
-### tree_test08.txt -- transclusion
+### tree_test12.txt -- transclusion
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/tree_test12.txt');
+my $wikiContent = &readFile('t/txt/tree_test12.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 my $section = $wiki->root->children->[0];

@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Wiki.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Wiki.pm,v 1.6 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -36,8 +36,8 @@ use PurpleWiki::Search::Result;
 use PurpleWiki::Database;
 use PurpleWiki::Page;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # Where the searching is done.
 sub search {

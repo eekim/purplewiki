@@ -36,7 +36,8 @@ use PurpleWiki::View::wikihtml;
 
 ############### Package Globals ###############
 
-our $VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # Note that we don't inherit directly from Driver.pm like the other drivers.
 our @ISA = qw(PurpleWiki::View::wikihtml); 

@@ -1,7 +1,7 @@
 # PurpleWiki::Search::IrcLogger.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: IrcLogger.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # A Search Module for irclogger (see
 # http://collab.blueoxen.net/forums/tools-yak/2003-12/msg00003.html
@@ -45,8 +45,8 @@ use base 'PurpleWiki::Search::Arts';
 use PurpleWiki::Search::Result;
 use AppConfig;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # AppConfig values from the irclogger config file
 my @CONFIG = qw(channel wikiconfig url logfile);

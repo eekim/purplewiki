@@ -1,4 +1,4 @@
-# parser.t
+# parser03.t
 
 use strict;
 use Test;
@@ -34,7 +34,7 @@ sub readFile {
 ### first paragraph is bold).  Nested inline nodes.
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/tree_test07.txt');
+my $wikiContent = &readFile('t/txt/tree_test07.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 

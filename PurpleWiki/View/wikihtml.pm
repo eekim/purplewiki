@@ -31,12 +31,14 @@ package PurpleWiki::View::wikihtml;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::Transclusion;
 use PurpleWiki::View::Driver;
 
 ############### Package Globals ###############
 
-our $VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 our @ISA = qw(PurpleWiki::View::Driver);
 
@@ -48,12 +50,26 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = $class->SUPER::new(@_);
 
-    # Object State
+    ### Object State
     $self->{outputString} = "";
     $self->{pageName} = "";
-    $self->{sectionState} = [];
     $self->{url} = $self->{url} || "";
-    $self->{transcluder} = new PurpleWiki::Transclusion(url => $self->{url});
+    $self->{transcluder} = new PurpleWiki::Transclusion(
+        url => $self->{url});
+
+    # standard flag for determining whether or not a hard rule should
+    # be printed
+    $self->{isPrevSection} = 0;
+
+    # special case flag for handling hard rules (or not) at the
+    # beginning of a document
+    $self->{isStart} = 1;
+    $self->{emptyFirstSection} = 0;
+
+    # used for determining whether there should be hard rules with
+    # nested sections
+    $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
 
     bless($self, $class);
     return $self;
@@ -61,30 +77,60 @@ sub new {
 
 sub view {
     my ($self, $wikiTree) = @_;
-    $self->{sectionState} = [];
     $self->SUPER::view($wikiTree);
     return $self->{outputString};
 }
 
+# See PurpleWiki::View::wikitext.pm for an explanation of hard rules.
+
 sub sectionPre { 
-    push @{shift->{sectionState}}, 'section'; 
+    my $self = shift;
+    $self->{sectionDepth}++;
+    $self->_hardRule(1);
+    $self->{isPrevSection} = 1;
 }
 
 sub sectionPost { 
-    pop @{shift->{sectionState}}; 
+    my $self = shift;
+    $self->{depthLastClosedSection} = $self->{sectionDepth};
+    $self->{sectionDepth}--;
+    $self->{emptyFirstSection} = 1
+        if ($self->{isStart} && $self->{isPrevSection});
+    $self->_hardRule(0);
+    $self->{isStart} = 0;
 }
 
 sub indentPre { 
-    shift->{outputString} .= "<div class=\"indent\">\n";
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "<div class=\"indent\">\n";
 }
 
 sub indentPost { 
     shift->{outputString} .= "</div>\n";
 }
 
-sub ulPre { shift->{outputString} .= '<' . shift->type . '>' }
-sub olPre { shift->{outputString} .= '<' . shift->type . '>' }
-sub dlPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub ulPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule(0);
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
+sub olPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule(0);
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
+sub dlPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule(0);
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
 sub bPre { shift->{outputString} .= '<' . shift->type . '>' }
 sub iPre { shift->{outputString} .= '<' . shift->type . '>' }
 sub ttPre { shift->{outputString} .= '<' . shift->type . '>' }
@@ -95,6 +141,14 @@ sub dlPost { shift->{outputString} .= '</' . shift->type . ">\n" }
 
 sub hPre { 
     my ($self, $node) = @_;
+    if ($self->{emptyFirstSection}) {
+        $self->{isPrevSection} = 1;
+        $self->{emptyFirstSection} = 0;
+        $self->_hardRule(0);
+    }
+    else {
+        $self->{isPrevSection} = 0;
+    }
     $self->{outputString} .= '<h' . $self->_headerLevel(); 
     $self->{outputString} .= '>' . $self->_anchor($node->id); 
 }
@@ -105,15 +159,40 @@ sub hPost {
     $self->{outputString} .= '</h' . $self->_headerLevel() . '>';
 }
 
-sub pPre { shift->_openTagWithNID(@_) }
+sub pPre {
+    my $self = shift;
+
+    $self->_hardRule(0);
+    $self->_openTagWithNID(@_);
+}
+
 sub liPre { shift->_openTagWithNID(@_) }
 sub ddPre { shift->_openTagWithNID(@_) }
 sub dtPre { shift->_openTagWithNID(@_) }
-sub prePre { shift->_openTagWithNID(@_) }
+
+sub prePre {
+    my $self = shift;
+
+    $self->_hardRule(0);
+    $self->_openTagWithNID(@_);
+}
+
+sub liMain { shift->_liRecurse(@_) }
+sub ddMain { shift->_liRecurse(@_) }
+
+sub liPost {
+    my ($self, $nodeRef) = @_;
+
+    $self->{outputString} .= '</' . $nodeRef->type . '>';
+}
+
+sub ddPost {
+    my ($self, $nodeRef) = @_;
+
+    $self->{outputString} .= '</' . $nodeRef->type . '>';
+}
 
 sub pPost { shift->_closeTagWithNID(@_) }
-sub liPost { shift->_closeTagWithNID(@_) }
-sub ddPost { shift->_closeTagWithNID(@_) }
 sub dtPost { shift->_closeTagWithNID(@_) }
 sub prePost { shift->_closeTagWithNID(@_) }
 
@@ -173,6 +252,35 @@ sub wikiwordMain { shift->_wikiLink(@_) }
 
 
 ############### Private Methods ###############
+
+sub _hardRule {
+    my ($self, $isSection) = @_;
+
+    if ($self->{isPrevSection}) {
+        if (!$self->{isStart}) {
+            if (!$isSection || ($isSection &&
+                $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
+                $self->{outputString} .= "<hr />\n\n";
+            }
+        }
+        $self->{isPrevSection} = 0;
+    }
+}
+
+sub _liRecurse { # also used for dd
+    my ($self, $nodeRef) = @_;
+
+    if (!defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+    # display NID here
+    $self->{outputString} .= $self->_nid($nodeRef->id);
+    $self->traverse($nodeRef->children) if defined $nodeRef->children;
+}
 
 sub _openTagWithNID {
     my ($self, $nodeRef) = @_;
@@ -238,7 +346,7 @@ sub _wikiLink {
 
 sub _quoteHtml {
     my ($self, $nodeRef) = @_;
-    my $html = $nodeRef->content;
+    my $html = $nodeRef->content || '';
 
     $html =~ s/&/&amp;/g;
     $html =~ s/</&lt;/g;
@@ -253,7 +361,7 @@ sub _quoteHtml {
 
 sub _headerLevel {
     my $self = shift;
-    my $headerLevel = scalar @{$self->{sectionState}} + 1;
+    my $headerLevel = $self->{sectionDepth} + 1;
 
     $headerLevel = 6 if $headerLevel > 6;
     return $headerLevel;
@@ -279,7 +387,7 @@ sub _nid {
     my $nidFace = '#';
 
     if ($self->{config}->ShowNid) {
-        $nidFace = $nid;
+        $nidFace = "($nid)";
     }
 
     if ($nid) {

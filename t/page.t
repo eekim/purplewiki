@@ -33,7 +33,6 @@ Hello this is a wiki page, using WikiPage as a WikiWord. {nid 1}
 * this is a list two {nid 3}
 
 [http://www.burningchrome.com/ this is a link] {nid 4}
-
 EOF
 
 # parse it

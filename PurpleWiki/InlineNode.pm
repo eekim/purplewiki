@@ -1,6 +1,6 @@
 # PurpleWiki::InlineNode.pm
 #
-# $Id: InlineNode.pm,v 1.9 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,8 +32,8 @@ package PurpleWiki::InlineNode;
 use 5.005;
 use strict;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 ### constructor
 

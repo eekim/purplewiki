@@ -39,12 +39,11 @@ package PurpleWiki::Rss;
 
 use strict;
 use XML::RSS;
-use PurpleWiki::Config;
 use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 sub new {
     my $proto = shift;

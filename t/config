@@ -17,6 +17,7 @@ RCName      = RecentChanges   # Name of changes page (change space to _)
 #SiteBase    = ""             # Full URL for <BASE> header
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
+LocalSequenceDir = "t"
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days

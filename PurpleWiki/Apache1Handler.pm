@@ -1,7 +1,7 @@
 # PurpleWiki::Apache1Handler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache1Handler.pm,v 1.3 2004/02/12 18:58:35 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -30,7 +30,6 @@
 
 package PurpleWiki::Apache1Handler;
 
-use lib '/home/cjdent/src/PurpleWiki/';
 use strict;
 use IO::File;
 use PurpleWiki::Config;
@@ -38,8 +37,9 @@ use PurpleWiki::Parser::WikiText;
 use Apache;
 use Apache::Constants;
 use Apache::URI;
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $CONFIG = '/home/kb-dev/wikidata';
 my $CSS = '/css/purple.css';
@@ -47,7 +47,7 @@ my $CSS = '/css/purple.css';
 sub handler {
     my $r = shift;
 
-    print $r->send_http_header("text/html"); 
+    $r->send_http_header("text/html"); 
 
     my $file = $r->filename();
     my $url = Apache::URI->parse($r)->unparse();
@@ -61,11 +61,11 @@ sub handler {
         url => $url,
     );
 
-    print $wiki->view('xhtml', 
+    $r->print($wiki->view('xhtml', 
         wikiword => 1,
         css_file => $CSS,
         url => $url,
-    );
+    ));
 
     return OK;
 

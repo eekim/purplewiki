@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.13 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,15 +32,16 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.13 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 
 use strict;
 use Carp;
 use AppConfig;
+use PurpleWiki::Singleton;
 use base qw(PurpleWiki::Singleton);
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # Field separators that delimit page storage
 my $FS  = "\xb3";      # The FS character is a superscript "3"
@@ -98,7 +99,7 @@ sub _init {
     });
 
     # set the types of config variables
-    $self->_initConfig($directory);
+    $self->_initConfig();
 
     # set the DataDir variable, it needs to come first
     # because it is expanded in the file
@@ -112,6 +113,13 @@ sub _init {
     $self->{AppConfig}->set('FS1', $FS1);
     $self->{AppConfig}->set('FS2', $FS2);
     $self->{AppConfig}->set('FS3', $FS3);
+
+    # make sure LocalSequenceDir is set to DataDir if it
+    # wasn't already set
+    if (!defined($self->{AppConfig}->get('LocalSequenceDir'))) {
+        $self->{AppConfig}->set('LocalSequenceDir',
+            $self->{AppConfig}->get('DataDir'));
+    }
 
     return $self;
 }

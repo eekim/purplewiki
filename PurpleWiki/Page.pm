@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.16 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,10 +35,11 @@ use PurpleWiki::Database::Page;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.16 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 
-use vars qw($MainPage $VERSION);
-$VERSION = '0.9.1';
+our $MainPage;
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 sub exists {
     my $id = shift;
@@ -46,7 +47,7 @@ sub exists {
 
     $id =~ s|^/|$MainPage/| if defined($MainPage);
     if ($config->FreeLinks) {
-        $id = &FreeToNormal($id);
+        $id = &FreeToNormal($id, $config);
     }
     my $page = new PurpleWiki::Database::Page('id' => $id);
     return $page->pageExists();
@@ -76,8 +77,8 @@ sub getInterWikiLink {
     my $id = shift;
     
     my $results;
-    $results = (&InterPageLink($id))[0];
-    return _makeURL($results);
+    $results = (&InterPageLink($id, $config))[0];
+    return $results ? _makeURL($results) : '';
 }
 
 sub getFreeLink {

@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.21 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,8 +39,8 @@ use PurpleWiki::Tree;
 use PurpleWiki::Sequence;
 use PurpleWiki::Page;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $sequence;
 my $url;
@@ -106,13 +106,71 @@ sub parse {
 
     my $aggregateListRegExp = join('|', values(%listMap));
 
-    $wikiContent =~ s/\\ *\r?\n/ /g;     # Join lines with backslash at end
+    # The parsing strategy is as follows.  First, process the text
+    # line-by-line, updating state variables as we go.  At certain
+    # termination points, we update the data structure based on the
+    # state variables.
+    #
+    # The top of the text is parsed differently from the rest of the
+    # text.  If there is metadata (delimited by braces), then the
+    # metadata is parsed; otherwise, the parser begins parsing for
+    # WikiText.  Once it reaches this latter stage, it will treat
+    # metadata as WikiText according to the basic parsing rules.
+    #
+    # STATE VARIABLES
+    #
+    # The state variables we care about and why are:
+    #
+    #   $isStart -- Determines whether we're at the top of the text
+    #     (and should be parsing metadata) or not.
+    #
+    #   @authors -- List of authors (defined in the metadata).  This
+    #     list is added to the tree structure's metadata once parsing
+    #     is complete.
+    #
+    #   $listDepth -- The depth of the current list (unordered,
+    #     ordered, or definition) being parsed.  Starts at 0.
+    #
+    #   $indentDepth -- The depth of the current indented text (begins
+    #     with a colon) being parsed.  Starts at 0.
+    #
+    #   $sectionDepth -- Depth of the current section.  We start with
+    #     a depth of 1, because we assume that the body text begins
+    #     with a section.  (See below for more detailed explanation.)
+    #
+    #   $nodeContent -- Textual content of current node.
+    #
+    #   $currentNode -- The current node.  The initial node when we
+    #     start parsing is the first section node.
+    #
+    # SECTIONS
+    #
+    # A document consists of sections.  Each section may consist of
+    # subsections, ad infinitum.
+    #
+    # New sections are delimited by header markup (equal signs) and
+    # hard rules (four dashes).  The depth of the header markup
+    # determines whether or not the section is a new section, a
+    # subsection, or in some cases, a supersection (e.g. a two equal
+    # sign header following a three equal sign header).
+    #
+    # A hard rule indicates a new section.  Ideally, I'd like to make
+    # it so that the hard rule is ignored if it is directly followed
+    # by a header.  If users want to have hard rules separating
+    # sections (i.e. separating headers), they should define that in
+    # the stylesheet instead of using hard rules.  Expecting this
+    # behavior from users is probably a bit too draconian, however,
+    # and there may in fact be times when this is indeed the desired
+    # behavior (for example, as a placeholder for future content).
+    # The resulting data structure from a series of hard rules
+    # followed by headers won't be "clean," but it shouldn't be
+    # harmful either.
 
     $isStart = 1;
+    @authors = ();
     $listDepth = 0;
     $indentDepth = 0;
     $sectionDepth = 1;
-    @authors = ();
 
     $currentNode = $tree->root->insertChild('type' => 'section');
 
@@ -152,60 +210,82 @@ sub parse {
                 push @authors, [$authorString];
             }
         }
-        elsif ($line =~ /^\{sketch\}$/) {
+        elsif ($line =~ /^\{sketch\}$/) {  # WikiWhiteboard
             $currentNode->insertChild(type=>'sketch');
         }
+        elsif ($line =~ /^----*$/) {   # new section
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
+                                                %params);
+            $currentNode = $currentNode->parent;
+            $currentNode = $currentNode->insertChild(type=>'section');
+        }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
-            #
-            # Okay.  It gets funky here.
-            #
-            # Definition lists have to be handled in a special manner
-            # here, in order to enable the desired behavior in certain
-            # situations: external links and InterWiki links in the
-            # definition title.  For more detailed info, check out the
-            # test cases in t/parser07.t and t/tree_test11.txt.
-            #
-            # UseModWiki didn't have these problems because of the way
-            # the parser worked.  UseMod did a regexp substitution of
-            # inline formatting and links before parsing for structure.
-            # We don't do things that way.  Parsing and output is
-            # decoupled.  We parse for structure first, then for inline
-            # content.
-            #
-            # Probably the "right" way to handle these situations is to
-            # write a more sophisticated parser, one that does partial
-            # inline processing first, then does structural parsing, then
-            # completes the inline processing.  But I don't want to do
-            # that for this one exceptional situation.  Instead, I'm going
-            # to do some UseMod-like analysis on inline content in order
-            # to determine how the structure of the list will break down.
-            #
-            # I'm also going to take one shortcut.  I'm going to assume
-            # that the original regexp for determining whether or not a
-            # line is part of a definition list still holds.  If I wanted
-            # to be super anal, then something like:
-            #
-            #   ;http://www.blueoxen.org/
-            #
-            # would not be a definition list; it would be part of a
-            # paragraph.  By keeping the original regexp, the above will
-            # be considered a title without a definition, even though
-            # there is no concluding colon.  It bugs the super anal side
-            # of me, but the reality is, it should be harmless.  Plus,
-            # this documentation is longer than the code needed to make
-            # this work, so people who poke around shouldn't be surprised.
-            #
-            foreach $listType (keys(%listMap)) {
+
+            # Lists, for the most part, get handled the same way,
+            # whether they are unordered, ordered, or definition.
+            # However, definition lists are a bit funky as commented
+            # below.
+
+            foreach $listType (keys(%listMap)) {  # repeat for all
+                                                  # three list types
                 if ($line =~ /^$listMap{$listType}$/x) {
-                    $currentNode = &_terminateParagraph($currentNode,
-                                                        \$nodeContent,
-                                                        %params);
+                    $currentNode = &_terminateNode($currentNode,
+                                                   \$nodeContent,
+                                                   %params);
                     while ($indentDepth > 0) {
                         $currentNode = $currentNode->parent;
                         $indentDepth--;
                     }
                     my @listContents = ($2, $3);
                     if ($listType eq 'dl') {
+
+                        # Definition lists have to be handled in a
+                        # special manner in order to enable the
+                        # desired behavior in certain situations:
+                        # external links and InterWiki links in the
+                        # definition title.  For more detailed info,
+                        # check out the test cases in t/parser07.t and
+                        # t/tree_test11.txt.
+                        #
+                        # UseModWiki didn't have these problems
+                        # because of the way the parser worked.
+                        # UseMod did a regexp substitution of inline
+                        # formatting and links before parsing for
+                        # structure.  We don't do things that way.
+                        # Parsing and output is decoupled.  We parse
+                        # for structure first, then for inline
+                        # content.
+                        #
+                        # Probably the "right" way to handle these
+                        # situations is to write a more sophisticated
+                        # parser, one that does partial inline
+                        # processing first, then does structural
+                        # parsing, then completes the inline
+                        # processing.  But I don't want to do that for
+                        # this one exceptional situation.  Instead,
+                        # I'm going to do some UseMod-like analysis on
+                        # inline content in order to determine how the
+                        # structure of the list will break down.
+                        #
+                        # I'm also going to take one shortcut.  I'm
+                        # going to assume that the original regexp for
+                        # determining whether or not a line is part of
+                        # a definition list still holds.  If I wanted
+                        # to be super anal, then something like:
+                        #
+                        #   ;http://www.blueoxen.org/
+                        #
+                        # would not be a definition list; it would be
+                        # part of a paragraph.  By keeping the
+                        # original regexp, the above will be
+                        # considered a title without a definition,
+                        # even though there is no concluding colon.
+                        # It bugs the super anal side of me, but the
+                        # reality is, it should be harmless.  Plus,
+                        # this documentation is longer than the code
+                        # needed to make this work, so people who poke
+                        # around shouldn't be surprised.
+
                         # rejoin @listContents, and parse it again
                         my $listContentString = join(':', @listContents);
                         if ($listContentString =~
@@ -229,20 +309,18 @@ sub parse {
                     }
                     $currentNode = &_parseList($listType, length $1,
                                                \$listDepth, $currentNode,
-                                               \%params, @listContents);
+                                               \%params, \$nodeContent,
+                                               @listContents);
                     $isStart = 0 if ($isStart);
                 }
             }
         }
         elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, undef);
             $listLength = length $1;
-            $nodeContent = $2;
+            $nodeContent = "$2\n";
             while ($listLength > $indentDepth) {
                 $currentNode = $currentNode->insertChild('type'=>'indent');
                 $indentDepth++;
@@ -251,28 +329,13 @@ sub parse {
                 $currentNode = $currentNode->parent;
                 $indentDepth--;
             }
-            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-            $currentNid = $1;
-            $currentNode = $currentNode->insertChild('type'=>'p',
-                'content'=>&_parseInlineNode($nodeContent, %params));
-            if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-                $currentNode->id($currentNid);
-            }
-            $currentNode = $currentNode->parent;
-            undef $nodeContent;
+            $currentNode = $currentNode->insertChild('type'=>'p');
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
             $sectionLength = length $1;
             $nodeContent = $2;
             if ($sectionLength > $sectionDepth) {
@@ -302,17 +365,12 @@ sub parse {
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
-        elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted
-            if ($currentNode->type ne 'pre') {
-                while ($listDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $listDepth--;
-                }
-                while ($indentDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $indentDepth--;
-                }
-                $currentNode = &_terminateParagraph($currentNode,
+        elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted or continued li
+            if ($currentNode->type ne 'pre' && $currentNode->type ne 'li' &&
+                $currentNode->type ne 'dd' &&
+                !($currentNode->type eq 'p' && $indentDepth > 0) ) {
+                $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
+                $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
                 $currentNode = $currentNode->insertChild('type'=>'pre');
@@ -321,28 +379,15 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^\s*$/) {  # blank line
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
         }
         else {
-            if ($currentNode->type ne 'p') {
-                while ($listDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $listDepth--;
-                }
-                while ($indentDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $indentDepth--;
-                }
-                $currentNode = &_terminateParagraph($currentNode,
+            if (($currentNode->type ne 'p') && ($currentNode->type ne 'li') &&
+                ($currentNode->type ne 'dd')) {
+                $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
+                $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
                 $currentNode = $currentNode->insertChild('type'=>'p');
@@ -351,7 +396,7 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
     }
-    $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+    $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                         %params);
     if (scalar @authors > 0) {
         $tree->authors(\@authors);
@@ -365,11 +410,40 @@ sub parse {
 
 ### private
 
-sub _terminateParagraph {
+sub _resetList {
+    # "Resets" lists.  When a new node is about to be created, this
+    # routine makes sure that any previous lists or indentations are
+    # reset to the correct nesting depth.
+
+    my ($currentNode, $listDepthRef, $indentDepthRef) = @_;
+
+    if ($listDepthRef && ${$listDepthRef}) {
+        while (${$listDepthRef} > 1) {
+            $currentNode = $currentNode->parent->parent;
+            ${$listDepthRef}--;
+        }
+        $currentNode = $currentNode->parent;
+        ${$listDepthRef} = 0;
+    }
+    if ($indentDepthRef) {
+        while (${$indentDepthRef} > 0) {
+            $currentNode = $currentNode->parent;
+            ${$indentDepthRef}--;
+        }
+    }
+    return $currentNode;
+}
+
+sub _terminateNode {
+    # "Closes" nodes.  When the parser knows that it is ready to add
+    # content to the node (i.e. when it sees a blank line), this
+    # routine does the adding.
+
     my ($currentNode, $nodeContentRef, %params) = @_;
     my ($currentNid);
 
-    if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
+    if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
+        ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
         chomp ${$nodeContentRef};
         ${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s;
         $currentNid = $1;
@@ -384,43 +458,56 @@ sub _terminateParagraph {
 }
 
 sub _parseList {
+    # List parsing is mostly handled the same, which is why it gets
+    # its own subroutine.  The main thing this routine does is handle
+    # the nesting properly.
+
     my ($listType, $listLength, $listDepthRef,
-        $currentNode, $paramRef, @nodeContents) = @_;
-    my ($currentNid);
+        $currentNode, $paramRef, $nodeContentRef,
+        @nodeContents) = @_;
 
     while ($listLength > ${$listDepthRef}) {
-        $currentNode = $currentNode->insertChild('type'=>$listType);
+        # Nested lists are children of list items, not of other lists.
+        # We need to find the last list item (if it exists) and
+        # create a sublist there; otherwise, we need to create a list
+        # item and give it a sublist.
+        if ($currentNode->type eq 'ul' || $currentNode->type eq 'ol' ||
+            $currentNode->type eq 'dl') {
+            my $kidsRef = $currentNode->children;
+            if ($kidsRef) {
+                $currentNode = $kidsRef->[scalar @{$kidsRef} - 1];
+            }
+            else {
+                if ($listType eq 'dl') {
+                    $currentNode = $currentNode->insertChild(type=>'dd');
+                }
+                else {
+                    $currentNode = $currentNode->insertChild(type=>'li');
+                }
+            }
+        }
+        $currentNode = $currentNode->insertChild(type=>$listType);
         ${$listDepthRef}++;
     }
-    while ($listLength < ${$listDepthRef}) {
-        $currentNode = $currentNode->parent;
+    while ($listLength < ${$listDepthRef}) {  # assert($listLength != 0)
+        $currentNode = $currentNode->parent->parent;
         ${$listDepthRef}--;
     }
-    $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-    $currentNid = $1;
     if ($listType eq 'dl') {
-        $currentNode = $currentNode->insertChild('type'=>'dt',
-            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
+        $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
+        my $currentNid = $1;
+        $currentNode = $currentNode->insertChild(type=>'dt',
+            content=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
         $currentNode = $currentNode->parent;
-        $nodeContents[1] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-        $currentNid = $1;
-        $currentNode = $currentNode->insertChild('type'=>'dd',
-            'content'=>&_parseInlineNode($nodeContents[1], %{$paramRef}));
-        if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-            $currentNode->id($currentNid);
-        }
-        return $currentNode->parent;
+        ${$nodeContentRef} = $nodeContents[1] . "\n";
+        $currentNode = $currentNode->insertChild('type'=>'dd');
     }
     else {
-        $currentNode = $currentNode->insertChild('type'=>'li',
-            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
-        if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-            $currentNode->id($currentNid);
-        }
-        return $currentNode->parent;
+        ${$nodeContentRef} = $nodeContents[0] . "\n";
+        $currentNode = $currentNode->insertChild('type'=>'li');
     }
     return $currentNode;
 }

@@ -1,9 +1,9 @@
-# parser.t
+# parser01.t
 
 use strict;
 use Test;
 
-BEGIN { plan tests => 254 };
+BEGIN { plan tests => 159 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -31,7 +31,7 @@ sub readFile {
 ### tree_test01.txt
 
 my $config = new PurpleWiki::Config($configfile);
-my $wikiContent = &readFile('t/tree_test01.txt');
+my $wikiContent = &readFile('t/txt/tree_test01.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 $wiki->title('Tree Test 1');
@@ -113,7 +113,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[9]->content->
 ok($wiki->root->children->[0]->children->[1]->children->[9]->content->
     [2]->content eq "  If so, then be happy!");
 
-# Unordered list.  (Tests 38-60)
+# Unordered list.  (Tests 38-44)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->type
     eq 'section');
@@ -124,216 +124,13 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [0]->content->[0]->content eq 'Lists');
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->type eq 'ul');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[1]->children} == 3);
+    [1]->type eq 'p');
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[0]->type eq 'li');
+    [1]->content->[0]->type eq 'text');
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[0]->content->[0]->content eq
-    'Lists are an excellent test.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[1]->content->[0]->content eq
-    'Yessirreebob.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->type eq 'ul');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[1]->children->[2]->children} == 5);
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[0]->content->[0]->content eq
-    'This is a sublist.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[1]->content->[0]->content eq
-    'This is item two of the sublist.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[2]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[2]->content->[0]->content eq
-    'Item three of the sublist should be one sentence.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[3]->type eq 'ul');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[3]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[3]->children->[0]->content->[0]->content
-    eq 'This is a subsublist.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[4]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [1]->children->[2]->children->[4]->content->[0]->content eq
-    'This is item three of the sublist.');
+    [1]->content->[0]->content eq 'Tests moved to tree_test14.txt.');
 
-# Ordered list.  (Tests 61-74)
-
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->type eq 'ol');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[2]->children} == 3);
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[0]->content->[0]->content eq
-    'How about numbered lists?');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[1]->content->[0]->content eq
-    'What about them?');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->type eq 'ol');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[0]->content->[0]->content eq
-    'Will it parse correctly?');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[1]->type eq 'ol');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[1]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[1]->children->[0]->content->[0]->
-    content eq 'I sure hope so.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[2]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [2]->children->[2]->children->[2]->content->[0]->content eq
-    'Only one way to find out.');
-
-# Mixed unordered and ordered.  (Tests 75-87)
-
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->type eq 'ul');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[3]->children} == 4);
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[0]->content->[0]->content eq
-    'Mixed list.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[1]->content->[0]->content eq
-    'Second item.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[2]->type eq 'ol');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[2]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[2]->children->[0]->content->[0]->content eq
-    'Now do numbered list.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[2]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[2]->children->[1]->content->[0]->content eq
-    'Again.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[3]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [3]->children->[3]->content->[0]->content eq
-    'Backed to unordered list.');
-
-# Mixed ordered and unordered.  (Tests 88-100)
-
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->type eq 'ol');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[4]->children} == 4);
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[0]->content->[0]->content eq
-    'Ordered list.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[1]->content->[0]->content eq
-    'Number two.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[2]->type eq 'ul');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[2]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[2]->children->[0]->content->[0]->content eq
-    'Now do unordered.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[2]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[2]->children->[1]->content->[0]->content eq
-    'Again.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[3]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [4]->children->[3]->content->[0]->content eq
-    'Number three.');
-
-# Definition list.  (Tests 100-115)
-
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->type eq 'dl');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [10]->children->[5]->children} == 5);
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[0]->type eq 'dt');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[0]->content->[0]->content eq
-    'definition lists');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[1]->type eq 'dd');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[1]->content->[0]->content eq
-    'Will definition lists parse correctly?');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[2]->type eq 'dt');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[2]->content->[0]->content eq
-    'testing');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[3]->type eq 'dd');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[3]->content->[0]->content eq
-    'This is a test.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[4]->type eq 'dl');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[4]->children->[0]->type eq 'dt');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[4]->children->[0]->content->[0]->content eq
-    'indented definition');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[4]->children->[1]->type eq 'dd');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [5]->children->[4]->children->[1]->content->[0]->content eq
-    'This should be indented again.');
-
-# The rest of lists.  (Tests 116-124)
-
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [6]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [6]->content->[0]->content eq 'Okay, some mixed paragraphs and lists.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [7]->type eq 'ul');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [7]->children->[0]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [7]->children->[0]->content->[0]->content eq 'This ought to work.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [7]->children->[1]->type eq 'li');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [7]->children->[1]->content->[0]->content eq 'But I just want to make sure.');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [8]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
-    [8]->content->[0]->content eq 'Did it work?');
-
-# Quote formatting.  (Tests 125-146)
+# Quote formatting.  (Tests 45-66)
 
 ok($wiki->root->children->[0]->children->[1]->children->[11]->type
     eq 'section');
@@ -381,7 +178,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [1]->content->[6]->content eq '.');
 
-# HTML formatting.  (Tests 147-179)
+# HTML formatting.  (Tests 67-99)
 
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [2]->type eq 'p');
@@ -452,44 +249,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [2]->content->[11]->content eq '.');
 
-# Indented text.  (Tests 180-194)
-
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->type eq 'indent');
-ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [11]->children->[3]->children} == 2);
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[0]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[0]->content->[0]->content eq 'Indented text.');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->type eq 'indent');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[0]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[0]->content->[0]->content eq
-    'Double indented text.');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[1]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[1]->content->[0]->content eq
-    'Another paragraph of double indented text.');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[2]->type eq 'indent');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[2]->children->[0]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [3]->children->[1]->children->[2]->children->[0]->content->
-    [0]->content eq 'Triple indented text.');
-
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [4]->type eq 'p');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [4]->content->[0]->type eq 'text');
-ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
-    [4]->content->[0]->content eq 'Text after indentation.');
-
-# Links.  (Tests 195-246)
+# Links.  (Tests 100-151)
 
 ok($wiki->root->children->[0]->children->[1]->children->[12]->type
     eq 'section');
@@ -597,7 +357,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[4]->content eq '?');
 
-# Conclusion.  (Tests 247-254)
+# Conclusion.  (Tests 152-159)
 
 ok($wiki->root->children->[1]->type eq 'section');
 ok(scalar @{$wiki->root->children->[1]->children} == 2);

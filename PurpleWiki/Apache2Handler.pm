@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2Handler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2Handler.pm,v 1.3 2004/02/12 18:58:35 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,7 +31,7 @@
 package PurpleWiki::Apache2Handler;
 
 use strict;
-use lib '/home/cdent/src/PurpleWiki';
+use lib '/home/cdent/src/psSing';
 use IO::File;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
@@ -39,10 +39,11 @@ use Apache::RequestRec ();
 use Apache::RequestIO ();
 use Apache::URI;
 use Apache::Const -compile => qw(OK);
-use vars qw($VERSION);
-$VERSION = '0.9.1';
 
-my $CONFIG = '/home/cdent/testpurple';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
+
+my $CONFIG = '/home/cdent/wikidb';
 my $CSS = '/~cdent/purple.css';
 
 sub handler {

@@ -1,6 +1,6 @@
 # PurpleWiki::Search::Blosxom.pm
 #
-# $Id: Blosxom.pm,v 1.4 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -34,8 +34,8 @@ use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
 use IO::File;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $ENTRIES_CACHE_INDEX = '/home/eekim/www/local/blosxom/plugins/state/.entries_cache.index';
 my $DATA_DIR = '/home/eekim/writing/blog/eekim.com';
