@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.3 2003/06/20 23:54:01 cdent Exp $
+# $Id: Config.pm,v 1.4 2003/08/14 06:05:10 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.3 2003/06/20 23:54:01 cdent Exp $
+# $Id: Config.pm,v 1.4 2003/08/14 06:05:10 eekim Exp $
 
 use strict;
 use AppConfig;
@@ -214,3 +214,40 @@ sub _initLinkPatterns {
 
   
 1;
+__END__
+
+=head1 NAME
+
+PurpleWiki::Config - Configuration object.
+
+=head1 SYNOPSIS
+
+  use PurpleWiki::Config;
+
+  my $config = PurpleWiki::Config->new('/var/www/wikidb');
+
+  $config->InterFile;  # returns the location of intermap
+
+=head1 DESCRIPTION
+
+Parses the PurpleWiki config file, which is in AppConfig format.
+Configuration variables are made available in methods.
+
+=head1 METHODS
+
+=head2 new($directory)
+
+Parses "$directory/config", and creates methods for each variable
+using AUTOLOAD.
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<AppConfig>.
+
+=cut
