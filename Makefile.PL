@@ -3,9 +3,9 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'		=> 'PurpleWiki',
-    'VERSION_FROM'	=> 'PurpleWiki.pm', # finds $VERSION
+    'VERSION'	=> '0.1',
     'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM => 'PurpleWiki.pm', # retrieve abstract from module
-       AUTHOR     => 'Eugene Eric Kim <eekim@blueoxen.net>') : ()),
+      (ABSTRACT   => 'WikiWiki with purple numbers',
+       AUTHOR     => 'Chris Dent <cdent@blueoxen.org>, Eugene Eric Kim <eekim@blueoxen.org>') : ()),
 );
