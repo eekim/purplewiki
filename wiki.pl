@@ -745,9 +745,9 @@ sub DoEdit {
     $revision = '';
   }
 
-  $page = $pages->getPage($id, $revision);
-  my $oldrev = $page->getRevision;
+  my $oldrev = $pages->getPage($id)->getRevision();  # get current revision
 
+  $page = $pages->getPage($id, $revision);
   $pageTime = $page->getTime() || 0;
 
   my @vPages = &visitedPages;

@@ -1,4 +1,12 @@
 #!/usr/bin/perl -w
+#
+# dumpSequence.pl
+#
+# $Id$
+#
+# Outputs the contents of the sequence database.
+#
+# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 
 use DB_File;
 

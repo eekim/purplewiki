@@ -1,5 +1,9 @@
 # vi:ai:sm:et:sw=4:tw=0:ts=4
 # 
+#   mt/purple.pl
+#
+# $Id$
+#
 # Purple Plugin For Movable Type
 #
 # Provide Purple Numbering and Wiki Formatting for

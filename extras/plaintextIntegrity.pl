@@ -4,9 +4,9 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
-#
 # Checks integrity of plaintext backend.
+#
+# Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 
 use strict;
 use Fcntl ':mode';
