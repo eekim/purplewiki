@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.17 2002/11/24 09:19:24 eekim Exp $
+# $Id: Tree.pm,v 1.18 2002/11/24 09:26:28 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -351,7 +351,7 @@ sub _parseInlineNode {
     my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
     my $rxSubpage = '[A-Z]+[a-z]+\w*';
     my $rxQuoteDelim = '(?:"")?';
-    my $rxDoubleBracketed = '\[\[\w[\w\s]+\]\]';
+    my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
 
     # For some reason, the split below results in a lot of empty list
     # members.  Hence the grep.
