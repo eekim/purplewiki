@@ -1,5 +1,5 @@
-PurpleWiki version 0.9.3
-========================
+PurpleWiki version 0.93
+=======================
 
 PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
 headers, lists, and other fine-grained elements on a Wiki page.  These
@@ -11,6 +11,8 @@ Features include:
   * Transclusions.
 
   * Blog integration (MovableType and blosxom)
+
+  * Single sign-on via Identity Commons i-names.
 
   * Modular architecture for maximum customizability.
 
@@ -38,15 +40,19 @@ PurpleWiki has several requirements:
   * The following CPAN modules:
 
     + AppConfig
-
     + Algorithm::Diff
-
+    + CGI
+    + CGI::Carp
+    + CGI::Session
+    + DB_File
     + LWP::UserAgent
-
+    + Template
     + Text::Diff
+    + Text::Wrap
+    + XML::RSS
 
 To install the modules, first unpack the distribution.  This will
-create a PurpleWiki-0.9 directory.  Change directories, and execute
+create a PurpleWiki-0.93 directory.  Change directories, and execute
 the following commands:
 
   perl Makefile.PL
@@ -56,33 +62,27 @@ the following commands:
 
 To install the Wiki:
 
-  1. Create a wikidb directory.  This directory must be writeable by
-     the web server when running CGI scripts.  It should not be in the
-     publically accessible htdocs directory.
+  1. Copy the wikidb directory included in the distribution wherever
+     you want it.  This directory must be writeable by the web server
+     when running CGI scripts.  It should not be in the publically
+     accessible htdocs directory.
 
   2. Edit wiki.pl, changing $CONFIG_DIR to the directory you just
      created.
 
   3. Copy wiki.pl to your cgi-bin directory.
 
-  4. Copy wikidb/* into the new wikidb directory you created.
-
-  5. Edit the config file:
+  4. Edit the config file:
 
     + Change ScriptName to the URL path of the Wiki CGI
-      (e.g. /cgi-bin/wiki.pl).
-
-    + Change CookieName to a unique single word name.  Cookies are
-      used for keeping track of users.
+      (e.g. http://foo.bar/cgi-bin/wiki.pl).  It must be a fully
+      qualified URL.
 
     + Change SiteName to the name of the Wiki.
 
-    + Change LogoURL to point to an image that will be displayed on
-      each page.  If you don't want to use a logo, comment out this
-      item by placing a # at the start of the line.
-
-    + Change StyleSheet to point to the CSS stylesheet for use with
-      this Wiki.  You can use etc/purplewiki.css as a starting point.
+  5. If you would like to change the look-and-feel of the site, edit
+     the templates in wikidb/templates.  More information is available
+     in docs/Templates.wiki.
 
 The Wiki should now be installed.  To test, point your web browser to
 the PurpleWiki URL.  You should see a page called FrontPage that says,
@@ -98,7 +98,7 @@ requirements.
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2002-2003 Blue Oxen Associates.
+Copyright (C) 2002-2004 Blue Oxen Associates.
 
 PurpleWiki is derived from:
 
