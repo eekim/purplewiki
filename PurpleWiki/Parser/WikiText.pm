@@ -1,8 +1,8 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.5 2002/12/30 10:13:52 eekim Exp $
+# $Id: WikiText.pm,v 1.6 2003/01/02 06:08:00 eekim Exp $
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #

@@ -1,8 +1,8 @@
 # PurpleWiki::View::WikiHTML.pm
 #
-# $Id: WikiHTML.pm,v 1.11 2002/11/24 09:47:46 eekim Exp $
+# $Id: WikiHTML.pm,v 1.12 2003/01/02 06:07:10 eekim Exp $
 #
-# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
