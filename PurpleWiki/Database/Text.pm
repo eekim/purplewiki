@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Text
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Text.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
+# $Id: Text.pm,v 1.1.2.3 2003/01/31 06:14:50 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,14 +32,14 @@ package PurpleWiki::Database::Text;
 
 # PurpleWiki Text Data Access
 
-# $Id: Text.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
+# $Id: Text.pm,v 1.1.2.3 2003/01/31 06:14:50 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
-use PurpleWiki::Database;
 
-# Creates a new page reference, may be a
-# a new one or an existing one.
+# Creates a new Text. A text represents the actual
+# use visible and editable text of a WikiPage.  It
+# can be created empty or by being passed a string.
 sub new {
     my $proto = shift;
     my $data = shift;
@@ -52,44 +52,59 @@ sub new {
 
 # Getters and setters.
 # FIXME: redunant
+
+# Gets the text of this Text.
 sub getText {
     my $self = shift;
     return $self->{text};
 }
 
+# Sets the text of this Text.
 sub setText {
     my $self = shift;
     my $text = shift;
     $self->{text} = $text;
 }
 
+# Gets whether this text was last edited as a minor
+# edit.
 sub getMinor {
     my $self = shift;
     return $self->{minor};
 }
 
+# Sets whether this text was last edited as a minor
+# edit.
 sub setMinor {
     my $self = shift;
     my $minor = shift;
     $self->{minor} = $minor;
 }
 
+# Gets whether this text was last edited by a different
+# author from the previous editor (or maybe the current
+# viewer, not sure) FIXME: don't be dumb
 sub getNewAuthor {
     my $self = shift;
     return $self->{newauthor};
 }
 
+# Gets whether this text was last edited by a different
+# author from the previous editor (or maybe the current
+# viewer, not sure) FIXME: don't be dumb
 sub setNewAuthor {
     my $self = shift;
     my $newAuthor = shift;
     $self->{newauthor} = $newAuthor;
 }
 
+# Gets the brief summary of the changes made to the Text.
 sub getSummary {
     my $self = shift;
     return $self->{summary};
 }
 
+# Sets the brief summary of the changes made to the Text.
 sub setSummary {
     my $self = shift;
     my $summary = shift;
@@ -103,8 +118,9 @@ sub isMinor {
     return $self->{minor};
 }
 
-# Initializes the Section datastructure by pulling fields from
-# the page
+# Initializes the Text datastructure by pulling fields from
+# the provided data. If no data is provided, sets up a new
+# empty page.
 sub _init {
     my $self = shift;
     my $data = shift;
@@ -128,6 +144,7 @@ sub _init {
     }
 }
 
+# Serializes the Text to string so it can be saved.
 sub serialize {
     my $self = shift;
 
