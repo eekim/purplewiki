@@ -333,9 +333,10 @@ sub DoRc {
             push @recentChanges, { date => $date, pages => [] };
             $prevDate = $date;
         }
+        my $pageId = $page->{pageId};
         push @{$recentChanges[$#recentChanges]->{pages}},
-            { id => $page->{id},
-              pageName => $page->{pageName},
+            { id => $pageId,
+              pageName => $pages->getName($pageId),
               time => CalcTime($page->{timeStamp}),
               numChanges => $page->{numChanges},
               summary => QuoteHtml($page->{summary}),
@@ -343,9 +344,9 @@ sub DoRc {
               userId => $page->{userId},
               host => $page->{host},
               diffUrl => $config->ScriptName .
-                  '?action=browse&amp;diff=1&amp;id=' . $page->{id},
+                  '?action=browse&amp;diff=1&amp;id=' . $page->{pageId},
               changeUrl => $config->ScriptName .
-                  '?action=history&amp;id=' . $page->{id} };
+                  '?action=history&amp;id=' . $page->{pageId} };
     }
     my @vPages = &visitedPages;
     $wikiTemplate->vars(&globalTemplateVars,
@@ -891,12 +892,15 @@ sub UpdatePrefNumber {
 }
 
 sub DoIndex {
-    my @pages = $pages->allPages($config);
+    my @list = ();
+    for my $id ($pages->allPages($config)) {
+        push(@list, { id => $id, pageName => $pages->getName($id) });
+    }
     my @vPages = &visitedPages;
 
     $wikiTemplate->vars(&globalTemplateVars,
                         visitedPages => \@vPages,
-                        pages => \@pages);
+                        pages => \@list);
     print GetHttpHeader() . $wikiTemplate->process('pageIndex');
 }
 

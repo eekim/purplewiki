@@ -325,6 +325,9 @@ sub _wikiLink {
     if ($pageName =~ s/\#([A-Z0-9]+)$//) {
         $pageNid = $1;
     }
+    my $pageId = $pageName;
+    $pageId = PurpleWiki::Misc::FreeToNormal($pageName)
+        if ($nodeRef->type eq 'freelink');
 
     if ($nodeRef->content =~ /:/) {
         $linkString .= '<a href="'
@@ -332,7 +335,7 @@ sub _wikiLink {
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
     }
-    elsif ($self->{config}->{pages}->pageExists($pageName)) {
+    elsif ($self->{config}->{pages}->pageExists($pageId)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="'
                            . PurpleWiki::Misc::getFreeLink($nodeRef->content)

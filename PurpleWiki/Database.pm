@@ -195,37 +195,26 @@ sub AllPagesList {
         foreach $id (@pageFiles) {
             next  if (($id eq '.') || ($id eq '..'));
             if (substr($id, -3) eq '.db') {
-		my $pageName = substr($id, 0, -3);
-		$pageName =~ s/_/ /g if ($config->FreeLinks);
-                push(@pages, {
-		    'id' => substr($id, 0, -3),
-		    'pageName' => $pageName,
-                });
+                push(@pages, substr($id, 0, -3));
             } elsif (substr($id, -4) ne '.lck') {
                 opendir(PAGELIST, "$directory/$id");
                 @subpageFiles = readdir(PAGELIST);
                 closedir(PAGELIST);
                 foreach $subId (@subpageFiles) {
-                    if (substr($subId, -3) eq '.db') {
-			my $pageName = "$id/" . substr($subId, 0, -3);
-			$pageName =~ s/_/ /g if ($config->FreeLinks);
-			push(@pages, {
-			    'id' => "$id/" . substr($subId, 0, -3),
-			    'pageName' => $pageName,
-			});
-                    }
+		    push(@pages, "$id/" . substr($subId, 0, -3))
+                        if (substr($subId, -3) eq '.db');
                 }
             }
         }
     }
-    return sort { $a->{id} cmp $b->{id} } @pages;
+    return sort @pages;
 }
 
 # Populates a hash reference with recent changes.
 # Data structure:
 #   $recentChanges = [
 #     { timeStamp => ,  # time stamp
-#       name => ,       # page name
+#       pageId => ,     # page Id
 #       numChanges => , # number of times changed
 #       summary => ,    # change summary
 #       userName => ,   # username
@@ -312,10 +301,9 @@ sub recentChanges {
     # now parse pages hash into final data structure and return
     foreach my $name (sort { $pages{$b}->{timeStamp} <=> $pages{$a}->{timeStamp} } keys %pages) {
         push @recentChanges, { timeStamp => $pages{$name}->{timeStamp},
-                               id => $name,
-                               pageName => $pages{$name}->{pageName},
+                               pageId => $name,
                                numChanges => $pages{$name}->{numChanges},
-                               summary => $pages{$name}->{summary},
+                               changeSummary => $pages{$name}->{summary},
                                userName => $pages{$name}->{userName},
                                userId => $pages{$name}->{userId},
                                host => $pages{$name}->{host} };

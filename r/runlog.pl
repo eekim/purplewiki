@@ -104,7 +104,8 @@ sub diffOutput {
             push @out, $_;
         } elsif (/^---$/) {
             $after = 1;
-        #} elsif (/^[><]\s+(Set-Cookie|Date|<p>Last save time):/) {
+        } elsif (/^[><]\s+Location=/) {
+        } elsif (/^[><]\s+(Set-Cookie|Date|<p>Last save time):/) {
         #} elsif (/^[><][\.\s]+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,/) {
         } elsif (/^< /) {
             push @out, "From after $." if $after;
@@ -126,23 +127,29 @@ sub diffOutput {
 sub check {
 my ($from, $to) = @_;
 my (@from, @to) = ((), ());
-my $last = $#from;
-    if ($#to == $last) {
+my $last = $#$from;
+#print ERR "check $#$from $#$to\n";
+    if ($#$to == $last) {
         for my $i (0..$last) {
            my $f = stripDate($$from[$i]);
            my $t = stripDate($$to[$i]);
-print ERR "Diff:\n-$from\n+$to\n" if ($t ne $f);
+#print ERR "Diff:\n-$from\n+$to\n" if ($t ne $f);
            return join("\n", @$from, '---', @$to) if ($t ne $f);
         }
+    } else {
+        return join("\n", @$from, '---', @$to);
     }
     return "";
 }
 
 sub stripDate {
 my $line = shift;
-    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d?\d:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\w/DateTimeStamp/;
-    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\w/DateStamp/;
-    $line =~ s/\w\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\w/TimeStamp/;
+my $x = $line;
+    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d\d?:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\b/DateTimeStamp/;
+#October 6, 2004 8:01 pm
+    $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\b/DateStamp/;
+    $line =~ s/\w\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
+#print ERR "Ch:$x >> $line:\n" if $x ne $line;
     substr($line,2);
 }
 

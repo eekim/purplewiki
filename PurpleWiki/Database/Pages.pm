@@ -151,7 +151,9 @@ sub putPage {
 }
 
 sub allPages {
-  (PurpleWiki::Database::AllPagesList());
+  my @l = (PurpleWiki::Database::AllPagesList());
+  grep(s|\+|/|g, @l);
+  @l;
 }
 
 # pages->recentChanges($starttime)
@@ -222,9 +224,11 @@ sub pageExists {
 sub _getPageFile {
     my $self = shift;
     my $id = shift;
-    $id =~ s|/|+/g;   # handle 'subpages' by translating '/' to '+'
-
-    return $self->{pagedir} . '/' . _getPageDirectory($id) . '/' . $id . '.db';
+    my $base = $self->{pagedir} . '/' . _getPageDirectory($id);
+    my $file = "$base/$id.db";
+    return $file if ($id !~ /\// ||-f $file);  # if it exists as a subpage
+    $id =~ s|/|+|g;   # handle 'subpages' by translating '/' to '+'
+    return "$base/$id.db";
 }
 
 sub _getPageDirectory {
@@ -257,7 +261,7 @@ sub _serialize {
 
     my $separator = $self->{fs1};
 
-    my $data = join($separator, map {$_ . $separator . ($page->{$_} || '')} 
+    my $data = join($separator, map {$_ . $separator . ($page->{$_} || '')}
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',
          'cache_diff_default_major', 'cache_diff_default_minor',
          'ts_create', 'ts'));
@@ -265,14 +269,6 @@ sub _serialize {
     $data .= $separator . 'text_default' . $separator . $sectionData;
 
     return $data;
-}
-
-# Gets the path and filename for the lock file for 
-# this page.
-sub _getLockedPageFile {
-    my $self = shift;
-    my $id = shift;
-    return $self->{pagedir} . '/' . _getPageDirectory($id) . "/$id.lck";
 }
 
 # Creates the directory where this Page is stored.
@@ -284,11 +280,6 @@ sub _createPageDir {
     PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
     $dir .= ('/' . _getPageDirectory($id));
     PurpleWiki::Database::CreateDir($dir);
-
-    if ($id =~ m|([^/]+)/|) {
-        $dir .= "/$1";
-        PurpleWiki::Database::CreateDir($dir);
-    }
 }
 
 sub _openPage {
@@ -296,8 +287,8 @@ sub _openPage {
     my $id = shift;
     my $page = PurpleWiki::Database::ModPage->new(id => $id);
 
-    if (-f $self->_getPageFile($id)) {
-        my $filename = $self->_getPageFile($id);
+    my $filename;
+    if (-f ($filename = $self->_getPageFile($id))) {
         # FIXME: there should be a utility class of some kind
         my $data = PurpleWiki::Database::ReadFileOrDie($filename);
         $self->_parseData($page, $data);

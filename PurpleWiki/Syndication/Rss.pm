@@ -75,7 +75,7 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $id = $recentChange->{pageName};
+        my $id = $recentChange->{pageId};
         my $bodyText = $pages->getPage($id)
                        ->getTree()->view('wikihtml', url => $urlbase.$id);
 

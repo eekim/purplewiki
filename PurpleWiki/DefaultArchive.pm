@@ -154,14 +154,14 @@ sub _find_txt {
 sub allPages {
   my $self = shift;
   my $a_ref = [];
-  my @ids = ();
+  my %ids = ();
   _find_txt($self->{datadir}, $a_ref);
   for (@$a_ref) {
     if (m|/([^/]+)/[^/]+\.txt$|) {
-      push @ids, $1;
+      $ids{$1} = 1 unless (defined($ids{$1}));
     }
   }
-  @ids;
+  (sort keys %ids);
 }
 
 # pages->recentChanges($starttime)
@@ -183,12 +183,12 @@ sub recentChanges {
           if ($pages{$id}) {
               $pages{$id}->{numChanges}++;
           } else {
-              $pages{$id} = { numChanges => 1, pageName => $id }
+              $pages{$id} = { numChanges => 1, pageId => $id }
           }
           $pages{$id}->{timeStamp} = $pageTime;
-          my $summary = $page->{summary};
-          $pages{$id}->{summary} = (!$summary || $summary eq '*') ? ''
-                                   : $page->{summary};
+          my $summary = $page->{changeSummary};
+          $pages{$id}->{changeSummary} = (!$summary || $summary eq '*') ? ''
+                                   : $page->{changeSummary};
           $pages{$id}->{userId} = $page->getUserID || '';
           $pages{$id}->{host} = $page->{host} || '';
       }
@@ -266,10 +266,11 @@ sub getRevisions {
           $editUrl = $self->{script} .
               "?action=edit&amp;id=$id&amp;revision=$rev";
       }
-      my $summary = $self->{summary};
+      my $pageTime = $page->getTime();
+      my $summary = $page->{changeSummary};
       push( @revisions,
             { revision => $rev,
-              dateTime => UseModWiki::TimeToText($page->getTime()),
+              dateTime => UseModWiki::TimeToText($pageTime),
               host => $page->{host},
               user => $page->getUserID(),
               summary => ($summary && ($summary ne "*"))
