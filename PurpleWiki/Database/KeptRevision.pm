@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,14 +32,14 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 
 use strict;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 
-use vars qw($VERSION);
-$VERSION = '0.9.2';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # Creates a new kept revision reference
 # Really just a collection of Sections

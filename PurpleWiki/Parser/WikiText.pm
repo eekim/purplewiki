@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.21 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -38,8 +38,8 @@ use PurpleWiki::Tree;
 use PurpleWiki::Sequence;
 use PurpleWiki::Page;
 
-use vars qw($VERSION);
-$VERSION = '0.9.2';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $sequence;
 my $url;

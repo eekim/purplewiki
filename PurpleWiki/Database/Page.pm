@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,15 +32,15 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id$
 
 use strict;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;
 
-use vars qw($VERSION);
-$VERSION = '0.9.2';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 # defaults for Text Based data structure
 my $DATA_VERSION = 3;            # the data format version

@@ -34,8 +34,8 @@ use strict;
 use base 'PurpleWiki::Template::Base';
 use Template;
 
-use vars qw($VERSION);
-$VERSION = '0.9.3';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 sub process {
     my $self = shift;

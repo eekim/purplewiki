@@ -1,7 +1,7 @@
 # PurpleWiki::Sequence.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Sequence.pm,v 1.6 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,14 +33,14 @@ package PurpleWiki::Sequence;
 # Tool for generating PurpleWiki::Sequence numbers for use
 # in Nids
 
-# $Id: Sequence.pm,v 1.6 2004/02/12 18:22:42 cdent Exp $
+# $Id$
 
 use strict;
 use IO::File;
 use DB_File;
 
-use vars qw($VERSION);
-$VERSION = '0.9.2';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $ORIGIN = '0';
 my $LOCK_WAIT = 1;

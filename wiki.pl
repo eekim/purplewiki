@@ -45,8 +45,9 @@ use CGI::Carp qw(fatalsToBrowser);
 
 my $CONFIG_DIR='/var/www/wikidb';
 
-our ($VERSION) = ' $Id$ ' =~ /\$Id:\s+\S+\s(\d+)\s/;
-print $VERSION;
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
+
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 

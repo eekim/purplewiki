@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2NidHandler.pm,v 1.1.2.3 2004/02/07 04:12:26 cdent Exp $
+# $Id$
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -37,6 +37,9 @@ use Apache::RequestRec ();
 use Apache::RequestIO ();
 use Apache::URI;
 use Apache::Const -compile => qw(OK);
+
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $CONFIG = '/home/cdent/testpurple';
 

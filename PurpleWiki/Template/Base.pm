@@ -32,8 +32,8 @@ package PurpleWiki::Template::Base;
 use 5.005;
 use strict;
 
-use vars qw($VERSION);
-$VERSION = '0.9.3';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 ### constructor
 
