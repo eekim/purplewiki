@@ -5,6 +5,7 @@ use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
 use PurpleWiki::View::XHTML;
 
+
 ### constructor
 
 sub new {
@@ -41,47 +42,46 @@ sub parse {
     my $this = shift;
     my $wikiContent = shift;
     my ($currentNode, @sectionState, $isStart, $nodeContent);
-    my ($nodeContent, $listLength, $listDepth, $sectionLength, $sectionDepth);
+    my ($listLength, $listDepth, $sectionLength, $sectionDepth);
     my ($indentLength, $indentDepth);
+    my ($line, $listType);
+
+    my %listMap = ('ul' => '(\*+)\s*(.*)',
+                   'ol' => '(\#+)\s*(.*)',
+                   'dl' => '(\;+)([^:]+\:?)\:(.*)',
+                  );
+
+    my $aggregateListRegExp = join('|', values(%listMap));
 
     $wikiContent =~ s/\\ *\r?\n/ /g;     # Join lines with backslash at end
+
     $isStart = 1;
     $listDepth = 0;
     $indentDepth = 0;
     $sectionDepth = 1;
+
     $currentNode = $this->root->insertChild('type' => 'section');
-    foreach (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
-        if (/^(\*+)\s*(.*)$/) {  # unordered lists
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
-            $currentNode = &_parseList('ul', length $1, \$listDepth,
-                                       $currentNode, $2);
-            $isStart = 0 if ($isStart);
-        }
-        elsif (/^(\#+)\s*(.*)$/) {  # ordered lists
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
-            $currentNode = &_parseList('ol', length $1, \$listDepth,
-                                       $currentNode, $2);
-            $isStart = 0 if ($isStart);
-        }
-        elsif (/^(\;+)([^:]+\:?)\:(.*)$/) {  # definition lists
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
-            $currentNode = &_parseList('dl', length $1, \$listDepth,
-                                       $currentNode, $2, $3);
-            $isStart = 0 if ($isStart);
-        }
-        elsif (/^(\:+)(.*)$/) {  # indented paragraphs
+
+    foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
+
+	# Process lists
+	if ($line =~ /^($aggregateListRegExp)$/) {
+	    foreach $listType (keys(%listMap)) {
+		if ($line =~ /^$listMap{$listType}$/) {
+		    $currentNode = &_terminateParagraph($currentNode,
+							\$nodeContent);
+		    while ($indentDepth > 0) {
+			$currentNode = $currentNode->parent;
+			$indentDepth--;
+		    }
+		    $currentNode = &_parseList($listType, length $1,
+					       \$listDepth,
+					       $currentNode, $2, $3);
+		    $isStart = 0 if ($isStart);
+		}
+	    }
+	}
+	elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
             $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -103,7 +103,7 @@ sub parse {
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
-        elsif (/^(\=+)\s+(\S.+)\s+\=+/) {  # header/section
+        elsif ($line =~ /^(\=+)\s+(\S.+)\s+\=+/) {  # header/section
             $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -135,7 +135,7 @@ sub parse {
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
-        elsif (/^(\s+\S.*)$/) {  # preformatted
+        elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted
             if ($currentNode->type ne 'pre') {
                 while ($listDepth > 0) {
                     $currentNode = $currentNode->parent;
@@ -152,7 +152,7 @@ sub parse {
             $nodeContent .= "$1\n";
             $isStart = 0 if ($isStart);
         }
-        elsif (/^\s*$/) {  # blank line
+        elsif ($line =~ /^\s*$/) {  # blank line
             $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -177,7 +177,7 @@ sub parse {
                                                    \$nodeContent);
                 $currentNode = $currentNode->insertChild('type'=>'p');
             }
-            $nodeContent .= "$_\n";
+            $nodeContent .= "$line\n";
             $isStart = 0 if ($isStart);
         }
     }
