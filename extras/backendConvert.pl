@@ -43,57 +43,61 @@ my $NEW_CONFIG = 'new';
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
+my $fromDataDir='';
+my $toDataDir='';
+my $fromBackend='PurpleWiki::Archive::UseMod.pm';
+my $toBackend='PurpleWiki::Archive::PlainText.pm';
+my $umask='';
 my $verb=0;
 while (@ARGV) {
   $a = shift(@ARGV);
   if ($a =~ /^-v/) {
     $verb = 1;
   } elsif ($a =~ /^-c/) {
-    $CONFIG_DIR = $' || shift(@ARGV);
+    $fromDataDir = $' || shift(@ARGV);
+  } elsif ($a =~ /^-C/) {
+    $fromBackend = $' || shift(@ARGV);
+    if ($fromBackend !~ /[:\.]/) {
+        $fromBackend = "PurpleWiki::Archive::$fromBackend.pm";
+    }
   } elsif ($a =~ /^-n/) {
-    $NEW_CONFIG = $' || shift(@ARGV);
+    $toDataDir = $' || shift(@ARGV);
+  } elsif ($a =~ /^-N/) {
+    $toBackend = $' || shift(@ARGV);
+    if ($toBackend !~ /[:\.]/) {
+        $toBackend = "PurpleWiki::Archive::$toBackend.pm";
+    }
+  } elsif ($a =~ /^-u/) {
+    $umask = $' || shift(@ARGV);
   }
 }
 
-local $| = 1;  # Do not buffer output (localized for mod_perl)
-
-# we only need one of each these per run
-my $newconfig = new PurpleWiki::Config($NEW_CONFIG);
-my $config = new PurpleWiki::Config($CONFIG_DIR);
+local $| = 1;  # Do not buffer output
 
 my $pages;
 my $newpages;
 
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 
-# Set our umask if one was put in the config file. - matthew
-umask(oct($config->Umask)) if defined $config->Umask;
+umask(oct($umask)) if $umask;
 
-my $new_database_package = $newconfig->DatabasePackage;
-print STDERR "Database Package $new_database_package\nError: $@\n"
-    unless (defined(eval "require $new_database_package"));
-$newpages = $new_database_package->new($newconfig, create => 1);
+print STDERR "Database Package $toBackend\nError: $@\n"
+    unless (defined(eval "require $toBackend"));
+$newpages = $toBackend->new(DataDir => $toDataDir, create => 1);
          # Object representing a page database
 
-$newpages || die "Can't open input database $NEW_CONFIG\n";
-$newconfig->{pages} = $newpages;
+$newpages || die "Can't open input database $toDataDir\n";
 
-print STDERR "NC:$newconfig\n";
-
-my $database_package = $config->DatabasePackage;
-print STDERR "Database Package $database_package\nError: $@\n"
-    unless (defined(eval "require $database_package"));
-$pages = $database_package->new($config);
+print STDERR "Database Package $fromBackend\nError: $@\n"
+    unless (defined(eval "require $fromBackend"));
+$pages = $fromBackend->new($config);
          # Object representing a page database
 
-$pages || die "Can't open input database $CONFIG_DIR\n";
-$config->{pages} = $pages;   # use the config to store context vars for now
-print STDERR "C:$config\n";
+$pages || die "Can't open input database $fromDataDir\n";
 
 my ($rev, $host, $summary, $user);
 my %all = ();
-for my $p ($pages->allPages($config)) {
-  my $id = $p->{id};
+for my $id ($pages->allPages()) {
   for ($pages->getRevisions($id)) {
     my ($rev, $host, $summary, $user, $pageTime)
       = ($_->{revision}, $_->{host}, $_->{summary}, $_->{user}, $_->{dateTime});

@@ -44,21 +44,27 @@ use PurpleWiki::Parser::WikiText;
 
 sub new {
   my $proto = shift;
-  my $config = shift;
-  die "No config\n" unless $config;
+  my $config = undef;
+  $config = shift if (ref($_[0]) eq "PurpleWiki::Config");
   my %args = @_;
   my $class = ref($proto) || $proto;
   my $self = {};
 
-  $self->{script} = $config->ScriptName;
-  my $loc = $config->DataDir;
-  substr($loc,-1) = '' if (substr($loc,-1) eq '/');
-  if ($args{create} && !-d $loc) {
-      mkdir $loc;
-  } elsif (!-d $loc) {
-      die "No datadir $loc\n";
+  my $datadir;
+  if ($config) {
+    $datadir = $config->DataDir;
+  } else {
+    my $x;
+    $datadir = $x if (defined($x=$args{DataDir}));
   }
-  $self->{datadir} = $loc;
+    die "No config or data dir defined\n" unless $datadir;
+  substr($datadir,-1) = '' if (substr($datadir,-1) eq '/');
+  if ($args{create} && !-d $datadir) {
+      mkdir $datadir;
+  } elsif (!-d $datadir) {
+      die "No datadir $datadir\n";
+  }
+  $self->{datadir} = $datadir;
   bless $self, $class;
   $self;
 }
@@ -281,17 +287,6 @@ sub getRevisions {
       my $page = $self->getPage($id, $rev);
       my ($pageUrl, $diffUrl, $editUrl);
 
-      # FIXME this is really ugly, we shouldn't be creating all these URLs here
-      if ($page->_getCurrentRev() == $rev) {
-          $pageUrl = $self->{script} . "?$id";
-      } else {
-          $pageUrl = $self->{script} .
-            "?action=browse&amp;id=$id&amp;revision=$rev";
-          $diffUrl = $self->{script} .
-              "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
-          $editUrl = $self->{script} .
-              "?action=edit&amp;id=$id&amp;revision=$rev";
-      }
       my $pageTime = $page->getTime();
       my $summary = $page->{changeSummary};
       push( @revisions,

@@ -157,6 +157,5 @@ ok($recentCh, $rcResult);
 sub END {
     unlink('t/tDB/sequence');
     system('cp t/config.tDef t/config');
-    system('rm -fr t/tDB');
 }
 

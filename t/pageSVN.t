@@ -6,9 +6,10 @@ use warnings;
 use Test;
 
 BEGIN {
-    eval { require "SVN::Repos" };
+    eval { require SVN::Repos; };
     if ($@) {
-        print STDERR "Could not find Subversion modules, skiping tests\n";
+        print STDERR "Error: $@\n";
+        print "Could not find Subversion modules, skiping tests\n";
         exit;
     }
     plan tests => 17;
@@ -17,6 +18,7 @@ BEGIN {
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
+system('rm -fr t/tDB');
 system('cp t/config.tSVN t/config');
 
 my $configdir = 't';

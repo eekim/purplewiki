@@ -3,7 +3,7 @@
 use Test;
 
 BEGIN {
-    eval { require "SVN::Repos" };
+    eval { require SVN::Repos; };
     if ($@) {
         print STDERR "Could not find Subversion modules, skiping tests\n";
         exit;

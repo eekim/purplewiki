@@ -23,10 +23,10 @@ use PurpleWiki::Archive::UseMod;
 use PurpleWiki::Parser::MoinMoin;
 
 my $MOINDIR;
-my $WIKIDB;
+my $PW_CONFIG_DIR;
 if (scalar @ARGV == 2) {
     $MOINDIR = shift @ARGV;
-    $WIKIDB = shift @ARGV;
+    $PW_CONFIG_DIR = shift @ARGV;
 }
 else {
     print <<EOM;
@@ -44,7 +44,7 @@ EOM
 use POSIX 'strftime';
 my $date = strftime("%F", localtime(time));
 
-my $config = PurpleWiki::Config->new($WIKIDB);
+my $config = PurpleWiki::Config->new($PW_CONFIG_DIR);
 my $wikiParser = PurpleWiki::Parser::MoinMoin->new;
 
 my $database_package = $config->DatabasePackage;

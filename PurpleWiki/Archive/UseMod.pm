@@ -46,30 +46,43 @@ my $DATA_VERSION = 3;            # the data format version
 
 sub new {
   my $proto = shift;
-  my $config = shift;
+  my $config;
+  $config = shift if (ref($_[0]) eq "PurpleWiki::Config");
   my %args = @_;
-  die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
 
-  $self->{script} = $config->ScriptName;
-  $self->{fs1} = $config->FS1;
-  $self->{fs2} = $config->FS2;
-  $self->{fs3} = $config->FS3;
-  $self->{fs} = $config->FS;
-  my $loc = $config->DataDir;
-  if ($args{create} && !-d $loc) {
-      mkdir $loc;
+  my $datadir;
+  if ($config) {
+    $datadir = $config->Datadir;
+    $self->{fs1} = $config->FS1;
+    $self->{fs2} = $config->FS2;
+    $self->{fs3} = $config->FS3;
+    $self->{fs} = $config->FS;
+    $datadir = $config->DataDir;
+    $loc = $self->{pagedir} = $config->PageDir;
+    $self->{rcfile} = $config->RcFile;
+    $self->{keepdays} = $config->KeepDays;
+    $self->{keepdir} = $config->KeepDir;
+  } else {
+    my $x;
+    $datadir = $config->Datadir;
+    $self->{fs} = "\xb3";
+    $self->{fs1} = "\xb31";
+    $self->{fs2} = "\xb32";
+    $self->{fs3} = "\xb33";
   }
-  if (!-d $loc) {
+  $self->{pagedir} = "$datadir/page" unless defined($self->{pagedir});
+  $self->{keepdir} = "$datadir/keep" unless defined($self->{keepdir});
+  $self->{rcfile} = "$datadir/rclog" unless defined($self->{rcfile});
+  if ($args{create} && !-d $datadir) {
+      mkdir $datadir;
+  }
+  if (!-d $datadir) {
       use Carp;
-      Carp::confess "No datadir $loc\n";
+      Carp::confess "No datadir $datadir\n";
   }
 
-  my $loc = $self->{pagedir} = $config->PageDir;
-  $self->{rcfile} = $config->RcFile;
-  $self->{keepdays} = $config->KeepDays;
-  $self->{keepdir} = $config->KeepDir;
   bless $self, $class;
   $self;
 }
@@ -133,7 +146,7 @@ sub putPage {
                  userid => $user );
 
   my $fsexp = $self->{fs};
-  my $keptRevision = new PurpleWiki::UseMod::KeptRevision(id => $id);
+  my $keptRevision = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
   my $text = $section->getText();
 
   $wikitext =~ s/$fsexp//g;
@@ -348,7 +361,7 @@ sub getRevisions {
 
     my $currentSection = $page->_getSection();
     push @pageHistory, $self->_getRevisionHistory($id, $currentSection, 1);
-    my $krev = new PurpleWiki::UseMod::KeptRevision(id => $id);
+    my $krev = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
     foreach my $section ( sort {($b->getRevision() <=> $a->getRevision())}
                                $krev->getSections() ) {
         # If KeptRevision == Current Revision don't print it. - matthew
@@ -377,17 +390,6 @@ sub _getRevisionHistory {
     $uid = $section->getUserID();
     $ts = $section->getTS();
 
-    if ($isCurrent) {
-        $pageUrl = $self->{script} . "?$id";
-    }
-    else {
-        $pageUrl = $self->{script} .
-          "?action=browse&amp;id=$id&amp;revision=$rev";
-        $diffUrl = $self->{script} .
-            "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
-        $editUrl = $self->{script} .
-            "?action=edit&amp;id=$id&amp;revision=$rev";
-    }
     if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
         $summary = UseModWiki::QuoteHtml($summary);
     }
@@ -398,10 +400,7 @@ sub _getRevisionHistory {
              dateTime => UseModWiki::TimeToText($ts),
              host => $host,
              user => $user,
-             summary => $summary,
-             pageUrl => $pageUrl,
-             diffUrl => $diffUrl,
-             editUrl => $editUrl };
+             summary => $summary };
 }
 
 # Retrieves the default text data by getting the
@@ -493,7 +492,8 @@ sub _getText {
     my $self = shift;
     my $selectrevision = $self->{selectrevision};
     if ($selectrevision && ($selectrevision != $self->{revision})) {
-        my $krev = new PurpleWiki::UseMod::KeptRevision(id => $self->{id});
+        my $krev = new PurpleWiki::UseMod::KeptRevision($self->{pages},
+                                                        id=>$self->{id});
         for my $section ($krev->getSections()) {
             if ($selectrevision == $section->getRevision()) {
                 $self->{section} = $section;
@@ -508,22 +508,6 @@ sub _getText {
         return (ref($text)) ? $text->getText() : $text;
     }
 }
-
-# page->getWikiHTML()
-#
-# format the page for HTML output
-#
-#sub getWikiHTML {
-#    my $self = shift;
-#
-#    my $url = $self->{pages}->{script} . '?' . $self->{id};
-#    my $parser = PurpleWiki::Parser::WikiText->new();
-#    my $wiki = $parser->parse($self->_getText(),
-#                   add_node_ids => 0,
-#                   url => $url,
-#               );
-#    return $wiki->view('wikihtml', url => $url);
-#}
 
 sub getTree {
   my $self = shift;

@@ -30,7 +30,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/database-api-1");}
+BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
 
 package UseModWiki;
 use strict;
@@ -378,11 +378,26 @@ sub DoRandom {
 
 sub DoHistory {
     my ($id) = @_;
-    my $page;
     my $text;
 
+    my $base = $config->ScriptName;
     my @vPages = &visitedPages;
     my @pageHistory = $pages->getRevisions($id);
+    my $first = 1;
+    for my $pageinfo (@pageHistory) {
+        my $rev = $pageinfo->{revision};
+        if ($first) {
+            $pageinfo->{pageUrl} = "$base?$id";
+            $first = 0;
+        } else {
+            $pageinfo->{pageUrl} = 
+              "$base?action=browse&amp;id=$id&amp;revision=$rev";
+            $pageinfo->{diffUrl} = 
+              "$base?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
+            $pageinfo->{editUrl} = 
+              "$base?action=edit&amp;id=$id&amp;revision=$rev";
+        }
+    }
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $id,
                         visitedPages => \@vPages,

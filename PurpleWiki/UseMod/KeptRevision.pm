@@ -46,13 +46,25 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 # Really just a collection of Sections
 sub new {
     my $proto = shift;
-    my %params = @_;
-    my $class = ref($proto) || $proto;
     my $self = {};
+    if (ref($_[0]) eq "PurpleWiki::Archive::UseMod") {
+      my $page = shift;
+      my %params = @_;
+      for (qw(keepdir fs1)) {
+        $self->{$_} = $page->{$_};
+      }
+      $self->{id} = $params{id};
+    } else {
+      use Carp;
+      confess "Error creating KeptRevision object\n";
+      #my %params = @_;
+      #$self = {};
+      #my $config = PurpleWiki::Config->instance();
+      #$self->{id} = $params{id};
+    }
+    my $class = ref($proto) || $proto;
     bless ($self, $class);
 
-    $self->{id} = $params{id};
-    $self->{config} = PurpleWiki::Config->instance();
     $self->{sections} = [];
     $self->_makeKeptList();
 
@@ -111,8 +123,6 @@ sub trimKepts {
     my $self = shift;
     my $expirets = shift;
 
-    #my $expirets = $now - ($self->{config}->KeepDays * 24 * 60 * 60);
-
     # was using undef here but that doesn't work,
     # must use splice
     my $count = 0;
@@ -137,7 +147,7 @@ sub keptFileExists {
 sub getKeepFile {
     my $self = shift;
 
-    return $self->{config}->KeepDir . '/' . $self->getKeepDirectory() . '/' .
+    return $self->{keepdir} . '/' . $self->getKeepDirectory() . '/' .
         $self->getID() . '.kp';
 }
 
@@ -161,7 +171,7 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    my $regexp = $self->{config}->FS1;
+    my $regexp = $self->{fs1};
     foreach my $section (split(/$regexp/, $data, -1)) {
         # because of the usemod way of saving data, the first
         # field is empty
@@ -195,7 +205,7 @@ sub save {
 sub _createKeepDir {
     my $self = shift;
     my $id = $self->getID();
-    my $dir = $self->{config}->KeepDir;
+    my $dir = $self->{keepdir};
     my $subdir;
 
     PurpleWiki::Misc::CreateDir($dir);  # Make sure main page exists
@@ -232,7 +242,7 @@ sub serialize {
     my @secs = $self->getSections();
 
     foreach $section (@secs) {
-        $data .= $self->{config}->FS1;
+        $data .= $self->{fs1};
         $data .= $section->serialize();
     }
 

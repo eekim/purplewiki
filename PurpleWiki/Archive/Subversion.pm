@@ -45,18 +45,26 @@ require "timelocal.pl";
 
 sub new {
   my $proto = shift;
-  my $config = shift;
+  my $config = undef;
+  $config = shift if (ref($_[0]) eq "PurpleWiki::Config");
   my %args = @_;
-  die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
 
-  $self->{script} = $config->ScriptName;
-  my $reposPath =  $config->ReposPath || '';
+  my ($reposdir, $reposPath) = ('', '');
+  if ($config) {
+    $reposdir = $config->DataDir;
+    $reposPath =  $config->ReposPath || '';
+  } else {
+    my $x;
+    $reposdir = $x if (defined($x=$args{DataDir}));
+    $reposPath = $x if (defined($x=$args{ReposPath}));
+  }
+  die "No config or data dir defined\n" unless $reposdir;
+
   substr($reposPath,-1) = '' if (substr($reposPath,-1) eq '/');
   $self->{reposPath} = $reposPath;
 #print STDERR "P:$reposPath\n";
-  my $reposdir = $config->DataDir;
   $self->{repository} = $reposdir;
   bless $self, $class;
   return undef unless ($self->_init($reposdir, $args{create}));
@@ -347,7 +355,8 @@ sub getRevisions {
     $t = _svn_time($t);
     $u =~ s/:.*$//;
 #print STDERR "log (r=>$r, u=>$u, t=>$t, s=>$l) $#response\n";
-    push( @response, {revision=>$r, user=>$u, dateTime=>$t, summary=>$l} );
+    push( @response, {revision=>$r, user=>$u,
+                      dateTime=>UseModWiki::TimeToText($t), summary=>$l} );
   }
 
   my $repos = $self->{repos_ptr};
@@ -355,23 +364,6 @@ sub getRevisions {
   my $curRev = $self->_currentRev;
   $repos->get_logs($path, $curRev, 1, 0, 1, \&receiver2);
 
-#print STDERR "get_logs($path, ",$self->_currentRev,") = $#response\n";
-  my $changeRev = $self->_get_root($curRev)->node_created_rev($path);
-  for my $h (@response) {
-    $h->{dateTime} = UseModWiki::TimeToText($h->{dateTime});
-    my $rev = $h->{revision};
-#print STDERR "Revs Ch:$changeRev Cr:$curRev R:$rev\n";
-    if ($changeRev == $rev) {
-        $h->{pageUrl} = $self->{script} . "?$id";
-    } else {
-        $h->{pageUrl} = $self->{script}
-            . "?action=browse&amp;id=$id&amp;revision=$rev";
-        $h->{diffUrl} = $self->{script}
-            . "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
-        $h->{editUrl} = $self->{script}
-            . "?action=edit&amp;id=$id&amp;revision=$rev";
-    }
-  }
   return @response;
 }
 

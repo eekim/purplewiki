@@ -100,14 +100,10 @@ ACLDriver           = PurpleWiki::ACL
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 
 # == You should not have to change anything below this line. =============
-PageDir     = $DataDir/page      # Stores page data
 UserDir     = $DataDir/user      # Stores user data
-KeepDir     = $DataDir/keep      # Stores kept (old) page data
 TempDir     = $DataDir/temp      # Temporary files and locks
 LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
-RcFile      = $DataDir/rclog     # New RecentChanges logfile
-RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 TemplateDir = $DataDir/templates # templates
 LocaleFile  = $DataDir/messages.l10n # Localization messages
 

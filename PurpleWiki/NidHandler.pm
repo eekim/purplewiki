@@ -38,7 +38,7 @@ use CGI;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $purpleConfig = new PurpleWiki::Config($ENV{WIKIDB});
+my $purpleConfig = new PurpleWiki::Config($ENV{PW_CONFIG_DIR});
 
 sub handler {
     my $r = shift;
@@ -82,8 +82,8 @@ sub _getURL {
     my $purpleConfig = shift;
     my $nid = shift;
 
-    # never pass remote sequence here, or you just get a big mess
-    my $sequence = new PurpleWiki::Sequence($purpleConfig->DataDir());
+    # use LocalSequenceDir only
+    my $sequence = new PurpleWiki::Sequence($purpleConfig->LocalSequeceDir());
 
     $r->print($sequence->getURL($nid));
 }
@@ -94,7 +94,7 @@ sub _getNIDs {
     my $count = shift;
     my $url = shift;
 
-    my $sequence = new PurpleWiki::Sequence($purpleConfig->DataDir());
+    my $sequence = new PurpleWiki::Sequence($purpleConfig->LocalSequeceDir());
 
     while ($count-- > 0) {
         $r->print($sequence->getNext($url), "\n");
