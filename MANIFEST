@@ -166,6 +166,9 @@ wikidb/templates/previewPage.ht
 wikidb/templates/previewPage.tt
 wikidb/templates/recentChangesLoop.ht
 wikidb/templates/removeEditLock.tt
+wikidb/templates/searchForm.ht
+wikidb/templates/searchResults.tt
+wikidb/templates/showRevision.ht
 wikidb/templates/viewDiff.ht
 wikidb/templates/viewDiff.tt
 wikidb/templates/viewPageHistory.tt
@@ -201,3 +204,4 @@ wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
 wikidb/templates/lib/searchResults.tt
 wiki.pl
+META.yml                                Module meta-data (added by MakeMaker)
