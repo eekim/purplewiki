@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.5 2002/11/22 21:23:05 eekim Exp $
+# $Id: WikiText.pm,v 1.6 2002/11/24 08:37:50 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -31,7 +31,6 @@ package PurpleWiki::View::WikiText;
 
 use 5.006;
 use strict;
-use warnings;
 use PurpleWiki::Tree;
 
 # globals
@@ -53,8 +52,8 @@ my %structuralActionMap = (
         'pre' => sub { $indentDepth++; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { $indentDepth--;
-                        print "\n" if ($indentDepth == 0);
-                        undef $lastInlineProcessed; return; },
+                        undef $lastInlineProcessed;
+                        return "\n" if ($indentDepth == 0); },
     },
     'ul' => {
         'pre' => sub { push @listStack, 'ul'; return; },
