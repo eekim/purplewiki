@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.14 2003/08/22 01:00:42 cdent Exp $
+# $Id: Page.pm,v 1.15 2004/01/09 08:35:12 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -34,7 +34,7 @@ use PurpleWiki::Database::Page;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.14 2003/08/22 01:00:42 cdent Exp $
+# $Id: Page.pm,v 1.15 2004/01/09 08:35:12 eekim Exp $
 
 use vars qw($MainPage $VERSION);
 $VERSION = '0.9';
@@ -164,9 +164,18 @@ sub GetPageLinkText {
 sub ScriptLink {
   my ($action, $text, $config) = @_;
 
+  my $baseUrl;
   my $scriptName = $config->ScriptName;
-
-  return "<a href=\"$scriptName?$action\">$text</a>";
+  my $siteBase = $config->SiteBase;
+  if ($siteBase) {
+      $scriptName =~ s/^\///;
+      $siteBase =~ s/\/$//;
+      $baseUrl = "$siteBase/$scriptName";
+  }
+  else {
+      $baseUrl = $scriptName;
+  }
+  return "<a href=\"$baseUrl?$action\">$text</a>";
 }
 
 sub GetEditLink {
