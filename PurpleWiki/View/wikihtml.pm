@@ -175,7 +175,6 @@ sub prePre {
 
     $self->_hardRule(0);
     $self->_openTagWithNID(@_);
-    $self->{outputString} .= "\n";
 }
 
 sub liMain { shift->_liRecurse(@_) }
