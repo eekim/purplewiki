@@ -1,22 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
-                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title>[% siteName %]: [% pageName %]</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
-</head>
-<body>
-<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+[% INCLUDE common/header.tt
+           title = pageName
+           titleUrl = backlinksUrl
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
@@ -33,31 +20,8 @@
 
 <hr />
 
-<div>
-[% IF revision %]
-<a href="[% pageUrl %]">View current revision</a>
-[% ELSE %]
-<a href="[% editUrl %]">Edit text of this page</a> |
-<a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
-</div>
+[% INCLUDE common/pagebar.tt %]
 
-<div>
-[% IF revision %]
-Edited
-[% ELSE %]
-Last edited
-[% END %]
-[% lastEdited %]
-<a href="[% diffUrl %]">(diff)</a></div>
+[% INCLUDE common/searchbar.tt %]
 
-<div>
-<form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-Search:
-<input type="text" name="search"  size="20" />
-<input type="hidden" name="dosearch" value="1" />
-</form>
-</div>
-
-</body>
-</html>
+[% INCLUDE common/footer.tt %]

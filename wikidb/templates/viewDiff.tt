@@ -1,81 +1,20 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
-                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title>[% siteName %]: [% pageName %]</title>
-<link rel="stylesheet" href="[% cssFile %]" />
-</head>
-<body>
-<h1><a href="[% searchUrl %][% pageName %]">[% pageName %]</a></h1>
+[% INCLUDE common/header.tt
+           title = pageName
+           titleUrl = backlinksUrl
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
-[% IF revision %]
-<p><b>Difference (from revision [% revision %] to current revision)</b>
-[% ELSIF nodiff %]
-<p><b>No diff available -- this is the first [% diffType %] revision</b>
-[% ELSE %]
-<p><b>Difference (from prior [% diffType %] revision)</b>
-[% END %]
-
-[% IF diffLinks.size == 0 %]
-(No diff available)
-[% ELSE %]
-  (
-  [% FOREACH diffLink = diffLinks %]
-    [% IF diffLink.type == 'major' %]
-    <a href="[% diffLink.url %]">major diff</a>
-    [% ELSIF diffLink.type == 'minor' %]
-    <a href="[% diffLink.url %]">minor diff</a>
-    [% ELSIF diffLink.type == 'author' %]
-    <a href="[% diffLink.url %]">author diff</a>
-    [% END %]
-    [% IF NOT loop.last %],[% END %]
-  [% END %]
-  )
-[% END %]
-</p>
-
-[% IF diffs.size == 0 %]
-<p>(The revisions are identical or unavailable.)</p>
-[% ELSE %]
-  [% FOREACH diff = diffs %]
-    [% IF diff.type == 'status' %]
-    <p><b>[% diff.text %]</b></p>
-    [% ELSIF diff.type == 'removed' %]
-    <table width="95%" bgcolor="#ffffaf">
-    <tr><td>
-      [% diff.text %]
-    </td></tr>
-    </table>
-    [% ELSIF diff.type == 'added' %]
-    <table width="95%" bgcolor="#cfffcf">
-    <tr><td>
-      [% diff.text %]
-    </td></tr>
-    </table>
-    [% END %]
-  [% END %]
-[% END %]
+[% INCLUDE lib/diffs.tt %]
 
 <hr />
 
-<div><a href="[% revisionsUrl %]">View other revisions</a></div>
+<div class="pagebar"><a href="[% revisionsUrl %]">View other revisions</a></div>
 
-<div>Last edited [% lastEdited %]</div>
+<div class="pagebar">Last edited [% lastEdited %]</div>
 
-<div>
-<form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-Search:
-<input type="text" name="search"  size="20" />
-<input type="hidden" name="dosearch" value="1" />
-</form>
-</div>
+[% INCLUDE common/searchbar.tt %]
 
-</body>
-</html>
+[% INCLUDE common/footer.tt %]

@@ -1,21 +1,9 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html>
-<head>
-<title>[% siteName %]: [% pageName %]</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
-</head>
-<body>
-<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+[% INCLUDE common/header.tt
+           title = pageName
+           titleUrl = backlinksUrl
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
@@ -32,70 +20,12 @@
 
 <hr />
 
-[% IF daysAgo %]
-<h2>Updates in the last [% daysAgo %] days</h2>
-[% ELSE %]
-<h2>Updates since [% changesFrom %]</h2>
-[% END %]
+[% INCLUDE lib/recentChanges.tt %]
 
-<p>
-[% FOREACH rcDay = rcDays %]
-<a href="[% rcDay.url %]">[% rcDay.num %] days</a>
-[% IF NOT loop.last %]|[% END %]
-[% END %]
-</p>
-
-[% FOREACH date = recentChanges %]
-<p><b>[% date.date %]</b></p>
-<ul>
-  [% FOREACH page = date.pages %]
-  <li><a href="[% page.diffUrl %]">(diff)</a>
-      <a href="[% baseUrl %]?[% page.name %]">[% page.name %]</a> [% page.time %]
-      [% IF page.numChanges > 1 %]
-      ([% page.numChanges %] <a href="[% page.changeUrl %]">changes</a>)
-      [% END %]
-      [% IF page.summary %]
-      <b>[[% page.summary %]]</b>
-      [% END %]
-      . . . . .
-      [% IF page.userName %]
-      <a href="[% baseUrl %]?[% page.userName %]" title="ID [% page.userId %] from [% page.host %]">[% page.userName %]</a>
-      [% ELSE %]
-      [% page.host %]
-      [% END %]
-  </li>
-  [% END %]
-</ul>
-[% END %]
-
-<p>Page generated [% currentDate %]</p>
 <hr />
 
-<div>
-[% IF revision %]
-<a href="[% pageUrl %]">View current revision</a>
-[% ELSE %]
-<a href="[% editUrl %]">Edit text of this page</a> |
-<a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
-</div>
+[% INCLUDE common/pagebar.tt %]
 
-<div>
-[% IF revision %]
-Edited
-[% ELSE %]
-Last edited
-[% END %]
-[% lastEdited %]
-<a href="[% diffUrl %]">(diff)</a></div>
+[% INCLUDE common/searchbar.tt %]
 
-<div>
-<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-Search:
-<input type="text" name="search"  size="20" />
-<input type="hidden" name="dosearch" value="1" />
-</form>
-</div>
-
-</body>
-</html>
+[% INCLUDE common/footer.tt %]

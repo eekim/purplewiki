@@ -1,25 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html>
-<head>
-<title>[% siteName %]: Editing [% pageName %]</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
-</head>
-<body>
-[% IF revision %]
-<h1>Editing revision [% revision %] of [% pageName %]</h1>
-[% ELSE %]
-<h1>Editing [% pageName %]</h1>
-[% END %]
+[% INCLUDE common/header.tt
+           title = "Editing $pageName"
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
@@ -54,6 +37,6 @@ replace the latest revision with this text.</b></p>
 
 <hr />
 
-<div><a href="[% revisionsUrl %]">View other revisions</a></div>
-</body>
-</html>
+<div class="pagebar"><a href="[% revisionsUrl %]">View other revisions</a></div>
+
+[% INCLUDE common/footer.tt %]

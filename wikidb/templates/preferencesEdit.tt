@@ -1,21 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html>
-<head>
-<title>[% siteName %]: Editing Preferences</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
-</head>
-<body>
-<h1>Editing Preferences</h1>
+[% INCLUDE common/header.tt
+           title = "Editing Preferences"
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
@@ -94,5 +81,4 @@ Time Zone offset (hours): <input type="text" name="p_tzoffset" value="[% tzOffse
 
 <hr />
 
-</body>
-</html>
+[% INCLUDE common/footer.tt %]

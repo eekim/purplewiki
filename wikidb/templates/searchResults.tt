@@ -1,56 +1,15 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
-                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-<html>
-<head>
-<title>[% siteName %]: Search for: [% keywords %]</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
-</head>
-<body>
-<h1>Search for: [% keywords %]</h1>
+[% INCLUDE common/header.tt
+           title = "Search for: $keywords"
+%]
 
-<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
-<a href="[% preferencesUrl %]">Preferences</a></div>
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
-<ul>
-[% FOREACH module = modules %]
-  <li><a href="#[% module %]">[% module %]</a></li>
-[% END %]
-</ul>
-
-[% FOREACH module = modules %]
-  <h2><a name="[% module %]">[% module %]</a></h2>
-  [% FOREACH result = results.$module %]
-    <p><a href="[% result.url %]">[% result.title %]</a>
-    [% IF result.lastModified %]
-      -- <i>[% result.lastModified %]</i>
-    [% END %]
-    [% IF result.summary %]
-      <br />
-      [% result.summary %]
-    [% END %]
-    </p>
-  [% END %]
-[% END %]
+[% INCLUDE lib/searchResults.tt %]
 
 <hr />
 
-<div>
-<form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-Search:
-<input type="text" name="search" value="[% keywords %]" size="20" />
-<input type="hidden" name="dosearch" value="1" />
-</form>
-</div>
+[% INCLUDE common/searchbar.tt %]
 
-</body>
-</html>
+[% INCLUDE common/footer.tt %]
