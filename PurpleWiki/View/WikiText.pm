@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.4 2002/11/22 21:17:36 eekim Exp $
+# $Id: WikiText.pm,v 1.5 2002/11/22 21:23:05 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -40,6 +40,7 @@ my $sectionDepth = 0;
 my $indentDepth = 0;
 my @listStack;
 my $lastInlineProcessed;
+my @sectionState;
 
 my %structuralActionMap = (
     'section' => {
