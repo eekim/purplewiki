@@ -46,6 +46,7 @@ sub process {
     my $self = shift;
     my $file = shift;
     my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ],
+				   POST_CHOMP => 1,
                                    FILTERS => { 'php' => \&_phpFilter } });
     my $output;
 

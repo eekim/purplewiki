@@ -2,8 +2,6 @@
            title = "Saving Preferences"
 %]
 
-<hr />
-
 [% IF errorUserName %]
 <p>Invalid UserName [% username %]: not saved.</p>
 [% ELSIF NOT userName %]
@@ -22,9 +20,5 @@
 Local time: [% localTime %]</p>
 
 <p><b>Preferences saved.</b></p>
-
-<hr />
-
-[% INCLUDE common/searchbar.tt %]
 
 [% INCLUDE common/footer.tt %]

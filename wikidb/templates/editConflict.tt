@@ -2,8 +2,6 @@
            title = "Editing $pageName"
 %]
 
-<hr />
-
 [% IF revision %]
 <p><b>Editing old revision [% revision %]. Saving this page will
 replace the latest revision with this text.</b></p>
@@ -24,14 +22,14 @@ be saved.</b></p>
 <p>Last save time: [% lastSavedTime %] (Current time is: [% currentTime %])</p>
 
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-<input type="hidden" name="title" value="[% pageName %]" />
+<input type="hidden" name="title" value="[% id %]" />
 <input type="hidden" name="oldtime" value="[% pageTime %]" />
 <input type="hidden" name="oldconflict" value="[% isConflict %]" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />
 [% END %]
 
-<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:100%">
+<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:75%">
 [% oldText %]
 </textarea>
 
@@ -51,14 +49,10 @@ be saved.</b></p>
 
 <p><b>This is the text you submitted:</b></p>
 
-<textarea name="newtext" rows="10" cols="65" wrap="virtual" style="width:100%">
+<textarea name="newtext" rows="10" cols="65" wrap="virtual" style="width:75%">
 [% newText %]
 </textarea>
 
 <div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
-
-<hr />
-
-<div class="pagebar"><a href="[% revisionsUrl %]">View other revisions</a></div>
 
 [% INCLUDE common/footer.tt %]

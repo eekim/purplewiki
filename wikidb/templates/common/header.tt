@@ -4,18 +4,44 @@
 <html>
 <head>
 <title>[% siteName %]: [% title %]</title>
-[% IF siteBase %]
-  <base href="[% siteBase %]" />
-[% END %]
-[% IF cssFile %]
-<link rel="stylesheet" href="[% cssFile %]" />
-[% END %]
+<link rel="stylesheet" href="/purplewiki.css" />
 </head>
+
 <body>
-[% IF titleUrl %]
-<h1><a href="[% titleUrl %]">[% title %]</a></h1>
-[% ELSE %]
+
+<div id="header">
+<table width="100%" border="0">
+  <tr valign="bottom">
+    <td align="left">
 <h1>[% title %]</h1>
+    </td>
+    <td align="right">
+[% INCLUDE common/navbar.tt %]
+    </td>
+  </tr>
+</table>
+</div>
+
+<div id="body">
+[% IF visitedPages.size > 0 %]
+<div id="sidebar">
+<h3>Visited Pages</h3>
+
+<ul>
+  [% FOREACH page = visitedPages %]
+  <li><a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a></li>
+  [% END %]
+</ul>
+</div>
 [% END %]
 
-[% INCLUDE common/navbar.tt %]
+[% IF titleUrl %]
+<div id="sidebar">
+<h3><a href="[% titleUrl %]">View Backlinks</a></h3>
+</div>
+[% END %]
+
+<div id="sidebar">
+[% INCLUDE common/searchbar.tt %]
+</div>
+

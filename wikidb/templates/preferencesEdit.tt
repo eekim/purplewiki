@@ -2,8 +2,6 @@
            title = "Editing Preferences"
 %]
 
-<hr />
-
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 <input type="hidden" name="edit_prefs" value="1" />
 
@@ -30,7 +28,5 @@ Time Zone offset (hours): <input type="text" name="p_tzoffset" value="[% tzOffse
 
 <p><input type="submit" name="Save" value="Save" /></p>
 </form>
-
-<hr />
 
 [% INCLUDE common/footer.tt %]

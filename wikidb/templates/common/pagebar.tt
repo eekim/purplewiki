@@ -1,12 +1,19 @@
+[% IF editUrl %]
 <div class="pagebar">
 [% IF revision %]
 <a href="[% pageUrl %]">View current revision</a>
 [% ELSE %]
 <a href="[% editUrl %]">Edit text of this page</a> |
 <a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
 </div>
+[% END %]
+[% ELSIF showDiff %]
+<div class="pagebar">
+<a href="[% revisionsUrl %]">View other revisions</a>
+</div>
+[% END %]
 
+[% IF lastEdited %]
 <div class="pagebar">
 [% IF revision %]
 Edited
@@ -16,3 +23,4 @@ Last edited
 [% lastEdited %]
 <a href="[% diffUrl %]">(diff)</a>
 </div>
+[% END %]

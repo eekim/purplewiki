@@ -3,22 +3,20 @@
            titleUrl = backlinksUrl
 %]
 
-<hr />
-
 [% IF revision %]
 <p><b>Editing old revision [% revision %]. Saving this page will
 replace the latest revision with this text.</b></p>
 [% END %]
 
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-<input type="hidden" name="title" value="[% pageName %]" />
+<input type="hidden" name="title" value="[% id %]" />
 <input type="hidden" name="oldtime" value="[% pageTime %]" />
 <input type="hidden" name="oldconflict" value="0" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />
 [% END %]
 
-<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:100%">
+<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:75%">
 [% oldText %]
 </textarea>
 
@@ -50,9 +48,5 @@ replace the latest revision with this text.</b></p>
 <hr />
 
 <h2>Preview only, not yet saved</h2>
-
-<hr />
-
-<div><a href="[% revisionsUrl %]">View other revisions</a></div>
 
 [% INCLUDE common/footer.tt %]
