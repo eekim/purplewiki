@@ -1,0 +1,83 @@
+INSTALLATION
+
+To install PurpleWiki, you must first install the modules, then
+install and configures the scripts you will use.
+
+PurpleWiki has several requirements:
+
+  * A web server that can run CGI programs.
+
+  * Perl version 5.6.0 or greater.
+
+  * The following CPAN modules:
+
+    + AppConfig
+    + Algorithm::Diff
+    + Authen::Captcha
+    + CGI
+    + CGI::Carp
+    + CGI::Session
+    + DB_File
+    + LWP::UserAgent
+    + Template
+    + Text::Diff
+    + Text::Wrap
+    + XML::RSS
+
+To install the modules, first unpack the distribution.  This will
+create a PurpleWiki-0.95 directory.  Change directories, and execute
+the following commands:
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+To install the Wiki:
+
+  1. Copy the wikidb directory included in the distribution wherever
+     you want it.  Copy the directory and all its contents, including
+     subdirectories. This directory must be writeable by the web server
+     when running CGI scripts.  It should not be in the publically
+     accessible htdocs directory.
+
+  2. Edit wiki.pl, changing $CONFIG_DIR to the directory you just
+     created.  You can also set this value by setting the environment
+     variable PW_CONFIG_DIR.  If you're using Apache, you can do this
+     by adding the following to your httpd.conf file:
+
+     SetEnv PW_CONFIG_DIR /var/www/wikidb
+
+     where /var/www/wikidb is the full pathname of your wikidb
+     directory.
+
+  3. Copy wiki.pl to your cgi-bin directory.
+
+  4. Edit the config file:
+
+    + Change BaseURL to the URL path of the Wiki CGI
+      (e.g. http://foo.bar/cgi-bin/wiki.pl).  It must be a fully
+      qualified URL.
+
+    + Change SiteName to the name of the Wiki.
+
+  5. If you would like to change the look-and-feel of the site, edit
+     the templates in wikidb/templates.  All of the Wiki's HTML output
+     -- including links to the CSS stylesheet -- is stored in these
+     templates.  More information is available in docs/Templates.wiki.
+
+The Wiki should now be installed.  To test, point your web browser to
+the PurpleWiki URL.  You should see a page called FrontPage that says,
+"Describe the new page here."  Clicking "Edit text of this page" will
+allow you to edit this page.  Add some text, and click save.  If
+everything works, your installation is a success!
+
+If you plan to take advantage of Search modules beyond the default,
+read the documentation found within the modules to be found in the
+Search directory of your PurpleWiki installation in site_perl or 
+elsewhere in @INC. Those files include additional configuration
+requirements.
+
+For more information see:
+
+  http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?InstallationTips
