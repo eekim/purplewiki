@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.7.4.1 2003/01/21 06:45:54 eekim Exp $
+# $Id: WikiText.pm,v 1.7.4.2 2003/01/22 22:43:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -133,8 +133,8 @@ sub parse {
                     }
                     $currentNode = &_parseList($listType, length $1,
                                                \$listDepth, $currentNode,
-                                               \$biggestNidSeen, $2, $3,
-                                               %params);
+                                               \$biggestNidSeen, \%params,
+                                               $2, $3);
                     $isStart = 0 if ($isStart);
                 }
             }
@@ -303,8 +303,7 @@ sub _terminateParagraph {
 
 sub _parseList {
     my ($listType, $listLength, $listDepthRef,
-        $currentNode, $biggestNidSeenRef, @nodeContents,
-        %params) = @_;
+        $currentNode, $biggestNidSeenRef, $paramRef, @nodeContents) = @_;
     my ($currentNid);
 
     while ($listLength > ${$listDepthRef}) {
@@ -319,7 +318,7 @@ sub _parseList {
     $currentNid = $1;
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
-            'content'=>&_parseInlineNode($nodeContents[0], %params));
+            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
             $currentNode->id($currentNid);
             if (${$biggestNidSeenRef} < $currentNid) {
@@ -330,7 +329,7 @@ sub _parseList {
         $nodeContents[1] =~  s/\s+\[nid (\d+)\]$//s;
         $currentNid = $1;
         $currentNode = $currentNode->insertChild('type'=>'dd',
-            'content'=>&_parseInlineNode($nodeContents[1], %params));
+            'content'=>&_parseInlineNode($nodeContents[1], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
             $currentNode->id($currentNid);
             if (${$biggestNidSeenRef} < $currentNid) {
@@ -341,7 +340,7 @@ sub _parseList {
     }
     else {
         $currentNode = $currentNode->insertChild('type'=>'li',
-            'content'=>&_parseInlineNode($nodeContents[0], %params));
+            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
             $currentNode->id($currentNid);
             if (${$biggestNidSeenRef} < $currentNid) {
@@ -381,12 +380,12 @@ sub _parseInlineNode {
         $rxTripleQuotes |
         $rxI |
         $rxDoubleQuotes |
-        \\\[$rxProtocols$rxAddress\s*.*?\\\] |
+        \\\[$rxProtocols$rxAddress\\s*.*?\\\] |
         $rxProtocols$rxAddress};
     if ($params{wikiword}) {
         $rx .= qq{ |
-        (?:$rxWikiWord)?\/$rxSubpage(?:\\\#\d+)?$rxQuoteDelim |
-        [A-Z]\w+:$rxWikiWord(?:\\\#\d+)?$rxQuoteDelim |
+        (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#\\d+)?$rxQuoteDelim |
+        [A-Z]\\w+:$rxWikiWord(?:\\\#\\d+)?$rxQuoteDelim |
         $rxWikiWord(?:\\\#\d+)?$rxQuoteDelim};
     }
     if ($params{freelink}) {
@@ -459,13 +458,13 @@ sub _parseInlineNode {
             }
         }
         elsif ($params{wikiword} &&
-               $node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s) {
+               ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
         elsif ($params{wikiword} &&
-               $node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s) {
+               ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
             if (&PurpleWiki::Page::siteExists($site)) {
@@ -494,7 +493,7 @@ sub _parseInlineNode {
             }
         }
         elsif ($params{wikiword} &&
-               $node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
+               ($node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
@@ -781,6 +780,9 @@ are supported:
 
   add_node_ids -- Add IDs to structural nodes that do not already
                   have them.
+
+  wikiword     -- Parse WikiWords.
+  freelink     -- Parse free links (e.g. [[free link]]).
 
 =head1 AUTHORS
 
