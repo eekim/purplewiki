@@ -91,6 +91,7 @@ t/config.tMod
 t/config.tSVN
 t/conversion.sh
 t/database.t
+t/filter.t
 t/inline_node.t
 t/intermap
 t/messages.l10n
@@ -516,6 +517,7 @@ t/txt/hr4.txt
 t/txt/hr5.txt
 t/txt/hr6.txt
 t/txt/hr7.txt
+t/txt/mixed_list.txt
 t/txt/tree_freelinks.txt
 t/txt/tree_hr.txt
 t/txt/tree_interlinks.txt
@@ -574,6 +576,7 @@ wikidb/templates/en/common/userbarInames.tt
 wikidb/templates/en/common/userbarInamesRegister.tt
 wikidb/templates/en/errors/actionInvalid.tt
 wikidb/templates/en/errors/badInameRegistration.tt
+wikidb/templates/en/errors/captchaInvalid.tt
 wikidb/templates/en/errors/dataDirCannotCreate.tt
 wikidb/templates/en/errors/editBlocked.tt
 wikidb/templates/en/errors/editNotAllowed.tt
