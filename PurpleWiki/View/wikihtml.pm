@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
+# $Id: wikihtml.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -270,7 +270,7 @@ sub _anchor {
     my $string = '';
 
     if ($nid) {
-        $string = '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>';
+        $string = '<a name="nid' . $nid . '" id="nid' . $nid . '"></a>';
     }
 
     return $string;
@@ -284,8 +284,8 @@ sub _nid {
 
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
-	                   'title="' . "0$nid" . '" href="' .
-			   $params{url} . '#nid0' .
+	                   'title="' . "$nid" . '" href="' .
+			   $params{url} . '#nid' .
 			   $nid . '">#</a>';
     }
 

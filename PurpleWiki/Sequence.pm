@@ -1,7 +1,7 @@
 # PurpleWiki::Sequence.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Sequence.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
+# $Id: Sequence.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,26 +33,24 @@ package PurpleWiki::Sequence;
 # Tool for generating PurpleWiki::Sequence numbers for use
 # in Nids
 
-# $Id: Sequence.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
+# $Id: Sequence.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
 
 use strict;
 use IO::File;
 use DB_File;
 
-my $ORIGIN = '000000';
+my $ORIGIN = '0';
 my $LOCK_WAIT = 1;
 my $LOCK_TRIES = 5;
 
 sub new {
     my $proto = shift;
     my $datadir = shift;
-    my $origin = shift || $ORIGIN;
     my $class = ref($proto) || $proto;
     my $self = {};
 
     $self->{datafile} = $datadir . '/sequence';
     $self->{indexfile} = $datadir . '/sequence.index';
-    $self->{origin} = $origin;
     bless ($self, $class);
     return $self;
 }
@@ -86,8 +84,6 @@ sub _updateIndex {
     untie %index;
 }
 
-
-
 sub _retrieveNextValue {
     my $self = shift;
 
@@ -113,28 +109,20 @@ sub _incrementValue {
     my $self = shift;
     my $oldValue = shift;
 
-
     my @oldValues = split('', $oldValue);
     my @newValues;
     my $carryBit = 1;
-    my $loopCount = 0;
 
-    # FIXME: can do this in a map?
     foreach my $char (reverse(@oldValues)) {
-        $loopCount++;
         if ($carryBit) {
             my $newChar;
             ($newChar, $carryBit) = $self->_incChar($char);
-            # FIXME: this is bogus, be graceful
-            if ($carryBit && $loopCount >= length($self->{origin})) {
-                die "Overflow!";
-            }
             push(@newValues, $newChar);
         } else {
             push(@newValues, $char);
         }
     }
-
+    push(@newValues, '1') if ($carryBit);
     return join('', (reverse(@newValues)));
 }
 
@@ -146,17 +134,13 @@ sub _incChar {
     if ($char eq 'Z') {
         return '0', 1;
     }
-
     if ($char eq '9') {
         return 'A', 0;
     }
-
     if ($char =~ /[A-Z0-9]/) {
         return chr(ord($char) + 1), 0;
     }
 }
-
-
 
 sub _getCurrentValue {
     my $self = shift;
@@ -169,7 +153,7 @@ sub _getCurrentValue {
         $value = $fh->getline();
         $fh->close();
     } else {
-        $value = $self->{origin};
+        $value = $ORIGIN;
     }
 
     return $value;
@@ -198,7 +182,52 @@ sub _lockFile {
 sub _unlockFile {
     my $self = shift;
     my $dir = $self->{datafile} . '.lck';
-    rmdir($dir) or die "Unale to remove locking directory $dir: $!";
+    rmdir($dir) or die "Unable to remove locking directory $dir: $!";
 }
 
+1;
+__END__
 
+=head1 NAME
+
+PurpleWiki::Sequence - Generates sequences for node IDs
+
+=head1 SYNOPSIS
+
+  use PurpleWiki::Sequence;
+
+  my $dataDir = '/wikidb';
+  my $url = 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl';
+
+  my $sequence = new PurpleWiki::Sequence($dataDir);
+  $sequence->getNext;
+
+=head1 DESCRIPTION
+
+Generates IDs in base 36 (10 digits + 26 uppercase alphabet) for use
+as node IDs.
+
+=head1 METHODS
+
+=head2 new($datadir)
+
+Constructor.  $datadir contains the Wiki configuration/database
+directory.  There, PurpleWiki::Sequence stores the last used ID and an
+index of node IDs to fully qualified URLs (used by Transclusion.pm).
+
+=head2 getNext($url)
+
+Returns the next ID, increments and updates the last used ID
+appropriately.  If $url is passed, also updates the NID to URL index.
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Parser::WikiText>, L<PurpleWiki::Transclusion>.
+
+=cut

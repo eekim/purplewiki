@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
+# $Id: Transclusion.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,7 +39,7 @@ use LWP::UserAgent;
 # good by any stretch of the imagination. It is simply to
 # demonstrate the possibilities that these features allow.
 
-# $Id: Transclusion.pm,v 1.2 2003/06/20 23:54:02 cdent Exp $
+# $Id: Transclusion.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
 
 # The name of the index file. It's directory comes from Config.
 my $INDEX_FILE = 'sequence.index';
@@ -73,13 +73,11 @@ sub new {
 # content associated with the NID. A string containing
 # the content or an error message if it could not be obtained
 # is returned.
-#
-# FIXME: this uses long style nids which are probably going
-# away.
+
 sub get {
     my $self = shift;
     my $nid = shift;
-    my $nidLong = "nid0$nid";
+    my $nidLong = "nid$nid";
 
     # get the URL that hosts this nid out of the the db
     my $url = $self->{db}->{$nid}; 
@@ -104,14 +102,14 @@ sub get {
         if ($result->is_success()) {
             $content = $result->content();
             $content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is;
-            $content =~ s/&nbsp;&nbsp;\s*<a class="nid" title="0$nid".*$//is;
+            $content =~ s/&nbsp;&nbsp;\s*<a class="nid" title="$nid".*$//is;
         } else {
             $content = "unable to retrieve content";
         }
     }
 
     $content = qq(<span id="$nidLong" class="transclusion">) .
-               qq($content&nbsp;<a class="nid" title="0$nid" ) .
+               qq($content&nbsp;<a class="nid" title="$nid" ) .
                qq(href="$url#$nidLong">T</a></span>);
 
     return $content;
