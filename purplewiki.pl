@@ -11,7 +11,7 @@ if (@ARGV < 1) {
 my $wikiContent = &readFile($ARGV[0]);
 my $wiki = PurpleWiki::Tree->new('title'=>$ARGV[0]);
 
-$wiki->parse($wikiContent, 'add_node_ids'=>1);
+$wiki->parse($wikiContent, 'add_node_ids'=>0);
 
 if (@ARGV == 2) {
     print $wiki->view($ARGV[1]);
