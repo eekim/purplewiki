@@ -52,8 +52,8 @@ sub _RequestLockDir {
     my $config = PurpleWiki::Config->instance();
 
     if ($config) {
-        $tempdir = $config->TempDir;
-        $lockdir = $config->LockDir;
+        $tempdir = $config->TempDir || $config->DataDir . "/temp";
+        $lockdir = $config->LockDir || $config->DataDir . "/lock";
     } elsif (!$tempdir) {
         $tempdir = (m|/[^/]+$|) ? $` : '';
     }
@@ -78,7 +78,7 @@ sub _ReleaseLockDir {
     my ($name, $lockdir) = @_;
     my $config = PurpleWiki::Config->instance();
     if ($config) {
-        $lockdir = $config->LockDir;
+        $lockdir = $config->LockDir || $config->DataDir . "/lock";
     }
     die("No lockdir") unless $lockdir;
     rmdir($lockdir . $name);

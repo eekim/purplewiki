@@ -1,4 +1,4 @@
-PurpleWiki version 0.93
+PurpleWiki version 0.95
 =======================
 
 PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
@@ -43,6 +43,7 @@ PurpleWiki has several requirements:
 
     + AppConfig
     + Algorithm::Diff
+    + Authen::Captcha
     + CGI
     + CGI::Carp
     + CGI::Session
@@ -54,7 +55,7 @@ PurpleWiki has several requirements:
     + XML::RSS
 
 To install the modules, first unpack the distribution.  This will
-create a PurpleWiki-0.93 directory.  Change directories, and execute
+create a PurpleWiki-0.95 directory.  Change directories, and execute
 the following commands:
 
   perl Makefile.PL
@@ -71,7 +72,14 @@ To install the Wiki:
      accessible htdocs directory.
 
   2. Edit wiki.pl, changing $CONFIG_DIR to the directory you just
-     created.
+     created.  You can also set this value by setting the environment
+     variable PW_CONFIG_DIR.  If you're using Apache, you can do this
+     by adding the following to your httpd.conf file:
+
+     SetEnv PW_CONFIG_DIR /var/www/wikidb
+
+     where /var/www/wikidb is the full pathname of your wikidb
+     directory.
 
   3. Copy wiki.pl to your cgi-bin directory.
 

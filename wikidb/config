@@ -1,120 +1,96 @@
-# Configuration values are followed by major and minor options.
-# The options are boolean settings. If they are commented out,
-# they are off. At the end are file locations with the data
-# directory, these should not need any changes.
+# PurpleWiki config
+#
+# Configuration values that are commented out are off.  AppConfig
+# doesn't like empty strings, so if you want the value to be an
+# empty string (or off), comment it out.
+#
+# Note: wiki.pl sets $DataDir to the PW_CONFIG_DIR environment variable.
 
-# An empty string for the config values is the default but
-# AppConfig isn't happy with that, so those items must be
-# commented out.
+BaseURL    = http://your.site/cgi-bin/wiki.pl  # Base URL for wiki script
+SiteName   = YourWiki          # Name of site (used for titles)
+CookieDir  = /cgi-bin/         # Directory to the Wiki script (for the cookie)
+#CookieName = YourWiki          # Cookie name.  By default, uses SiteName
+HomePage   = FrontPage         # Home page (change space to _)
+RCName     = RecentChanges     # Name of changes page (change space to _)
 
-BaseURL  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
-CookieDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
-SiteName    = YourWiki          # Name of site (used for titles)
-HomePage    = FrontPage         # Home page (change space to _)
-RCName      = RecentChanges     # Name of changes page (change space to _)
-#ScriptTZ    = ""                # Local time zone
-#Umask       = 0002	             # the umask used when writing files
-LocalSequenceDir = $DataDir     # The directory where purple number sequences live
-#RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
+### Captcha
+# Settings for the auto-generated graphics displayed when
+# someone tries to create an account, confirming that "someone" is a 
+# human and not a spambot.
 
-DefaultLanguage = en           # Default language to use
-#CookieName = YourWiki         # Cookie name.
-
-# Captcha
 CaptchaDataDir = $DataDir/captcha
 CaptchaOutputDir = /var/www/htdocs/captcha
 CaptchaWebDir = /captcha
 
-# PurpleWiki Modules
+### PurpleWiki Modules
 ParserDriver        = PurpleWiki::Parser::WikiText
 TemplateDriver      = PurpleWiki::Template::TT
 UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
 ACLDriver           = PurpleWiki::ACL
 ArchiveDriver       = PurpleWiki::Archive::PlainText
-#DatabasePackage = PurpleWiki::Archive::UseMod
-#DatabasePackage = PurpleWiki::Archive::Subversion
-#ReposPath = /wiki   # needed for Subversion back end
 
-# Recent Changes
+### Major options:
+#LoginToEdit            # require logged in user to edit pages
+#UseINames              # if set use i-names
+EditAllowed            # if set editing allowed
+ShowNid                # if set value of Nid is shown
+FreeUpper              # if set force upper case
+#CreateLinkBefore       # if set, puts create link (?) before the text
+FreeLinks              # if set use [[word]] links
+WikiLinks              # if set use LinkPattern
+UseSubpage             # if set allow subpages
+RunCGI                 # if set Run script as CGI
+
+### Search Modules:
+SearchModule	=	Wiki
+#SearchModule	=	MovableType
+#SearchModule	=	Blosxom
+
+### Search Additional Config
+#MovableTypeDirectory	= 	/home/cdent/www/mt/
+#MovableTypeBlogID	=	1
+#BlosxomEntriesCache =
+#BlosxomDataDir      =
+#BlosxomUrl          =
+
+### Identity Commons i-names
+#ServiceProviderName = "blueoxen"
+#ServiceProviderKey = ""
+#ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
+
+# =========================================================================
+# == You probably won't have to change anything below. ====================
+# =========================================================================
+
+DefaultLanguage = en           # Default language to use
+
+UserDir     = $DataDir/user      # Stores user data
+InterFile   = $DataDir/intermap  # Interwiki site->url map
+SessionDir  = $DataDir/sessions  # sessions
+TemplateDir = $DataDir/templates # templates
+LocaleFile  = $DataDir/messages.l10n # Localization messages
+LocalSequenceDir = $DataDir   # Directory where purple number sequences live
+
+### Post sizes
+MaxPost     = 215040           # Maximum 210K posts (about 200K for pages)
+
+### HttpAuth username and password
+#HttpUser    = ""
+#HttpPass    = ""
+
+### HTML additions and characteristics
+#HttpCharset = ""             # Charset for pages, like "iso-8859-2"
+
+### Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
 RcDays      = 1                # List of days for links on RecentChanges
 RcDays      = 3
 RcDays      = 7
 RcDays      = 30
 RcDays      = 90
-KeepDays    = 30               # Days to keep old revisions
 
-# HttpAuth username and password
-#HttpUser    = ""
-#HttpPass    = ""
-
-# HTML additions and characteristics
-#HttpCharset = ""             # Charset for pages, like "iso-8859-2"
-
-# Post sizes
-MaxPost     = 215040           # Maximum 210K posts (about 200K for pages)
-
-# Major options:
-#LoginToEdit            # require logged in user to edit pages
-#UseINames              # if set use i-names
-UseSubpage             # if set allow subpages
-EditAllowed            # if set editing allowed
-UseDiff                # if set use diff features
-FreeLinks              # if set use [[word]] links
-WikiLinks              # if set use LinkPattern
-RunCGI                 # if set Run script as CGI
-ShowNid                # if set value of Nid is shown
-#NonEnglish             # non english characters in links?
-#SimpleLink
-
-# Create Link Options
-#CreateLinkBefore       # if set, puts create link (?) before the text
-                       # (PHPWiki-style)
-
-# Minor options:
-RecentTop              # if set recent on top
-UseDiffLog             # if set save diffs to log
-KeepMajor              # if set keep major rev
-KeepAuthor             # if set keep author rev
-UseAmPm                # if set use am/pm in times
-FreeUpper              # if set force upper case
-#ShowEdits             # if set show minor edits
-
-# Search Modules:
-SearchModule	=	Wiki
-#SearchModule	=	MovableType
-#SearchModule	=	Blosxom
-#SearchModule	=	Arts
-#SearchModule	=	IrcLogger
-#SearchModule	=	Google
-
-# Search Additional Config
-#MovableTypeDirectory	= 	/home/cdent/www/mt/
-#MovableTypeBlogID	=	1
-#BlosxomEntriesCache =
-#BlosxomDataDir      =
-#BlosxomUrl          =
-#ArtsDirectory		=	/usr/local/etc/
-#IrcLogConfig		=	/home/kb-dev/ircquotes/kbdev.config
-#IrcLogConfig		=	/home/kb-dev/ircquotes/kbeditors.config
-#GoogleWSDL             =       /home/cdent/lib/GoogleSearch.wsdl
-#GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# Identity Commons i-names
-#ServiceProviderName = "blueoxen"
-#ServiceProviderKey = ""
-#ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
-
-# Login redirect.  An optional URL for handling site-wide login in place
-# of the default action=login.
-#LoginRedirect = 
-
-# == You should not have to change anything below this line. =============
-UserDir     = $DataDir/user      # Stores user data
-TempDir     = $DataDir/temp      # Temporary files and locks
-LockDir     = $TempDir/lock      # DB is locked if this exists
-InterFile   = $DataDir/intermap  # Interwiki site->url map
-SessionDir  = $DataDir/sessions  # sessions
-TemplateDir = $DataDir/templates # templates
-LocaleFile  = $DataDir/messages.l10n # Localization messages
-# == End of Configuration =================================================
+### Optional/experimental
+#LoginRedirect =   # URL for handling site-wide login (instead of default)
+#ScriptTZ  = ""                # Local time zone
+#Umask     = 0002	             # the umask used when writing files
+#RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid

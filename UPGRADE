@@ -9,42 +9,76 @@ compatible as well.
 UPGRADING FROM V0.94
 ====================
 
-internationalization.  move templates folder to templates/en.  remove
-CreateLinkText from config.  move wikidb/messages.l10n to wikidb.  add
-LocaleFile to config.
+We made many significant changes in v0.95, which makes upgrading more
+tedious than usual.  However, the changes are well worth it.
 
-config changes:
+First and foremost, v0.95 now has pluggable backends and a new default
+database format (PlainText).  All previous versions used the UseMod
+database format, and while that will still work, we _strongly_ urge
+you to convert your old databases to the new default format.  To do
+this, run:
+
+  extras/backendConvert.pl wikidb newdb http://foo/cgi-bin/wiki.pl
+
+wikidb is the name of your old database.  The new database will be
+written in newdb.  The third parameter is the base URL for your Wiki.
+This is necessary for transclusions to work.
+
+The backendConvert.pl script will convert your data, but you will have
+to copy over the rest of the files in the old wikidb directory
+yourself.  Once you do this, you can delete (or backup) the old wikidb
+directory, and rename the new one back to wikidb.
+
+v0.94 added a new user database, but there were some minor bugs that
+allowed spurious users to be created.  You should remove those by
+rerunning the extras/createUsernameIndex.pl script.  (See below for
+details.)
+
+v0.95 now supports localization.  You will need to move the contents
+of the current templates folder into templates/en.  Remove
+CreateLinkText from config, and move wikidb/messages.l10n into your
+wikidb.  Add LocaleFile to your config with the location of the
+messages.l10n file.
+
+We made several changes to the config file.  Your best bet is to copy
+the new sample file from wikidb/config and to customize accordingly.
+The following summarizes the changes to the file:
 
   TemplateDriver = TT   -->   TemplateDriver = PurpleWiki::Template::TT
 
-rename parameter:
+Renamed variables:
 
   ScriptName     -->  BaseURL
   ScriptDir      -->  CookieDir
 
-add:
+Added:
 
   DefaultLanguage    = en
   #CookieName         = YourWiki
   ParserDriver       = PurpleWiki::Parser::WikiText
   UserDatabaseDriver = PurpleWiki::UserDB::UseMod
   ACLDriver          = PurpleWiki::ACL
-  DatabasePackage = PurpleWiki::Archive::UseMod
+  ArchiveDriver      = PurpleWiki::Archive::PlainText
+  CaptchaDataDir
+  CaptchaOutputDir
+  CaptchaWebDir
+  LocaleFile
+  SessionDir
+  #LoginRedirect
 
-Or you can use a new backend after conversion:
-  DatabasePackage = PurpleWiki::Archive::PlainText
-or:
-  DatabasePackage = PurpleWiki::Archive::Subversion
-  ReposPath   = /wiki
+Removed:
 
-Database conversion:
-backendConvert.pl -o <current data dir> [-O <original package>]
-                  -n <new data dir> [-N <new backend package>]
-
-Reads the database directory which is formatted for the -O option for the
-backend (default is UseMod) and writes to the new directory using -N option
-for the backend (default to PlainText).  No defaults for the directories.
-
+  TempDir
+  LockDir
+  KeepMajor
+  KeepAuthor
+  BracketText
+  KeepDays
+  RecentTop
+  UseDiffLog
+  ShowEdits
+  UseAmPm
+  UseDiff
 
 UPGRADING FROM V0.9.2
 =====================

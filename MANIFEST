@@ -4,6 +4,7 @@ LICENSE
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
+PurpleWiki.pm
 PurpleWiki/ACL.pm
 PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
@@ -182,6 +183,7 @@ t/txt/moin_ol2.txt
 t/txt/moin_pre1.txt
 t/txt/moin_pre2.txt
 t/txt/moin_ul.txt
+wikidb/banlist
 wikidb/config
 wikidb/intermap
 wikidb/messages.l10n
