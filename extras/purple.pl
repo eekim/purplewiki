@@ -33,7 +33,7 @@ use MT::Comment;
 use MT::Template::Context;
 
 my $CONFIG_DIR = '/home/cdent/testwiki';
-my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords
+my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords anywhere
 
 ##### PRESENTATION #####
 
@@ -70,7 +70,9 @@ sub parseForPurple {
     $str = "\n$str\r\n";
     my $config = new PurpleWiki::Config($CONFIG_DIR);
     my $parser = PurpleWiki::Parser::WikiText->new();
-    my $wiki = $parser->parse($str, config => $config, wikiword => $WIKIWORDS);
+    my $wiki = $parser->parse($str,
+            config => $config,
+            wikiword => $WIKIWORDS);
     my $results = $wiki->view('wikihtml', 'url' => $url, config => $config);
 
     return $results;
@@ -113,10 +115,12 @@ my $commentSaveSub = sub {
 
         # process text
         $text =~ s/\r//g;
+        my $config = new PurpleWiki::Config($CONFIG_DIR);
         my $parser = PurpleWiki::Parser::WikiText->new();
         my $wiki = $parser->parse($text, 'add_node_ids' => 1,
+            config => $config,
             'url' => $entry->permalink);
-        $text = $wiki->view('wikitext');
+        $text = $wiki->view('wikitext', config => $config);
         $text =~ s/\r//g;
 
         # save it
@@ -153,10 +157,12 @@ my $entrySaveSub = sub {
     if ($entry->convert_breaks =~ /purpleIN/) {
         my $text = $entry->text;
         $text =~ s/\r//g;
+        my $config = new PurpleWiki::Config($CONFIG_DIR);
         my $parser = PurpleWiki::Parser::WikiText->new();
-        my $wiki = $parser->parse($text, 'add_node_ids'=> 1,
+        my $wiki = $parser->parse($text, 'add_node_ids' => 1,
+            config => $config,
             'url' => $entry->permalink);
-        $text = $wiki->view('wikitext');
+        $text = $wiki->view('wikitext', config => $config);
         $text =~ s/\r//g;
         $entry->text($text);
         $entry->SUPER::save(@_) or return;
