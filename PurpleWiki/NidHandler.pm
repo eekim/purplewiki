@@ -51,7 +51,7 @@ sub handler {
     my $cgi = new CGI;
 
 
-    print $cgi->header(-type => 'text/plain');
+    $r->print($cgi->header(-type => 'text/plain'));
 
     $queryString = $cgi->query_string();
     $pathInfo = $cgi->path_info();
@@ -66,10 +66,10 @@ sub handler {
 
     if (!defined($url)) {
         $nid = $count;
-        _getURL($purpleConfig, $nid);
+        _getURL($r, $purpleConfig, $nid);
     } else {
         $count = 1 if (!length($count));
-        _getNIDs($purpleConfig, $count, "$url$queryString");
+        _getNIDs($r, $purpleConfig, $count, "$url$queryString");
     }
 
     # FIXME: need to be better disciplined in returning
@@ -78,16 +78,18 @@ sub handler {
 }
 
 sub _getURL {
+    my $r = shift;
     my $purpleConfig = shift;
     my $nid = shift;
 
     # never pass remote sequence here, or you just get a big mess
     my $sequence = new PurpleWiki::Sequence($purpleConfig->DataDir());
 
-    print $sequence->getURL($nid);
+    $r->print($sequence->getURL($nid));
 }
 
 sub _getNIDs {
+    my $r = shift;
     my $purpleConfig = shift;
     my $count = shift;
     my $url = shift;
@@ -95,7 +97,7 @@ sub _getNIDs {
     my $sequence = new PurpleWiki::Sequence($purpleConfig->DataDir());
 
     while ($count-- > 0) {
-        print $sequence->getNext($url), "\n";
+        $r->print($sequence->getNext($url), "\n");
     }
 }
 
@@ -116,6 +118,7 @@ PurpleWiki::NidHandler - Remote NID handling for mod_perl (1 or 2)
          SetHandler perl-script
          PerlSetEnv WIKIDB /path/to/wikidb
          PerlResponseHandler  PurpleWiki::NidHandler
+         # PerlHandler for Apache 1
    </Location>
 
 =head1 DESCRIPTION

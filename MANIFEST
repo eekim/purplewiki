@@ -165,6 +165,7 @@ wikidb/config
 wikidb/intermap
 wikidb/templates/editConflict.tt
 wikidb/templates/editPage.tt
+wikidb/templates/handler.tt
 wikidb/templates/loginResults.tt
 wikidb/templates/login.tt
 wikidb/templates/logout.tt

@@ -55,12 +55,11 @@ sub handler {
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
         wikiword => 1,
-        css_file => $CSS,
         url => $url,
     );
 
     # select and load a template driver
-    my $templateDriver = $config->TemplateDriver();
+    my $templateDriver = $purpleConfig->TemplateDriver();
     my $templateClass = "PurpleWiki::Template::$templateDriver";
     eval "require $templateClass";
     my $wikiTemplate = $templateClass->new;
@@ -102,7 +101,7 @@ PurpleWiki::Apache1Handler - Wiki text display handler for mod_perl 1
   <FilesMatch *\.wiki>
       SetHandler perl-script
       PerlSetEnv WIKIDB /path/to/wikidb
-      PerlResponseHandler  PurpleWiki::Apache1Handler
+      PerlHandler  PurpleWiki::Apache1Handler
   </FilesMatch>
 
 =head1 DESCRIPTION
