@@ -50,7 +50,8 @@ sub instance {
     croak "instance() is a class method." if ref $class or not $class;
 
     if ($ENV{MOD_PERL}) {
-        require Apache;
+        require mod_perl;
+        ($mod_perl::VERSION >= 1.99) ? require Apache::compat : require Apache;
         return Apache->request->pnotes("purplewiki_singleton_$class");
     } else {
         no strict 'refs';
@@ -64,7 +65,8 @@ sub setInstance {
     croak "setInstance() is a class method." if ref $class or not $class;
 
     if ($ENV{MOD_PERL}) {
-        require Apache;
+        require mod_perl;
+        ($mod_perl::VERSION >= 1.99) ? require Apache::compat : require Apache;
         Apache->request->pnotes("purplewiki_singleton_$class" => $instance);
     } else {
         no strict 'refs';
