@@ -57,6 +57,7 @@ sub new {
         config => $self->{config},
         url => $self->{url});
     $self->{isPrevSection} = 0;
+    $self->{isStart} = 1;
 
     bless($self, $class);
     return $self;
@@ -66,7 +67,6 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->{sectionState} = [];
     $self->SUPER::view($wikiTree);
-    $self->_hardRule;
     return $self->{outputString};
 }
 
@@ -78,7 +78,10 @@ sub sectionPre {
 }
 
 sub sectionPost { 
+    my $self = shift;
     pop @{shift->{sectionState}}; 
+    $self->_hardRule;
+    $self->{isStart} = 0;
 }
 
 sub indentPre { 
@@ -218,7 +221,12 @@ sub _hardRule {
     my $self = shift;
 
     if ($self->{isPrevSection}) {
-        $self->{outputString} .= "<hr />\n\n";
+        if (!$self->{isStart}) {
+            $self->{outputString} .= "<hr />\n\n";
+        }
+        else {
+            $self->{isStart} = 0;
+        }
         $self->{isPrevSection} = 0;
     }
 }

@@ -53,6 +53,7 @@ sub new {
     $self->{indentDepth} = 0;
     $self->{listStack} = [];
     $self->{isPrevSection} = 0;
+    $self->{isStart} = 1;
     $self->{lastInlineProcessed} = "";
 
     bless($self, $class);
@@ -63,7 +64,6 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->SUPER::view($wikiTree);
     $self->{outputString} = $self->_header($wikiTree) . $self->{outputString};
-    $self->_hardRule;
     return $self->{outputString};
 }
 
@@ -78,6 +78,8 @@ sub sectionPost {
     my $self = shift;
     $self->{sectionDepth}--;
     $self->{lastInlineProcessed} = '';
+    $self->_hardRule;
+    $self->{isStart} = 0;
 }
 
 sub indentPre { 
@@ -118,6 +120,7 @@ sub dlPost { shift->_endList(@_) }
 sub hPre { 
     my $self = shift;
     $self->{isPrevSection} = 0;
+    $self->{isStart} = 0;
     $self->{outputString} .= '=' x $self->{sectionDepth}. ' '; 
 }
 
@@ -276,7 +279,12 @@ sub _hardRule {
     my $self = shift;
 
     if ($self->{isPrevSection}) {
-        $self->{outputString} .= "----\n\n";
+        if (!$self->{isStart}) {
+            $self->{outputString} .= "----\n\n";
+        }
+        else {
+            $self->{isStart} = 0;
+        }
         $self->{isPrevSection} = 0;
     }
 }
