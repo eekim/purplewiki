@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: KeptRevision.pm,v 1.2.2.1 2003/05/21 05:19:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: KeptRevision.pm,v 1.2.2.1 2003/05/21 05:19:00 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -49,7 +49,7 @@ sub new {
     bless ($self, $class);
 
     $self->{id} = $id;
-    $self->{sections} = [];
+    $self->{sections} = ();
     $self->_makeKeptList();
 
     return $self;
@@ -96,11 +96,14 @@ sub trimKepts {
 
     my $expirets = $now - ($KeepDays * 24 * 60 * 60);
 
-    # setting to undef actually going to do it?
+    # was using undef here but that doesn't work,
+    # must use splice
+    my $count = 0;
     foreach my $section (@{$self->{sections}}) {
         if ($section->getKeepTS() < $expirets) {
-            undef $section;
+            splice(@{$self->{sections}}, $count, 1);
         }
+        $count++;
     }
 }
 

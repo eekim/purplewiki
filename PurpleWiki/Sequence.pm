@@ -1,7 +1,7 @@
 # PurpleWiki::Sequence.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Sequence.pm,v 1.1.2.1 2003/02/06 05:19:46 cdent Exp $
+# $Id: Sequence.pm,v 1.1.2.2 2003/05/21 05:19:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,10 +33,11 @@ package PurpleWiki::Sequence;
 # Tool for generating PurpleWiki::Sequence numbers for use
 # in Nids
 
-# $Id: Sequence.pm,v 1.1.2.1 2003/02/06 05:19:46 cdent Exp $
+# $Id: Sequence.pm,v 1.1.2.2 2003/05/21 05:19:00 cdent Exp $
 
 use strict;
 use IO::File;
+use DB_File;
 
 my $ORIGIN = '000000';
 my $LOCK_WAIT = 1;
@@ -58,11 +59,33 @@ sub new {
 # Returns the next ID in the sequence
 sub getNext {
     my $self = shift;
+    my $url = shift;
     $self->_lockFile();
     my $value = $self->_retrieveNextValue();
     $self->_unlockFile();
+    # update the NID to URL index
+    if ($url) {
+        $self->_updateIndex($value, $url);
+    }
     return $value;
 }
+
+# I suspect this is expensive
+sub _updateIndex {
+    my $self = shift;
+    my $value = shift;
+    my $url = shift;
+    my %index;
+
+    tie %index, 'DB_File', $self->{datafile} . '.index', 
+        O_RDWR|O_CREAT, 0644, $DB_HASH ||
+        die "unable to tie " . $self->{datafile} . '.index' . $!;
+
+    $index{$value} = $url;
+    untie %index;
+}
+
+
 
 sub _retrieveNextValue {
     my $self = shift;

@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikihtml.pm
 #
-# $Id: wikihtml.pm,v 1.1 2003/01/18 05:23:45 eekim Exp $
+# $Id: wikihtml.pm,v 1.1.6.1 2003/05/21 05:19:01 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,6 +35,7 @@ use PurpleWiki::Tree;
 # globals
 
 my @sectionState;
+my $urlBase;
 
 my %structuralActionMap = (
                'section' => {
@@ -155,6 +156,8 @@ my %inlineActionMap = (
 
 sub view {
     my ($wikiTree, %params) = @_;
+    
+    $urlBase = $params{urlBase} || '';
 
     return &_traverseStructural($wikiTree->root->children, 0);
 }
@@ -216,9 +219,9 @@ sub _traverseInline {
     foreach my $inlineNode (@{$nodeListRef}) {
         if ($inlineNode->type eq 'link' || $inlineNode->type eq 'url') {
             $outputString .= '<a href="' . $inlineNode->href . '">';
-            $outputString .= '[' if ($inlineNode->type eq 'link');
+	    #$outputString .= '[' if ($inlineNode->type eq 'link');
             $outputString .= &_quoteHtml($inlineNode->content);
-            $outputString .= ']' if ($inlineNode->type eq 'link');
+	    #$outputString .= ']' if ($inlineNode->type eq 'link');
             $outputString .= '</a>';
         }
         elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
@@ -295,9 +298,13 @@ sub _printNid {
     my $nid = shift;
 
     if ($nid) {
-        my $outputString = ' &nbsp;&nbsp; <a class="nid" href="#nid0' . $nid . '">';
-        $outputString .= "(0$nid)</a>";
-        return $outputString;
+	#my $outputString = ' &nbsp;&nbsp; <a class="nid" href="#nid0' . $nid . '">';
+	#$outputString .= "(0$nid)</a>";
+	my $outputString = '&nbsp;&nbsp; <a class="nid" ' .
+			   'title="' . "0$nid" . '" href="' .
+			   $urlBase . '#nid0' .
+			   $nid . '">#</a>';
+	return $outputString;
     }
 }
 

@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.7.6.1 2003/02/06 05:19:46 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.2 2003/05/21 05:19:01 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -38,6 +38,7 @@ use PurpleWiki::Sequence;
 use PurpleWiki::Config;
 
 my $sequence;
+my $url;
 
 ### constructor
 
@@ -56,6 +57,8 @@ sub parse {
     my $this = shift;
     my $wikiContent = shift;
     my %params = @_;
+
+    $url = $params{url};
 
     my $tree = PurpleWiki::Tree->new;
     my ($currentNode, @sectionState, $isStart, $nodeContent);
@@ -153,7 +156,7 @@ sub parse {
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'p',
                 'content'=>&_parseInlineNode($nodeContent));
-            if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]$/)) {
+            if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
                 $currentNode->id($currentNid);
             }
             $currentNode = $currentNode->parent;
@@ -483,7 +486,7 @@ sub _traverseAndAddNids {
              $node->type eq 'li' || $node->type eq 'pre' ||
              $node->type eq 'dt' || $node->type eq 'dd') &&
             !$node->id) {
-            $node->id($sequence->getNext());
+            $node->id($sequence->getNext($url));
         }
         my $childrenRef = $node->children;
         &_traverseAndAddNids($childrenRef)
@@ -629,7 +632,7 @@ is parsed as:
 PurpleWiki's most obvious unique feature is its support of purple
 numbers.  Every structural node gets a node ID that is unique and
 immutable, and which is displayed as a purple number.  PurpleWiki uses
-new markup -- [lastnid], [nid] -- to indicate purple numbers and
+new markup -- [nid] -- to indicate purple numbers and
 related metadata.  The reason these tags exist and are displayed,
 rather than generating purple numbers dynamically, is to enable
 persistent, immutable IDs.  That is, if this paragraph had the purple
@@ -666,14 +669,12 @@ This would be parsed into:
 Because there are no purple numbers in this markup, the parser assigns
 them.  Now the document looks like:
 
-  [lastnid 2]
   = Hello, World! [nid 1] =
 
   This is an example. [nid 2]
 
 Suppose you insert a paragraph before the existing one:
 
-  [lastnid 2]
   = Hello, World! [nid 1] =
 
   New paragraph.
@@ -682,44 +683,27 @@ Suppose you insert a paragraph before the existing one:
 
 When this gets parsed, the new paragraph is assigned an ID;
 
-  [lastnid 3]
   = Hello, World! [nid 1] =
 
   New paragraph. [nid 3]
 
   This is an example. [nid 2]
 
-Note two things.  First, the IDs have stayed with the nodes to which
-they were originally assigned.  Second, the lastnid value has been
-updated.  Suppose we delete the new paragraph, and add a list item
-after the remaining paragraph.  Parsing and adding new IDs will result
-in:
+Note the IDs have stayed with the nodes to which they were
+originally assigned. Suppose we delete the new paragraph, and add
+a list item after the remaining paragraph.  Parsing and adding new
+IDs will result in:
 
-  [lastnid 4]
   = Hello, World! [nid 1] =
 
   This is an example. [nid 2]
 
   * List item. [nid 4]
 
-Note that the list item has a node ID of 4, not 3.  The lastnid value
-prevents node IDs from being reused.
+Note that the list item has a node ID of 4, not 3.
 
 Users are supposed to ignore the purple number tags, but of course,
-there is no way to guarantee this.  Suppose a user changed the list
-item's node ID from 4 to 5, then adds a second list item:
-
-  [lastnid 4]
-  = Hello, World! [nid 1] =
-
-  This is an example. [nid 2]
-
-  * List item. [nid 5]
-  * Second list item.
-
-The lastnid is no longer correct.  However, PurpleWiki realizes that
-the lastnid must be at least 5, corrects the value, and gives the new
-list item a node ID of 6.
+there is no way to guarantee this. 
 
 =head1 METHODS
 

@@ -1,6 +1,6 @@
 # PurpleWiki::Page.pm
 #
-# $Id: Page.pm,v 1.9 2003/01/02 06:06:30 eekim Exp $
+# $Id: Page.pm,v 1.9.6.1 2003/05/21 05:19:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -29,39 +29,37 @@
 
 package PurpleWiki::Page;
 
-# mappings between PurpleWiki code and code withing useMod
+use PurpleWiki::Database::Page;
+use PurpleWiki::Config;
 
-# $Id: Page.pm,v 1.9 2003/01/02 06:06:30 eekim Exp $
+# mappings between PurpleWiki code and code within useMod
+
+# $Id: Page.pm,v 1.9.6.1 2003/05/21 05:19:00 cdent Exp $
 
 sub exists {
     my $id = shift;
 
-    if (defined &UseModWiki::pageExists) {
-        &UseModWiki::pageExists($id) ? return 1 : return 0;
-    }
-    else {
-        return 0;
-    }
+    my $page = new PurpleWiki::Database::Page('id' => $id);
+    return $page->pageExists();
+
 }
 
 sub siteExists {
     my $site = shift;
+    my $status;
+    my $data;
 
-    if (defined &UseModWiki::GetSiteUrl) {
-        (defined &UseModWiki::GetSiteUrl($site)) ? return 1 : return undef;
-    }
-    else {
-        return 0;
-    }
+    ($status, $data) = PurpleWiki::Database::ReadFile($InterFile);
+    return undef if (!$status);
+    my %interSite = split(/\s+/, $data); 
+    return $interSite{$site};
 }
 
 sub getWikiWordLink {
     my $id = shift;
 
     my $results;
-    if (defined &UseModWiki::GetPageOrEditLink) {
-        $results = &UseModWiki::GetPageOrEditLink($id, '');
-    }
+    $results = &GetPageOrEditLink($id, '');
     return _makeURL($results);
 }
 
@@ -69,9 +67,7 @@ sub getInterWikiLink {
     my $id = shift;
     
     my $results;
-    if (defined &UseModWiki::InterPageLink) {
-        $results = (&UseModWiki::InterPageLink($id, ''))[0];
-    }
+    $results = (&InterPageLink($id, ''))[0];
     return _makeURL($results);
 }
 
@@ -79,17 +75,128 @@ sub getFreeLink {
     my $id = shift;
 
     my $results;
-    if (defined &UseModWiki::GetPageOrEditLink) {
-        $results = (&UseModWiki::GetPageOrEditLink($id, ''))[0];
-    }
+    $results = (&GetPageOrEditLink($id, ''))[0];
     return _makeURL($results);
 }
-
-                  
 
 sub _makeURL {
     my $string = shift;
     return ($string =~ /\"([^\"]+)\"/)[0];
+}
+
+# FIXME: this is hackery 
+sub GetPageOrEditLink {
+  my ($id, $name) = @_;
+  my (@temp);
+
+  if ($name eq "") {
+    $name = $id;
+    if ($FreeLinks) {
+      $name =~ s/_/ /g;
+    }
+  }
+  $id =~ s|^/|$MainPage/|;
+  if ($FreeLinks) {
+    $id = &FreeToNormal($id);
+  }
+  my $page = new PurpleWiki::Database::Page('id' => $id);
+  if ($page->pageExists()) {      # Page file exists
+    return &GetPageLinkText($id, $name);
+  }
+  if ($FreeLinks) {
+    if ($name =~ m| |) {  # Not a single word
+      $name = "[$name]";  # Add brackets so boundaries are obvious
+    }
+  }
+  return $name . &GetEditLink($id,"?");
+}
+
+sub FreeToNormal {
+  my ($id) = @_;
+
+  $id =~ s/ /_/g;
+  $id = ucfirst($id);
+  if (index($id, '_') > -1) {  # Quick check for any space/underscores
+    $id =~ s/__+/_/g;
+    $id =~ s/^_//;
+    $id =~ s/_$//;
+    if ($UseSubpage) {
+      $id =~ s|_/|/|g;
+      $id =~ s|/_|/|g;
+    }
+  }
+  if ($FreeUpper) {
+    # Note that letters after ' are *not* capitalized
+    if ($id =~ m|[-_.,\(\)/][a-z]|) {    # Quick check for non-canonical case
+      $id =~ s|([-_.,\(\)/])([a-z])|$1 . uc($2)|ge;
+    }
+  }
+  return $id;
+}
+
+sub GetPageLinkText {
+  my ($id, $name) = @_;
+
+  $id =~ s|^/|$MainPage/|;
+  if ($FreeLinks) {
+    $id = &FreeToNormal($id);
+    $name =~ s/_/ /g;
+  }
+  return &ScriptLink($id, $name);
+}
+
+
+sub ScriptLink {
+  my ($action, $text) = @_;
+
+  my $scriptName; 
+
+  if (defined $UseModWiki::ScriptName) {
+	  $scriptName = $UseModWiki::ScriptName;
+  } else {
+	  $scriptName = '/~cdent/wiki.cgi';
+  }
+
+  return "<a href=\"$scriptName?$action\">$text</a>";
+}
+
+
+sub GetEditLink {
+  my ($id, $name) = @_;
+
+  if ($FreeLinks) {
+    $id = &FreeToNormal($id);
+    $name =~ s/_/ /g;
+  }
+  return &ScriptLink("action=edit&id=$id", $name);
+}
+
+sub InterPageLink {
+    my ($id) = @_;
+    my ($name, $site, $remotePage, $url, $punct);
+
+    ($id, $punct) = &SplitUrlPunct($id);
+
+    $name = $id;
+    ($site, $remotePage) = split(/:/, $id, 2);
+    $url = siteExists($site);
+    return ("", $id . $punct)  if ($url eq "");
+    $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
+    $url .= $remotePage;
+    return ("<a href=\"$url\">$name</a>", $punct);
+}
+
+sub SplitUrlPunct {
+    my ($url) = @_;
+    my ($punct);
+
+    if ($url =~ s/\"\"$//) {
+      return ($url, "");   # Delete double-quote delimiters here
+    }
+    $punct = "";
+    ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
+    $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
+    return ($url, $punct);
 }
 
 1;

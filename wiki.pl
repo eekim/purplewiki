@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.6.2.1 2003/02/06 05:19:46 cdent Exp $
+# $Id: wiki.pl,v 1.6.2.2 2003/05/21 05:19:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -1859,7 +1859,8 @@ sub DoPost {
   # clean \r out of string
   $string =~ s/\r//g;
 
-  my $wiki = $wikiParser->parse($string, 'add_node_ids'=>1);
+  my $url = $q->url() . "?$id";
+  my $wiki = $wikiParser->parse($string, 'add_node_ids'=>1, 'url'=>$url);
   my $output = $wiki->view('wikitext');
 
   $string = $output;

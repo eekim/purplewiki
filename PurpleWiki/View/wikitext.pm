@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikitext.pm
 #
-# $Id: wikitext.pm,v 1.2 2003/01/19 18:38:13 eekim Exp $
+# $Id: wikitext.pm,v 1.2.6.1 2003/05/21 05:19:01 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -259,8 +259,6 @@ sub _printHeader {
     my $wikiTree = shift;
     my $header;
 
-    $header = "[lastnid " . $wikiTree->lastNid . "]\n"
-        if ($wikiTree->lastNid);
     $header .= "[title " . $wikiTree->title . "]\n"
         if ($wikiTree->title);
     $header .= "[subtitle " . $wikiTree->subtitle . "]\n"
