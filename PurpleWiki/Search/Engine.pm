@@ -1,13 +1,12 @@
 # PurpleWiki::Search::Engine.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Engine.pm,v 1.1 2003/12/31 08:02:51 cdent Exp $
+# $Id: Engine.pm,v 1.2 2003/12/31 23:46:12 cdent Exp $
 
 package PurpleWiki::Search::Engine;
 
 use strict;
 use PurpleWiki::Search::Result;
-use Data::Dumper;
 
 sub new {
     my $class = shift;

@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Arts.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Arts.pm,v 1.1 2003/12/31 22:41:35 cdent Exp $
+# $Id: Arts.pm,v 1.2 2003/12/31 23:46:12 cdent Exp $
 #
 # A Search Module for Arts (http://arts.sourceforge.net/) files
 # that have been formatted as PurpleWiki wikitext.
@@ -15,7 +15,8 @@ use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
 use IO::File;
-use Data::Dumper;
+
+my $FILE_MATCH = '\d+\.\d+\.wiki';
 
 # Where the searching is done.
 sub search {
@@ -23,7 +24,7 @@ sub search {
     my $query = shift;
     my @results;
 
-    $self->_initArts();
+    $self->_initRepository();
 
     # Loop through each of the available repositories, looking
     # at the files within for matches on the query.
@@ -33,16 +34,15 @@ sub search {
     foreach my $repository (sort(keys(%{$self->{repositories}}))) {
 
         my $directory = $self->{repositories}{$repository};
+
         opendir(DIR, $directory) ||
             die "unable to open dir $directory: $!\n";
-        my @files = grep(/^\d+\.\d+\.wiki$/, (readdir(DIR)));
+        my @files = grep(/^$self->{fileMatch}$/, (readdir(DIR)));
         closedir(DIR);
 
-        foreach my $file (@files) {
+        foreach my $file (sort {$b <=> $a} @files) {
             my $bodytext;
             my $title;
-            my $url;
-            my $nid;
 
             my $fileref = new IO::File;
             $fileref->open("$directory/$file") ||
@@ -60,18 +60,20 @@ sub search {
             # look for the query
             if ($bodytext =~ /$query/is) {
                 # find the nid
-                $bodytext =~ /$query[^{]*{nid\s+(\w+)}/i;
-                $nid = $1;
+                $bodytext =~ /($query[^{]*){nid\s+(\w+)}/i;
+                my $summary = $1;
+                my $nid = $2;
                 $nid = "#nid$nid" if $nid;
 
                 # FIXME: inconsistency on need of / at end of dir name
-                $url = $self->{artsConfig}{$repository}{urlprefix} . '/' .
-                    $file . $nid;
+                my $url = $self->{repositoryConfig}{$repository}{urlprefix} .
+                    '/' .  $file . $nid;
 
                 # pack the results
                 my $result = new PurpleWiki::Search::Result();
                 $result->setTitle("$repository: $title");
                 $result->setURL($url);
+                $result->setSummary($summary);
                 push(@results, $result);
             }
         }
@@ -80,8 +82,10 @@ sub search {
     return @results;
 }
 
-sub _initArts {
+sub _initRepository {
     my $self = shift;
+
+    $self->{fileMatch} = $FILE_MATCH;
 
     # FIXME: need these to deal with arts.pl broken namespace
     my ($UPDATERDIR, $UPDATEREXT);
@@ -101,7 +105,7 @@ sub _initArts {
     my %repositories;
 
     foreach my $repository (keys(%config)) {
-        if ($config{$repository}{purpleConfig} =
+        if ($config{$repository}{purpleConfig} eq
             $self->{config}->DataDir()) {
             $repositories{$repository} = $config{$repository}{repository};
         }
@@ -109,7 +113,7 @@ sub _initArts {
 
     # FIXME: its redundant to have both of these but I wanted easy
     #        access
-    $self->{artsConfig} = \%config;
+    $self->{repositoryConfig} = \%config;
     $self->{repositories} = \%repositories;
 
     return $self;
