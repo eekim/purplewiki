@@ -108,7 +108,7 @@ sub diffOutput {
             push @out, $_;
         } elsif (/^---$/) {
             $after = 1;
-        } elsif (/^[><]\s+Location=/) {
+        } elsif (/^[><]\s+Location(=|: )/) {
         } elsif (/^[><]\s+(Set-Cookie|Date|<p>Last save time):/) {
         #} elsif (/^[><][\.\s]+(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,/) {
         } elsif (/^< /) {

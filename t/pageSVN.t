@@ -5,7 +5,14 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 17};
+BEGIN {
+    eval { require "SVN::Repos" };
+    if ($@) {
+        print STDERR "Could not find Subversion modules, skiping tests\n";
+        exit;
+    }
+    plan tests => 17;
+};
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
