@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.24 2003/01/18 05:23:45 eekim Exp $
+# $Id: Tree.pm,v 1.24.2.1 2003/01/20 23:06:09 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -36,6 +36,7 @@ use PurpleWiki::View::debug;
 use PurpleWiki::View::text;
 use PurpleWiki::View::wikihtml;
 use PurpleWiki::View::wikitext;
+use PurpleWiki::View::xhtml;
 
 ### constructor
 
@@ -137,6 +138,9 @@ sub view {
     }
     elsif (lc($driver) eq 'text') {
         return &PurpleWiki::View::text::view($this, %params);
+    }
+    elsif (lc($driver) eq 'xhtml') {
+        return &PurpleWiki::View::xhtml::view($this, %params);
     }
 }
 
