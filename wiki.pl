@@ -1134,13 +1134,15 @@ sub UpdatePrefNumber {
 
 sub DoIndex {
     my @pages = &PurpleWiki::Database::AllPagesList($config);
+    my $username;
+    $username = $user->username if ($user);
     $wikiTemplate->vars(siteName => $config->SiteName,
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
-                        userName => $user->username,
-                        escapedUserName => uri_escape($user->username),
+                        userName => $username,
+                        escapedUserName => uri_escape($username),
                         pages => \@pages,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print &GetHttpHeader . $wikiTemplate->process('pageIndex');
