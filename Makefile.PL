@@ -15,6 +15,7 @@ WriteMakefile(
         ],
     'INSTALLSCRIPT' => $cgiDir,
     'PREREQ_PM'		=> {
+	Template => 0,
     	Text::Wrap => 0,
 	Text::Diff => 0,
 	LWP::UserAgent => 0,
