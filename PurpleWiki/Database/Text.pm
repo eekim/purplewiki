@@ -35,6 +35,7 @@ package PurpleWiki::Database::Text;
 # $Id: Text.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
 
 use strict;
+use PurpleWiki::Config;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -48,7 +49,7 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = {};
     $self->{data} = $params{data};
-    $self->{config} = $params{config};
+    $self->{config} = PurpleWiki::Config->instance();
     bless ($self, $class);
 
     $self->_init();

@@ -32,6 +32,7 @@ package PurpleWiki::Parser::WikiText;
 
 use 5.005;
 use strict;
+use PurpleWiki::Config;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;
@@ -78,6 +79,8 @@ sub parse {
     my $this = shift;
     my $wikiContent = shift;
     my %params = @_;
+
+    $params{config} = PurpleWiki::Config->instance();
 
     $url = $params{url};
     $sequence = new PurpleWiki::Sequence($params{config}->LocalSequenceDir,
@@ -219,7 +222,7 @@ sub parse {
                             my $site = $2;
                             my $page = $3;
                             my $rest = $4;
-                            if (&PurpleWiki::Page::siteExists($site, $params{config})) {
+                            if (&PurpleWiki::Page::siteExists($site)) {
                                 @listContents = ("$start$site:$page", $rest);
                             }
                         }
@@ -522,7 +525,7 @@ sub _parseInlineNode {
                ($node =~ /^([A-Z]\w+):([^\]\#\:\s"<>]+(?:\#[A-Z0-9]+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
-            if (&PurpleWiki::Page::siteExists($site, $params{config})) {
+            if (&PurpleWiki::Page::siteExists($site)) {
                 $node =~ s/""$//;
                 push @inlineNodes,
                     PurpleWiki::InlineNode->new('type'=>'wikiword',

@@ -35,6 +35,7 @@ package PurpleWiki::Database::Section;
 # $Id: Section.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
 
 use strict;
+use PurpleWiki::Config;
 use PurpleWiki::Database::Text;
 
 use vars qw($VERSION);
@@ -57,7 +58,7 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = {};
     bless ($self, $class);
-    $self->{config} = $params{config};
+    $self->{config} = PurpleWiki::Config->instance();
     $self->_init(@_);
     return $self;
 }
@@ -67,8 +68,8 @@ sub getText {
     my $self = shift;
 
     if (!ref($self->{data})) {
-        $self->{data} = new PurpleWiki::Database::Text(data => $self->{data},
-            config => $self->{config});
+        $self->{data} = new PurpleWiki::Database::Text(data => $self->{data});
+          
     }
     return $self->{data};
 }
@@ -176,7 +177,7 @@ sub _init {
         $self->{host} = '';
         $self->{id} = $args{userID};
         $self->{username} = $args{username};
-        $self->{data} = new PurpleWiki::Database::Text(config => $self->{config});
+        $self->{data} = new PurpleWiki::Database::Text();
     }
 }
 
