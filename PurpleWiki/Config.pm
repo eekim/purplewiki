@@ -1,9 +1,83 @@
-# == Configuration =======================================================
-# Original version from UseModWiki 0.92 (April 21, 2001)
+# PurpleWiki::Config.pm
+#
+# $Id: Config.pm,v 1.1.2.1 2003/01/21 06:15:39 cdent Exp $
+#
+# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
+#
+# This file is part of PurpleWiki.  PurpleWiki is derived from:
+#
+#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
+#   AtisWiki v0.3             (c) Markus Denker 1998
+#   CVWiki CVS-patches        (c) Peter Merel 1997
+#   The Original WikiWikiWeb  (c) Ward Cunningham
+#
+# PurpleWiki is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the
+#    Free Software Foundation, Inc.
+#    59 Temple Place, Suite 330
+#    Boston, MA 02111-1307 USA
 
+package PurpleWiki::Config;
+
+# PurpleWiki Configuration 
+
+# $Id: Config.pm,v 1.1.2.1 2003/01/21 06:15:39 cdent Exp $
+
+use strict;
+use vars qw(@ISA @EXPORT);
+require Exporter;
+@ISA = qw (Exporter);
+
+@EXPORT = qw(@RcDays
+  $TempDir $LockDir $DataDir $HtmlDir $UserDir $KeepDir $PageDir
+  $InterFile $RcFile $RcOldFile $IndexFile $FullUrl $SiteName $HomePage
+  $LogoUrl $RcDefault $IndentLimit $RecentTop $EditAllowed $UseDiff
+  $UseSubpage $UseCache $SimpleLinks $NonEnglish $LogoLeft
+  $KeepDays $HtmlTags $UseDiffLog $KeepMajor $KeepAuthor
+  $FreeUpper $EmailNotify $SendMail $EmailFrom $FastGlob $EmbedWiki
+  $ScriptTZ $BracketText $UseAmPm $UseConfig $UseIndex $UseLookup
+  $RedirType $AdminPass $EditPass $UseHeadings $NetworkFile $BracketWiki
+  $FreeLinks $WikiLinks $AdminDelete $FreeLinkPattern $RCName $RunCGI
+  $ShowEdits $ThinLine $LinkPattern $InterLinkPattern $InterSitePattern
+  $UrlProtocols $UrlPattern $ImageExtensions $RFCPattern $ISBNPattern
+  $FS $FS1 $FS2 $FS3 $CookieName $SiteBase $StyleSheet $NotFoundPg
+  $FooterNote $EditNote $MaxPost $NewText $NotifyDefault $HttpCharset
+  $UserGotoBar);
+
+use vars qw(@RcDays
+  $TempDir $LockDir $DataDir $HtmlDir $UserDir $KeepDir $PageDir
+  $InterFile $RcFile $RcOldFile $IndexFile $FullUrl $SiteName $HomePage
+  $LogoUrl $RcDefault $IndentLimit $RecentTop $EditAllowed $UseDiff
+  $UseSubpage $UseCache $SimpleLinks $NonEnglish $LogoLeft
+  $KeepDays $HtmlTags $UseDiffLog $KeepMajor $KeepAuthor
+  $FreeUpper $EmailNotify $SendMail $EmailFrom $FastGlob $EmbedWiki
+  $ScriptTZ $BracketText $UseAmPm $UseConfig $UseIndex $UseLookup
+  $RedirType $AdminPass $EditPass $UseHeadings $NetworkFile $BracketWiki
+  $FreeLinks $WikiLinks $AdminDelete $FreeLinkPattern $RCName $RunCGI
+  $ShowEdits $ThinLine $LinkPattern $InterLinkPattern $InterSitePattern
+  $UrlProtocols $UrlPattern $ImageExtensions $RFCPattern $ISBNPattern
+  $FS $FS1 $FS2 $FS3 $CookieName $SiteBase $StyleSheet $NotFoundPg
+  $FooterNote $EditNote $MaxPost $NewText $NotifyDefault $HttpCharset
+  $UserGotoBar);
+
+# == Configuration =====================================================
+$DataDir     = "/home/cdent/testpurple"; # Main wiki directory
+$UseConfig   = 1;       # 1 = use config file,    0 = do not look for config
+
+# Default configuration (used if UseConfig is 0)
 $CookieName  = "PurpleWiki";    # Name for this wiki (for multi-wiki sites)
-$SiteName    = "WikiTest";    # Name of site (used for titles)
-$HomePage    = "FrontPage";      # Home page (change space to _)
+$SiteName    = "PurpleWiki";    # Name of site (used for titles)
+$HomePage    = "HomePage";      # Home page (change space to _)
 $RCName      = "RecentChanges"; # Name of changes page (change space to _)
 $LogoUrl     = "";              # URL for site logo ("" for no logo)
 $ENV{PATH}   = "/usr/bin/";     # Path used to find "diff"
@@ -16,7 +90,7 @@ $FullUrl     = "";              # Set if the auto-detected URL is wrong
 $RedirType   = 1;               # 1 = CGI.pm, 2 = script, 3 = no redirect
 $AdminPass   = "";              # Set to non-blank to enable password(s)
 $EditPass    = "";              # Like AdminPass, but for editing only
-$StyleSheet  = "/purplewiki.css"; # URL for CSS stylesheet (like "/wiki.css")
+$StyleSheet  = "";              # URL for CSS stylesheet (like "/wiki.css")
 $NotFoundPg  = "";              # Page for not-found links ("" for blank pg)
 $EmailFrom   = "Wiki";          # Text for "From: " field of email notes.
 $SendMail    = "/usr/sbin/sendmail";  # Full path to sendmail executable
@@ -72,4 +146,8 @@ $RcFile      = "$DataDir/rclog";    # New RecentChanges logfile
 $RcOldFile   = "$DataDir/oldrclog"; # Old RecentChanges logfile
 $IndexFile   = "$DataDir/pageidx";  # List of all pages
 
-# == End of Configuration =================================================
+if ($UseConfig && (-f "$DataDir/config")) {
+  do "$DataDir/config";  # Later consider error checking?
+}
+
+1;
