@@ -4,7 +4,7 @@ package PurpleWiki::View::Viewsaver;
 # to a scalar variable. Not necessary in newer versions 
 # of Perl.
 
-# $Id: Viewsaver.pm,v 1.2 2002/10/23 01:22:58 cdent Exp $
+# $Id: Viewsaver.pm,v 1.3 2002/10/23 05:07:27 cdent Exp $
 
 use strict;
 
@@ -20,7 +20,7 @@ sub TIEHANDLE {
 
 sub PRINT {
         my $self = shift;
-        ${$self->{'stringref'}} .= join($,,@_);
+        ${$self->{'stringref'}} .= join('',@_);
 }
 
 1;
