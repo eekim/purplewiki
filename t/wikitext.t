@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 22 };
+BEGIN { plan tests => 23 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -32,7 +32,7 @@ my $config = new PurpleWiki::Config($configdir);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my ($input, $output, $shouldBe, $wiki);
 
-my @files = qw(tree_freelinks tree_hr tree_interlinks tree_lists
+my @files = qw(tree_freelinks tree_hr tree_interlinks tree_lists tree_pre
                tree_test01 tree_test02 tree_test03
                tree_test04 tree_test05 tree_test06 tree_test07 tree_test08
                tree_test09 tree_test11 tree_test12

@@ -77,6 +77,7 @@ t/parser_freelinks.t
 t/parser_hr.t
 t/parser_interlinks.t
 t/parser_lists.t
+t/parser_pre.t
 t/sequence.t
 t/structural_node.t
 t/tree.t
@@ -92,6 +93,7 @@ t/output/tree_freelinks.txt
 t/output/tree_hr.txt
 t/output/tree_interlinks.txt
 t/output/tree_lists.txt
+t/output/tree_pre.txt
 t/output/tree_test01.txt
 t/output/tree_test02.txt
 t/output/tree_test03.txt
@@ -114,6 +116,7 @@ t/txt/tree_freelinks.txt
 t/txt/tree_hr.txt
 t/txt/tree_interlinks.txt
 t/txt/tree_lists.txt
+t/txt/tree_pre.txt
 t/txt/tree_test01.txt
 t/txt/tree_test02.txt
 t/txt/tree_test03.txt

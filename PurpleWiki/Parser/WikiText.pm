@@ -47,7 +47,7 @@ my $url;
 
 ### markup regular expressions
 my $rxNowiki = '<nowiki>.*?<\/nowiki>';
-my $rxTt = '<tt>.*?<\/tt>';
+my $rxTt = '<tt>.*?<\/tt>|\{\{\{.*?\}\}\}';
 my $rxFippleQuotes = "'''''.*?'''''";
 my $rxB = '<b>.*?<\/b>';
 my $rxTripleQuotes = "'''.*?'''";
@@ -93,9 +93,8 @@ sub parse {
         if (!defined $params{freelink});
 
     my $tree = PurpleWiki::Tree->new;
-    my ($currentNode, @sectionState, $isStart, $nodeContent);
-    my ($listLength, $listDepth, $sectionLength, $sectionDepth);
-    my ($indentLength, $indentDepth);
+    my ($currentNode, @sectionState, $nodeContent);
+    my ($listLength, $sectionLength, $indentLength);
     my ($line, $listType, $currentNid);
     my (@authors);
 
@@ -166,11 +165,12 @@ sub parse {
     # followed by headers won't be "clean," but it shouldn't be
     # harmful either.
 
-    $isStart = 1;
-    @authors = ();
-    $listDepth = 0;
-    $indentDepth = 0;
-    $sectionDepth = 1;
+    my $isStart = 1;
+    my $isBracePre = 0;
+    my @authors = ();
+    my $listDepth = 0;
+    my $indentDepth = 0;
+    my $sectionDepth = 1;
 
     $currentNode = $tree->root->insertChild('type' => 'section');
 
@@ -378,14 +378,77 @@ sub parse {
             $nodeContent .= "$1\n";
             $isStart = 0 if ($isStart);
         }
-        elsif ($line =~ /^\s*$/) {  # blank line
-            $currentNode = &_terminateNode($currentNode, \$nodeContent,
-                                                %params);
+        elsif ($line =~ /^\s*\{\{\{\s*$/) {  # MoinMoin-style pre
+
+            # If there's already a pre, this has the effect of closing
+            # the previous one and starting a new one.  For example:
+            #
+            #   = Header =
+            #
+            #     indented (hence preformatted)
+            #   {{{
+            #   hello world!
+            #   }}}
+            #
+            # will result in:
+            #
+            #   section:
+            #     h:Header
+            #     pre:  indented (hence preformatted)
+            #     pre:hello world!
+            #
+            # This also creates an unusual side-effect:
+            #
+            #   {{{
+            #   hello world!
+            #   {{{
+            #   hello again.
+            #   }}}
+            #
+            # which results in:
+            #
+            #   section:
+            #     h:Header
+            #     pre:hello world!
+            #     pre:hello again.
+            #
+            # In other words, the first {{{ did not need closing.
+
             $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
+            $currentNode = &_terminateNode($currentNode,
+                                           \$nodeContent,
+                                           %params);
+            $currentNode = $currentNode->insertChild('type'=>'pre');
+            $isStart = 0 if ($isStart);
+            $isBracePre = 1;
+        }
+        elsif ($line =~ /^\s*\}\}\}\s*$/) {  # close MoinMoin pre
+            if ($currentNode->type eq 'pre') {
+                $currentNode = &_terminateNode($currentNode,
+                                               \$nodeContent,
+                                               %params);
+                $isBracePre = 0;
+            }
+            else {
+                # just make it part of the text
+                $nodeContent .= $line;
+            }
+        }
+        elsif ($line =~ /^\s*$/) {  # blank line
+            if ($isBracePre) {
+                $nodeContent .= $line;
+            }
+            else {
+                $currentNode = &_terminateNode($currentNode, \$nodeContent,
+                                               %params);
+                $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
+            }
         }
         else {
-            if (($currentNode->type ne 'p') && ($currentNode->type ne 'li') &&
-                ($currentNode->type ne 'dd')) {
+            if (($currentNode->type ne 'p') &&
+                ($currentNode->type ne 'li') &&
+                ($currentNode->type ne 'dd') &&
+                (!$isBracePre)) {
                 $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
                 $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
@@ -548,6 +611,8 @@ sub _parseInlineNode {
         elsif ($node =~ /^$rxTt$/s) {
             $node =~ s/^<tt>//;
             $node =~ s/<\/tt>$//;
+            $node =~ s/^\{\{\{//;
+            $node =~ s/\}\}\}$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'tt',
                 'children'=>&_parseInlineNode($node, %params));
         }
