@@ -1,0 +1,30 @@
+PurpleWiki is derived from UseModWiki, by Clifford A. Adams.
+
+It is inspired by the granular addressability present in the Augment
+system developed by Doug Engelbart and his associates.
+
+The original creation of PurpleWiki was done by Chris Dent and
+Eugene Eric Kim as part of Blue Oxen Associates efforts to create
+a collaborative environment. Major changes since then have been the
+result of the occasional serendipitous bright bulbs going off 
+in their heads. History of such things can be found in the development
+mailing list:
+
+  http://purplewiki.blueoxen.net/forums/devel/
+
+and on their blogs:
+
+  http://www.burningchrome.com:8000/~cdent/mt/
+  http://www.eekim.com/blog/
+
+Since then valuable contributions of all sorts have come from:
+
+Danny Ayers
+Jonathan Cheyer
+Jason Cook
+David Fannin
+Matthew O'Connor
+John Sechrest
+
+If you should be on this list, please contact devel@purplewiki.blueoxen.net
+and say so.

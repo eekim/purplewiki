@@ -1,0 +1,74 @@
+
+If you are upgrading from version 0.1 please see the 'UPGRADING FROM
+V0.1' information, further below. 0.1 users will need to perform the 
+tasks listed in that section, followed by the tasks listed in the 
+'UPGRADING FROM V0.9' section.
+
+UPGRADING FROM V0.9
+===================
+
+PurpleWiki v0.9.1 uses the same format as v0.9 and requires no 
+changes to the content or data files. One significant change
+is REQUIRED in the config file.
+
+The Wiki search function has been modularized to allow searches of
+the wiki titles and content, blogs associated with the wiki (through
+the MovableType and Bloxsom plugins), google and whatever else
+you can think of: The system is set up to allow individuals to create
+their own modules for searching. See the documentation within
+PurpleWiki::Search::Engine and PurpleWiki::Search::Interface.
+
+Which search modules are used is controlled by the configuration
+file. To get the default 0.1 and 0.9 behavior of searching the
+the wiki titles and content from either the search box or clicking on
+page title, you MUST add the following line to the config file:
+
+  SearchModule    =    Wiki
+
+(case matters).
+
+The sample config file in the etc file of this distribution includes
+other search configuration examples. Each Search module may require
+additional configuration items. These are described in the
+documentation associated with each module. Each module may also have
+additional Perl module requirements. See each module to find out 
+what is required.
+
+UPGRADING FROM V0.1
+===================
+
+PurpleWiki v0.9 has a new scheme for NIDs.  In PurpleWiki v0.1, NIDs
+were locally unique to each page.  In PurpleWiki v0.9, NIDs are unique
+across the entire site.  In other words, the NID of a paragraph on one
+Wiki page will not be used anywhere else on the site.
+
+This has a few ramifications.  First, the lastnid metadata tag is no
+longer required.  This will simplify things for users.  Second,
+copying and pasting nodes between pages is easier, because you don't
+have to worry about deleting and regenerating NIDs.  Third, it enables
+transclusions.
+
+PurpleWiki v0.9 also uses a new syntax for NIDs: braces instead of
+brackets.  See the thread starting at:
+
+  http://purplewiki.blueoxen.net/forums/devel/2003-07/msg00004.html
+
+for an explanation.
+
+Because of the new syntax and addressing scheme, users of PurpleWiki
+v0.1 will have to convert their site to the new format.  Additionally,
+we are using a new config file format.  The config format is
+straightforward; you should be able to manually convert your config
+file fairly easily.
+
+After you have converted your config file, you can use the
+purpleConvert.pl script (located in the extras directory) to convert
+your site's NID information:
+
+  purpleConvert.pl /path/to/wikidb http://your.host
+
+For the URL, just provide the hostname and port (if not 80).
+purpleConvert.pl will use the path specified by ScriptName in your
+config file.
+
+$Id: UPGRADE,v 1.2 2004/01/21 23:24:08 cdent Exp $
