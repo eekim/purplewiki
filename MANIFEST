@@ -128,8 +128,6 @@ t/output/tree_lists.html
 t/output/tree_mixedlists.html
 t/output/tree_pre.html
 t/output/tree_test01.html
-t/templates/en
-t/templates/fr
 t/txt/hr1.txt
 t/txt/hr2.txt
 t/txt/hr3.txt
