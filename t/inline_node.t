@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 75 };
+BEGIN { plan tests => 81 };
 use PurpleWiki::InlineNode;
 
 #########################
@@ -151,4 +151,14 @@ ok(ref $inlineNode->data->[0]->data->[1] eq 'PurpleWiki::InlineNode');
 ok($inlineNode->data->[0]->data->[1]->type eq 'b');
 ok($inlineNode->data->[0]->data->[1]->data->[0] eq 'blind');
 
-# Links.  (not implemented)
+# Links.  ( tests)
+
+my $text12 = 'This is a WikiWord.';
+
+$inlineNode = PurpleWiki::InlineNode->new('data'=>$text12);
+ok(scalar @{$inlineNode->data} == 2);
+ok($inlineNode->data->[0] eq 'This is a');
+ok(ref $inlineNode->data->[1] eq 'PurpleWiki::InlineNode');
+ok($inlineNode->data->[1]->type eq 'link');
+ok(scalar @{$inlineNode->data->[1]->data} == 1);
+ok($inlineNode->data->[1]->data->[0] eq 'WikiWord');
