@@ -2,7 +2,7 @@
 #
 # purple -- Document authoring system using PurpleWiki.
 #
-# $Id: purple,v 1.3 2003/06/20 23:54:01 cdent Exp $
+# $Id: purple,v 1.4 2003/07/08 21:58:48 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
@@ -33,6 +33,7 @@ use strict;
 use File::Copy;
 use Getopt::Long;
 use IO::File;
+use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
 my $addNodeIds = 0;
@@ -43,30 +44,34 @@ my $url = '';
 GetOptions('add_ids'  => \$addNodeIds,
            'driver=s' => \$optionDriver,
            'css=s'    => \$cssFile,
-           'url=s'  => \$url);
+           'url=s'    => \$url);
 
 
-if (scalar @ARGV < 2) {
-    if (!($addNodeIds && scalar @ARGV == 1)) {
+if (scalar @ARGV < 3) {
+    if (!($addNodeIds && scalar @ARGV == 2)) {
         print <<EOM;
 Usage:
-  $0 --add_ids input.wiki
+  $0 --add_ids [--url=URL] /path/to/wikidb input.wiki
       or
-  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] [--url=URL] input.wiki output.[txt|html]
+  $0 [--add_ids] [--driver=drivername] [--css=stylesheet] [--url=URL] \\
+      /path/to/wikidb input.wiki output.[txt|html]
 EOM
         exit;
     }
 }
 
+my $config = new PurpleWiki::Config($ARGV[0]);
 my %params;
+$params{config} = $config;
 $params{css_file} = $cssFile if ($cssFile);
 $params{add_node_ids} = $addNodeIds if ($addNodeIds);
 $params{wikiword} = 0;
+#$params{freelink} = $config->FreeLinks;
 $params{freelink} = 0;
 $params{url} = $url if ($url);
 
-my $inputFile = $ARGV[0];
-my $outputFile = $ARGV[1];
+my $inputFile = $ARGV[1];
+my $outputFile = $ARGV[2];
 my $outputFileType;
 if ($optionDriver eq '') {
     if ($outputFile =~ /\.html$/i) {
@@ -102,8 +107,8 @@ else {
 if ($addNodeIds) {
     unlink "$inputFile~" if (-e "$inputFile~");
     &File::Copy::move($inputFile, "$inputFile~");
-    print $wiki->view('wikitext');
-    &writeFile($inputFile, $wiki->view('wikitext'));
+#    print $wiki->view('wikitext', %params);
+    &writeFile($inputFile, $wiki->view('wikitext', %params));
 }
 
 # fini
@@ -143,10 +148,10 @@ purple - Document authoring system
 
 =head1 SYNOPSIS
 
-  purple --add_ids F<inputFile.wiki>
+  purple --add_ids [--url=URL] /path/to/wikidb F<inputFile.wiki>
 
-  purple [--add_ids] [--driver=driverName] [--css=stylesheet] \
-    inputFile.wiki output.[txt|html]
+  purple [--add_ids] [--driver=driverName] [--css=stylesheet] [--url=URL] \
+    /path/to/wikidb F<inputFile.wiki> F<output.[txt|html]>
 
 =head1 OPTIONS
 
@@ -163,6 +168,12 @@ Use driverName as the View driver.
 =item --css=stylesheet
 
 Use stylesheet as the CSS stylesheet for HTML output.
+
+=item --url=URL
+
+The URL of the document.  This is used to maintain an index of node
+IDs and URLs, so that PurpleWiki can find the exact URL using only the
+NID.
 
 =back
 
@@ -194,8 +205,8 @@ To combine steps 2 and 3, do:
 
   purple --add_ids inputFile.wiki outputFile.html
 
-4. When you edit inputFile.wiki, don't touch the [lastnid] or [nid]
-metatags.  If you add new content, run purple --add_ids again.
+4. When you edit inputFile.wiki, don't touch the [nid] metatags.  If
+you add new content, run purple --add_ids again.
 
 =head1 AUTHORS
 
