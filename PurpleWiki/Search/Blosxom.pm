@@ -1,6 +1,6 @@
 # PurpleWiki::Search::Blosxom.pm
 #
-# $Id: Blosxom.pm,v 1.2 2004/01/05 23:29:26 eekim Exp $
+# $Id: Blosxom.pm,v 1.3 2004/01/05 23:41:27 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -92,8 +92,10 @@ sub _fileToUrl {
         my @datetime = localtime($ts);
         my $year = 1900 + $datetime[5];
         my $month = 1 + $datetime[4];
-        return "$URL/$year" . '/' . $month . '/' . $datetime[3] .
-            "/$fname";
+        my $day = $datetime[3];
+        $month = "0$month" if ($month < 10);
+        $day = "0$day" if ($day < 10);
+        return "$URL/$year" . '/' . $month . '/' . $day . "/$fname";
     }
     else {
         $fname =~ s/^$DATA_DIR\/*//;
