@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.11 2004/02/12 18:22:42 cdent Exp $
+# $Id: Transclusion.pm,v 1.12 2004/02/16 21:58:21 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -78,9 +78,7 @@ sub get {
     my $content;
 
     # get the URL that hosts this nid out of the the db
-    my $sequence = new PurpleWiki::Sequence($self->{config}->DataDir(),
-        $self->{config}->RemoteSequence());
-    my $url = $sequence->getURL($nid); 
+    my $url = $self->getURL($nid);
 
     $content = "no URL for $nid" unless $url;
 
@@ -128,6 +126,15 @@ sub get {
             qq(href="$url#$nidLong">T</a></span>);
     }
     return $content;
+}
+
+sub getURL {
+    my $self = shift;
+    my $nid = shift;
+
+    my $sequence = new PurpleWiki::Sequence($self->{config}->DataDir(),
+        $self->{config}->RemoteSequence());
+    return $sequence->getURL($nid); 
 }
 
 # Attaches to the the DB file which contains the NID:URL index
@@ -191,6 +198,10 @@ is returned.
 If the PurpleWiki::Config has defined httpUser and httpPass, that 
 information will be passed along with the HTTP request to authenticate.
 
+=head2 getURL($nid)
+
+Returns the URL associated with the NID. This can be useful for displaying
+the URL.
 
 =head1 AUTHORS
 
