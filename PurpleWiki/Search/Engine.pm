@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Engine.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Engine.pm,v 1.2 2003/12/31 23:46:12 cdent Exp $
+# $Id: Engine.pm,v 1.3 2004/01/01 01:20:35 cdent Exp $
 
 package PurpleWiki::Search::Engine;
 
@@ -45,8 +45,14 @@ sub asHTML {
 
     my $string;
 
+    $string .= '<ul>';
     foreach my $module (@{$self->{modules}}) {
-        $string .= "<h2>$module</h2>\n";
+        $string .= qq(<li><a href="#$module">$module</a></li>\n);
+    }
+    $string .= '</ul>';
+
+    foreach my $module (@{$self->{modules}}) {
+        $string .= qq(<h2><a name="$module">$module</a></h2>\n);
 
         foreach my $result (@{$self->{results}{$module}}) {
             my $url = $result->getURL();

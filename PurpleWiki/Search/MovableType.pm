@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.1 2003/12/31 08:02:51 cdent Exp $
+# $Id: MovableType.pm,v 1.2 2004/01/01 01:20:35 cdent Exp $
 #
 
 package PurpleWiki::Search::MovableType;
@@ -19,9 +19,6 @@ sub search {
 
     # initialize movable type library stuff
     $self->_initMT();
-
-    print STDERR "performed init\n";
-
 
     # make our hash of blog ids we care about
     foreach my $id (@{$self->{config}->MovableTypeBlogId()}) {
