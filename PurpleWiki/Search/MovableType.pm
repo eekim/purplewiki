@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.5 2004/01/07 01:20:14 cdent Exp $
+# $Id: MovableType.pm,v 1.6 2004/01/07 01:43:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -77,7 +77,6 @@ sub _calculateModifiedTime {
 
     # In YYYYMMDDHHMMSS format
     my $timestamp = $entry->modified_on();
-    print STDERR "timestamp: $timestamp\n";
     my ($year, $month, $day, $hour, $min, $sec) =
         ($timestamp =~ (/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/));
     return timelocal($sec, $min, $hour, $day, $month - 1, $year);
