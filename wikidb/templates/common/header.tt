@@ -17,3 +17,5 @@
 [% ELSE %]
 <h1>[% title %]</h1>
 [% END %]
+
+[% INCLUDE common/navbar.tt %]

@@ -2,8 +2,6 @@
            title = "Saving Preferences"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 [% IF errorUserName %]

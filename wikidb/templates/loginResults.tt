@@ -2,8 +2,6 @@
            title = "Login Results"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
 <hr />
 
 [% IF loginSuccess %]
