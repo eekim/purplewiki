@@ -65,6 +65,7 @@ my @SCALAR_CONFIGS = qw( DatabasePackage
     LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
     ServiceProviderName ServiceProviderKey ReturnUrl);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
+my @HASH_CONFIGS = qw( Module Action );
 
 # Sets up the strings and regular expressions for matching
 
@@ -141,6 +142,12 @@ sub _initConfig {
     foreach my $var (@LIST_CONFIGS) {
         $self->{AppConfig}->define($var, {
                 ARGCOUNT => AppConfig::ARGCOUNT_LIST,
+            });
+    }
+
+    foreach my $var (@HASH_CONFIGS) {
+        $self->{AppConfig}->define($var, {
+                ARGCOUNT => AppConfig::ARGCOUNT_HASH,
             });
     }
 

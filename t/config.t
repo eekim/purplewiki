@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 4 };
+BEGIN { plan tests => 8 };
 
 use PurpleWiki::Config;
 my $configdir = 't';
@@ -14,9 +14,16 @@ my $datadir = 'tDB';
 
 my $config = new PurpleWiki::Config($configdir);
 
-ok(ref $config eq 'PurpleWiki::Config');
+ok(ref $config, 'PurpleWiki::Config');
 
-ok($config->UseSubpage == 1);
-ok($config->RCName eq 'RecentChanges');
-ok($config->FS1 eq "\xb31");
+ok($config->UseSubpage, 1);
+ok($config->RCName, 'RecentChanges');
+ok($config->FS1, "\xb31");
+
+my $mod = $config->Module;
+ok(ref($mod), "HASH");
+ok($mod->{database}, "PurpleWiki::Database::Page");
+my $action = $config->Action;
+ok(ref($action), "HASH");
+ok($action->{edit}, "PurpleWiki::Action::Edit");
 

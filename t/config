@@ -26,6 +26,22 @@ RcDays      = 30
 RcDays      = 90
 KeepDays    = 14               # Days to keep old revisions
 
+#Modules and Actions: format  <symbolic_name> = <perl module>
+Module wikiparser = PurpleWiki::Parser::WikiText
+Module pages      = PurpleWiki::Database::Page
+Module userdb     = PurpleWiki::Database::User::UseMod
+Module template   = PurpleWiki::Template::TT2
+Module request    = PupleWiki::Request
+Module acl        = PurpleWiki::ACL
+Module spit       = XDI::SPIT
+Module search     = PurpleWiki::Search::Engine
+
+Action edit     = PurpleWiki::Action::Edit
+Action browse   = PurpleWiki::Action::Browse
+Action recent   = PurpleWiki::Action::Recent
+Action history  = PurpleWiki::Action::History
+Action diff     = PurpleWiki::Action::Diff
+
 # Password for administration and editing
 # FIXME: need better understanding of how these things are used
 #AdminPass   = ""              # Set to non-blank to enable password(s)

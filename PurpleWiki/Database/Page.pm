@@ -45,7 +45,7 @@ sub new {
   $self->{pagedir} = $config->PageDir;
   $self->{usediff} = $config->UseDiff;
   $self->{rcfile} = $config->RcFile;
-  $self->{keepdays}->KeepDays;
+  $self->{keepdays} = $config->KeepDays;
   bless $self, $class;
   $self;
 }
@@ -330,6 +330,7 @@ sub getPrev {
     my $self = shift;
     my $rev = "";
     my $prev = 0;
+    my $psection;
     $rev = ((@_) ? shift : $self->getRevision()) - 1;
     $self->_openPage() unless ($self->{open});
     my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
