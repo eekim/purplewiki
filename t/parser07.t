@@ -1,4 +1,4 @@
-# parser.t
+# parser07.t
 
 use strict;
 use Test;
@@ -31,7 +31,7 @@ sub readFile {
 ### tree_test11.txt -- Definition lists
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/tree_test11.txt');
+my $wikiContent = &readFile('t/txt/tree_test11.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 

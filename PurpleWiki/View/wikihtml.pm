@@ -49,18 +49,27 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = $class->SUPER::new(@_);
 
-    # Object State
+    ### Object State
     $self->{outputString} = "";
     $self->{pageName} = "";
-#    $self->{sectionState} = [];
-    $self->{sectionDepth} = 0;
-    $self->{depthLastClosedSection} = 0;
     $self->{url} = $self->{url} || "";
     $self->{transcluder} = new PurpleWiki::Transclusion(
         config => $self->{config},
         url => $self->{url});
+
+    # standard flag for determining whether or not a hard rule should
+    # be printed
     $self->{isPrevSection} = 0;
+
+    # special case flag for handling hard rules (or not) at the
+    # beginning of a document
     $self->{isStart} = 1;
+    $self->{emptyFirstSection} = 0;
+
+    # used for determining whether there should be hard rules with
+    # nested sections
+    $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
 
     bless($self, $class);
     return $self;
@@ -68,16 +77,16 @@ sub new {
 
 sub view {
     my ($self, $wikiTree) = @_;
-#    $self->{sectionState} = [];
     $self->SUPER::view($wikiTree);
     return $self->{outputString};
 }
 
+# See PurpleWiki::View::wikitext.pm for an explanation of hard rules.
+
 sub sectionPre { 
     my $self = shift;
-#    push @{$self->{sectionState}}, 'section';
     $self->{sectionDepth}++;
-    $self->_hardRule;
+    $self->_hardRule(1);
     $self->{isPrevSection} = 1;
 }
 
@@ -85,14 +94,15 @@ sub sectionPost {
     my $self = shift;
     $self->{depthLastClosedSection} = $self->{sectionDepth};
     $self->{sectionDepth}--;
-#    pop @{$self->{sectionState}}; 
-    $self->_hardRule;
+    $self->{emptyFirstSection} = 1
+        if ($self->{isStart} && $self->{isPrevSection});
+    $self->_hardRule(0);
     $self->{isStart} = 0;
 }
 
 sub indentPre { 
     my $self = shift;
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{outputString} .= "<div class=\"indent\">\n";
 }
 
@@ -103,21 +113,21 @@ sub indentPost {
 sub ulPre {
     my ($self, $nodeRef) = @_;
 
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{outputString} .= '<' . $nodeRef->type . '>';
 }
 
 sub olPre {
     my ($self, $nodeRef) = @_;
 
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{outputString} .= '<' . $nodeRef->type . '>';
 }
 
 sub dlPre {
     my ($self, $nodeRef) = @_;
 
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{outputString} .= '<' . $nodeRef->type . '>';
 }
 
@@ -131,7 +141,14 @@ sub dlPost { shift->{outputString} .= '</' . shift->type . ">\n" }
 
 sub hPre { 
     my ($self, $node) = @_;
-    $self->{isPrevSection} = 0;
+    if ($self->{emptyFirstSection}) {
+        $self->{isPrevSection} = 1;
+        $self->{emptyFirstSection} = 0;
+        $self->_hardRule(0);
+    }
+    else {
+        $self->{isPrevSection} = 0;
+    }
     $self->{outputString} .= '<h' . $self->_headerLevel(); 
     $self->{outputString} .= '>' . $self->_anchor($node->id); 
 }
@@ -145,7 +162,7 @@ sub hPost {
 sub pPre {
     my $self = shift;
 
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->_openTagWithNID(@_);
 }
 
@@ -156,7 +173,7 @@ sub dtPre { shift->_openTagWithNID(@_) }
 sub prePre {
     my $self = shift;
 
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->_openTagWithNID(@_);
 }
 
@@ -237,14 +254,14 @@ sub wikiwordMain { shift->_wikiLink(@_) }
 ############### Private Methods ###############
 
 sub _hardRule {
-    my $self = shift;
+    my ($self, $isSection) = @_;
 
     if ($self->{isPrevSection}) {
         if (!$self->{isStart}) {
-            $self->{outputString} .= "<hr />\n\n";
-        }
-        else {
-            $self->{isStart} = 0;
+            if (!$isSection || ($isSection &&
+                $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
+                $self->{outputString} .= "<hr />\n\n";
+            }
         }
         $self->{isPrevSection} = 0;
     }
@@ -347,7 +364,6 @@ sub _quoteHtml {
 sub _headerLevel {
     my $self = shift;
     my $headerLevel = $self->{sectionDepth} + 1;
-#    my $headerLevel = scalar @{$self->{sectionState}} + 1;
 
     $headerLevel = 6 if $headerLevel > 6;
     return $headerLevel;

@@ -48,14 +48,27 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = $class->SUPER::new(@_);
    
-    # Object State
+    ### Object State
     $self->{outputString} = "";
-    $self->{sectionDepth} = 0;
-    $self->{depthLastClosedSection} = 0;
     $self->{indentDepth} = 0;
     $self->{listStack} = [];
+
+    # standard flag for determining whether or not a hard rule should
+    # be printed
     $self->{isPrevSection} = 0;
+
+    # special case flag for handling hard rules (or not) at the
+    # beginning of a document
     $self->{isStart} = 1;
+    $self->{emptyFirstSection} = 0;
+
+    # used for determining whether there should be hard rules with
+    # nested sections
+    $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
+
+    # needed for determining whether a WikiWord needs to be delimited
+    # from subsequent text
     $self->{lastInlineProcessed} = "";
 
     bless($self, $class);
@@ -66,13 +79,45 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->SUPER::view($wikiTree);
     $self->{outputString} = $self->_header($wikiTree) . $self->{outputString};
+    chomp $self->{outputString};
     return $self->{outputString};
 }
+
+# The most general case for generating hard rules is as follows: If
+# the first structured node of a new section (with the exception of
+# the very first section) does not begin with an h node, then print a
+# hard rule.  The trickiness is dealing with the exceptions: sections
+# at the beginning of a document and nested subsections.
+#
+# 
+#
+# When you create headers that are more than one level deeper than the
+# previous section, you get things like:
+#
+#   section:
+#     h:section 1
+#     section:
+#       section:
+#         h:section 1.1.1
+#
+# Note the two sections immediately nested after each other.  A
+# similar effect is possible when you have a hard rule followed by a
+# header that is one or more levels deeper:
+#
+#   section:
+#     h:section 1
+#   section:
+#     section:
+#       h:section 2.1
+#
+# Because of these two possible scenarios, it's not enough to simply
+# print a hard rule whenever you see nested sections one right after
+# the other.
 
 sub sectionPre { 
     my $self = shift;
     $self->{sectionDepth}++;
-    $self->_hardRule;
+    $self->_hardRule(1);
     $self->{isPrevSection} = 1;
 }
 
@@ -81,13 +126,15 @@ sub sectionPost {
     $self->{depthLastClosedSection} = $self->{sectionDepth};
     $self->{sectionDepth}--;
     $self->{lastInlineProcessed} = '';
-    $self->_hardRule;
+    $self->{emptyFirstSection} = 1
+        if ($self->{isStart} && $self->{isPrevSection});
+    $self->_hardRule(0);
     $self->{isStart} = 0;
 }
 
 sub indentPre { 
     my $self = shift;
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{indentDepth}++; 
 }
 
@@ -100,19 +147,19 @@ sub indentPost {
 
 sub ulPre {
     my ($self, $nodeRef) = @_;
-    $self->_hardRule;
+    $self->_hardRule(0);
     push @{$self->{listStack}}, $nodeRef->type;
 }
 
 sub olPre {
     my ($self, $nodeRef) = @_;
-    $self->_hardRule;
+    $self->_hardRule(0);
     push @{$self->{listStack}}, $nodeRef->type;
 }
 
 sub dlPre {
     my ($self, $nodeRef) = @_;
-    $self->_hardRule;
+    $self->_hardRule(0);
     push @{$self->{listStack}}, $nodeRef->type;
 }
 
@@ -122,8 +169,14 @@ sub dlPost { shift->_endList(@_) }
 
 sub hPre { 
     my $self = shift;
-    $self->{isPrevSection} = 0;
-    $self->{isStart} = 0;
+    if ($self->{emptyFirstSection}) {
+        $self->{isPrevSection} = 1;
+        $self->{emptyFirstSection} = 0;
+        $self->_hardRule(0);
+    }
+    else {
+        $self->{isPrevSection} = 0;
+    }
     $self->{outputString} .= '=' x $self->{sectionDepth}. ' '; 
 }
 
@@ -136,7 +189,7 @@ sub hPost {
 
 sub pPre { 
     my $self = shift;
-    $self->_hardRule;
+    $self->_hardRule(0);
     $self->{outputString} .= ':' x $self->{indentDepth};
 }
 
@@ -167,7 +220,7 @@ sub ddMain { shift->_liRecurse(@_) }
 
 sub dtPost { shift->_showNID(@_) }
 
-sub prePre { &_hardRule(shift) }
+sub prePre { shift->_hardRule(0) }
 
 sub prePost { shift->_showNID(@_) }
 
@@ -280,15 +333,14 @@ sub imagePost {
 ############### Private Methods ###############
 
 sub _hardRule {
-    my $self = shift;
+    my ($self, $isSection) = @_;
 
-    if ( $self->{isPrevSection} && 
-        ($self->{sectionDepth} == $self->{depthLastClosedSection}) ) {
+    if ($self->{isPrevSection}) {
         if (!$self->{isStart}) {
-            $self->{outputString} .= "----\n\n";
-        }
-        else {
-            $self->{isStart} = 0;
+            if (!$isSection || ($isSection &&
+                $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
+                $self->{outputString} .= "----\n\n";
+            }
         }
         $self->{isPrevSection} = 0;
     }

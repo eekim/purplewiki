@@ -1,4 +1,4 @@
-# parser09.t
+# parser_hr.t
 
 use strict;
 use Test;
@@ -28,10 +28,10 @@ sub readFile {
 
 #########################
 
-### tree_test13.txt -- hard rules
+### tree_hr.txt -- hard rules
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/tree_test13.txt');
+my $wikiContent = &readFile('t/txt/tree_hr.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 my $section = $wiki->root->children->[0];

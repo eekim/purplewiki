@@ -1,4 +1,4 @@
-# parser10.t
+# parser_lists.t
 
 use strict;
 use Test;
@@ -28,10 +28,10 @@ sub readFile {
 
 #########################
 
-### tree_test14.txt -- funky list and indentation parsing
+### tree_lists.txt -- funky list and indentation parsing
 
 my $config = new PurpleWiki::Config($configfile);
-my $wikiContent = &readFile('t/tree_test14.txt');
+my $wikiContent = &readFile('t/txt/tree_lists.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
