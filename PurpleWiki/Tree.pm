@@ -49,10 +49,12 @@ sub lastNid {
 sub parse {
     my $this = shift;
     my $wikiContent = shift;
+    my %params = @_;
+
     my ($currentNode, @sectionState, $isStart, $nodeContent);
     my ($listLength, $listDepth, $sectionLength, $sectionDepth);
     my ($indentLength, $indentDepth);
-    my ($line, $listType);
+    my ($line, $listType, $biggestNidSeen, $currentNid);
 
     my %listMap = ('ul' => '(\*+)\s*(.*)',
                    'ol' => '(\#+)\s*(.*)',
@@ -67,6 +69,7 @@ sub parse {
     $listDepth = 0;
     $indentDepth = 0;
     $sectionDepth = 1;
+    $biggestNidSeen = 0;
 
     $currentNode = $this->root->insertChild('type' => 'section');
 
@@ -78,20 +81,22 @@ sub parse {
             foreach $listType (keys(%listMap)) {
                 if ($line =~ /^$listMap{$listType}$/) {
                     $currentNode = &_terminateParagraph($currentNode,
-                                                        \$nodeContent);
+                                                        \$nodeContent,
+                                                        \$biggestNidSeen);
                     while ($indentDepth > 0) {
                         $currentNode = $currentNode->parent;
                         $indentDepth--;
                     }
                     $currentNode = &_parseList($listType, length $1,
-                                               \$listDepth,
-                                               $currentNode, $2, $3);
+                                               \$listDepth, $currentNode,
+                                               \$biggestNidSeen, $2, $3);
                     $isStart = 0 if ($isStart);
                 }
             }
         }
         elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                \$biggestNidSeen);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -107,15 +112,22 @@ sub parse {
                 $indentDepth--;
             }
             $nodeContent =~  s/\s+\[nid (\d+)\]$//s;
+            $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'p',
                 'content'=>&_parseInlineNode($nodeContent));
-            $currentNode->id($1) if (defined $1);
+            if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+                $currentNode->id($currentNid);
+                if ($biggestNidSeen < $currentNid) {
+                    $biggestNidSeen = $currentNid;
+                }
+            }
             $currentNode = $currentNode->parent;
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\=+)\s+(\S.+)\s+\=+/) {  # header/section
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                \$biggestNidSeen);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -143,9 +155,15 @@ sub parse {
                 }
             }
             $nodeContent =~  s/\s+\[nid (\d+)\]$//s;
+            $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent));
-            $currentNode->id($1) if (defined $1);
+            if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+                $currentNode->id($currentNid);
+                if ($biggestNidSeen < $currentNid) {
+                    $biggestNidSeen = $1;
+                }
+            }
             $currentNode = $currentNode->parent;
             undef $nodeContent;
             $isStart = 0 if ($isStart);
@@ -161,14 +179,16 @@ sub parse {
                     $indentDepth--;
                 }
                 $currentNode = &_terminateParagraph($currentNode,
-                                                   \$nodeContent);
+                                                    \$nodeContent,
+                                                    \$biggestNidSeen);
                 $currentNode = $currentNode->insertChild('type'=>'pre');
             }
             $nodeContent .= "$1\n";
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^\s*$/) {  # blank line
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                \$biggestNidSeen);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -189,23 +209,38 @@ sub parse {
                     $indentDepth--;
                 }
                 $currentNode = &_terminateParagraph($currentNode,
-                                                   \$nodeContent);
+                                                    \$nodeContent,
+                                                    \$biggestNidSeen);
                 $currentNode = $currentNode->insertChild('type'=>'p');
             }
             $nodeContent .= "$line\n";
             $isStart = 0 if ($isStart);
         }
     }
-    $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+    $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                        \$biggestNidSeen);
+    if ($params{'add_node_ids'}) {
+        if ($biggestNidSeen > $this->lastNid) {
+            $this->lastNid($biggestNidSeen);
+        }
+        $this->lastNid(&_addNodeIds($this->root, $this->lastNid));
+    }
 }
 
 sub _terminateParagraph {
-    my ($currentNode, $nodeContentRef) = @_;
+    my ($currentNode, $nodeContentRef, $biggestNidSeenRef) = @_;
+    my ($currentNid);
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
         chomp ${$nodeContentRef};
         ${$nodeContentRef} =~ s/\s+\[nid (\d+)\]$//s;
-        $currentNode->id($1) if (defined $1);
+        $currentNid = $1;
+        if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+            $currentNode->id($currentNid);
+            if (${$biggestNidSeenRef} < $currentNid) {
+                ${$biggestNidSeenRef} = $currentNid;
+            }
+        }
         $currentNode->content(&_parseInlineNode(${$nodeContentRef}));
         undef ${$nodeContentRef};
         return $currentNode->parent;
@@ -215,7 +250,8 @@ sub _terminateParagraph {
 
 sub _parseList {
     my ($listType, $listLength, $listDepthRef,
-        $currentNode, @nodeContents) = @_;
+        $currentNode, $biggestNidSeenRef, @nodeContents) = @_;
+    my ($currentNid);
 
     while ($listLength > ${$listDepthRef}) {
         $currentNode = $currentNode->insertChild('type'=>$listType);
@@ -226,21 +262,38 @@ sub _parseList {
         ${$listDepthRef}--;
     }
     $nodeContents[0] =~  s/\s+\[nid (\d+)\]$//s;
+    $currentNid = $1;
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
             'content'=>&_parseInlineNode($nodeContents[0]));
-        $currentNode->id($1) if (defined $1);
+        if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+            $currentNode->id($currentNid);
+            if (${$biggestNidSeenRef} < $currentNid) {
+                ${$biggestNidSeenRef} = $currentNid;
+            }
+        }
         $currentNode = $currentNode->parent;
         $nodeContents[1] =~  s/\s+\[nid (\d+)\]$//s;
+        $currentNid = $1;
         $currentNode = $currentNode->insertChild('type'=>'dd',
             'content'=>&_parseInlineNode($nodeContents[1]));
-        $currentNode->id($1) if (defined $1);
+        if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+            $currentNode->id($currentNid);
+            if (${$biggestNidSeenRef} < $currentNid) {
+                ${$biggestNidSeenRef} = $currentNid;
+            }
+        }
         return $currentNode->parent;
     }
     else {
         $currentNode = $currentNode->insertChild('type'=>'li',
             'content'=>&_parseInlineNode($nodeContents[0]));
-        $currentNode->id($1) if (defined $1);
+        if (defined $currentNid && ($currentNid =~ /^\d+$/)) {
+            $currentNode->id($currentNid);
+            if (${$biggestNidSeenRef} < $currentNid) {
+                ${$biggestNidSeenRef} = $currentNid;
+            }
+        }
         return $currentNode->parent;
     }
     return $currentNode;
@@ -381,20 +434,27 @@ sub view {
     }
 }
 
-sub traverseTree {
-    my $this = shift;
-    my $functionRef = shift;
+sub _addNodeIds {
+    my ($rootNode, $currentNid) = @_;
 
-    &_traverse($this->{'rootNode'}->children, 0, $functionRef);
+    &_traverseAndAddNids($rootNode->children, \$currentNid)
+        if ($rootNode->children);
+    return $currentNid;
 }
 
-sub _traverse {
-    my ($nodeListRef, $indentLevel, $functionRef) = @_;
+sub _traverseAndAddNids {
+    my ($nodeListRef, $currentNidRef) = @_;
 
     foreach my $node (@{$nodeListRef}) {
-        &{$functionRef}($node, $indentLevel);
+        if (($node->type eq 'h' || $node->type eq 'p' ||
+             $node->type eq 'li' || $node->type eq 'pre' ||
+             $node->type eq 'dt' || $node->type eq 'dd') &&
+            !$node->id) {
+            ${$currentNidRef}++;
+            $node->id(${$currentNidRef});
+        }
         my $childrenRef = $node->children;
-        &_traverse($childrenRef, $indentLevel + 1, $functionRef)
+        &_traverseAndAddNids($childrenRef, $currentNidRef)
             if ($childrenRef);
     }
 }
