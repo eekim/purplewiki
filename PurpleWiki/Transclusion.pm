@@ -104,13 +104,12 @@ sub get {
                 my $tree = $parser->parse($page->getText()->getText(),
                              'add_node_ids' => 0,
                              'config' => $self->{config});
-                my $view = $tree->view('subtree', 'config' => $self->{config},
-                    'nid' => uc($nid));
-                my $subtree = $view->getSubTree();
-                # FIXME: bad mojo returning in the middle
-                return $subtree if (defined($subtree));
-            }
-            $content = "transclusion index out of sync";
+                $content = $tree->view('subtree', 
+                                       'config' => $self->{config},
+                                       'nid' => uc($nid));
+            } 
+            
+            $content = "transclusion index out of sync" if not $content;
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));
@@ -138,11 +137,12 @@ sub get {
     }
 
     
-    if ($outputType !~ /plaintext/) {
+    if ($outputType !~ /plaintext/ and not ref($content)) {
         $content = qq(<span id="$nidLong" class="transclusion">) .
             qq($content&nbsp;<a class="nid" title="$nid" ) .
             qq(href="$url#$nidLong">T</a></span>);
     }
+
     return $content;
 }
 
