@@ -17,16 +17,22 @@
 <body>
 
 <div id="header">
-<table width="100%" border="0">
-  <tr valign="bottom">
-    <td align="left">
+<div id="left">
 <h1>[% title %]</h1>
-    </td>
-    <td align="right">
-[% INCLUDE common/navbar.tt %]
-    </td>
-  </tr>
-</table>
+</div>
+<div id="right">
+<!-- img tag would go here if you have a logo -->
+</div>
 </div>
 
+<div id="menubar">
+<div id="left">
+[% INCLUDE common/navbar.tt %]
+</div>
+<div id="right">
+[% INCLUDE common/userbar.tt %]
+</div>
+</div>
+
+<div id="main">
 <div id="body">

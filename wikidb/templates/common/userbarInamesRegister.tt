@@ -1,7 +1,4 @@
 <form method="GET" action="[% baseUrl %]">
-<a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
-<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
-<a href="[% baseUrl %]?action=index">Page Index</a> |
 [% IF userName %]
 [% userName %]
  (<a href="[% preferencesUrl %]">preferences</a> |

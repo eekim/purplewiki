@@ -19,14 +19,42 @@ table {
 #header {
     font-family: "Verdana", "Arial", sans-serif;
     font-size: 11pt;
-    border-bottom: #000 1px solid;
+}
+
+#header #left {
+    float: left;
+    width: 75%;
+}
+
+#header #right {
+    float: right;
+}
+
+#menubar {
+    clear: both;
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
+}
+
+#menubar #left {
+    float: left;
+    width: 50%;
     padding-bottom: 4px;
+}
+
+#menubar #right {
+    float: right;
+    padding-bottom: 4px;
+}
+
+#main {
+    border-top: #000 1px solid;
+    clear: both;
 }
 
 #body {
     font-family: "Verdana", "Arial", sans-serif;
     font-size: 11pt;
-    clear: both;
     float: left;
     width: 80%;
     padding-top: 10px;
@@ -55,13 +83,14 @@ table {
     padding-top: 4px;
 }
 
-#footleft {
+#footer #left {
     float: left;
     width: 75%;
 }
 
-#footright {
+#footer #right {
     float: right;
+    text-align: right;
 }
 
 tt, pre {
@@ -70,15 +99,6 @@ tt, pre {
 
 div.indent {
     margin-left: 3em;
-}
-
-a.nid {
-    font-family: Verdana, Trebuchet, Arial, Helvetica;
-    font-style: normal;
-    font-weight: bold;
-    font-size: x-small;
-    text-decoration: none;
-    color: #C8A8FF;  /* light purple */
 }
 
 a {
@@ -102,6 +122,15 @@ a.nid:after {
 }
 */
 
+a.nid {
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
+    font-style: normal;
+    font-weight: bold;
+    font-size: x-small;
+    text-decoration: none;
+    color: #C8A8FF;  /* light purple */
+}
+
 a.extlink {
     border-width: 1px;
     border-style: none none dotted none;
@@ -116,6 +145,18 @@ a.extlink {
     background-color: #8700FF;
 /*    border-left:1px solid #3C6;
     border-top:1px solid #3C6; */
+    border-right:1px solid #063;
+    border-bottom:1px solid #063;
+    padding:0px 3px 0px 3px;
+}
+
+.syndicate {
+    font-family: verdana, sans-serif;
+    font-size: 10px;
+    font-weight:bold;
+    text-decoration:none;
+    color: white;
+    background-color: #FF6600;
     border-right:1px solid #063;
     border-bottom:1px solid #063;
     padding:0px 3px 0px 3px;

@@ -23,14 +23,17 @@
 [% INCLUDE common/searchbar.tt %]
 </div>
 </div>
+</div>
 
 <div id="footer">
-<div id="footleft">
+<div id="left">
 [% INCLUDE common/pagebar.tt %]
 </div>
-<div id="footright">
+<div id="right">
 <a href="http://www.blueoxen.org/tools/purplewiki/">
-<span class="poweredby">PurpleWiki</span></a>
+<span class="poweredby">PurpleWiki</span></a><br />
+<a href="[% baseUrl %]?action=rss">
+<span class="syndicate">RSS</span></a>
 </div>
 </div>
 
