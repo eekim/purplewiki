@@ -1,9 +1,19 @@
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
+
+my $cgiDir = prompt("Where should the wiki.pl CGI be installed?",
+    '/var/www/cgi-bin');
+
+
 WriteMakefile(
     'NAME'		=> 'PurpleWiki',
     'VERSION'	=> '0.9.1',
+    'PREREQ_PRINT' => 1,
+    'EXE_FILES' => [
+        'wiki.pl',
+        ],
+    'INSTALLSCRIPT' => $cgiDir,
     'PREREQ_PM'		=> {
     	Text::Wrap => 0,
 	Text::Diff => 0,

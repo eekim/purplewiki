@@ -2,9 +2,11 @@ ChangeLog
 Contributors
 LICENSE
 MANIFEST
+MANIFEST.SKIP
 Makefile.PL
 PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
+PurpleWiki/Apache2NidHandler.pm
 PurpleWiki/Config.pm
 PurpleWiki/Database.pm
 PurpleWiki/Database/KeptRevision.pm
@@ -15,6 +17,7 @@ PurpleWiki/Database/User.pm
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
 PurpleWiki/Parser/WikiText.pm
+PurpleWiki/Rss.pm
 PurpleWiki/Search/Arts.pm
 PurpleWiki/Search/Blosxom.pm
 PurpleWiki/Search/Engine.pm
@@ -30,7 +33,10 @@ PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
+PurpleWiki/View/Filter.pm
 PurpleWiki/View/text.pm
+PurpleWiki/View/rawtext.pm
+PurpleWiki/View/subtree.pm
 PurpleWiki/View/wikihtml.pm
 PurpleWiki/View/wikitext.pm
 PurpleWiki/View/xhtml.pm
@@ -45,10 +51,12 @@ extras/mhonarc/README
 extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
+extras/rss/README
+extras/rss/rssCreate
+extras/rss/wikirss
 extras/purple
 extras/purpleConvert.pl
 extras/wiki_trans.pl
-extras/wikirss
 extras/wikiwhiteboard/sketch.svg
 extras/wikiwhiteboard/wikiwhiteboard.pl
 t/config
@@ -65,6 +73,7 @@ t/parser05.t
 t/parser06.t
 t/parser07.t
 t/parser08.t
+t/parser09.t
 t/sequence.t
 t/structural_node.t
 t/tree.t
@@ -80,4 +89,5 @@ t/tree_test09.txt
 t/tree_test10.txt
 t/tree_test11.txt
 t/tree_test12.txt
+t/tree_test13.txt
 wiki.pl
