@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.10 2004/01/01 01:20:35 cdent Exp $
+# $Id: Config.pm,v 1.11 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,13 +32,13 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.10 2004/01/01 01:20:35 cdent Exp $
+# $Id: Config.pm,v 1.11 2004/01/21 23:24:08 cdent Exp $
 
 use strict;
 use AppConfig;
 
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '0.9.1';
 
 # Field separators that delimit page storage
 my $FS  = "\xb3";      # The FS character is a superscript "3"

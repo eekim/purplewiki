@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.8 2004/01/13 02:11:15 cdent Exp $
+# $Id: MovableType.pm,v 1.9 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -33,6 +33,9 @@ package PurpleWiki::Search::MovableType;
 use strict;
 use base 'PurpleWiki::Search::Interface';
 use Time::Local;
+
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 # Where the searching is done.
 # Most of this taken from MT::App::Search

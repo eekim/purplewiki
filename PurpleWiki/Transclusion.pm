@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.7 2004/01/13 22:47:40 cdent Exp $
+# $Id: Transclusion.pm,v 1.8 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,7 +35,7 @@ use DB_File;
 use LWP::UserAgent;
 
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '0.9.1';
 
 # The name of the index file. Its directory comes from Config.
 my $INDEX_FILE = 'sequence.index';

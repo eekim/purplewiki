@@ -1,3 +1,39 @@
+
+If you are upgrading from version 0.1 please see the 'UPGRADING FROM
+V0.1' information, further below. 0.1 users will need to perform the 
+tasks listed in that section, followed by the tasks listed in the 
+'UPGRADING FROM V0.9' section.
+
+UPGRADING FROM V0.9
+===================
+
+PurpleWiki v0.9.1 uses the same format as v0.9 and requires no 
+changes to the content or data files. One significant change
+is REQUIRED in the config file.
+
+The Wiki search function has been modularized to allow searches of
+the wiki titles and content, blogs associated with the wiki (through
+the MovableType and Bloxsom plugins), google and whatever else
+you can think of: The system is set up to allow individuals to create
+their own modules for searching. See the documentation within
+PurpleWiki::Search::Engine and PurpleWiki::Search::Interface.
+
+Which search modules are used is controlled by the configuration
+file. To get the default 0.1 and 0.9 behavior of searching the
+the wiki titles and content from either the search box or clicking on
+page title, you MUST add the following line to the config file:
+
+  SearchModule    =    Wiki
+
+(case matters).
+
+The sample config file in the etc file of this distribution includes
+other search configuration examples. Each Search module may require
+additional configuration items. These are described in the
+documentation associated with each module. Each module may also have
+additional Perl module requirements. See each module to find out 
+what is required.
+
 UPGRADING FROM V0.1
 ===================
 
@@ -35,4 +71,4 @@ For the URL, just provide the hostname and port (if not 80).
 purpleConvert.pl will use the path specified by ScriptName in your
 config file.
 
-$Id: UPGRADE,v 1.1 2003/08/14 21:06:11 eekim Exp $
+$Id: UPGRADE,v 1.2 2004/01/21 23:24:08 cdent Exp $

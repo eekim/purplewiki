@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Arts.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Arts.pm,v 1.5 2004/01/13 02:11:15 cdent Exp $
+# $Id: Arts.pm,v 1.6 2004/01/21 23:24:08 cdent Exp $
 #
 # A Search Module for Arts (http://arts.sourceforge.net/) files
 # that have been formatted as PurpleWiki wikitext.
@@ -40,6 +40,9 @@ use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
 use IO::File;
+
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 my $FILE_MATCH = '\d+\.\d+\.wiki';
 

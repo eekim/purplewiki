@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Interface.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Interface.pm,v 1.2 2004/01/13 02:11:15 cdent Exp $
+# $Id: Interface.pm,v 1.3 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -32,6 +32,9 @@
 package PurpleWiki::Search::Interface;
 
 use strict;
+
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 sub new {
     my $class = shift;

@@ -1,6 +1,6 @@
 # PurpleWiki::View::debug.pm
 #
-# $Id: debug.pm,v 1.5 2003/08/29 18:42:03 eekim Exp $
+# $Id: debug.pm,v 1.6 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,7 +35,7 @@ use PurpleWiki::Tree;
 use PurpleWiki::View::EventHandler;
 
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '0.9.1';
 
 # structural node event handlers
 

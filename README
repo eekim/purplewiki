@@ -90,6 +90,12 @@ the PurpleWiki URL.  You should see a page called FrontPage that says,
 allow you to edit this page.  Add some text, and click save.  If
 everything works, your installation is a success!
 
+If you plan to take advantage of Search modules beyond the default,
+read the documentation found within the modules to be found in the
+Search directory of your PurpleWiki installation in site_perl or 
+elsewhere in @INC. Those files include additional configuration
+requirements.
+
 COPYRIGHT AND LICENCE
 
 Copyright (C) 2002-2003 Blue Oxen Associates.
@@ -133,4 +139,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.7 2003/08/17 19:16:24 cdent Exp $
+$Id: README,v 1.8 2004/01/21 23:24:08 cdent Exp $

@@ -1,5 +1,16 @@
 Revision history for PurpleWiki.
 
+0.9.1 -- January 23, 2004
+	  - Boolean config option, ShowNid, that controls whether NIDs should
+	    be displayed as '#' or their value.
+	  - Support for Wiki whiteboards. See [???]
+	  - SiteBase configuration variable now used correctly, if set.
+	  - Pluggage search modules allowing searching of external tools from
+	    the wiki. See PurpleWiki/Search/*.pm for
+	    documentation and information.
+          - Transclusions can now be presented as plain text rather than
+	    HTML.
+
 0.9 -- August 17, 2003
 	- Document-independent node IDs.
 	- Transclusions!

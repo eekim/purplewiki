@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.4 2003/08/18 07:10:53 eekim Exp $
+# $Id: Page.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.4 2003/08/18 07:10:53 eekim Exp $
+# $Id: Page.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
 
 use strict;
 use PurpleWiki::Database;
@@ -40,7 +40,7 @@ use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;
 
 use vars qw($VERSION);
-$VERSION = '0.9';
+$VERSION = '0.9.1';
 
 # defaults for Text Based data structure
 my $DATA_VERSION = 3;            # the data format version

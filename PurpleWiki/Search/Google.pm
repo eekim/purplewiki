@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Google.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Google.pm,v 1.2 2004/01/13 02:11:15 cdent Exp $
+# $Id: Google.pm,v 1.3 2004/01/21 23:24:08 cdent Exp $
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -31,6 +31,9 @@ package PurpleWiki::Search::Google;
 use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
+
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 # Where the searching is done.
 sub search {
