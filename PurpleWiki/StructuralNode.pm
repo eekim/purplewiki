@@ -1,6 +1,6 @@
 # PurpleWiki::StructuralNode.pm
 #
-# $Id: StructuralNode.pm,v 1.6 2003/01/02 06:06:30 eekim Exp $
+# $Id: StructuralNode.pm,v 1.7 2003/01/09 06:30:02 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -205,6 +205,6 @@ Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
 
 =head1 SEE ALSO
 
-L<PurpleWiki::Tree>, L<PurpleWiki::InlineNode.
+L<PurpleWiki::Tree>, L<PurpleWiki::InlineNode>.
 
 =cut
