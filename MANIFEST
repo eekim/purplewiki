@@ -73,6 +73,7 @@ t/parser04.t
 t/parser05.t
 t/parser07.t
 t/parser08.t
+t/parser_freelinks.t
 t/parser_hr.t
 t/parser_interlinks.t
 t/parser_lists.t
@@ -87,6 +88,7 @@ t/output/hr4.txt
 t/output/hr5.txt
 t/output/hr6.txt
 t/output/hr7.txt
+t/output/tree_freelinks.txt
 t/output/tree_hr.txt
 t/output/tree_interlinks.txt
 t/output/tree_lists.txt
@@ -108,6 +110,7 @@ t/txt/hr4.txt
 t/txt/hr5.txt
 t/txt/hr6.txt
 t/txt/hr7.txt
+t/txt/tree_freelinks.txt
 t/txt/tree_hr.txt
 t/txt/tree_interlinks.txt
 t/txt/tree_lists.txt
