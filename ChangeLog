@@ -1,25 +1,26 @@
 Revision history for PurpleWiki.
 
-0.9.1 -- January 23, 2004
-	  - Umask config option has been added so that wiki pages can be
-	    created group writable, if desired. Thanks to: Matthew O'Connor
-	  - A bug with KeptRevisions causing an error fixed. Thanks to:
-	    Matthew O'Conner
-	  - Boolean config option, ShowNid, that controls whether NIDs should
-	    be displayed as '#' or their value. T
-	  - Support for Wiki whiteboards. See [???]
-	  - SiteBase configuration variable now used correctly, if set. Thanks
-	    to: Jason Cook
-	  - Pluggage search modules allowing searching of external tools from
-	    the wiki. See PurpleWiki/Search/*.pm for
-	    documentation and information.
-          - Transclusions can now be presented as plain text rather than
-	    HTML. See PurpleWiki::Transclusion. Thanks to: Jason Cook
-	  - mod_per 1 and mod_perl 2 handlers for displaying raw wikitext
-	    files as xhtml are now included. See PurpleWiki::Apache1Handler
-	    and PurpleWiki::Apache2Handler. Intended for use with tools
-	    that manipulate wikitext and PurpleNumbers external to the
-	    wiki proper.
+0.9.1 -- February 11, 2004
+	- Umask config option has been added so that wiki pages can be
+	  created group writable, if desired. Thanks to: Matthew O'Connor
+	- A bug with KeptRevisions causing an error fixed. Thanks to:
+	  Matthew O'Conner
+	- Boolean config option, ShowNid, that controls whether NIDs should
+	  be displayed as '#' or their value. T
+	- Support for WikiWhiteboard.  See
+	  http://www.xml.com/pub/a/2003/11/19/svgwiki.html
+	- SiteBase configuration variable now used correctly, if set. Thanks
+	  to: Jason Cook
+	- Pluggage search modules allowing searching of external tools from
+	  the wiki. See PurpleWiki/Search/*.pm for
+	  documentation and information.
+        - Transclusions can now be presented as plain text rather than
+	  HTML. See PurpleWiki::Transclusion. Thanks to: Jason Cook
+	- mod_perl 1 and mod_perl 2 handlers for displaying raw wikitext
+	  files as xhtml are now included. See PurpleWiki::Apache1Handler
+	  and PurpleWiki::Apache2Handler. Intended for use with tools
+	  that manipulate wikitext and PurpleNumbers external to the
+	  wiki proper.
 
 0.9 -- August 17, 2003
 	- Document-independent node IDs.
