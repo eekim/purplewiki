@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.1.2.2 2003/01/28 05:43:49 cdent Exp $
+# $Id: Page.pm,v 1.1.2.3 2003/01/28 07:58:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.1.2.2 2003/01/28 05:43:49 cdent Exp $
+# $Id: Page.pm,v 1.1.2.3 2003/01/28 07:58:42 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -48,7 +48,8 @@ my $DATA_VERSION = 3;            # the data format version
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
-    my $self = {@_};
+    my %args = @_;
+    my $self = { %args };
     bless ($self, $class);
     return $self;
 }
@@ -67,6 +68,28 @@ sub pageFileExists {
     my $filename = $self->getPageFile();
 
     return (-f $filename);
+}
+
+sub getRevision {
+    my $self = shift;
+    return $self->{revision};
+}
+
+sub setRevision {
+    my $self = shift;
+    my $revision = shift;
+    $self->{revision} = $revision;
+}
+
+sub getTS {
+    my $self = shift;
+    return $self->{ts};
+}
+
+sub setTS {
+    my $self = shift;
+    my $ts = shift;
+    $self->{ts} = $ts;
 }
 
 sub getPageCache {
@@ -162,11 +185,6 @@ sub getName {
     return $self->{id};
 }
 
-sub getRevision {
-    my $self = shift;
-    return $self->{revision};
-}
-
 # Retrieves the now of when this page was asked for.
 sub getNow {
     my $self = shift;
@@ -199,8 +217,8 @@ sub getPageDirectory {
 sub _updatePageVersion {
     my $self = shift;
 
-    # FIXME: ugly
-    PurpleWiki::Database::ReportError('Bad page version (or corrupt page)');
+    # FIXME: ugly, but quick
+    die('Bad page version (or corrupt page)');
 }
 
 # Parses the data read in from a page file.
@@ -222,13 +240,14 @@ sub _openNewPage {
 
     $self->{version} = 3;
     $self->{revision} = 0;
-    $self->{tscreate} = $self->getNow();
+    $self->{ts_create} = $self->getNow();
     $self->{ts} = $self->getNow();
 }
 
 # we go ahead and rewrite the whole thing
 sub save {
     my $self = shift;
+
     my $data = $self->serialize();
 
     PurpleWiki::Database::CreatePageDir($PageDir, $self->getID());
@@ -239,14 +258,14 @@ sub save {
 sub serialize {
     my $self = shift;
 
-    my $sectionData = $self->{'text_default'}->serialize();
+    my $sectionData = $self->getSection()->serialize();
 
-    my $data = map {$_ . $FS1 . $self->{$_} . $FS1} 
+    my $data = join($FS1, map {$_ . $FS1 . $self->{$_}} 
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',
          'cache_diff_default_major', 'cache_diff_default_minor',
-         'ts_create', 'ts');
+         'ts_create', 'ts'));
 
-    $data .= $sectionData;
+    $data .= $FS1 . 'text_default' . $FS1 . $sectionData;
 
     return $data;
 }

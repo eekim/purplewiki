@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Section.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: Section.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Section;
 
 # PurpleWiki Section Data Access
 
-# $Id: Section.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: Section.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -64,15 +64,17 @@ sub getText {
     }
 }
 
-sub getRevision {
-    my $self = shift;
-    return $self->{revision};
-}
-
 sub getHost {
     my $self = shift;
     return $self->{host};
 }
+
+sub setHost {
+    my $self = shift;
+    my $host = shift;
+    $self->{host} = $host;
+}
+
 
 sub getIP {
     my $self = shift;
@@ -89,15 +91,37 @@ sub getUsername {
     return $self->{username};
 }
 
+sub getRevision {
+    my $self = shift;
+    return $self->{revision};
+}
+
+sub setRevision {
+    my $self = shift;
+    my $revision = shift;
+    $self->{revision} = $revision;
+}
+
 sub getTS {
     my $self = shift;
     return $self->{ts};
+}
+
+sub setTS {
+    my $self = shift;
+    my $ts = shift;
+    $self->{ts} = $ts;
 }
 
 sub setKeepTS {
     my $self = shift;
     my $time = shift;
     $self->{keepts} = $time;
+}
+
+sub getKeepTS {
+    my $self = shift;
+    return $self->{keepts};
 }
 
 
@@ -119,12 +143,12 @@ sub _init {
         $self->{name} = 'text_default';
         $self->{version} = 1;
         $self->{revision} = 0;
-        $self->{tscreate} = $self->{now};
-        $self->{ts} = $self->{now};
+        $self->{tscreate} = $args{now};
+        $self->{ts} = $args{now};
         $self->{ip} = $ENV{REMOTE_ADDR};
         $self->{host} = '';
-        $self->{id} = $self->{userID};
-        #$self->{username} = $self->{username} # redundant
+        $self->{id} = $args{userID};
+        $self->{username} = $args{username};
         $self->{data} = new PurpleWiki::Database::Text();
     }
 }
@@ -134,10 +158,10 @@ sub serialize {
 
     my $textData = $self->{data}->serialize();
 
-    my $data = map {$_ . $FS2 . $self->{$_} . $FS2} 
+    my $data = join($FS2, map {$_ . $FS2 . $self->{$_}} 
         ('name', 'version', 'id', 'username', 'ip', 'host',
-         'ts', 'tscreate', 'keepts', 'revision', 'revision');
-    $data .= $textData;
+         'ts', 'tscreate', 'keepts', 'revision'));
+    $data .= $FS2 . 'data' . $FS2 . $textData;
 
     return $data;
 }

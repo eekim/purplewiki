@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.6 2003/01/28 05:43:48 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.7 2003/01/28 07:58:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -47,7 +47,7 @@ local $| = 1;  # Do not buffer output (localized for mod_perl)
 #use vars qw( %Section %Text %InterSite %SaveUrl %SaveNumUrl
 #use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
 use vars qw(%InterSite %SaveUrl %SaveNumUrl
-  %KeptRevisions %UserCookie %SetCookie %UserData %IndexHash %Translate
+  %UserCookie %SetCookie %UserData %IndexHash %Translate
   %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
   @KeptList @IndexList $IndexInit $q $Now $UserID $TimeZoneOffset );
 
@@ -504,7 +504,7 @@ sub DoHistory {
 
   print &GetHeader("",&QuoteHtml("History of $id"), "") . "<br>";
   $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
-  $text = $page->getText();
+  $page->openPage();
 
   $canEdit = &UserCanEdit($id);
   $canEdit = 0;  # Turn off direct "Edit" links
@@ -1281,10 +1281,14 @@ sub DoEdit {
     return;
   }
   # Consider sending a new user-ID cookie if user does not have one
-  $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
-  $section = $page->getSection();
+  $keptRevision = new PurpleWiki::Database::KeptRevision($id);
+  $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
+                                 'username' => &GetParam("username", ""),
+                                 'userID' => $UserID);
+  $page->openPage();
+  # FIXME: ordering is import in these next two, it shouldn't be
   $text = $page->getText();
-  $keptRevision = new PurpleWiki::DataBase::KeptRevision($id);
+  $section = $page->getSection();
   $pageTime = $section->getTS();
   $header = "Editing $id";
   
@@ -1815,6 +1819,7 @@ sub DoPost {
   # (A few called routines can die, leaving locks.)
   my $keptRevision = new PurpleWiki::Database::KeptRevision($id);
   my $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
+  $page->openPage();
   my $text = $page->getText();
   my $section = $page->getSection();
   $old = $text->getText();
@@ -1861,7 +1866,7 @@ sub DoPost {
     $isEdit = 1;
   }
   if (!$isEdit) {
-    $page->setPageCache('oldmajor', $section->getRevison());
+    $page->setPageCache('oldmajor', $section->getRevision());
   }
   if ($newAuthor) {
     $page->setPageCache('oldauthor', $section->getRevision());
@@ -1879,6 +1884,11 @@ sub DoPost {
   $text->setNewAuthor($newAuthor);
   $text->setSummary($summary);
   $section->setHost(&GetRemoteHost(1));
+  # FIXME: redundancy in data structure here
+  $section->setRevision($section->getRevision() + 1);
+  $section->setTS($Now);
+  $page->setRevision($section->getRevision());
+  $page->setTS($Now);
   $page->save();
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
   &PurpleWiki::Database::ReleaseLock();
@@ -1961,6 +1971,7 @@ sub SearchTitleAndBody {
 
   foreach $name (&PurpleWiki::Database::AllPagesList()) {
     $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now);
+    $page->openPage();
     $text = $page->getText();
     if (($text->getText() =~ /$string/i) || ($name =~ /$string/i)) {
       push(@found, $name);
@@ -1983,6 +1994,7 @@ sub SearchBody {
 
   foreach $name (&PurpleWiki::Database::AllPagesList()) {
     $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now);
+    $page->openPage();
     $text = $page->getText();
     if ($text->getText() =~ /$string/i) {
       push(@found, $name);

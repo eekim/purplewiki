@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.1.2.1 2003/01/27 10:11:24 cdent Exp $
+# $Id: KeptRevision.pm,v 1.1.2.2 2003/01/28 07:58:42 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -178,7 +178,10 @@ sub serialize {
     my $self = shift;
 
     my $data;
-    foreach my $section ($self->getSections()) {
+    my $section;
+    foreach $section ($self->getSections()) {
+        # FIXME: shouldn't need to do this...
+        next if (!defined($section));
         $data .= $section->serialize();
         $data .= $FS1;
     }
