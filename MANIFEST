@@ -9,6 +9,7 @@ PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
 PurpleWiki/Archive/Base.pm
 PurpleWiki/Archive/PlainText.pm
+PurpleWiki/Archive/Sequence.pm
 PurpleWiki/Archive/Subversion.pm
 PurpleWiki/Archive/UseMod.pm
 PurpleWiki/Config.pm
