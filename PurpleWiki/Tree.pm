@@ -5,6 +5,7 @@ use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
 use PurpleWiki::View::XHTML;
+use PurpleWiki::View::WikiHTML;
 
 ### constructor
 
@@ -431,6 +432,9 @@ sub view {
     }
     elsif (lc($driver) eq 'debug') {
         &PurpleWiki::View::Debug::view($this, %params);
+    } 
+    elsif (lc($driver) eq 'wikihtml') {
+        &PurpleWiki::View::WikiHTML::view($this, %params);
     }
 }
 
