@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.6.2.2 2003/05/21 05:19:00 cdent Exp $
+# $Id: wiki.pl,v 1.6.2.3 2003/06/12 01:01:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -150,9 +150,6 @@ sub DoBrowseRequest {
     if ($FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
     }
-    if (($NotFoundPg ne '') && (!$page->pageExists())) {
-      $id = $NotFoundPg;
-    }
     &BrowsePage($id)  if &ValidIdOrDie($id);
     return 1;
   }
@@ -162,9 +159,6 @@ sub DoBrowseRequest {
   if ($action eq 'browse') {
     if ($FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
-    }
-    if (($NotFoundPg ne '') && (!$page->pageExists())) {
-      $id = $NotFoundPg;
     }
     &BrowsePage($id)  if &ValidIdOrDie($id);
     return 1;
@@ -954,39 +948,18 @@ sub GetSearchForm {
   return $result;
 }
 
+# Returns the URL of a page after it has 
+# been edited. This used to do lots of
+# hoops if CGI.pm was not being used,
+# but we don't worry about that anymore.
 sub GetRedirectPage {
   my ($newid, $name, $isEdit) = @_;
   my ($url, $html);
-  my ($nameLink);
 
-  # Normally get URL from script, but allow override.
   $FullUrl = $q->url(-full=>1)  if ($FullUrl eq "");
   $url = $FullUrl . "?" . $newid;
-  $nameLink = "<a href=\"$url\">$name</a>";
-  if ($RedirType < 3) {
-    if ($RedirType == 1) {             # Use CGI.pm
-      # NOTE: do NOT use -method (does not work with old CGI.pm versions)
-      # Thanks to Daniel Neri for fixing this problem.
-      $html = $q->redirect(-uri=>$url);
-    } else {                           # Minimal header
-      $html  = "Status: 302 Moved\n";
-      $html .= "Location: $url\n";
-      $html .= "Content-Type: text/html\n";  # Needed for browser failure
-      $html .= "\n";
-    }
-    $html .= "\n" . "Your browser should go to the $newid page.";
-    $html .= ' ' . "If it does not, click $nameLink to continue.";
-  } else {
-    if ($isEdit) {
-      $html  = &GetHeader('', 'Thanks for editing...', '');
-      $html .= "Thank you for editing $nameLink";
-    } else {
-      $html  = &GetHeader('', 'Link to another page...', '');
-    }
-    $html .= "\n<p>";
-    $html .= "Follow the $nameLink link to continue.";
-    $html .= &GetMinimumFooter();
-  }
+
+  $html = $q->redirect(-uri=>$url);
   return $html;
 }
 
@@ -995,7 +968,7 @@ sub WikiToHTML {
   # Use the PurpleWiki::View::wikihtml driver to parse wiki pages to HTML
   my ($pageText) = @_;
 
-  my $wiki = $wikiParser->parse($pageText);
+  my $wiki = $wikiParser->parse($pageText, 'freelink' => $FreeLinks);
   return $wiki->view('wikihtml');
 }
 
@@ -1860,7 +1833,10 @@ sub DoPost {
   $string =~ s/\r//g;
 
   my $url = $q->url() . "?$id";
-  my $wiki = $wikiParser->parse($string, 'add_node_ids'=>1, 'url'=>$url);
+  my $wiki = $wikiParser->parse($string,
+                                'add_node_ids'=>1,
+                                'url'=>$url,
+                                'freelink' => $FreeLinks);
   my $output = $wiki->view('wikitext');
 
   $string = $output;
@@ -2317,7 +2293,9 @@ sub ColorDiff {
   my ($diff, $color) = @_;
 
   $diff =~ s/(^|\n)[<>]/$1/g;
-  $diff =  $wikiParser->parse($diff, 'add_node_ids' => 0)->view('wikitext');
+  $diff =  $wikiParser->parse($diff,
+                              'freelink' => $FreeLinks,
+                              'add_node_ids' => 0)->view('wikitext');
   $diff =~ s/\r?\n/<br>/g;
   return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
          . "</td></tr></table>\n";

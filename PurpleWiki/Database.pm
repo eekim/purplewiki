@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2.2.1 2003/06/12 00:13:40 cdent Exp $
+# $Id: Database.pm,v 1.2.2.2 2003/06/12 01:01:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2.2.1 2003/06/12 00:13:40 cdent Exp $
+# $Id: Database.pm,v 1.2.2.2 2003/06/12 01:01:23 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -75,7 +75,7 @@ sub GetDiff {
     require Text::Diff;
     my ($old, $new, $lock) = @_;
 
-    my $diff_out = Text::Diff::diff($old, $new, {STYLE => "OldStyle"});
+    my $diff_out = Text::Diff::diff(\$old, \$new, {STYLE => "OldStyle"});
     return $diff_out;
 }
 
