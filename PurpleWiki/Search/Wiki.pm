@@ -46,6 +46,7 @@ sub search {
 
     my $nameHash;
     my $pages = $self->{config}->{pages};
+    return unless $pages;
 
     foreach my $id ($pages->allPages()) {
         my $page = $pages->getPage($id);

@@ -63,7 +63,7 @@ my $TimeZoneOffset;     # User's preference for timezone. FIXME: can we
 
 # we only need one of each these per run
 my $config = new PurpleWiki::Config($CONFIG_DIR);
-my $pages;
+my $pages = $config->{pages};
 
 my $parserDriver = $config->ParserDriver;
 my $templateDriver = $config->TemplateDriver;
@@ -125,12 +125,6 @@ sub InitRequest {
     $q = new CGI;
 #dumpParams($q);
   }
-
-  my $archiveDriver = $config->ArchiveDriver;
-  print STDERR "Archive Driver Error ($archiveDriver) $@\n"
-      unless (defined(eval "require $archiveDriver"));
-  $pages = $archiveDriver->new ($config, create => 1);
-           # Object representing a page database
 
   if (!$pages) {
     # technically, we failed to create the pages object which represents

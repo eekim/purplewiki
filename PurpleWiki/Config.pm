@@ -116,6 +116,13 @@ sub _init {
             $self->{AppConfig}->get('DataDir'));
     }
 
+    my $archiveDriver;
+    if (defined($archiveDriver = $self->{AppConfig}->get('ArchiveDriver'))) {
+        print STDERR "Error in Package: $archiveDriver\nError:$@"
+            unless (eval "require $archiveDriver");
+        $self->{pages} = $archiveDriver->new($self, create => 1);
+    }
+
     return $self;
 }
 

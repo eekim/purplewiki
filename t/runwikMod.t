@@ -17,6 +17,8 @@ my $keep_errors = 1;
 my $testdir = 't/out';
 system('cp t/config.runMod t/config');
 
+local (*OUT);
+
 {
     require "wiki.pl";
     use CGI;
@@ -31,7 +33,7 @@ system('cp t/config.runMod t/config');
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";
         if (open(IN, $test_in)) {
-            chomp($url = <IN>);
+            <IN>;
             my $q = new CGI(IN);
             close IN;
             close STDOUT;

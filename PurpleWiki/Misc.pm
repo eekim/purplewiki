@@ -100,7 +100,8 @@ sub GetPageOrEditLink {
     $id = FreeToNormal($id);
   }
   
-  if ($config->{pages}->pageExists($id)) {      # Page file exists
+  my $pages = $config->{pages};
+  if (defined($pages) && $pages->pageExists($id)) {      # Page file exists
     return GetPageLinkText($id, $name);
   }
   if ($config->FreeLinks) {
