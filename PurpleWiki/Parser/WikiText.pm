@@ -209,7 +209,7 @@ sub parse {
             $currentNode->insertChild(type=>'sketch');
         }
         elsif ($line =~ /^----*$/) {   # new section
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
             $currentNode = $currentNode->parent;
             $currentNode = $currentNode->insertChild(type=>'section');
@@ -224,9 +224,9 @@ sub parse {
             foreach $listType (keys(%listMap)) {  # repeat for all
                                                   # three list types
                 if ($line =~ /^$listMap{$listType}$/x) {
-                    $currentNode = &_terminateParagraph($currentNode,
-                                                        \$nodeContent,
-                                                        %params);
+                    $currentNode = &_terminateNode($currentNode,
+                                                   \$nodeContent,
+                                                   %params);
                     while ($indentDepth > 0) {
                         $currentNode = $currentNode->parent;
                         $indentDepth--;
@@ -304,20 +304,21 @@ sub parse {
                     }
                     $currentNode = &_parseList($listType, length $1,
                                                \$listDepth, $currentNode,
-                                               \%params, @listContents);
+                                               \%params, \$nodeContent,
+                                               @listContents);
                     $isStart = 0 if ($isStart);
                 }
             }
         }
         elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
             }
             $listLength = length $1;
-            $nodeContent = $2;
+            $nodeContent = "$2\n";
             while ($listLength > $indentDepth) {
                 $currentNode = $currentNode->insertChild('type'=>'indent');
                 $indentDepth++;
@@ -326,19 +327,11 @@ sub parse {
                 $currentNode = $currentNode->parent;
                 $indentDepth--;
             }
-            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-            $currentNid = $1;
-            $currentNode = $currentNode->insertChild('type'=>'p',
-                'content'=>&_parseInlineNode($nodeContent, %params));
-            if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-                $currentNode->id($currentNid);
-            }
-            $currentNode = $currentNode->parent;
-            undef $nodeContent;
+            $currentNode = $currentNode->insertChild('type'=>'p');
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -377,8 +370,13 @@ sub parse {
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
-        elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted
-            if ($currentNode->type ne 'pre') {
+        elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted or continued li
+            my $string = $1;
+            if (($currentNode->type eq 'li') || ($currentNode->type eq 'dd') ||
+                (($currentNode->type eq 'p') && ($indentDepth > 0))) {
+                $string =~ s/^\s+//;
+            }
+            elsif ($currentNode->type ne 'pre') {
                 while ($listDepth > 0) {
                     $currentNode = $currentNode->parent;
                     $listDepth--;
@@ -387,16 +385,16 @@ sub parse {
                     $currentNode = $currentNode->parent;
                     $indentDepth--;
                 }
-                $currentNode = &_terminateParagraph($currentNode,
+                $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
                 $currentNode = $currentNode->insertChild('type'=>'pre');
             }
-            $nodeContent .= "$1\n";
+            $nodeContent .= "$string\n";
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^\s*$/) {  # blank line
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+            $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -408,7 +406,8 @@ sub parse {
             }
         }
         else {
-            if ($currentNode->type ne 'p') {
+            if (($currentNode->type ne 'p') && ($currentNode->type ne 'li') &&
+                ($currentNode->type ne 'dd')) {
                 while ($listDepth > 0) {
                     $currentNode = $currentNode->parent;
                     $listDepth--;
@@ -417,7 +416,7 @@ sub parse {
                     $currentNode = $currentNode->parent;
                     $indentDepth--;
                 }
-                $currentNode = &_terminateParagraph($currentNode,
+                $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
                 $currentNode = $currentNode->insertChild('type'=>'p');
@@ -426,7 +425,7 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
     }
-    $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+    $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                         %params);
     if (scalar @authors > 0) {
         $tree->authors(\@authors);
@@ -440,11 +439,12 @@ sub parse {
 
 ### private
 
-sub _terminateParagraph {
+sub _terminateNode {
     my ($currentNode, $nodeContentRef, %params) = @_;
     my ($currentNid);
 
-    if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
+    if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
+        ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
         chomp ${$nodeContentRef};
         ${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s;
         $currentNid = $1;
@@ -460,7 +460,8 @@ sub _terminateParagraph {
 
 sub _parseList {
     my ($listType, $listLength, $listDepthRef,
-        $currentNode, $paramRef, @nodeContents) = @_;
+        $currentNode, $paramRef, $nodeContentRef,
+        @nodeContents) = @_;
     my ($currentNid);
 
     while ($listLength > ${$listDepthRef}) {
@@ -471,31 +472,21 @@ sub _parseList {
         $currentNode = $currentNode->parent;
         ${$listDepthRef}--;
     }
-    $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-    $currentNid = $1;
     if ($listType eq 'dl') {
+        $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
+        $currentNid = $1;
         $currentNode = $currentNode->insertChild('type'=>'dt',
             'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
         $currentNode = $currentNode->parent;
-        $nodeContents[1] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-        $currentNid = $1;
-        $currentNode = $currentNode->insertChild('type'=>'dd',
-            'content'=>&_parseInlineNode($nodeContents[1], %{$paramRef}));
-        if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-            $currentNode->id($currentNid);
-        }
-        return $currentNode->parent;
+        ${$nodeContentRef} = $nodeContents[1] . "\n";
+        $currentNode = $currentNode->insertChild('type'=>'dd');
     }
     else {
-        $currentNode = $currentNode->insertChild('type'=>'li',
-            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
-        if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
-            $currentNode->id($currentNid);
-        }
-        return $currentNode->parent;
+        ${$nodeContentRef} = $nodeContents[0] . "\n";
+        $currentNode = $currentNode->insertChild('type'=>'li');
     }
     return $currentNode;
 }

@@ -57,6 +57,7 @@ Does the nowiki tag work?  <nowiki>Well, that depends.  Do you see
 Okay, some mixed paragraphs and lists.
 * This ought to work.
 * But I just want to make sure.
+
 Did it work?
 
 === Formatting ===
