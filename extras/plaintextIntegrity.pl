@@ -11,11 +11,22 @@
 use strict;
 use Fcntl ':mode';
 use File::Copy;
+use Getopt::Std;
 use IO::Dir;
+use Text::Diff;
+
+my %opts;
+getopt('s', \%opts);
+my @spamRegexps = &getSpamRegexps($opts{'s'});
 
 my $dataDir = shift @ARGV;
-die "Usage: $0 wikidb" unless $dataDir;
+die "Usage: $0 [-b] [-s spamregexp.txt] wikidb" unless $dataDir;
 $dataDir =~ s/\/$//;
+
+my %spammerUserIds;
+my %spammerHosts;
+my $numFoundSpam = 0;
+my $deletedSpam = 0;
 
 for my $subdir ('A'..'Z', 'misc') {
     my $dir = "$dataDir/$subdir";
@@ -27,25 +38,25 @@ for my $subdir ('A'..'Z', 'misc') {
             next if ($entry =~ /^\.+$/);
             # all files in $dir must be a directory
             if (!-d "$dir/$entry") {
-                if (&yesNo("Warning: $dir/$entry not a directory.  Delete?")) {
+                if ($opts{'b'} or &yesNo("Warning: $dir/$entry not a directory.  Delete?")) {
                     unlink("$dir/$entry");
-                    print "$dir/$entry deleted.\n";
+                    print STDERR "$dir/$entry deleted.\n";
                 }
             }
             # $entry is in wrong subdir
             elsif ( (($subdir ne 'misc') and
                      (substr($entry, 0, 1) ne $subdir)) or
                     (($subdir eq 'misc') and ($entry =~ /^[A-Z]/)) ) {
-                if (&yesNo("Warning: $entry does not belong in $dir.  Move?")) {
+                if ($opts{'b'} or &yesNo("Warning: $entry does not belong in $dir.  Move?")) {
                     my $first = substr($entry, 0, 1);
                     my $newDir = ($first =~ /^[A-Z]$/) ? $first : 'misc';
                     if (!-e "$dataDir/$newDir") {
-                        print "Creating $dataDir/$newDir\n";
+                        print STDERR "Creating $dataDir/$newDir\n";
                         mkdir "$dataDir/$newDir";
                     }
                     move("$dir/$entry", "$dataDir/$newDir/$entry");
-                    print "$entry moved to $dataDir/$newDir.  ";
-                    print "You'll need to run this script again.\n";
+                    print STDERR "$entry moved to $dataDir/$newDir.  ";
+                    print STDERR "You'll need to run this script again.\n";
                 }
             }
             # traverse page directory
@@ -60,9 +71,9 @@ for my $subdir ('A'..'Z', 'misc') {
                         # inappropriately named files
                         if ( ($file !~ /^\d+\.(txt|meta)$/) and
                              ($file ne 'current') ) {
-                            if (&yesNo("Warning: $file does not belong in $dir/$entry.  Delete?")) {
+                            if ($opts{'b'} or &yesNo("Warning: $file does not belong in $dir/$entry.  Delete?")) {
                                 unlink("$dir/$entry/$file");
-                                print "$dir/$entry/$file deleted\n";
+                                print STDERR "$dir/$entry/$file deleted\n";
                             }
                         }
                         # file is a directory
@@ -82,52 +93,120 @@ for my $subdir ('A'..'Z', 'misc') {
                     # should be a meta corresponding to each txt...
                     foreach my $num (keys %txt) {
                         if (!$meta{$num}) {
-                            if (&yesNo("Warning: No corresponding meta file for $num.txt.  Create?")) {
+                            if ($opts{'b'} or &yesNo("Warning: No corresponding meta file for $num.txt.  Create?")) {
                                 &createMetaFile($entry, $num);
                                 $meta{$num} = 1;
-                                print "Meta file created.\n";
+                                print STDERR "Meta file created.\n";
                             }
                         }
                     }
                     # ... and vice-versa
                     foreach my $num (keys %meta) {
                         if (!$txt{$num}) {
-                            if (&yesNo("Warning: No corresponding txt file for $num.meta.  Delete?")) {
+                            if ($opts{'b'} or &yesNo("Warning: No corresponding txt file for $num.meta.  Delete?")) {
                                 unlink("$dir/$entry/$num.meta");
                                 delete $meta{$num};
-                                print "Meta file deleted.\n";
+                                print STDERR "Meta file deleted.\n";
                             }
                         }
                         # check integrity of meta file
                         else {
                             my $timeStamp = &checkMetaFile("$dir/$entry/$num.meta");
                             if (!$timeStamp) {
-                                if (&yesNo("Warning: $dir/$entry/$num.meta is bad.  Delete rev $num?")) {
+                                if ($opts{'b'} or &yesNo("Warning: $dir/$entry/$num.meta is bad.  Delete rev $num?")) {
                                     unlink("$dir/$entry/$num.txt");
                                     unlink("$dir/$entry/$num.meta");
                                     delete $txt{$num};
                                     delete $meta{$num};
-                                    print "Text and meta files deleted.\n";
+                                    print STDERR "Text and meta files deleted.\n";
                                 }
                             }
                             else {  # check timestamp of txt file
                                 my @finfo = stat("$dir/$entry/$num.txt");
                                 if ($finfo[9] != $timeStamp) {
                                     utime($timeStamp, $timeStamp, "$dir/$entry/$num.txt");
-                                    print "Changed timestamp of $num.txt to correspond to meta file.\n";
+                                    print STDERR "Changed timestamp of $num.txt to correspond to meta file.\n";
                                 }
                             }
                         }
                     }
-                    # TODO: antispam stuff would go here
-
+                    # identify and possibly remove spammed revisions
+                    my @revisions = sort { $a <=> $b} keys %txt;
+                    my $pageSpamFreeRev = 0;
+                    if ($opts{'s'}) {
+                        my @spammedRevs;
+                        for my $rev (@revisions) {
+                            my $foundSpam = 0;
+                            undef $/;
+                            open(REV, "$dir/$entry/$rev.txt");
+                            my $content = <REV>;
+                            close(REV);
+                            $/ = "\n";
+                            foreach my $re (@spamRegexps) {
+                                if ($content =~ /$re/) {
+                                    $foundSpam = 1;
+                                    last;
+                                }
+                            }
+                            if ($foundSpam) {
+                                push @spammedRevs, $rev;
+                                my ($uid, $host) = &getMetaInfo("$dir/$entry/$rev.meta");
+                                $spammerUserIds{$uid} = 1 if ($uid);
+                                $spammerHosts{$host} = 1 if ($host);
+                                $numFoundSpam++;
+                            }
+                            else {
+                                $pageSpamFreeRev = 1;
+                            }
+                        }
+                        if (scalar @spammedRevs > 0) {
+                            if (!$pageSpamFreeRev) {
+                                print STDERR "WARNING: $entry does not have a spam-free rev\n";
+                            }
+                            elsif ($opts{'b'} or &yesNo("Remove spam from $entry?")) {
+                                foreach my $rev (@spammedRevs) {
+                                    unlink("$dir/$entry/$rev.txt");
+                                    unlink("$dir/$entry/$rev.meta");
+                                    delete $txt{$rev};
+                                    delete $meta{$rev};
+                                    print STDERR "Deleted spammed rev $rev of $entry\n";
+                                    $deletedSpam++;
+                                }
+                            }
+                            else {
+                                foreach my $rev (@spammedRevs) {
+                                    print STDERR "Suspected spam in rev $rev of $entry\n";
+                                }
+                            }
+                        }
+                    }
+                    # remove duplicate revisions
+                    @revisions = sort { $a <=> $b} keys %txt;
+                    my $prevRev = shift @revisions;
+                    foreach my $rev (@revisions) {
+                        if (!diff("$dir/$entry/$prevRev.txt", "$dir/$entry/$rev.txt")) {
+                            if ($opts{'b'} or &yesNo("$prevRev and $rev for $entry are identical.  Remove $rev?")) {
+                                    unlink("$dir/$entry/$rev.txt");
+                                    unlink("$dir/$entry/$rev.meta");
+                                    delete $txt{$rev};
+                                    delete $meta{$rev};
+                                    print STDERR "Deleted duplicate rev $rev of $entry\n";
+                            }
+                            else {
+                                $prevRev = $rev;
+                            }
+                        }
+                        else {
+                            $prevRev = $rev;
+                        }
+                    }
                     # if files are out of order, smoosh them down
-                    my @revisions = sort keys %txt;
+                    @revisions = sort { $a <=> $b} keys %txt;
                     my $i = 1;
                     my $lastRev;
                     for my $rev (@revisions) {
                         if ($rev != $i) {
-                            print "Renaming $entry rev $rev to $i.\n";
+                            print STDERR "Renaming $entry rev $rev to $i.\n";
                             move("$dir/$entry/$rev.txt", "$dir/$entry/$i.txt");
                             move("$dir/$entry/$rev.meta", "$dir/$entry/$i.meta");
                         }
@@ -137,7 +216,7 @@ for my $subdir ('A'..'Z', 'misc') {
                     # update current, timestamps
                     if (!$seenCurrent) {
                         &createCurrentFile($entry, $lastRev);
-                        print "Created current file for $entry.\n";
+                        print STDERR "Created current file for $entry.\n";
                     }
                     else {
                         open(CURRENT, "$dir/$entry/current");
@@ -147,22 +226,68 @@ for my $subdir ('A'..'Z', 'misc') {
                         if ($rev != $lastRev) {
                             unlink("$dir/$entry/current");
                             &createCurrentFile($entry, $lastRev);
-                            print "Corrected current file for $entry.\n";
+                            print STDERR "Corrected current file for $entry.\n";
                         }
                     }
                 }
                 else {  # can't open page dir
-                    print "Warning: Cannot open $dir/$entry!\n";
+                    print STDERR "Warning: Cannot open $dir/$entry!\n";
                 }
             }
         }
     }
     else {  # can't open $dir
-        print "Warning: Cannot open $dir!\n";
+        print STDERR "Warning: Cannot open $dir!\n";
     }
 }
+foreach my $userId (sort keys %spammerUserIds) {
+    print STDERR "Suspected spammer user ID: $userId\n";
+}
+foreach my $host (sort keys %spammerHosts) {
+    print STDERR "Suspected spammer host: $host\n";
+}
+print STDERR "Found $numFoundSpam suspected spam.\n";
+print STDERR "Deleted $deletedSpam deleted spam.\n";
 
 ### subroutines
+
+sub getSpamRegexps {
+    my $file = shift;
+    my @re;
+
+    if (open(SPAMRE, $file)) {
+        while (my $line = <SPAMRE>) {
+            chomp $line;
+            push @re, $line;
+        }
+        close(SPAMRE);
+    }
+    return @re;
+}
+
+sub getMetaInfo {  # just user ID and host
+    my $file = shift;
+
+    my ($changeSummary, $host, $timeStamp, $userId);
+    if (open(META, $file)) {
+        while (my $line = <META>) {
+            chomp $line;
+            if ($line =~ /^changeSummary=(.*)$/) {
+                $changeSummary = $1;
+            }
+            elsif ($line =~ /^host=(.*)$/) {
+                $host = $1;
+            }
+            elsif ($line =~ /^timeStamp=(.*)$/) {
+                $timeStamp = $1;
+            }
+            elsif ($line =~ /^userId=(.*)$/) {
+                $userId = $1;
+            }
+        }
+    }
+    return ($userId, $host);
+}
 
 sub checkMetaFile {
     my $file = shift;
@@ -268,12 +393,19 @@ plaintextIntegrity.pl - Checks integrity of PlainText backend.
 
 =head1 SYNOPSIS
 
-  plaintextIntegrity.pl wikidb
+  plaintextIntegrity.pl [-b] [-s spamregexp.txt] wikidb
 
 =head1 DESCRIPTION
 
 Does a series of checks to make sure the PlainText files in wikidb are
 valid.
+
+-b runs in batch mode.
+
+You can specify a file containing regular expressions commonly found
+in spam by using the -s switch.  If these expressions match, this
+script will give you the option of deleting those files, assuming that
+a spam-free revision exists.
 
 =head1 AUTHOR
 

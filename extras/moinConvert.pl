@@ -15,7 +15,6 @@
 #   moinConvert.pl /path/to/moinmoin /path/to/wikidb
 
 use strict;
-use lib '/home/eekim/devel/PurpleWiki/trunk';
 use PurpleWiki::Config;
 use PurpleWiki::Misc;
 use PurpleWiki::UseMod::KeptRevision;

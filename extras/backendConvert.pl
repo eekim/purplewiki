@@ -12,7 +12,6 @@
 package UseModWiki;  # nasty hack
 
 use strict;
-use lib '/home/eekim/devel/PurpleWiki/trunk';
 use File::Copy;
 use Getopt::Std;
 use PurpleWiki::Config;
