@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.4 2003/07/03 01:24:47 cdent Exp $
+# $Id: wikitext.pm,v 1.5 2003/07/09 08:07:13 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -220,7 +220,7 @@ sub view {
 sub _nid {
     my $nid = shift;
 
-    return " [nid $nid]";
+    return " {nid $nid}";
 }
 
 sub _textHeader {
@@ -229,28 +229,28 @@ sub _textHeader {
 
     # FIXME: this can be a loop
     if ($wikiTree->title) {
-        $outputString .= '[title ' . $wikiTree->title . "]\n";
+        $outputString .= '{title ' . $wikiTree->title . "}\n";
     }
     if ($wikiTree->subtitle) {
-        $outputString .= '[subtitle ' . $wikiTree->subtitle . "]\n";
+        $outputString .= '{subtitle ' . $wikiTree->subtitle . "}\n";
     }
     if ($wikiTree->authors) {
         foreach my $author (@{$wikiTree->authors}) {
-            $outputString .= '[author ' . $author->[0];
+            $outputString .= '{author ' . $author->[0];
             if (scalar @{$author} > 1) {
                 $outputString .= ' ' . $author->[1];
             }
-            $outputString .= "]\n";
+            $outputString .= "}\n";
         }
     }
     if ($wikiTree->id) {
-        $outputString .= '[id ' . $wikiTree->id . "]\n";
+        $outputString .= '{docid ' . $wikiTree->id . "}\n";
     }
     if ($wikiTree->version) {
-        $outputString .= '[version ' . $wikiTree->version . "]\n";
+        $outputString .= '{version ' . $wikiTree->version . "}\n";
     }
     if ($wikiTree->date) {
-        $outputString .= '[date ' . $wikiTree->date . "]\n";
+        $outputString .= '{date ' . $wikiTree->date . "}\n";
     }
 
     return $outputString;

@@ -1,10 +1,10 @@
-[title Treatise on World Peace]
-[subtitle The Solution]
-[docid boa-12345]
-[author Joe Schmoe joe@schmoe.net]
-[author Bob Marley]
-[date February 27, 2002]
-[version 1.0]
+{title Treatise on World Peace}
+{subtitle The Solution}
+{docid boa-12345}
+{author Joe Schmoe joe@schmoe.net}
+{author Bob Marley}
+{date February 27, 2002}
+{version 1.0}
 
 = Introduction =
 

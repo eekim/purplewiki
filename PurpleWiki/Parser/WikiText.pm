@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.8 2003/06/20 23:54:02 cdent Exp $
+# $Id: WikiText.pm,v 1.9 2003/07/09 08:07:13 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -91,29 +91,29 @@ sub parse {
 
     foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
         chomp $line;
-        if ($isStart && $line =~ /^\[title (.+)\]$/) {
+        if ($isStart && $line =~ /^\{title (.+)\}$/) {
             # The metadata below is not (currently) used by the
             # Wiki.  It's here to so that this parser can be used
             # as a general documentation formatting system.
             $tree->title($1);
         }
-        elsif ($isStart && $line =~ /^\[subtitle (.+)\]$/) {
+        elsif ($isStart && $line =~ /^\{subtitle (.+)\}$/) {
             # See above.
             $tree->subtitle($1);
         }
-        elsif ($isStart && $line =~ /^\[docid (.+)\]$/) {
+        elsif ($isStart && $line =~ /^\{docid (.+)\}$/) {
             # See above.
             $tree->id($1);
         }
-        elsif ($isStart && $line =~ /^\[date (.+)\]$/) {
+        elsif ($isStart && $line =~ /^\{date (.+)\}$/) {
             # See above.
             $tree->date($1);
         }
-        elsif ($isStart && $line =~ /^\[version (.+)\]$/) {
+        elsif ($isStart && $line =~ /^\{version (.+)\}$/) {
             # See above.
             $tree->version($1);
         }
-        elsif ($isStart && $line =~ /^\[author (.+)\]$/) {
+        elsif ($isStart && $line =~ /^\{author (.+)\}$/) {
             # See above.
             my $authorString = $1;
             $authorString =~ s/\s+(\S+\@\S+)$//;
@@ -160,7 +160,7 @@ sub parse {
                 $currentNode = $currentNode->parent;
                 $indentDepth--;
             }
-            $nodeContent =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
+            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'p',
                 'content'=>&_parseInlineNode($nodeContent, %params));
@@ -200,7 +200,7 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            $nodeContent =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
+            $nodeContent =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent, %params));
@@ -280,7 +280,7 @@ sub _terminateParagraph {
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
         chomp ${$nodeContentRef};
-        ${$nodeContentRef} =~ s/\s+\[nid ([A-Z0-9]+)\]$//s;
+        ${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s;
         $currentNid = $1;
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
@@ -305,7 +305,7 @@ sub _parseList {
         $currentNode = $currentNode->parent;
         ${$listDepthRef}--;
     }
-    $nodeContents[0] =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
+    $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
     $currentNid = $1;
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
@@ -314,7 +314,7 @@ sub _parseList {
             $currentNode->id($currentNid);
         }
         $currentNode = $currentNode->parent;
-        $nodeContents[1] =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
+        $nodeContents[1] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
         $currentNid = $1;
         $currentNode = $currentNode->insertChild('type'=>'dd',
             'content'=>&_parseInlineNode($nodeContents[1], %{$paramRef}));
@@ -664,11 +664,11 @@ is parsed as:
 PurpleWiki's most obvious unique feature is its support of purple
 numbers.  Every structural node gets a node ID that is unique and
 immutable, and which is displayed as a purple number.  PurpleWiki uses
-new markup -- [nid] -- to indicate purple numbers and
+new markup -- {nid} -- to indicate purple numbers and
 related metadata.  The reason these tags exist and are displayed,
 rather than generating purple numbers dynamically, is to enable
 persistent, immutable IDs.  That is, if this paragraph had the purple
-number "023", and I moved this paragraph to a new location, this
+number "a23", and I moved this paragraph to a new location, this
 paragraph should retain the same purple number.  Because Wiki editing
 is essentially equivalent as replacing the current document with
 something entirely new, PurpleWiki includes the node IDs as markup, so
@@ -701,36 +701,36 @@ This would be parsed into:
 Because there are no purple numbers in this markup, the parser assigns
 them.  Now the document looks like:
 
-  = Hello, World! [nid 1] =
+  = Hello, World! {nid 1} =
 
-  This is an example. [nid 2]
+  This is an example. {nid 2}
 
 Suppose you insert a paragraph before the existing one:
 
-  = Hello, World! [nid 1] =
+  = Hello, World! {nid 1} =
 
   New paragraph.
 
-  This is an example. [nid 2]
+  This is an example. {nid 2}
 
 When this gets parsed, the new paragraph is assigned an ID;
 
-  = Hello, World! [nid 1] =
+  = Hello, World! {nid 1} =
 
-  New paragraph. [nid 3]
+  New paragraph. {nid 3}
 
-  This is an example. [nid 2]
+  This is an example. {nid 2}
 
 Note the IDs have stayed with the nodes to which they were
 originally assigned. Suppose we delete the new paragraph, and add
 a list item after the remaining paragraph.  Parsing and adding new
 IDs will result in:
 
-  = Hello, World! [nid 1] =
+  = Hello, World! {nid 1} =
 
-  This is an example. [nid 2]
+  This is an example. {nid 2}
 
-  * List item. [nid 4]
+  * List item. {nid 4}
 
 Note that the list item has a node ID of 4, not 3.
 
