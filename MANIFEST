@@ -2,8 +2,11 @@ Changes
 LICENSE
 Makefile.PL
 MANIFEST
-purplewiki.pl
 README
+wiki.pl
+wiki_trans.pl
+etc/config
+etc/purplewiki.css
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
 PurpleWiki/StructuralNode.pm
