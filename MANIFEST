@@ -98,7 +98,7 @@ t/intermap
 t/messages.l10n
 t/page.t
 t/pageMod.test
-t/pageSVN.t
+t/pageSVN.test
 t/parser01.t
 t/parser02.t
 t/parser03.t
