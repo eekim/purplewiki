@@ -324,6 +324,11 @@ sub recentChanges {
             my @entries = split /$fsexp/, $logEntry;
             if (scalar @entries >= 6 && $entries[0] >= $timeStamp) {  # Check timestamp
                 my $name = $entries[1];
+		my $pageName = $name;
+
+		if ($config->FreeLinks) {
+		    $pageName =~ s/_/ /g;
+		}
                 if ( $pages{$name} &&
                     ($pages{$name}->{timeStamp} > $entries[0]) ) {
                     $pages{$name}->{numChanges}++;
@@ -334,6 +339,7 @@ sub recentChanges {
                     }
                     else {
                         $pages{$name}->{numChanges} = 1;
+			$pages{$name}->{pageName} = $pageName;
                     }
                     $pages{$name}->{timeStamp} = $entries[0];
                     if ($entries[2] ne '' && $entries[2] ne '*') {
@@ -371,7 +377,8 @@ sub recentChanges {
     # now parse pages hash into final data structure and return
     foreach my $name (sort { $pages{$b}->{timeStamp} <=> $pages{$a}->{timeStamp} } keys %pages) {
         push @recentChanges, { timeStamp => $pages{$name}->{timeStamp},
-                               name => $name,
+                               id => $name,
+			       pageName => $pages{$name}->{pageName},
                                numChanges => $pages{$name}->{numChanges},
                                summary => $pages{$name}->{summary},
                                userName => $pages{$name}->{userName},

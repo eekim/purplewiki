@@ -32,6 +32,7 @@
 
 package UseModWiki;
 use strict;
+use lib '/data/www/net/planetwork/perl';
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
@@ -48,7 +49,7 @@ use PurpleWiki::Search::Engine;
 use PurpleWiki::Syndication::Rss;
 use PurpleWiki::Template::TT;
 
-my $CONFIG_DIR='/var/www/wikidb';
+my $CONFIG_DIR='/data/www/net/mgtaylor/7domains/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -65,7 +66,7 @@ my $userDb;
 my $user;               # our reference to the logged in user
 my $session;            # CGI::Session object
 my $visitedPagesCache;
-my $visitedPagesCacheSize = 5;
+my $visitedPagesCacheSize = 7;
 
 my $q;                  # CGI query reference
 my $Now;                # The time at the beginning of the request
@@ -269,11 +270,11 @@ sub BrowsePage {
 
   $body = &WikiToHTML($id, $text->getText());
 
+  &updateVisitedPagesCache($id);
   if ($id eq $config->RCName) {
       &DoRc($id, $pageName, $revision, $goodRevision, $lastEdited, $body);
       return;
   }
-  &updateVisitedPagesCache($id);
   my @vPages = &visitedPages;
   $wikiTemplate->vars(siteName => $config->SiteName,
                       pageName => $pageName,
@@ -348,7 +349,8 @@ sub DoRc {
             $prevDate = $date;
         }
         push @{$recentChanges[$#recentChanges]->{pages}},
-            { name => $page->{name},
+            { id => $page->{id},
+              pageName => $page->{pageName},
               time => &CalcTime($page->{timeStamp}),
               numChanges => $page->{numChanges},
               summary => &QuoteHtml($page->{summary}),
@@ -869,6 +871,11 @@ sub DoEdit {
   my $text;
   my $keptRevision;
 
+  my $pageName = $id;
+  if ($config->FreeLinks) {
+      $pageName =~ s/_/ /g;
+  }
+
   if (!&UserCanEdit($id, 1)) {
       $wikiTemplate->vars(siteName => $config->SiteName,
                           cssFile => $config->StyleSheet,
@@ -886,7 +893,7 @@ sub DoEdit {
       }
       return;
   }
-  # Consider sending a new user-ID cookie if user does not have one
+
   $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
   my ($username, $userId);
   if ($user) {
@@ -927,7 +934,8 @@ sub DoEdit {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
-                          pageName => $id,
+                          id => $id,
+                          pageName => $pageName,
                           revision => $revision,
                           isConflict => $isConflict,
                           lastSavedTime => &TimeToText($oldTime),
@@ -949,7 +957,8 @@ sub DoEdit {
                           homePage => $config->HomePage,
                           userName => $username,
                           escapedUserName => uri_escape($username),
-                          pageName => $id,
+                          id => $id,
+                          pageName => $pageName,
                           revision => $revision,
                           isConflict => $isConflict,
                           pageTime => $pageTime,
@@ -967,7 +976,8 @@ sub DoEdit {
                           homePage => $config->HomePage,
                           userName => $username,
                           escapedUserName => uri_escape($username),
-                          pageName => $id,
+                          id => $id,
+                          pageName => $pageName,
                           revision => $revision,
                           pageTime => $pageTime,
                           oldText => &QuoteHtml($oldText),
@@ -1371,7 +1381,7 @@ sub DoSearch {
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
                         userName => $user->username,
-                        escapedUserName => uri_escape($user->username),
+                        escapedUserName => uri_escape($username),
                         keywords => $string,
                         modules => $search->modules,
                         results => $search->results,
@@ -1741,17 +1751,15 @@ sub updateVisitedPagesCache {
     my $id = shift;
 
     my @pages = keys %{$visitedPagesCache};
-    if (!$visitedPagesCache->{$id} &&
-	(scalar @pages == $visitedPagesCacheSize)) {
-	my $oldest;
-	my $oldestTime = 0;
-	foreach my $page (@pages) {
-	    if ($visitedPagesCache->{$id} < $oldestTime) {
-		$oldest = $page;
-		$oldestTime = $visitedPagesCache->{$oldest};
-	    }
-	}
-	$visitedPagesCache->{$oldest} = undef;
+    if (!defined $visitedPagesCache->{$id} &&
+        (scalar @pages - 1 >= $visitedPagesCacheSize)) {
+        my @oldestPages = sort {
+            $visitedPagesCache->{$a} <=> $visitedPagesCache->{$b}
+        } @pages;
+        my $remove = scalar @pages - $visitedPagesCacheSize + 1;
+        for (my $i = 0; $i < $remove; $i++) {
+            delete $visitedPagesCache->{$oldestPages[$i]};
+        }
     }
     $visitedPagesCache->{$id} = time;
     $session->param('visitedPagesCache', $visitedPagesCache);
@@ -1760,11 +1768,17 @@ sub updateVisitedPagesCache {
 sub visitedPages {
     my @pages = sort { $visitedPagesCache->{$b} <=> $visitedPagesCache->{$a} }
         keys %{$visitedPagesCache};
-    return map {
-	my $pageName = $_;
-	$pageName =~ s/_/ /g if ($config->FreeLinks);
-	return $pageName
-    } @pages;
+    my $i = 0;
+    foreach my $id (@pages) {
+        my $pageName = $id;
+        $pageName =~ s/_/ /g if ($config->FreeLinks);
+        $pages[$i] = {
+            'id' => $id,
+            'pageName' => $pageName,
+        };
+        $i++;
+    };
+    return @pages;
 }
 
 &DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.

@@ -16,7 +16,7 @@
 <ul>
   [% FOREACH page = date.pages %]
   <li><a href="[% page.diffUrl %]">(diff)</a>
-      <a href="[% baseUrl %]?[% page.name %]">[% page.name %]</a> [% page.time %]
+      <a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a> [% page.time %]
       [% IF page.numChanges > 1 %]
       ([% page.numChanges %] <a href="[% page.changeUrl %]">changes</a>)
       [% END %]
