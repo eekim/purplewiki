@@ -1,6 +1,7 @@
 # PurpleWiki::Page.pm
+# vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.9.6.1 2003/05/21 05:19:00 cdent Exp $
+# $Id: Page.pm,v 1.9.6.2 2003/05/21 07:36:29 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -34,7 +35,7 @@ use PurpleWiki::Config;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.9.6.1 2003/05/21 05:19:00 cdent Exp $
+# $Id: Page.pm,v 1.9.6.2 2003/05/21 07:36:29 cdent Exp $
 
 sub exists {
     my $id = shift;
@@ -95,7 +96,9 @@ sub GetPageOrEditLink {
       $name =~ s/_/ /g;
     }
   }
-  $id =~ s|^/|$MainPage/|;
+  # FIXME: this is not right. There are times when 
+  # the / is there but MainPage is not set.
+  $id =~ s|^/|$MainPage/| if defined($MainPage);
   if ($FreeLinks) {
     $id = &FreeToNormal($id);
   }
@@ -137,7 +140,9 @@ sub FreeToNormal {
 sub GetPageLinkText {
   my ($id, $name) = @_;
 
-  $id =~ s|^/|$MainPage/|;
+  # FIXME: this is not right. There are times when 
+  # the / is there but MainPage is not set.
+  $id =~ s|^/|$MainPage/| if defined($MainPage);
   if ($FreeLinks) {
     $id = &FreeToNormal($id);
     $name =~ s/_/ /g;

@@ -1,6 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
+# vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.3 2003/05/21 06:55:43 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.4 2003/05/21 07:36:29 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -244,22 +245,31 @@ sub _headerLevel {
     return $headerLevel;
 }
 
+# FIXME: goes to too much effort to avoid a void return
 sub _anchor {
     my $nid = shift;
-
-    return '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>' if ($nid);
-}
-
-sub _nid {
-    my $nid = shift;
+    my $string = '';
 
     if ($nid) {
-        my $outputString = ' &nbsp;&nbsp; <a class="nid" ' .
+        $string = '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>';
+    }
+
+    return $string;
+}
+
+# FIXME: goes to too much effort to avoid a void return
+sub _nid {
+    my $nid = shift;
+    my $string = '';
+
+    if ($nid) {
+        $string = ' &nbsp;&nbsp; <a class="nid" ' .
 	                   'title="' . "0$nid" . '" href="' .
 			   $urlBase . '#nid0' .
 			   $nid . '">#</a>';
-        return $outputString;
     }
+
+    return $string;
 }
 
 1;

@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.1 2003/01/20 20:54:34 eekim Exp $
+# $Id: EventHandler.pm,v 1.1.4.1 2003/05/21 07:36:29 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -174,12 +174,17 @@ sub traverseStructural {
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
             if (defined($structuralHandler{$node->type})) {
+		    # FIXME: these || '' shouldn't be here
+		    # but should be in the handlers
                 $outputString .=
-                    $structuralHandler{$node->type}{pre}($node, %params);
+                    $structuralHandler{$node->type}{pre}($node, %params)
+		    	|| '';
                 $outputString .=
-                    $structuralHandler{$node->type}{main}($node, %params);
+                    $structuralHandler{$node->type}{main}($node, %params)
+		    	|| '';
                 $outputString .=
-                    $structuralHandler{$node->type}{post}($node, %params);
+                    $structuralHandler{$node->type}{post}($node, %params)
+		    	|| '';
             }
         }
     }
