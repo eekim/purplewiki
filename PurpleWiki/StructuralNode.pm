@@ -8,7 +8,7 @@ use PurpleWiki::InlineNode;
 sub new {
     my $this = shift;
     my (%attrib) = @_;
-    my $self;
+    my $self = {};
 
     ### Need to add type checking here. -eek
     $self->{'type'} = $attrib{'type'} if ($attrib{'type'});
