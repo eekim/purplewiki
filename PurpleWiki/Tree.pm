@@ -6,7 +6,6 @@ use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;
 use PurpleWiki::View::XHTML;
 
-
 ### constructor
 
 sub new {
@@ -16,6 +15,7 @@ sub new {
 
     $self = {};
     $self->{'title'} = $options{'title'} if ($options{'title'});
+    $self->{'lastNid'} = $options{'lastNid'} if ($options{'lastNid'});
     $self->{'rootNode'} = PurpleWiki::StructuralNode->new('type'=>'document');
 
     bless($self, $this);
@@ -35,6 +35,13 @@ sub title {
 
     $this->{'title'} = shift if @_;
     return $this->{'title'};
+}
+
+sub lastNid {
+    my $this = shift;
+
+    $this->{'lastNid'} = shift if @_;
+    return $this->{'lastNid'};
 }
 
 ### methods
@@ -64,25 +71,26 @@ sub parse {
     $currentNode = $this->root->insertChild('type' => 'section');
 
     foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
-
-	# Process lists
-	if ($line =~ /^($aggregateListRegExp)$/) {
-	    foreach $listType (keys(%listMap)) {
-		if ($line =~ /^$listMap{$listType}$/) {
-		    $currentNode = &_terminateParagraph($currentNode,
-							\$nodeContent);
-		    while ($indentDepth > 0) {
-			$currentNode = $currentNode->parent;
-			$indentDepth--;
-		    }
-		    $currentNode = &_parseList($listType, length $1,
-					       \$listDepth,
-					       $currentNode, $2, $3);
-		    $isStart = 0 if ($isStart);
-		}
-	    }
-	}
-	elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
+        if ($isStart && $line =~ /^\[lastnid (\d+)\]$/) {
+            $this->lastNid($1);
+        }
+        elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
+            foreach $listType (keys(%listMap)) {
+                if ($line =~ /^$listMap{$listType}$/) {
+                    $currentNode = &_terminateParagraph($currentNode,
+                                                        \$nodeContent);
+                    while ($indentDepth > 0) {
+                        $currentNode = $currentNode->parent;
+                        $indentDepth--;
+                    }
+                    $currentNode = &_parseList($listType, length $1,
+                                               \$listDepth,
+                                               $currentNode, $2, $3);
+                    $isStart = 0 if ($isStart);
+                }
+            }
+        }
+        elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
             $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
@@ -98,8 +106,10 @@ sub parse {
                 $currentNode = $currentNode->parent;
                 $indentDepth--;
             }
+            $nodeContent =~  s/\s+\[nid (\d+)\]$//s;
             $currentNode = $currentNode->insertChild('type'=>'p',
                 'content'=>&_parseInlineNode($nodeContent));
+            $currentNode->id($1) if (defined $1);
             $currentNode = $currentNode->parent;
             undef $nodeContent;
             $isStart = 0 if ($isStart);
@@ -132,8 +142,11 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            $currentNode->insertChild('type'=>'h',
+            $nodeContent =~  s/\s+\[nid (\d+)\]$//s;
+            $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent));
+            $currentNode->id($1) if (defined $1);
+            $currentNode = $currentNode->parent;
             undef $nodeContent;
             $isStart = 0 if ($isStart);
         }
@@ -191,6 +204,8 @@ sub _terminateParagraph {
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
         chomp ${$nodeContentRef};
+        ${$nodeContentRef} =~ s/\s+\[nid (\d+)\]$//s;
+        $currentNode->id($1) if (defined $1);
         $currentNode->content(&_parseInlineNode(${$nodeContentRef}));
         undef ${$nodeContentRef};
         return $currentNode->parent;
@@ -210,17 +225,22 @@ sub _parseList {
         $currentNode = $currentNode->parent;
         ${$listDepthRef}--;
     }
+    $nodeContents[0] =~  s/\s+\[nid (\d+)\]$//s;
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
             'content'=>&_parseInlineNode($nodeContents[0]));
+        $currentNode->id($1) if (defined $1);
         $currentNode = $currentNode->parent;
+        $nodeContents[1] =~  s/\s+\[nid (\d+)\]$//s;
         $currentNode = $currentNode->insertChild('type'=>'dd',
             'content'=>&_parseInlineNode($nodeContents[1]));
+        $currentNode->id($1) if (defined $1);
         return $currentNode->parent;
     }
     else {
         $currentNode = $currentNode->insertChild('type'=>'li',
             'content'=>&_parseInlineNode($nodeContents[0]));
+        $currentNode->id($1) if (defined $1);
         return $currentNode->parent;
     }
     return $currentNode;

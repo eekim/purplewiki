@@ -13,8 +13,7 @@ my %structuralActionMap = (
                    'post' => sub { pop @sectionState },
                },
                'indent' => {
-                   'pre' => sub
-                   { print "<div class=\"indent\">\n"},
+                   'pre' => sub { print "<div class=\"indent\">\n"},
                    'mid' => \&_traverseStructuralWithChild,
                    'post' => sub { print "</div>"},
                },
@@ -34,36 +33,58 @@ my %structuralActionMap = (
                    'post' => sub { print "</dl>"},
                },
                'h' => {
-                   'pre' => sub
-                   { print '<h' . &_headerLevel . '>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<h' . &_headerLevel . '>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub
-                   { print '</h' . &_headerLevel . '>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</h' . &_headerLevel . '>' },
                },
                'p' => {
-                   'pre' => sub { print '<p>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<p>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub { print '</p>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</p>'; },
                },
                'li' => {
-                   'pre' => sub { print '<li>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<li>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub { print '</li>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</li>'; },
                },
                'dd' => {
-                   'pre' => sub { print '<dd>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<dd>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub { print '</dd>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</dd>'; },
                },
                'dt' => {
-                   'pre' => sub { print '<dt>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<dt>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub { print '</dt>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</dt>'; },
                },
                'pre' => {
-                   'pre' => sub { print '<pre>' },
+                   'pre' => sub { my $nid = shift;
+                                  print '<pre>';
+                                  &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
-                   'post' => sub { print '</pre>' },
+                   'post' => sub { my $nid = shift;
+                                   &_printNid($nid);
+                                   print '</pre>'; },
                },
                );
 
@@ -98,7 +119,7 @@ my %inlineActionMap = (
 sub view {
     my ($wikiTree, %params) = @_;
 
-    &_printHeader($wikiTree->title);
+    &_printHeader($wikiTree->title, $wikiTree->lastNid);
     &_traverseStructural($wikiTree->root->children, 0);
     &_printFooter;
 }
@@ -109,10 +130,10 @@ sub _traverseStructural {
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
             if (defined($structuralActionMap{$node->type})) {
-                &{$structuralActionMap{$node->type}{'pre'}};
+                &{$structuralActionMap{$node->type}{'pre'}}($node->id);
                 &{$structuralActionMap{$node->type}{'mid'}}($node,
                                                             $indentLevel);
-                &{$structuralActionMap{$node->type}{'post'}};
+                &{$structuralActionMap{$node->type}{'post'}}($node->id);
             } 
             &_terminateLine unless ($node->type eq 'section');
         }
@@ -184,18 +205,43 @@ sub _headerLevel {
     return $headerLevel;
 }
 
+sub _printAnchor {
+    my $nid = shift;
+    print '<a name="0' . $nid . '" id="0' . $nid . '"></a>';
+}
+
+sub _printNid {
+    my $nid = shift;
+    print ' &nbsp;&nbsp; <a class="nid" href="#0' . $nid . '">';
+    print "(0$nid)</a>";
+}
+
 sub _printHeader {
-    my $title = shift;
+    my ($title, $lastNid) = @_;
 
     print <<EOM;
 <html>
   <head>
     <title>$title</title>
     <style type="text/css">
+    body {
+        padding-bottom: 50em;
+    }
+
     div.indent {
         margin-left: 3em;
     }
+
+    a.nid {
+        font-family: "Helvetica", "Arial", sans-serif;
+        font-style: normal;
+        font-weight: bold;
+        font-size: x-small;
+        text-decoration: none;
+        color: #C8A8FF;  /* light purple */
+    }
     </style>
+    <meta name="lastnid" content="$lastNid" />
   </head>
   <body>
     <h1>$title</h1>
