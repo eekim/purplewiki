@@ -960,16 +960,20 @@ sub GetFormCheck {
 
 sub DoUpdatePrefs {
   my $username = &GetParam("p_username",  "");
-
   my $errorUserName = 0;
-  if (length($username) > 50) {  # Too long
-      $errorUserName = 1;
+  if ($username) {
+      if (length($username) > 50) {  # Too long
+          $errorUserName = 1;
+      }
+      elsif ($userDb->idFromUsername($username)) {   # already used
+          $errorUserName = 1;
+      }
+      else {
+          $user->username($username);
+      }
   }
-  elsif ($userDb->idFromUsername($username)) {   # already used
-      $errorUserName = 1;
-  }      
   else {
-      $user->username($username);
+      $username = $user->username;
   }
 
   my $password = &GetParam("p_password",  "");

@@ -75,11 +75,11 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $bodyText = $self->_getWikiHTML($recentChange->{name});
+        my $bodyText = $self->_getWikiHTML($recentChange->{id});
 
         $rss->add_item(
-            title => $recentChange->{name},
-            link  => $self->{config}->ScriptName . '?' .$recentChange->{name},
+            title => $recentChange->{pageName},
+            link  => $self->{config}->ScriptName . '?' .$recentChange->{id},
             dc => {
                 creator => $recentChange->{userName},
             },

@@ -14,7 +14,7 @@ UserName:
 (blank to remove, or valid page name)
 [% END %]
 <br />
-Set Password: <input type="password" name="p_password" value="*" size="15" maxlength="50" />
+Set Password: <input type="password" name="p_password" size="15" maxlength="50" />
 (blank to remove password)<br />
 (Passwords allow sharing preferences between multiple systems. Passwords are completely optional.)</p>
 
