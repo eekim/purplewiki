@@ -17,27 +17,40 @@ table {
 }
 
 #header {
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
     border-bottom: #000 1px solid;
     padding-bottom: 4px;
 }
 
 #body {
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
+    clear: both;
+    float: left;
+    width: 75%;
     padding-top: 10px;
 }
 
-#body #sidebar {
-    clear: both;
+#sidebar {
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
     float: right;
-    width: 23%;
-    padding-left: 4px;
-    margin-left: 4px;
-    margin-bottom: 10px;
+    width: 24%;
+    padding-top: 10px;
+}
+
+#sidebar #box {
     background: #EEE;
     border: #000 1px solid;
+    padding-left: 4px;
+    margin-bottom: 10px;
 }
 
 #footer {
     clear: both;
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
     border-top: #000 1px solid;
     padding-top: 4px;
 }

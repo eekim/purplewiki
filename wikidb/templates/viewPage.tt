@@ -1,6 +1,5 @@
 [% INCLUDE common/header.tt
            title = pageName
-           titleUrl = backlinksUrl
 %]
 
 [% IF showRevision %]

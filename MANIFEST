@@ -100,6 +100,7 @@ t/output/tree_freelinks.txt
 t/output/tree_hr.txt
 t/output/tree_interlinks.txt
 t/output/tree_lists.txt
+t/output/tree_mixedlists.txt
 t/output/tree_pre.txt
 t/output/tree_test01.txt
 t/output/tree_test02.txt
@@ -122,6 +123,7 @@ t/output/hr7.html
 t/output/tree_freelinks.html
 t/output/tree_hr.html
 t/output/tree_lists.html
+t/output/tree_mixedlists.html
 t/output/tree_pre.html
 t/output/tree_test01.html
 t/txt/hr1.txt
@@ -135,6 +137,7 @@ t/txt/tree_freelinks.txt
 t/txt/tree_hr.txt
 t/txt/tree_interlinks.txt
 t/txt/tree_lists.txt
+t/txt/tree_mixedlists.txt
 t/txt/tree_pre.txt
 t/txt/tree_test01.txt
 t/txt/tree_test02.txt
@@ -178,14 +181,16 @@ wikidb/templates/viewRecentChanges.tt
 wikidb/templates/common/footer.tt
 wikidb/templates/common/header.tt
 wikidb/templates/common/navbar.tt
+wikidb/templates/common/navbar-inames.tt
 wikidb/templates/common/pagebar.tt
 wikidb/templates/common/searchbar.tt
 wikidb/templates/errors/actionInvalid.tt
+wikidb/templates/errors/badInameRegistration.tt
 wikidb/templates/errors/dataDirCannotCreate.tt
 wikidb/templates/errors/editBlocked.tt
 wikidb/templates/errors/editNotAllowed.tt
 wikidb/templates/errors/editSiteReadOnly.tt
-wikidb/templates/errors/enameInvalid.tt
+wikidb/templates/errors/inameInvalid.tt
 wikidb/templates/errors/pageCannotBeDefined.tt
 wikidb/templates/errors/pageNameInvalid.tt
 wikidb/templates/errors/pageNameMissingSubpage.tt

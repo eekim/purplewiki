@@ -5,7 +5,6 @@ use ExtUtils::MakeMaker;
 my $cgiDir = prompt("Where should the wiki.pl CGI be installed?",
     '/var/www/cgi-bin');
 
-
 WriteMakefile(
     'NAME'		=> 'PurpleWiki',
     'VERSION'	=> '0.93',
@@ -15,7 +14,7 @@ WriteMakefile(
         ],
     'INSTALLSCRIPT' => $cgiDir,
     'PREREQ_PM'		=> {
-	Template => 0,
+        Template => 0,
     	Text::Wrap => 0,
         Text::Diff => 0,
         LWP::UserAgent => 0,
@@ -28,7 +27,7 @@ WriteMakefile(
         CGI::Session => 0,
         Template => 0,
         XML::RSS => 0,
-        XDI::SPIT => 0,
+#        XDI::SPIT => 1.11,
 	}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT   => 'WikiWiki with purple numbers',

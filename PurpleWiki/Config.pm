@@ -55,14 +55,14 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
     BracketText UseAmPm UseLookup FreeUpper ShowEdits NonEnglish
-    SimpleLinks ShowNid);
+    SimpleLinks ShowNid UseINames);
 my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName 
     StyleSheet SiteBase FullUrl ScriptTZ RcDefault KeepDays AdminPass
     EditPass HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
-    LocalSequenceDir RemoteSequenceURL ServiceProviderKey ReturnUrl
-    ScriptDir TemplateDriver);
+    LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
+    ServiceProviderName ServiceProviderKey ReturnUrl);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching

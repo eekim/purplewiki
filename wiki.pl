@@ -37,7 +37,6 @@ use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
 use Digest::MD5;
 use URI::Escape;
-use XDI::SPIT;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
@@ -75,7 +74,6 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
 # we only need one of each these per run
 $config = new PurpleWiki::Config($CONFIG_DIR);
 $wikiParser = PurpleWiki::Parser::WikiText->new;
-
 # FIXME: would be cool if there were a way to factory these based off a
 #        config value.
 $userDb = PurpleWiki::Database::User::UseMod->new;
@@ -85,6 +83,11 @@ my $templateDriver = $config->TemplateDriver();
 my $templateClass = "PurpleWiki::Template::$templateDriver";
 eval "require $templateClass";
 $wikiTemplate = $templateClass->new;
+
+# check for i-names support
+if ($config->UseINames) {
+    require XDI::SPIT;
+}
 
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;
@@ -787,7 +790,7 @@ sub DoOtherRequest {
 
   $action = GetParam("action", "");
   $id = GetParam("id", "");
-  my $ename = &GetParam("xri_ename", "");
+  my $iname = &GetParam("xri_iname", "");
   if ($action ne "") {
     $action = lc($action);
     if ($action eq "edit") {
@@ -798,9 +801,9 @@ sub DoOtherRequest {
       DoIndex();
     } elsif ($action eq "editprefs") {
       DoEditPrefs();
-    } elsif ($action eq "getename") {
+    } elsif ($config->UseINames && $action eq "getiname") {
       if (!$user) {
-          &DoGetEname();
+          &DoGetIname();
       }
       else { # return an error
       }
@@ -831,17 +834,17 @@ sub DoOtherRequest {
     }
     return;
   }
-  elsif ($ename) {
+  elsif ($config->UseINames && $iname) {
     my $xsid = &GetParam('xri_xsid', '');
-    &DoEname($ename, $xsid);
+    &DoIname($iname, $xsid);
     return;
   }
 
-  $ename = &GetParam("ename", "");
-  if ($ename) {
+  $iname = &GetParam("iname", "");
+  if ($config->UseINames && $iname) {
       my $localId = &GetParam("local_id", "");
       my $rrsid = &GetParam("rrsid", "");
-      &DoAssociateEname($ename, $localId, $rrsid);
+      &DoAssociateIname($iname, $localId, $rrsid);
       return;
   }
   
@@ -1230,11 +1233,11 @@ sub DoLogin {
 }
 
 sub DoLogout {
-    if (my $xsid = $session->param('xsid')) {
+    if ($config->UseINames && (my $xsid = $session->param('xsid')) ) {
         my $spit = XDI::SPIT->new;
-        my $ename = $user->username;
-        my ($idBroker, $enumber) = $spit->resolveBroker($ename);
-        $spit->logout($idBroker, $ename, $xsid) if ($idBroker);
+        my $iname = $user->username;
+        my ($idBroker, $inumber) = $spit->resolveBroker($iname);
+        $spit->logout($idBroker, $iname, $xsid) if ($idBroker);
     }
     $session->delete;
     my $cookie = $q->cookie(-name => $config->SiteName,
@@ -1258,28 +1261,29 @@ sub DoLogout {
     print $header . $wikiTemplate->process('logout');
 }
 
-sub DoGetEname {
+sub DoGetIname {
     my $localId = &CreateNewUser if (!$user);
+    my $spname = $config->ServiceProviderName;
     my $spkey = $config->ServiceProviderKey;
     my $rtnUrl = $config->ReturnUrl;
     my $rsid = &Digest::MD5::md5_hex("$localId$spkey");
-    print "Location: http://dev.idcommons.net/register.html?registry=blueoxen&local_id=$localId&rsid=$rsid&rtn=$rtnUrl\n\n";
+    print "Location: http://dev.idcommons.net/register.html?registry=$spname&local_id=$localId&rsid=$rsid&rtn=$rtnUrl\n\n";
 }
 
-sub DoAssociateEname {
-    my ($ename, $localId, $rrsid) = @_;
+sub DoAssociateIname {
+    my ($iname, $localId, $rrsid) = @_;
 
     if ( $rrsid = &Digest::MD5::md5_hex($localId . $config->ServiceProviderKey . 'x') &&
          (!$user) ) {
-        # associate ename with ID
+        # associate i-name with ID
         $user = $userDb->loadUser($localId);
-        $user->username($ename);
+        $user->username($iname);
         $userDb->saveUser($user);
         # now login
         my $spit = XDI::SPIT->new;
-        my ($idBroker, $enumber) = $spit->resolveBroker($ename);
+        my ($idBroker, $inumber) = $spit->resolveBroker($iname);
         if ($idBroker) {
-            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->ReturnUrl);
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $iname, $config->ReturnUrl);
             print "Location: $redirectUrl\n\n";
         }
         else {
@@ -1291,7 +1295,7 @@ sub DoAssociateEname {
                                 userName => $user->username,
                                 escapedUserName => uri_escape($user->username),
                                 preferencesUrl => $config->ScriptName . '?action=editprefs');
-            print &GetHttpHeader . $wikiTemplate->process('errors/enameInvalid');
+            print &GetHttpHeader . $wikiTemplate->process('errors/inameInvalid');
         }
     }
     else {
@@ -1306,27 +1310,27 @@ sub DoAssociateEname {
                             userName => $user->username,
                             escapedUserName => uri_escape($user->username),
                             preferencesUrl => $config->ScriptName . '?action=editprefs');
-        print &GetHttpHeader . $wikiTemplate->process('errors/badEnameRegistration');
+        print &GetHttpHeader . $wikiTemplate->process('errors/badInameRegistration');
     }
 }
 
-sub DoEname {
-    my ($ename, $xsid) = @_;
+sub DoIname {
+    my ($iname, $xsid) = @_;
 
     my $spit = XDI::SPIT->new;
-    my ($idBroker, $enumber) = $spit->resolveBroker($ename);
+    my ($idBroker, $inumber) = $spit->resolveBroker($iname);
     if ($idBroker) {
         if ($xsid) {
-            if ($spit->validateSession($idBroker, $ename, $xsid)) {
+            if ($spit->validateSession($idBroker, $iname, $xsid)) {
                 $session->param('xsid', $xsid);
-                my $userId = $userDb->idFromUsername($ename);
+                my $userId = $userDb->idFromUsername($iname);
                 if ($userId) {
                     $user = $userDb->loadUser($userId);
                     $session->param('userId', $userId);
                 }
                 else { # create new account
                     &DoNewLogin;
-                    $user->username($ename);
+                    $user->username($iname);
                     $userDb->saveUser($user);
                 }
                 # successful login message
@@ -1354,11 +1358,11 @@ sub DoEname {
             }
         }
         else {
-            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->ReturnUrl);
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $iname, $config->ReturnUrl);
             print "Location: $redirectUrl\n\n";
         }
     }
-    else { # ename didn't resolve
+    else { # i-name didn't resolve
         $wikiTemplate->vars(siteName => $config->SiteName,
                             cssFile => $config->StyleSheet,
                             siteBase => $config->SiteBase,
@@ -1367,7 +1371,7 @@ sub DoEname {
                             userName => $user->username,
                             escapedUserName => uri_escape($user->username),
                             preferencesUrl => $config->ScriptName . '?action=editprefs');
-        print &GetHttpHeader . $wikiTemplate->process('errors/enameInvalid');
+        print &GetHttpHeader . $wikiTemplate->process('errors/inameInvalid');
     }
 }
 

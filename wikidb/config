@@ -13,7 +13,6 @@ SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
 RCName      = RecentChanges     # Name of changes page (change space to _)
 StyleSheet  = /purplewiki.css   # URL for CSS stylesheet (like "/wiki.css")
-#SiteBase    = ""                # Full URL for <BASE> header
 #FullUrl     = ""                # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""                # Local time zone
 #Umask       = 0002	             # the umask used when writing files
@@ -45,6 +44,7 @@ KeepDays    = 30               # Days to keep old revisions
 MaxPost     = 215040           # Maximum 210K posts (about 200K for pages)
 
 # Major options:
+#UseINames              # if set use i-names
 UseSubpage             # if set allow subpages
 EditAllowed            # if set editing allowed
 UseDiff                # if set use diff features
@@ -87,6 +87,7 @@ TemplateDriver = TT
 #GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Identity Commons e-names
+#ServiceProviderName = "blueoxen"
 #ServiceProviderKey = ""
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 

@@ -28,25 +28,3 @@
 </div>
 
 <div id="body">
-[% IF visitedPages.size > 0 %]
-<div id="sidebar">
-<h3>Visited Pages</h3>
-
-<ul>
-  [% FOREACH page = visitedPages %]
-  <li><a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a></li>
-  [% END %]
-</ul>
-</div>
-[% END %]
-
-[% IF titleUrl %]
-<div id="sidebar">
-<h3><a href="[% titleUrl %]">View Backlinks</a></h3>
-</div>
-[% END %]
-
-<div id="sidebar">
-[% INCLUDE common/searchbar.tt %]
-</div>
-

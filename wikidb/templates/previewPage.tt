@@ -1,6 +1,5 @@
 [% INCLUDE common/header.tt
            title = "Editing $pageName"
-           titleUrl = backlinksUrl
 %]
 
 [% IF revision %]
