@@ -1,6 +1,6 @@
 # PurpleWiki::Page.pm
 #
-# $Id: Page.pm,v 1.5 2002/11/22 20:57:24 eekim Exp $
+# $Id: Page.pm,v 1.6 2002/11/24 07:21:42 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -31,46 +31,58 @@ package PurpleWiki::Page;
 
 # mappings between PurpleWiki code and code withing useMod
 
-# $Id: Page.pm,v 1.5 2002/11/22 20:57:24 eekim Exp $
+# $Id: Page.pm,v 1.6 2002/11/24 07:21:42 eekim Exp $
 
 sub exists {
     my $id = shift;
 
-    return &UseModWiki::pageExists($id);
-
+    if (defined &UseModWiki::pageExists) {
+        (defined &UseModWiki::pageExists($id)) ? return 1 : return 0;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub siteExists {
     my $site = shift;
 
-    (defined &UseModWiki::GetSiteUrl($site)) ? return 1 : return undef;
-
+    if (defined &UseModWiki::GetSiteUrl) {
+        (defined &UseModWiki::GetSiteUrl($site)) ? return 1 : return 0;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub getWikiWordLink {
     my $id = shift;
 
-    my $results = &UseModWiki::GetPageOrEditLink($id, '');
-
+    my $results;
+    if (defined &UseModWiki::GetPageOrEditLink) {
+        $results = &UseModWiki::GetPageOrEditLink($id, '');
+    }
     return _makeURL($results);
-
 }
 
 sub getInterWikiLink {
     my $id = shift;
     
-    my $results = (&UseModWiki::InterPageLink($id, ''))[0];
-
+    my $results;
+    if (defined &UseModWiki::InterPageLink) {
+        $results = (&UseModWiki::InterPageLink($id, ''))[0];
+    }
     return _makeURL($results);
-
 }
 
 sub getFreeLink {
     my $id = shift;
 
-    my $results = (&UseModWiki::GetPageOrEditLink($id, ''))[0];
+    my $results;
+    if (defined &UseModWiki::GetPageOrEditLink) {
+        $results = (&UseModWiki::GetPageOrEditLink($id, ''))[0];
+    }
     return _makeURL($results);
-
 }
 
                   
