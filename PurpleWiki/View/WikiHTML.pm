@@ -180,19 +180,24 @@ sub _traverseInline {
             print '</a>';
         }
         elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
+            my $pageName = $inlineNode->content;
+            $pageName =~ s/\#(\d+)$//;
+            my $pageNid = $1;
             if ($inlineNode->content =~ /:/) {
-                print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
-                    '">';
-                print $inlineNode->content . '</a>';
+                print '<a href="' . &PurpleWiki::Page::getInterWikiLink($pageName);
+
+                print "#nid$pageNid" if ($pageNid);
+                print '">' . $inlineNode->content . '</a>';
             }
-            elsif (&PurpleWiki::Page::exists($inlineNode->content)) {
+            elsif (&PurpleWiki::Page::exists($pageName)) {
                 if ($inlineNode->type eq 'freelink') {
                     print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
                         '">';
                 }
                 else {
-                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
-                        '">';
+                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName);
+                    print "#nid$pageNid" if ($pageNid);
+                    print '">';
                 }
                 print $inlineNode->content . '</a>';
             }
@@ -239,14 +244,14 @@ sub _headerLevel {
 sub _printAnchor {
     my $nid = shift;
 
-    print '<a name="0' . $nid . '" id="0' . $nid . '"></a>' if ($nid);
+    print '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>' if ($nid);
 }
 
 sub _printNid {
     my $nid = shift;
 
     if ($nid) {
-        print ' &nbsp;&nbsp; <a class="nid" href="#0' . $nid . '">';
+        print ' &nbsp;&nbsp; <a class="nid" href="#nid0' . $nid . '">';
         print "(0$nid)</a>";
     }
 }

@@ -336,9 +336,9 @@ sub _parseInlineNode {
                 ($rxDoubleQuotes) |
                 (\[$rxProtocols$rxAddress\s*.*?\]) |
                 ($rxProtocols$rxAddress) |
-                ((?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim) |
-                ([A-Z]\w+:$rxWikiWord$rxQuoteDelim) |
-                ($rxWikiWord$rxQuoteDelim) |
+                ((?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim) |
+                ([A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim) |
+                ($rxWikiWord(?:\#\d+)?$rxQuoteDelim) |
                 ($rxDoubleBracketed)
                 )/xs, $text)
         );
@@ -397,19 +397,19 @@ sub _parseInlineNode {
                                                            'href'=>$node,
                                                            'content'=>$node);
         }
-        elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim/s) {
+        elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
 #                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),
                                                            'content'=>$node);
         }
-        elsif ($node =~ /[A-Z]\w+:$rxWikiWord$rxQuoteDelim/s) {
+        elsif ($node =~ /[A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
 #                                                           'href'=>&PurpleWiki::Page::getInterWikiLink($node),
                                                            'content'=>$node);
         }
-        elsif ($node =~ /$rxWikiWord$rxQuoteDelim/s) {
+        elsif ($node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
 #                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),

@@ -1,4 +1,4 @@
-[lastnid 10]
+[lastnid 14]
 This is the end, my friend. [nid 1]
 
 Or, is this the end?
@@ -19,3 +19,5 @@ Some code: [nid 8]
   } [nid 9]
 
 That's all, folks! [nid 10]
+
+I want to see a link to WikiWord#03. [nid 14]
