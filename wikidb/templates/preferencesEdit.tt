@@ -6,7 +6,6 @@
 <input type="hidden" name="edit_prefs" value="1" />
 
 <p><b>User Information:</b><br />
-Your User ID number: [% userId %]<br />
 UserName: 
 [% IF userName %]
 [% userName %]

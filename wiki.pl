@@ -36,13 +36,12 @@ use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
 use Digest::MD5;
-use URI::Escape;
-use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
-use PurpleWiki::Database::User::UseMod;
 use PurpleWiki::Database::KeptRevision;
+use PurpleWiki::Database::User::UseMod;
+use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Search::Engine;
 
 my $CONFIG_DIR='/var/www/wikidb';
@@ -116,13 +115,8 @@ sub InitRequest {
   $PurpleWiki::Page::MainPage = ".";  # For subpages only, the name of the top-level page
   PurpleWiki::Database::CreateDir($config->DataDir);  # Create directory if it doesn't exist
   if (!-d $config->DataDir) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          dataDir => $config->DataDir,
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
+      $wikiTemplate->vars(&globalTemplateVars,
+                          dataDir => $config->DataDir);
       print GetHttpHeader() . $wikiTemplate->process('errors/dataDirCannotCreate');
       return 0;
   }
@@ -284,24 +278,16 @@ sub BrowsePage {
   my @vPages = &visitedPages;
   my $keywords = $id;
   $keywords =~ s/_/\+/g if ($config->FreeLinks);
-  $wikiTemplate->vars(siteName => $config->SiteName,
+  $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $pageName,
-		      expandedPageName => &expandPageName($pageName),
-                      cssFile => $config->StyleSheet,
-                      siteBase => $config->SiteBase,
-                      baseUrl => $config->ScriptName,
+                      expandedPageName => &expandPageName($pageName),
                       visitedPages => \@vPages,
-                      homePage => $config->HomePage,
                       showRevision => $revision,
                       revision => $goodRevision,
                       body => $body,
-                      userName => $username,
-                      escapedUserName => uri_escape($username),
                       lastEdited => $lastEdited,
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$keywords",
-                      preferencesUrl =>
-                        $config->ScriptName . '?action=editprefs',
                       editUrl =>
                         $config->ScriptName . "?action=edit&amp;id=$id",
                       revisionsUrl =>
@@ -329,11 +315,6 @@ sub DoRc {
     my $daysago;
     my @rcDays;
 
-    my ($userId, $username);
-    if ($user) {
-        $userId = $user->id;
-        $username = $user->username;
-    }
     foreach my $days (@{$config->RcDays}) {
         push @rcDays, { num => $days,
                         url => $config->ScriptName .
@@ -377,19 +358,13 @@ sub DoRc {
                   '?action=history&amp;id=' . $page->{id} };
     }
     my @vPages = &visitedPages;
-    $wikiTemplate->vars(siteName => $config->SiteName,
+    $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $pageName,
-			expandedPageName => &expandPageName($pageName),
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-			visitedPages => \@vPages,
-                        homePage => $config->HomePage,
+                        expandedPageName => &expandPageName($pageName),
+                        visitedPages => \@vPages,
                         showRevision => $revision,
                         revision => $goodRevision,
                         body => $body,
-                        userName => $username,
-                        escapedUserName => uri_escape($username),
                         daysAgo => $daysago,
                         rcDays => \@rcDays,
                         changesFrom => TimeToText($starttime),
@@ -398,7 +373,6 @@ sub DoRc {
                         lastEdited => $lastEdited,
                         pageUrl => $config->ScriptName . "?$id",
                         backlinksUrl => $config->ScriptName . "?search=$id",
-                        preferencesUrl => $config->ScriptName . '?action=editprefs',
                         editUrl => $config->ScriptName . "?action=edit&amp;id=$id",
                         revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id",
                         diffUrl => $config->ScriptName . "?action=browse&amp;diff=1&amp;id=$id");
@@ -420,8 +394,6 @@ sub DoHistory {
     my $keptRevision;
     my @pageHistory;
 
-    my $username;
-    $username = $user->username if ($user);
     $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
     $page->openPage();
 
@@ -436,18 +408,10 @@ sub DoHistory {
     }
 
     my @vPages = &visitedPages;
-    $wikiTemplate->vars(siteName => $config->SiteName,
+    $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $id,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-			visitedPages => \@vPages,
-                        homePage => $config->HomePage,
-                        userName => $username,
-                        escapedUserName => uri_escape($username),
-                        pageHistory => \@pageHistory,
-                        preferencesUrl =>
-                          $config->ScriptName . '?action=editprefs');
+                        visitedPages => \@vPages,
+                        pageHistory => \@pageHistory);
     print GetHttpHeader() . $wikiTemplate->process('viewPageHistory');
 }
 
@@ -602,13 +566,8 @@ sub ValidIdOrDie {
     my $id = shift;
     my $error;
 
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        pageName => $id,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    $wikiTemplate->vars(&globalTemplateVars,
+                        pageName => $id);
     $error = ValidId($id);
     if ($error ne "") {
         print GetHttpHeader() . $wikiTemplate->process('errors/$error');
@@ -821,15 +780,8 @@ sub DoOtherRequest {
           $rss->getRSS;
     } else {
       # Later improve error reporting
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          userName => $user->username,
-                          escapedUserName => uri_escape($user->username),
-                          action => $action,
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
+      $wikiTemplate->vars(&globalTemplateVars,
+                          action => $action);
       print GetHttpHeader() . $wikiTemplate->process('errors/actionInvalid');
     }
     return;
@@ -868,14 +820,7 @@ sub DoOtherRequest {
     return;
   }
   # Later improve error message
-  $wikiTemplate->vars(siteName => $config->SiteName,
-                      cssFile => $config->StyleSheet,
-                      siteBase => $config->SiteBase,
-                      baseUrl => $config->ScriptName,
-                      homePage => $config->HomePage,
-                      userName => $user->username,
-                      escapedUserName => uri_escape($user->username),
-                      preferencesUrl => $config->ScriptName . '?action=editprefs');
+  $wikiTemplate->vars(&globalTemplateVars);
   print GetHttpHeader() . $wikiTemplate->process('errors/urlInvalid');
 }
 
@@ -895,14 +840,7 @@ sub DoEdit {
   }
 
   if (!&UserCanEdit($id, 1)) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          userName => $user->username,
-                          escapedUserName => uri_escape($user->username),
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
+      $wikiTemplate->vars(&globalTemplateVars);
       if (UserIsBanned()) {
           print GetHttpHeader() . $wikiTemplate->process('errors/editBlocked');
       }
@@ -949,12 +887,8 @@ sub DoEdit {
   }
 
   if ($isConflict) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
+      $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
-                          homePage => $config->HomePage,
                           id => $id,
                           pageName => $pageName,
                           revision => $revision,
@@ -962,23 +896,14 @@ sub DoEdit {
                           lastSavedTime => TimeToText($oldTime),
                           currentTime => TimeToText($Now),
                           pageTime => $pageTime,
-                          userName => $username,
-                          escapedUserName => uri_escape($username),
                           oldText => &QuoteHtml($oldText),
                           newText => &QuoteHtml($newText),
-                          preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editConflict');
   }
   elsif ($preview) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
+      $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
-                          homePage => $config->HomePage,
-                          userName => $username,
-                          escapedUserName => uri_escape($username),
                           id => $id,
                           pageName => $pageName,
                           revision => $revision,
@@ -986,25 +911,17 @@ sub DoEdit {
                           pageTime => $pageTime,
                           oldText => &QuoteHtml($oldText),
                           body => WikiToHTML($id, $oldText),
-                          preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('previewPage');
   }
   else {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
+      $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
-                          homePage => $config->HomePage,
-                          userName => $username,
-                          escapedUserName => uri_escape($username),
                           id => $id,
                           pageName => $pageName,
                           revision => $revision,
                           pageTime => $pageTime,
                           oldText => &QuoteHtml($oldText),
-                          preferencesUrl => $config->ScriptName . '?action=editprefs',
                           revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editPage');
   }
@@ -1018,18 +935,10 @@ sub DoEditPrefs {
   $recentName = $config->RCName;
   $recentName =~ s/_/ /g;
   &DoNewLogin() if (!$user);
-  $wikiTemplate->vars(siteName => $config->SiteName,
-                      cssFile => $config->StyleSheet,
-                      siteBase => $config->SiteBase,
-                      baseUrl => $config->ScriptName,
-                      homePage => $config->HomePage,
-                      userId => $user->id,
-                      userName => $user->username,
-                      escapedUserName => uri_escape($user->username),
+  $wikiTemplate->vars(&globalTemplateVars,
                       rcDefault => $config->RcDefault,
                       serverTime => &TimeToText($Now - $TimeZoneOffset),
-                      tzOffset => &GetParam('tzoffset', 0),
-                      preferencesUrl => $config->ScriptName . '?action=editprefs');
+                      tzOffset => &GetParam('tzoffset', 0));
   print GetHttpHeader() . $wikiTemplate->process('preferencesEdit');
 }
 
@@ -1097,30 +1006,17 @@ sub DoUpdatePrefs {
   $TimeZoneOffset = GetParam("tzoffset", 0) * (60 * 60);
 
   if ($errorUserName) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          userName => undef,
-                          escapedUserName => undef,
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
+      $wikiTemplate->vars(&globalTemplateVars,
+                          userName => undef);
       print &GetHttpHeader . $wikiTemplate->process('errors/usernameInvalid');
   }
   else {
       $userDb->saveUser($user);
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          userName => $username,
-                          escapedUserName => uri_escape($username),
+      $wikiTemplate->vars(&globalTemplateVars,
                           passwordRemoved => $passwordRemoved,
                           passwordChanged => $passwordChanged,
                           serverTime => &TimeToText($Now-$TimeZoneOffset),
-                          localTime => &TimeToText($Now),
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
+                          localTime => &TimeToText($Now));
       print &GetHttpHeader . $wikiTemplate->process('preferencesUpdated');
   }
 }
@@ -1149,20 +1045,11 @@ sub UpdatePrefNumber {
 
 sub DoIndex {
     my @pages = PurpleWiki::Database::AllPagesList($config);
-    my $username;
-    $username = $user->username if ($user);
     my @vPages = &visitedPages;
 
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        userName => $username,
-                        escapedUserName => uri_escape($username),
-			visitedPages => \@vPages,
-                        pages => \@pages,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    $wikiTemplate->vars(&globalTemplateVars,
+                        visitedPages => \@vPages,
+                        pages => \@pages);
     print GetHttpHeader() . $wikiTemplate->process('pageIndex');
 }
 
@@ -1195,12 +1082,7 @@ sub CreateNewUser {  # same as DoNewLogin, but no login
 }
 
 sub DoEnterLogin {
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    $wikiTemplate->vars(&globalTemplateVars);
     print GetHttpHeader() . $wikiTemplate->process('login');
 }
 
@@ -1220,15 +1102,8 @@ sub DoLogin {
   else {
       $user = undef;
   }
-  $wikiTemplate->vars(siteName => $config->SiteName,
-                      cssFile => $config->StyleSheet,
-                      siteBase => $config->SiteBase,
-                      baseUrl => $config->ScriptName,
-                      homePage => $config->HomePage,
-                      userName => $username,
-                      escapedUserName => uri_escape($username),
-                      loginSuccess => $success,
-                      preferencesUrl => $config->ScriptName . '?action=editprefs');
+  $wikiTemplate->vars(&globalTemplateVars,
+                      loginSuccess => $success);
   print GetHttpHeader() . $wikiTemplate->process('loginResults');
 }
 
@@ -1250,13 +1125,9 @@ sub DoLogout {
                              -type=>"text/html; charset=" . $config->HttpCharset);
     }
     $header = $q->header(-cookie=>$cookie);
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        prevUserName => $user->username,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    $wikiTemplate->vars(&globalTemplateVars,
+                        userName => undef,
+                        prevUserName => $user->username);
     $user = undef;
     print $header . $wikiTemplate->process('logout');
 }
@@ -1287,14 +1158,7 @@ sub DoAssociateIname {
             print "Location: $redirectUrl\n\n";
         }
         else {
-            $wikiTemplate->vars(siteName => $config->SiteName,
-                                cssFile => $config->StyleSheet,
-                                siteBase => $config->SiteBase,
-                                baseUrl => $config->ScriptName,
-                                homePage => $config->HomePage,
-                                userName => $user->username,
-                                escapedUserName => uri_escape($user->username),
-                                preferencesUrl => $config->ScriptName . '?action=editprefs');
+            $wikiTemplate->vars(&globalTemplateVars);
             print &GetHttpHeader . $wikiTemplate->process('errors/inameInvalid');
         }
     }
@@ -1302,14 +1166,7 @@ sub DoAssociateIname {
         if ($user) {
             print STDERR "NOT GUEST USER\n";
         }
-        $wikiTemplate->vars(siteName => $config->SiteName,
-                            cssFile => $config->StyleSheet,
-                            siteBase => $config->SiteBase,
-                            baseUrl => $config->ScriptName,
-                            homePage => $config->HomePage,
-                            userName => $user->username,
-                            escapedUserName => uri_escape($user->username),
-                            preferencesUrl => $config->ScriptName . '?action=editprefs');
+        $wikiTemplate->vars(&globalTemplateVars);
         print &GetHttpHeader . $wikiTemplate->process('errors/badInameRegistration');
     }
 }
@@ -1334,26 +1191,12 @@ sub DoIname {
                     $userDb->saveUser($user);
                 }
                 # successful login message
-                $wikiTemplate->vars(siteName => $config->SiteName,
-                                    cssFile => $config->StyleSheet,
-                                    siteBase => $config->SiteBase,
-                                    baseUrl => $config->ScriptName,
-                                    homePage => $config->HomePage,
-                                    userName => $user->username,
-                                    escapedUserName => uri_escape($user->username),
-                                    loginSuccess => 1,
-                                    preferencesUrl => $config->ScriptName . '?action=editprefs');
+                $wikiTemplate->vars(&globalTemplateVars,
+                                    loginSuccess => 1);
                 print &GetHttpHeader . $wikiTemplate->process('loginResults');
             }
             else { # invalid xsid
-                $wikiTemplate->vars(siteName => $config->SiteName,
-                                    cssFile => $config->StyleSheet,
-                                    siteBase => $config->SiteBase,
-                                    baseUrl => $config->ScriptName,
-                                    homePage => $config->HomePage,
-                                    userName => $user->username,
-                                    escapedUserName => uri_escape($user->username),
-                                    preferencesUrl => $config->ScriptName . '?action=editprefs');
+                $wikiTemplate->vars(&globalTemplateVars);
                 print &GetHttpHeader . $wikiTemplate->process('errors/xsidInvalid');
             }
         }
@@ -1363,14 +1206,7 @@ sub DoIname {
         }
     }
     else { # i-name didn't resolve
-        $wikiTemplate->vars(siteName => $config->SiteName,
-                            cssFile => $config->StyleSheet,
-                            siteBase => $config->SiteBase,
-                            baseUrl => $config->ScriptName,
-                            homePage => $config->HomePage,
-                            userName => $user->username,
-                            escapedUserName => uri_escape($user->username),
-                            preferencesUrl => $config->ScriptName . '?action=editprefs');
+        $wikiTemplate->vars(&globalTemplateVars);
         print &GetHttpHeader . $wikiTemplate->process('errors/inameInvalid');
     }
 }
@@ -1386,20 +1222,10 @@ sub DoSearch {
     my $search = new PurpleWiki::Search::Engine(config => $config);
     $search->search($string);
 
-    my $username;
-    $username = $user->username if ($user);
-
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        userName => $username,
-                        escapedUserName => uri_escape($username),
+    $wikiTemplate->vars(&globalTemplateVars,
                         keywords => $string,
                         modules => $search->modules,
-                        results => $search->results,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+                        results => $search->results);
     print GetHttpHeader() . $wikiTemplate->process('searchResults');
 }
 
@@ -1435,15 +1261,8 @@ sub DoPost {
   # clean \r out of string
   $string =~ s/\r//g;
 
-  $wikiTemplate->vars(siteName => $config->SiteName,
-                      cssFile => $config->StyleSheet,
-                      siteBase => $config->SiteBase,
-                      baseUrl => $config->ScriptName,
-                      homePage => $config->HomePage,
-                      userName => $userName,
-                      escapedUserName => uri_escape($userName),
-                      pageName => $id,
-                      preferencesUrl => $config->ScriptName . '?action=editprefs');
+  $wikiTemplate->vars(&globalTemplateVars,
+                      pageName => $id);
   if (!UserCanEdit($id, 1)) {
     # This is an internal interface--we don't need to explain
     print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
@@ -1564,15 +1383,8 @@ sub DoUnlock {
     PurpleWiki::Database::ForceReleaseLock('cache', $config);
     PurpleWiki::Database::ForceReleaseLock('diff', $config);
     PurpleWiki::Database::ForceReleaseLock('index', $config);
-    $wikiTemplate->vars(siteName => $config->SiteName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        userName => $user->username,
-                        escapedUserName => uri_escape($user->username),
-                        forcedUnlock => $forcedUnlock,
-                        preferencesUrl => $config->ScriptName . '?action=editprefs');
+    $wikiTemplate->vars(&globalTemplateVars,
+                        forcedUnlock => $forcedUnlock);
     print GetHttpHeader() . $wikiTemplate->process('removeEditLock');
 
 }
@@ -1658,16 +1470,8 @@ sub DoDiff {
          ($page->getPageCache("old$cacheName") < 1))) {
         $noDiff = 1;
     }
-    my $username;
-    $username = $user->username if ($user);
-    $wikiTemplate->vars(siteName => $config->SiteName,
+    $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $pageName,
-                        cssFile => $config->StyleSheet,
-                        siteBase => $config->SiteBase,
-                        baseUrl => $config->ScriptName,
-                        homePage => $config->HomePage,
-                        userName => $username,
-                        escapedUserName => uri_escape($username),
                         revision => $rev,
                         diffType => $diffTypeString,
                         diffLinks => \@diffLinks,
@@ -1676,7 +1480,6 @@ sub DoDiff {
                         lastEdited => $lastEdited,
                         pageUrl => $config->ScriptName . "?$id",
                         backlinksUrl => $config->ScriptName . "?search=$id",
-                        preferencesUrl => $config->ScriptName . '?action=editprefs',
                         revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewDiff');
 }
@@ -1798,8 +1601,20 @@ sub visitedPages {
 sub expandPageName {
     my $pageName = shift;
 
-    $pageName =~ s/([a-z])([A-Z])/$1 $2/g;
+    if ($pageName !~ / /) {
+        $pageName =~ s/([a-z])([A-Z])/$1 $2/g;
+        $pageName =~ s/([0-9])([A-Z])/$1 $2/g;
+        $pageName =~ s/([a-z])([0-9])/$1 $2/g;
+    }
     return $pageName;
+}
+
+sub globalTemplateVars {
+    return (siteName => $config->SiteName,
+            baseUrl => $config->ScriptName,
+            homePage => $config->HomePage,
+            userName => $user ? $user->username : undef,
+            preferencesUrl => $config->ScriptName . '?action=editprefs');
 }
 
 &DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.
