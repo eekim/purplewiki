@@ -103,13 +103,69 @@ sub parse {
 
     my $aggregateListRegExp = join('|', values(%listMap));
 
-    $wikiContent =~ s/\\ *\r?\n/ /g;     # Join lines with backslash at end
+    # The parsing strategy is as follows.  First, process the text
+    # line-by-line, updating state variables as we go.  At certain
+    # termination points, we update the data structure based on the
+    # state variables.
+    #
+    # The top of the text is parsed differently from the rest of the
+    # text.  If there is metadata (delimited by braces), then the
+    # metadata is parsed; otherwise, the parser begins parsing for
+    # WikiText.  Once it reaches this latter stage, it will treat
+    # metadata as WikiText according to the basic parsing rules.
+    #
+    # STATE VARIABLES
+    #
+    # The state variables we care about and why are:
+    #
+    #   $isStart -- Determines whether we're at the top of the text
+    #     (and should be parsing metadata) or not.
+    #
+    #   @authors -- List of authors (defined in the metadata).  This
+    #     list is added to the tree structure's metadata once parsing
+    #     is complete.
+    #
+    #   $listDepth -- The depth of the current list (unordered,
+    #     ordered, or definition) being parsed.  Starts at 0.
+    #
+    #   $indentDepth -- The depth of the current indented text (begins
+    #     with a colon) being parsed.  Starts at 0.
+    #
+    #   $sectionDepth -- Depth of the current section.  We start with
+    #     a depth of 1, because we assume that the body text begins
+    #     with a section.  (See below for more detailed explanation.)
+    #
+    #   $nodeContent -- Textual content of current node.
+    #
+    #   $currentNode -- The current node.  The initial node when we
+    #     start parsing is the first section node.
+    #
+    # SECTIONS
+    #
+    # A document consists of sections.  Each section may consist of
+    # subsections, ad infinitum.
+    #
+    # New sections are delimited by header markup (equal signs) and
+    # hard rules (four dashes).  The depth of the header markup
+    # determines whether or not the section is a new section, a
+    # subsection, or in some cases, a supersection (e.g. a two equal
+    # sign header following a three equal sign header).
+    #
+    # A hard rule indicates a new section.  Ideally, I'd like to make
+    # it so that the hard rule is ignored if it is directly followed
+    # by a header.  If users want to have hard rules separating
+    # sections (i.e. separating headers), they should define that in
+    # the stylesheet instead of using hard rules.  Expecting this
+    # behavior from users is probably a bit too draconian, however.
+    # The resulting data structure from a series of hard rules
+    # followed by headers won't be "clean," but it shouldn't be
+    # harmful either.
 
     $isStart = 1;
+    @authors = ();
     $listDepth = 0;
     $indentDepth = 0;
     $sectionDepth = 1;
-    @authors = ();
 
     $currentNode = $tree->root->insertChild('type' => 'section');
 
@@ -149,50 +205,24 @@ sub parse {
                 push @authors, [$authorString];
             }
         }
-        elsif ($line =~ /^\{sketch\}$/) {
+        elsif ($line =~ /^\{sketch\}$/) {  # WikiWhiteboard
             $currentNode->insertChild(type=>'sketch');
         }
+        elsif ($line =~ /^----*$/) {   # new section
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                %params);
+            $currentNode = $currentNode->parent;
+            $currentNode = $currentNode->insertChild(type=>'section');
+        }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
-            #
-            # Okay.  It gets funky here.
-            #
-            # Definition lists have to be handled in a special manner
-            # here, in order to enable the desired behavior in certain
-            # situations: external links and InterWiki links in the
-            # definition title.  For more detailed info, check out the
-            # test cases in t/parser07.t and t/tree_test11.txt.
-            #
-            # UseModWiki didn't have these problems because of the way
-            # the parser worked.  UseMod did a regexp substitution of
-            # inline formatting and links before parsing for structure.
-            # We don't do things that way.  Parsing and output is
-            # decoupled.  We parse for structure first, then for inline
-            # content.
-            #
-            # Probably the "right" way to handle these situations is to
-            # write a more sophisticated parser, one that does partial
-            # inline processing first, then does structural parsing, then
-            # completes the inline processing.  But I don't want to do
-            # that for this one exceptional situation.  Instead, I'm going
-            # to do some UseMod-like analysis on inline content in order
-            # to determine how the structure of the list will break down.
-            #
-            # I'm also going to take one shortcut.  I'm going to assume
-            # that the original regexp for determining whether or not a
-            # line is part of a definition list still holds.  If I wanted
-            # to be super anal, then something like:
-            #
-            #   ;http://www.blueoxen.org/
-            #
-            # would not be a definition list; it would be part of a
-            # paragraph.  By keeping the original regexp, the above will
-            # be considered a title without a definition, even though
-            # there is no concluding colon.  It bugs the super anal side
-            # of me, but the reality is, it should be harmless.  Plus,
-            # this documentation is longer than the code needed to make
-            # this work, so people who poke around shouldn't be surprised.
-            #
-            foreach $listType (keys(%listMap)) {
+
+            # Lists, for the most part, get handled the same way,
+            # whether they are unordered, ordered, or definition.
+            # However, definition lists are a bit funky as commented
+            # below.
+
+            foreach $listType (keys(%listMap)) {  # repeat for all
+                                                  # three list types
                 if ($line =~ /^$listMap{$listType}$/x) {
                     $currentNode = &_terminateParagraph($currentNode,
                                                         \$nodeContent,
@@ -203,6 +233,54 @@ sub parse {
                     }
                     my @listContents = ($2, $3);
                     if ($listType eq 'dl') {
+
+                        # Definition lists have to be handled in a
+                        # special manner in order to enable the
+                        # desired behavior in certain situations:
+                        # external links and InterWiki links in the
+                        # definition title.  For more detailed info,
+                        # check out the test cases in t/parser07.t and
+                        # t/tree_test11.txt.
+                        #
+                        # UseModWiki didn't have these problems
+                        # because of the way the parser worked.
+                        # UseMod did a regexp substitution of inline
+                        # formatting and links before parsing for
+                        # structure.  We don't do things that way.
+                        # Parsing and output is decoupled.  We parse
+                        # for structure first, then for inline
+                        # content.
+                        #
+                        # Probably the "right" way to handle these
+                        # situations is to write a more sophisticated
+                        # parser, one that does partial inline
+                        # processing first, then does structural
+                        # parsing, then completes the inline
+                        # processing.  But I don't want to do that for
+                        # this one exceptional situation.  Instead,
+                        # I'm going to do some UseMod-like analysis on
+                        # inline content in order to determine how the
+                        # structure of the list will break down.
+                        #
+                        # I'm also going to take one shortcut.  I'm
+                        # going to assume that the original regexp for
+                        # determining whether or not a line is part of
+                        # a definition list still holds.  If I wanted
+                        # to be super anal, then something like:
+                        #
+                        #   ;http://www.blueoxen.org/
+                        #
+                        # would not be a definition list; it would be
+                        # part of a paragraph.  By keeping the
+                        # original regexp, the above will be
+                        # considered a title without a definition,
+                        # even though there is no concluding colon.
+                        # It bugs the super anal side of me, but the
+                        # reality is, it should be harmless.  Plus,
+                        # this documentation is longer than the code
+                        # needed to make this work, so people who poke
+                        # around shouldn't be surprised.
+
                         # rejoin @listContents, and parse it again
                         my $listContentString = join(':', @listContents);
                         if ($listContentString =~

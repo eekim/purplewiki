@@ -28,8 +28,7 @@ Does the nowiki tag work?  <nowiki>Well, that depends.  Do you see
 * Yessirreebob.
 ** This is a sublist.
 ** This is item two of the sublist.
-** Item three of the sublist\
-should be one sentence.
+** Item three of the sublist should be one sentence.
 *** This is a subsublist.
 ** This is item three of the sublist.
 

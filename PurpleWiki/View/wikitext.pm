@@ -52,6 +52,7 @@ sub new {
     $self->{sectionDepth} = 0;
     $self->{indentDepth} = 0;
     $self->{listStack} = [];
+    $self->{isPrevSection} = 0;
     $self->{lastInlineProcessed} = "";
 
     bless($self, $class);
@@ -62,11 +63,15 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->SUPER::view($wikiTree);
     $self->{outputString} = $self->_header($wikiTree) . $self->{outputString};
+    $self->_hardRule;
     return $self->{outputString};
 }
 
 sub sectionPre { 
-    shift->{sectionDepth}++  
+    my $self = shift;
+    $self->{sectionDepth}++;
+    $self->_hardRule;
+    $self->{isPrevSection} = 1;
 }
 
 sub sectionPost {
@@ -76,7 +81,9 @@ sub sectionPost {
 }
 
 sub indentPre { 
-    shift->{indentDepth}++; 
+    my $self = shift;
+    $self->_hardRule;
+    $self->{indentDepth}++; 
 }
 
 sub indentPost { 
@@ -86,9 +93,23 @@ sub indentPost {
     $self->{outputString} .= "\n" if $self->{indentDepth} == 0; 
 }
 
-sub ulPre { push @{shift->{listStack}}, shift->type }
-sub olPre { push @{shift->{listStack}}, shift->type }
-sub dlPre { push @{shift->{listStack}}, shift->type }
+sub ulPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule;
+    push @{$self->{listStack}}, $nodeRef->type;
+}
+
+sub olPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule;
+    push @{$self->{listStack}}, $nodeRef->type;
+}
+
+sub dlPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule;
+    push @{$self->{listStack}}, $nodeRef->type;
+}
 
 sub ulPost { shift->_endList(@_) }
 sub olPost { shift->_endList(@_) }
@@ -96,6 +117,7 @@ sub dlPost { shift->_endList(@_) }
 
 sub hPre { 
     my $self = shift;
+    $self->{isPrevSection} = 0;
     $self->{outputString} .= '=' x $self->{sectionDepth}. ' '; 
 }
 
@@ -108,6 +130,7 @@ sub hPost {
 
 sub pPre { 
     my $self = shift;
+    $self->_hardRule;
     $self->{outputString} .= ':' x $self->{indentDepth};
 }
 
@@ -136,6 +159,9 @@ sub ddPre {
 sub liPost { shift->_showNID(@_) }
 sub dtPost { shift->_showNID(@_) }
 sub ddPost { shift->_showNID(@_) }
+
+sub prePre { &_hardRule(shift) }
+
 sub prePost { shift->_showNID(@_) }
 
 sub sketchMain { 
@@ -246,6 +272,15 @@ sub imagePost {
 
 ############### Private Methods ###############
 
+sub _hardRule {
+    my $self = shift;
+
+    if ($self->{isPrevSection}) {
+        $self->{outputString} .= "----\n\n";
+        $self->{isPrevSection} = 0;
+    }
+}
+
 sub _endList {
     my $self = shift;
     pop @{$self->{listStack}};
@@ -270,7 +305,7 @@ sub _showNID {
 
 sub _nid {
     my ($self, $nid) = @_;
-    return " {nid $nid}";
+    return " {nid $nid}" if ($nid);
 }
 
 sub _header {

@@ -56,6 +56,7 @@ sub new {
     $self->{transcluder} = new PurpleWiki::Transclusion(
         config => $self->{config},
         url => $self->{url});
+    $self->{isPrevSection} = 0;
 
     bless($self, $class);
     return $self;
@@ -65,11 +66,15 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->{sectionState} = [];
     $self->SUPER::view($wikiTree);
+    $self->_hardRule;
     return $self->{outputString};
 }
 
 sub sectionPre { 
-    push @{shift->{sectionState}}, 'section'; 
+    my $self = shift;
+    push @{$self->{sectionState}}, 'section';
+    $self->_hardRule;
+    $self->{isPrevSection} = 1;
 }
 
 sub sectionPost { 
@@ -77,16 +82,36 @@ sub sectionPost {
 }
 
 sub indentPre { 
-    shift->{outputString} .= "<div class=\"indent\">\n";
+    my $self = shift;
+    $self->_hardRule;
+    $self->{outputString} .= "<div class=\"indent\">\n";
 }
 
 sub indentPost { 
     shift->{outputString} .= "</div>\n";
 }
 
-sub ulPre { shift->{outputString} .= '<' . shift->type . '>' }
-sub olPre { shift->{outputString} .= '<' . shift->type . '>' }
-sub dlPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub ulPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule;
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
+sub olPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule;
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
+sub dlPre {
+    my ($self, $nodeRef) = @_;
+
+    $self->_hardRule;
+    $self->{outputString} .= '<' . $nodeRef->type . '>';
+}
+
 sub bPre { shift->{outputString} .= '<' . shift->type . '>' }
 sub iPre { shift->{outputString} .= '<' . shift->type . '>' }
 sub ttPre { shift->{outputString} .= '<' . shift->type . '>' }
@@ -97,6 +122,7 @@ sub dlPost { shift->{outputString} .= '</' . shift->type . ">\n" }
 
 sub hPre { 
     my ($self, $node) = @_;
+    $self->{isPrevSection} = 0;
     $self->{outputString} .= '<h' . $self->_headerLevel(); 
     $self->{outputString} .= '>' . $self->_anchor($node->id); 
 }
@@ -107,11 +133,23 @@ sub hPost {
     $self->{outputString} .= '</h' . $self->_headerLevel() . '>';
 }
 
-sub pPre { shift->_openTagWithNID(@_) }
+sub pPre {
+    my $self = shift;
+
+    $self->_hardRule;
+    $self->_openTagWithNID(@_);
+}
+
 sub liPre { shift->_openTagWithNID(@_) }
 sub ddPre { shift->_openTagWithNID(@_) }
 sub dtPre { shift->_openTagWithNID(@_) }
-sub prePre { shift->_openTagWithNID(@_) }
+
+sub prePre {
+    my $self = shift;
+
+    $self->_hardRule;
+    $self->_openTagWithNID(@_);
+}
 
 sub pPost { shift->_closeTagWithNID(@_) }
 sub liPost { shift->_closeTagWithNID(@_) }
@@ -175,6 +213,15 @@ sub wikiwordMain { shift->_wikiLink(@_) }
 
 
 ############### Private Methods ###############
+
+sub _hardRule {
+    my $self = shift;
+
+    if ($self->{isPrevSection}) {
+        $self->{outputString} .= "<hr />\n\n";
+        $self->{isPrevSection} = 0;
+    }
+}
 
 sub _openTagWithNID {
     my ($self, $nodeRef) = @_;
