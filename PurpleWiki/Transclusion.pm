@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.1.2.1 2003/05/21 08:47:27 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.2 2003/05/30 08:15:19 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,9 +31,7 @@
 package PurpleWiki::Transclusion;
 
 use strict;
-# FIXME: instead of using hardcode variables (below)
-# get stuff out of the PurpleWiki::Config
-#use PurpleWiki::Config;
+use PurpleWiki::Config;
 use DB_File;
 use LWP::UserAgent;
 
@@ -42,32 +40,52 @@ use LWP::UserAgent;
 # good by any stretch of the imagination. It is simply to
 # demonstrate the possibilities that these features allow.
 
-# $Id: Transclusion.pm,v 1.1.2.1 2003/05/21 08:47:27 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.2 2003/05/30 08:15:19 cdent Exp $
 
-my $INDEX_FILE='/home/cdent/testpurple/sequence.index';
-my $BASE = 'http://www.burningchrome.com:8000';
+# The name of the index file. It's directory comes from Config.
+my $INDEX_FILE = 'sequence.index';
 
-
+# Creates a new Transclusion object associated with 
+# the sequence.index in the DataDir. The index is 
+# used to find the URL from which a particular NID
+# originates. See get() for more.
+# 
+# A single Transclusion object should be able to do
+# multiple gets, but this has not been tested.
+# FIXME: will a DB file opened for a long read be
+# aware of new writes? Presumably not?
 sub new {
-    my $proto = shift;
-    my $class = ref($proto) || $proto;
+    my $class = shift;
     my $self = {};
     bless ($self, $class);
-    my %params = @_; # FIXME: not yet used
+    my %params = @_; # FIXME: not yet used will include a config object eventually
 
-    $self->_tieHash();
+    my $config = new PurpleWiki::Config;
+
+    $self->_tieHash($config->DataDir() . '/' . $INDEX_FILE);
 
     return $self;
 }
 
+# Takes the provided nid, looks it up in the sequence.index
+# and then uses HTTP to retrieve the page on which that NID
+# is found. The retrieved page is parsed to gather the
+# content associated with the NID. A string containing
+# the content or an error message if it could not be obtained
+# is returned.
+#
+# FIXME: this uses long style nids which are probably going
+# away.
 sub get {
     my $self = shift;
     my $nid = shift;
     my $nidLong = "nid0$nid";
 
-    my $url = $self->{db}->{$nid}; # Uh?
+    # get the URL that hosts this nid out of the the db
+    my $url = $self->{db}->{$nid}; 
 
-    my $ua = new LWP::UserAgent();
+    # request the content of the URL 
+    my $ua = new LWP::UserAgent(agent => ref($self));
     my $request = new HTTP::Request('GET', $url);
     my $result = $ua->request($request);
     
@@ -84,16 +102,17 @@ sub get {
                qq($content&nbsp;<a class="nid" title="0$nid" ) .
                qq(href="$url#$nidLong">T</a></span>);
 
-
     return $content;
 }
 
+# Attaches to the the DB file which contains the NID:URL index
 sub _tieHash {
     my $self = shift;
+    my $file = shift;
 
-    tie %{$self->{db}}, 'DB_File', $INDEX_FILE, O_RDONLY, 0644, $DB_HASH ||
-        die "unable to tie $INDEX_FILE: $!";
+    tie %{$self->{db}}, 'DB_File', $file, O_RDONLY, 0644, $DB_HASH ||
+        die "unable to tie $file: $!";
 }
 
 
-
+# POD coming someday.

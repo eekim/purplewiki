@@ -1,6 +1,7 @@
 # PurpleWiki::Config.pm
+# vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Config.pm,v 1.2.2.1 2003/05/30 08:15:19 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,7 +32,7 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Config.pm,v 1.2.2.1 2003/05/30 08:15:19 cdent Exp $
 
 use strict;
 use vars qw(@ISA @EXPORT);
@@ -213,5 +214,33 @@ sub InitLinkPatterns {
   }
   $FreeLinkPattern .= $QDelim;
 }
+
+# ===========================================
+# Experimental autoload access to config 
+# variables. Eventually instead of 
+# using PurpleWiki::Config everywhere
+# we will pass Config objects around.
+
+# FIXME: this should accept a config file
+# location and do the 'do' that is done
+# above on that file.
+sub new {
+    my $class = shift;
+    my $self = {};
+    bless ($self, $class);
+    return $self;
+}
+
+# FIXME: this is only for accessing package
+# variables. It should be more flexible than this
+# and more aware of error conditions.
+sub AUTOLOAD {
+    my $self = shift;
+    my $auto = our $AUTOLOAD;
+    return if $auto eq 'Config::DESTROY';
+    no strict 'refs';
+    return ${$auto};
+}
+
   
 1;
