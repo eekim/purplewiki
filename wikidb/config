@@ -26,7 +26,7 @@ RcDays      = 3
 RcDays      = 7
 RcDays      = 30
 RcDays      = 90
-KeepDays    = 14               # Days to keep old revisions
+KeepDays    = 30               # Days to keep old revisions
 
 # Password for administration and editing
 # FIXME: need better understanding of how these things are used

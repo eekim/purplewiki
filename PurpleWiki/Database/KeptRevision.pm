@@ -73,14 +73,27 @@ sub hasRevision {
     my $self = shift;
     my $revision = shift;
 
-    return (ref($self->{sections}->[$revision - 1]));
+    # FIXME: a hash of revision number to sections is
+    # probably in order
+    foreach my $section (@{$self->{sections}}) {
+        my $sectionRevision = $section->getRevision();
+        return 1 if $revision == $sectionRevision;
+    }
+    return 0;
 }
 
 # Retrieves the Section representing to a particular revision
 sub getRevision {
     my $self = shift;
     my $revision = shift;
-    return $self->{sections}->[$revision - 1]; 
+
+    foreach my $section (@{$self->{sections}}) {
+        my $sectionRevision = $section->getRevision();
+        return $section if $revision == $sectionRevision;
+    }
+    # FIXME, should probably error here, for now return
+    # most recent
+    return pop(@{$self->{sections}});
 }
 
 # Adds the provided Section to this KeptRevision
