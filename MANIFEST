@@ -55,6 +55,7 @@ extras/mt/purple.pl
 extras/rss/README
 extras/rss/rssCreate
 extras/rss/wikirss
+extras/createUsername.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
@@ -151,6 +152,7 @@ wikidb/templates/footer.ht
 wikidb/templates/header.ht
 wikidb/templates/loginResults.tt
 wikidb/templates/login.tt
+wikidb/templates/logout.tt
 wikidb/templates/pageCommands.ht
 wikidb/templates/pageIndex.ht
 wikidb/templates/pageIndex.tt
@@ -179,6 +181,7 @@ wikidb/templates/errors/dataDirCannotCreate.tt
 wikidb/templates/errors/editBlocked.tt
 wikidb/templates/errors/editNotAllowed.tt
 wikidb/templates/errors/editSiteReadOnly.tt
+wikidb/templates/errors/enameInvalid.tt
 wikidb/templates/errors/pageCannotBeDefined.tt
 wikidb/templates/errors/pageNameInvalid.tt
 wikidb/templates/errors/pageNameMissingSubpage.tt
@@ -189,6 +192,7 @@ wikidb/templates/errors/pageNameTooManyChars.tt
 wikidb/templates/errors/pageNameTooManySlashes.tt
 wikidb/templates/errors/prefsInvalidUserId.tt
 wikidb/templates/errors/urlInvalid.tt
+wikidb/templates/errors/xsidInvalid.tt
 wikidb/templates/lib/diffs.tt
 wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
