@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiHTML.pm
 #
-# $Id: WikiHTML.pm,v 1.8 2002/11/22 21:24:25 eekim Exp $
+# $Id: WikiHTML.pm,v 1.9 2002/11/24 08:57:56 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -237,12 +237,13 @@ sub _traverseInline {
                 $outputString .= $inlineNode->content . '</a>';
             }
             else {
-                $outputString .= $inlineNode->content;
                 if ($inlineNode->type eq 'freelink') {
+                    $outputString .= '[' . $inlineNode->content . ']';
                     $outputString .= '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
                         '">';
                 }
                 else {
+                    $outputString .= $inlineNode->content;
                     $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
                         '">';
                 }
