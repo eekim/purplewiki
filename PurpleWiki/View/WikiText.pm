@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.7 2002/11/24 09:19:24 eekim Exp $
+# $Id: WikiText.pm,v 1.8 2002/12/11 03:06:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -29,7 +29,7 @@
 
 package PurpleWiki::View::WikiText;
 
-use 5.006;
+use 5.005;
 use strict;
 use PurpleWiki::Tree;
 

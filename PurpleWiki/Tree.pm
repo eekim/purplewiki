@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.19 2002/11/25 05:54:58 eekim Exp $
+# $Id: Tree.pm,v 1.20 2002/12/11 03:06:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -29,9 +29,8 @@
 
 package PurpleWiki::Tree;
 
-use 5.006;
+use 5.005;
 use strict;
-use warnings;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::View::Debug;

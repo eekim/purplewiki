@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.1 2002/11/25 05:54:59 eekim Exp $
+# $Id: WikiText.pm,v 1.2 2002/12/11 03:06:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -29,9 +29,8 @@
 
 package PurpleWiki::Parser::WikiText;
 
-use 5.006;
+use 5.005;
 use strict;
-#use warnings;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;

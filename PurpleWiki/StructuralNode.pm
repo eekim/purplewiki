@@ -1,6 +1,6 @@
 # PurpleWiki::StructuralNode.pm
 #
-# $Id: StructuralNode.pm,v 1.4 2002/11/22 20:57:24 eekim Exp $
+# $Id: StructuralNode.pm,v 1.5 2002/12/11 03:06:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -29,12 +29,12 @@
 
 package PurpleWiki::StructuralNode;
 
-use 5.006;
+use 5.005;
 use strict;
-use warnings;
 use PurpleWiki::InlineNode;
 
-our $VERSION = '0.1';
+use vars qw($VERSION);
+$VERSION = '0.1';
 
 ### constructor
 

@@ -1,6 +1,6 @@
 # PurpleWiki::View::Debug.pm
 #
-# $Id: Debug.pm,v 1.4 2002/11/24 07:45:46 eekim Exp $
+# $Id: Debug.pm,v 1.5 2002/12/11 03:06:00 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -29,9 +29,8 @@
 
 package PurpleWiki::View::Debug;
 
-use 5.006;
+use 5.005;
 use strict;
-use warnings;
 use PurpleWiki::Tree;
 
 # functions
