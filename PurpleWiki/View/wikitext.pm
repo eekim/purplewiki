@@ -221,9 +221,17 @@ sub ddMain { shift->_liRecurse(@_) }
 
 sub dtPost { shift->_showNID(@_) }
 
-sub prePre { shift->_hardRule(0) }
+sub prePre {
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "{{{\n";
+ }
 
-sub prePost { shift->_showNID(@_) }
+sub prePost {
+    my $self = shift;
+    $self->_showNID(@_);
+    $self->{outputString} .= "}}}\n\n";
+}
 
 sub sketchMain { 
     shift->{outputString} .= "{sketch}\n\n";
@@ -250,13 +258,13 @@ sub iPost {
 }
 
 sub ttPre { 
-    shift->{outputString} .= "<tt>";
+    shift->{outputString} .= "{{{";
 }
 
 sub ttPost { 
     my $self = shift;
     $self->{lastInlineProcessed} = 'tt'; 
-    $self->{outputString} .=  "</tt>"; 
+    $self->{outputString} .=  "}}}"; 
 }
 
 sub textPre { 
@@ -377,8 +385,8 @@ sub _showNID {
 
     if ($nodeRef->type eq 'dt') {
         $self->{outputString} .= $nidString;
-    } elsif ($nodeRef->type eq 'pre') {
-        $self->{outputString} .= $nidString . "\n\n";
+#    } elsif ($nodeRef->type eq 'pre') {
+#        $self->{outputString} .= $nidString . "\n\n";
     } else {
         $self->{outputString} .= $nidString . "\n";
     }

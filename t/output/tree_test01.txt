@@ -5,8 +5,10 @@
 This is a bare-bones, error-free example of a textual Wiki page.  The
 question is, will this parse correctly?
 
+{{{
   Only time will tell.
   And tell it will.
+}}}
 
 This is a paragraph.
 
@@ -14,8 +16,10 @@ This is another paragraph.
 
 How about mixed paragraphs and preformatting?
 
+{{{
    This should be preformatted.
  But is it?
+}}}
 
 You should know by now.
 
@@ -33,7 +37,7 @@ Tests moved to tree_test14.txt.
 This is ''italics''.  This is '''bold'''.  This is '''''bold and
 italic'''''.
 
-UseModWiki also supports HTML bold and italic tags.  This is ''italics''.  This is '''bold'''.  This is '''''bold and italic'''''.  This is '''''italic and bold'''''.  This is <tt>monospace</tt>.
+UseModWiki also supports HTML bold and italic tags.  This is ''italics''.  This is '''bold'''.  This is '''''bold and italic'''''.  This is '''''italic and bold'''''.  This is {{{monospace}}}.
 
 === Links ===
 

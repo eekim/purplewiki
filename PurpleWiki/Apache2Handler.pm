@@ -31,10 +31,10 @@
 package PurpleWiki::Apache2Handler;
 
 use strict;
-use lib '/home/cdent/src/psSing';
 use IO::File;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Template::TT;
 use Apache::RequestRec ();
 use Apache::RequestIO ();
 use Apache::URI;
@@ -44,7 +44,6 @@ our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $CONFIG = '/home/cdent/wikidb';
-my $CSS = '/~cdent/purple.css';
 
 sub handler {
     my $r = shift;
@@ -59,16 +58,16 @@ sub handler {
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
         wikiword => 1,
-        css_file => $CSS,
         url => $url,
     );
-
-    print $wiki->view('xhtml', 
-        wikiword => 1,
-        css_file => $CSS,
-        url => $url,
-    );
-
+    my $wikiTemplate = new PurpleWiki::Template::TT(
+        templateDir => "$CONFIG/templates");
+    $wikiTemplate->vars( body => $wiki->view('wikihtml', 
+                                             wikiword => 1,
+                                             url => $url),
+                         title => $wiki->title,
+                         date => $wiki->date );
+    print $wikiTemplate->process('handler');
     # FIXME: sometimes okay is not the desired return code
     return Apache::OK;
 
@@ -106,9 +105,10 @@ PurpleWiki::Apache2Handler - Wiki text display handler for mod_perl 2
 
 =head1 DESCRIPTION
 
-A simple display handler for web content files that are formatted
-as PurpleWiki wikitext. The handler reads in the *.wiki file, parses
-it to a PurpleWiki::Tree and presents it as PurpleWiki::View::xhtml.
+A simple display handler for web content files that are formatted as
+PurpleWiki wikitext. The handler reads in the *.wiki file, parses it
+to a PurpleWiki::Tree and presents it using the template defined in
+wikidb/templates/handler.tt.
 
 =head1 METHODS
 

@@ -1,4 +1,4 @@
-# PurpleWiki::Rss.pm
+# PurpleWiki::Syndication::Rss.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
 # $Id$
@@ -28,17 +28,16 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Rss;
+package PurpleWiki::Syndication::Rss;
 
 # PurpleWiki Rss generation
 #
 # FIXME: Replace getRecentChanges with the Idiom code when it is done,
 # from whence much of this is stolen.
 
-# $Id$
-
 use strict;
 use XML::RSS;
+use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 
@@ -60,7 +59,8 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my @recentChanges = reverse($self->_getRecentChanges());
+    my $rcRef = &PurpleWiki::Database::recentChanges($self->{config});
+    my @recentChanges = @{$rcRef};
 
     my $rss = new XML::RSS;
     $rss->channel (
@@ -70,18 +70,10 @@ sub getRSS {
         link  => $self->{config}->ScriptName,
     );
 
-    my %seen;
     # FIXME: depending on the wrong variable here, probably better 
     # to loop on the array
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
-
-        # have only the most recent change show up
-        if (exists($seen{$recentChange->{name}})) {
-            $count ++;
-            next;
-        }
-        
 
         my $bodyText = $self->_getWikiHTML($recentChange->{name});
 
@@ -89,11 +81,10 @@ sub getRSS {
             title => $recentChange->{name},
             link  => $self->{config}->ScriptName . '?' .$recentChange->{name},
             dc => {
-                creator => $recentChange->{author},
+                creator => $recentChange->{userName},
             },
             description => "<![CDATA[$bodyText]]>\n",
         );
-        $seen{$recentChange->{name}}++;
     }
 
     return $rss->as_string;
@@ -114,51 +105,42 @@ sub _getWikiHTML {
     return $wiki->view('wikihtml', url => $url);
 }
 
+1;
+__END__
 
+=head1 NAME
 
+PurpleWiki::Syndication::Rss - RSS feed of RecentChanges
 
-sub _getRecentChanges {
-    my ($self, $timeStamp) = @_;
-    my @RCInfo = ();
+=head1 SYNOPSIS
 
-    # Default to showing all changes.
-    $timeStamp = 0 if not defined $timeStamp;
+  use PurpleWiki::Syndication::Rss;
 
-    # Convert timeStamp to seconds since the epoch if it's not already in
-    # that form.
-    if (not $timeStamp =~ /^\d+$/) {
-        use Date::Manip;
-        $timeStamp = abs(UnixDate($timeStamp, "%o")) || 0;
-    }
+  my $rss = PurpleWiki::Syndication::Rss->new;
+  my $rssString = $rss->getRSS;
 
-    open(IN, $self->{config}->RcFile)
-        || die $self->{config}->RCName." log error: $!\n";
-    for my $logEntry (<IN>) {
-        chomp $logEntry;
-        my $fsexp = $self->{config}->FS3;
-        my @entries = split /$fsexp/, $logEntry;
-        if (@entries == 7 && $entries[0] >= $timeStamp) {  # Check timestamp
-            my %info;
-            $info{name} = $entries[1];
-            $info{summary} = $entries[2];
-            $info{minorEdit} = $entries[3];
-            $info{host} = $entries[4];
-            $info{author} = "";
+=head1 DESCRIPTION
 
-            # $entries[5] is garbage and so we ignore it...
+Generates an RSS feed of RecentChanges.
 
-            # Get extra info
-            my $fsexp = $self->{config}->FS2;
-            @entries = split /$fsexp/, $entries[6];
-            if (@entries == 2) {
-                $info{userID} = $entries[0];
-                $info{author} = $info{username} = $entries[1];
-            }
+=head1 METHODS
 
-            push @RCInfo, \%info;
-        }
-    }
-    close(IN);
+=head2 new
 
-    return @RCInfo;
-}
+Constructor.
+
+=head2 getRSS()
+
+Returns RSS string of RecentChanges.
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Database>.
+
+=cut

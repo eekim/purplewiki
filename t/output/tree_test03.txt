@@ -12,9 +12,11 @@ New paragraph.  Show {nid 7}. {nid 7}
 
 Some code: {nid 8}
 
+{{{
   void hello_world()
   {
       printf("Hello, world!\n");
   } {nid 9}
+}}}
 
 That's all, folks! {nid 10}

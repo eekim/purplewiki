@@ -39,6 +39,7 @@ use PurpleWiki::Database::Page;
 use PurpleWiki::Database::User;
 use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Search::Engine;
+use PurpleWiki::Syndication::Rss;
 use PurpleWiki::Template::TT;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
@@ -755,7 +756,7 @@ sub DoOtherRequest {
   $id = &GetParam("id", "");
   if ($action ne "") {
     $action = lc($action);
-    if      ($action eq "edit") {
+    if ($action eq "edit") {
       &DoEdit($id, 0, 0, "", 0)  if &ValidIdOrDie($id);
     } elsif ($action eq "unlock") {
       &DoUnlock();
@@ -768,6 +769,10 @@ sub DoOtherRequest {
     } elsif ($action eq "newlogin") {
       $UserID = 0;
       &DoEditPrefs();  # Also creates new ID
+    } elsif ($action eq 'rss') {
+      my $rss = new PurpleWiki::Syndication::Rss;
+      print $q->header(-type => 'text/xml') .
+          $rss->getRSS;
     } else {
       # Later improve error reporting
       $wikiTemplate->vars(siteName => $config->SiteName,
