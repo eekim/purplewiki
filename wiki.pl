@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.2 2003/01/21 08:22:30 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.3 2003/01/24 12:18:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -35,6 +35,7 @@ use lib '/home/cdent/src/PurpleWiki.refactor';
 use strict;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
+use PurpleWiki::Database;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 
@@ -44,8 +45,7 @@ local $| = 1;  # Do not buffer output (localized for mod_perl)
 use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
   %KeptRevisions %UserCookie %SetCookie %UserData %IndexHash %Translate
   %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
-  $OpenPageName @KeptList @IndexList $IndexInit
-  $q $Now $UserID $TimeZoneOffset );
+  @KeptList @IndexList $IndexInit $q $Now $UserID $TimeZoneOffset );
 
 my $ScriptName;         # the name by which this script is called
 my $wikiParser;         # the reference to the PurpleWiki Parser
@@ -72,7 +72,7 @@ sub pageExists {
     if ($FreeLinks) {
         $id = &FreeToNormal($id);
     }
-    if (-f &GetPageFile($id)) {      # Page file exists
+    if (-f &PurpleWiki::Database::GetPageFile($id)) {      # Page file exists
         return 1;
     }
     else {
@@ -81,14 +81,6 @@ sub pageExists {
 }
 
 # == Common and cache-browsing code ====================================
-sub GetPageDirectory {
-  my ($id) = @_;
-
-  if ($id =~ /^([a-zA-Z])/) {
-    return uc($1);
-  }
-  return "other";
-}
 
 sub T {
   my ($text) = @_;
@@ -120,8 +112,7 @@ sub InitRequest {
   $InterSiteInit = 0;
   %InterSite = ();
   $MainPage = ".";       # For subpages only, the name of the top-level page
-  $OpenPageName = "";    # Currently open page
-  &CreateDir($DataDir);  # Create directory if it doesn't exist
+  &PurpleWiki::Database::CreateDir($DataDir);  # Create directory if it doesn't exist
   if (!-d $DataDir) {
     &ReportError(Ts('Could not create %s', $DataDir) . ": $!");
     return 0;
@@ -140,13 +131,12 @@ sub InitCookie {
   if ($UserID < 200) {
     $UserID = 111;
   } else {
-    &LoadUserData($UserID);
-  }
-  if ($UserID > 199) {
-    if (($UserData{'id'}       != $UserCookie{'id'})      ||
+    if (&PurpleWiki::Database::LoadUserData($UserID, \%UserData)) {
+      if (($UserData{'id'}       != $UserCookie{'id'})      ||
         ($UserData{'randkey'}  != $UserCookie{'randkey'})) {
-      $UserID = 113;
-      %UserData = ();   # Invalid.  Later consider warning message.
+        $UserID = 113;
+        %UserData = ();   # Invalid.  Later consider warning message.
+      }
     }
   }
   if ($UserData{'tzoffset'} != 0) {
@@ -163,10 +153,10 @@ sub DoBrowseRequest {
   }
   $id = &GetParam('keywords', '');
   if ($id) {                    # Just script?PageName
-    if ($FreeLinks && (!-f &GetPageFile($id))) {
+    if ($FreeLinks && (!-f &PurpleWiki::Database::GetPageFile($id))) {
       $id = &FreeToNormal($id);
     }
-    if (($NotFoundPg ne '') && (!-f &GetPageFile($id))) {
+    if (($NotFoundPg ne '') && (!-f &PurpleWiki::Database::GetPageFile($id))) {
       $id = $NotFoundPg;
     }
     &BrowsePage($id)  if &ValidIdOrDie($id);
@@ -175,10 +165,10 @@ sub DoBrowseRequest {
   $action = lc(&GetParam('action', ''));
   $id = &GetParam('id', '');
   if ($action eq 'browse') {
-    if ($FreeLinks && (!-f &GetPageFile($id))) {
+    if ($FreeLinks && (!-f &PurpleWiki::Database::GetPageFile($id))) {
       $id = &FreeToNormal($id);
     }
-    if (($NotFoundPg ne '') && (!-f &GetPageFile($id))) {
+    if (($NotFoundPg ne '') && (!-f &PurpleWiki::Database::GetPageFile($id))) {
       $id = $NotFoundPg;
     }
     &BrowsePage($id)  if &ValidIdOrDie($id);
@@ -197,24 +187,27 @@ sub DoBrowseRequest {
 }
 
 sub BrowsePage {
-  my ($id) = @_;
+  my $id = shift;
   my ($fullHtml, $oldId, $allDiff, $showDiff, $openKept);
   my ($revision, $goodRevision, $diffRevision, $newText);
 
-  &OpenPage($id);
-  &OpenDefaultText();
+  print STDERR "id: $id\n";
+  &PurpleWiki::Database::OpenPage($id, \%Page, $Now);
+  print STDERR "Page: " . %Page . "\n";
+  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text, \%Section, $Now);
+  print STDERR "Text: " . %Text . "\n";
   $newText = $Text{'text'};     # For differences
   $openKept = 0;
   $revision = &GetParam('revision', '');
   $revision =~ s/\D//g;           # Remove non-numeric chars
   $goodRevision = $revision;      # Non-blank only if exists
   if ($revision ne '') {
-    &OpenKeptRevisions('text_default');
+    &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions);
     $openKept = 1;
     if (!defined($KeptRevisions{$revision})) {
       $goodRevision = '';
     } else {
-      &OpenKeptRevision($revision);
+      &PurpleWiki::Database::OpenKeptRevision($revision, \%KeptRevisions, \%Section, \%Text);
     }
   }
   # Handle a single-level redirect
@@ -263,7 +256,7 @@ sub BrowsePage {
     $diffRevision = $goodRevision;
     $diffRevision = &GetParam('diffrevision', $diffRevision);
     # Later try to avoid the following keep-loading if possible?
-    &OpenKeptRevisions('text_default')  if (!$openKept);
+    &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions)  if (!$openKept);
     $fullHtml .= &GetDiffHTML($showDiff, $id, $diffRevision, $newText);
   }
   $fullHtml .= &WikiToHTML($Text{'text'});
@@ -321,7 +314,7 @@ sub DoRc {
   }
 
   # Read rclog data (and oldrclog data if needed)
-  ($status, $fileData) = &ReadFile($RcFile);
+  ($status, $fileData) = &PurpleWiki::Database::ReadFile($RcFile);
   $errorText = "";
   if (!$status) {
     # Save error text if needed.
@@ -336,7 +329,7 @@ sub DoRc {
     ($firstTs) = split(/$FS3/, $fullrc[0]);
   }
   if (($firstTs == 0) || ($starttime <= $firstTs)) {
-    ($status, $oldFileData) = &ReadFile($RcOldFile);
+    ($status, $oldFileData) = &PurpleWiki::Database::ReadFile($RcOldFile);
     if ($status) {
       @fullrc = split(/\n/, $oldFileData . $fileData);
     } else {
@@ -504,7 +497,7 @@ sub GetRcHtml {
 sub DoRandom {
   my ($id, @pageList);
 
-  @pageList = &AllPagesList();  # Optimize?
+  @pageList = &PurpleWiki::Database::AllPagesList();  # Optimize?
   $id = $pageList[int(rand($#pageList + 1))];
   &ReBrowsePage($id, "", 0);
 }
@@ -514,12 +507,12 @@ sub DoHistory {
   my ($html, $canEdit);
 
   print &GetHeader("",&QuoteHtml(Ts('History of %s', $id)), "") . "<br>";
-  &OpenPage($id);
-  &OpenDefaultText();
+  &PurpleWiki::Database::OpenPage($id, \%Page, $Now);
+  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text, \%Section, $Now);
   $canEdit = &UserCanEdit($id);
   $canEdit = 0;  # Turn off direct "Edit" links
   $html = &GetHistoryLine($id, $Page{'text_default'}, $canEdit, 1);
-  &OpenKeptRevisions('text_default');
+  &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions);
   foreach (reverse sort {$a <=> $b} keys %KeptRevisions) {
     next  if ($_ eq "");  # (needed?)
     $html .= &GetHistoryLine($id, $KeptRevisions{$_}, $canEdit, 0);
@@ -642,7 +635,7 @@ sub GetPageOrEditLink {
   if ($FreeLinks) {
     $id = &FreeToNormal($id);
   }
-  if (-f &GetPageFile($id)) {      # Page file exists
+  if (-f &PurpleWiki::Database::GetPageFile($id)) {      # Page file exists
     return &GetPageLinkText($id, $name);
   }
   if ($FreeLinks) {
@@ -1086,7 +1079,7 @@ sub GetSiteUrl {
 
   if (!$InterSiteInit) {
     $InterSiteInit = 1;
-    ($status, $data) = &ReadFile($InterFile);
+    ($status, $data) = &PurpleWiki::Database::ReadFile($InterFile);
     return ""  if (!$status);
     %InterSite = split(/\s+/, $data);  # Later consider defensive code
   }
@@ -1350,27 +1343,6 @@ sub GetKeptDiff {
   return &GetDiff($oldText, $newText, $lock);
 }
 
-sub GetDiff {
-  my ($old, $new, $lock) = @_;
-  my ($diff_out, $oldName, $newName);
-
-  &CreateDir($TempDir);
-  $oldName = "$TempDir/old_diff";
-  $newName = "$TempDir/new_diff";
-  if ($lock) {
-    &RequestDiffLock() or return "";
-    $oldName .= "_locked";
-    $newName .= "_locked";
-  }
-  &WriteStringToFile($oldName, $old);
-  &WriteStringToFile($newName, $new);
-  $diff_out = `diff $oldName $newName`;
-  &ReleaseDiffLock()  if ($lock);
-  $diff_out =~ s/\\ No newline.*\n//g;   # Get rid of common complaint.
-  # No need to unlink temp files--next diff will just overwrite.
-  return $diff_out;
-}
-
 sub DiffToHTML {
   my ($html) = @_;
   my ($tChanged, $tRemoved, $tAdded);
@@ -1405,285 +1377,6 @@ sub ColorDiff {
   $diff =~ s/\r?\n/<br>/g;
   return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
          . "</td></tr></table>\n";
-}
-
-# ==== Database (Page, Section, Text, Kept, User) functions ====
-sub OpenNewPage {
-  my ($id) = @_;
-
-  %Page = ();
-  $Page{'version'} = 3;      # Data format version
-  $Page{'revision'} = 0;     # Number of edited times
-  $Page{'tscreate'} = $Now;  # Set once at creation
-  $Page{'ts'} = $Now;        # Updated every edit
-}
-
-sub OpenNewSection {
-  my ($name, $data) = @_;
-
-  %Section = ();
-  $Section{'name'} = $name;
-  $Section{'version'} = 1;      # Data format version
-  $Section{'revision'} = 0;     # Number of edited times
-  $Section{'tscreate'} = $Now;  # Set once at creation
-  $Section{'ts'} = $Now;        # Updated every edit
-  $Section{'ip'} = $ENV{REMOTE_ADDR};
-  $Section{'host'} = '';        # Updated only for real edits (can be slow)
-  $Section{'id'} = $UserID;
-  $Section{'username'} = &GetParam("username", "");
-  $Section{'data'} = $data;
-  $Page{$name} = join($FS2, %Section);  # Replace with save?
-}
-
-sub OpenNewText {
-  my ($name) = @_;  # Name of text (usually "default")
-  %Text = ();
-  # Later consider translation of new-page message? (per-user difference?)
-  if ($NewText ne '') {
-    $Text{'text'} = T($NewText);
-  } else {
-    $Text{'text'} = T('Describe the new page here.') . "\n";
-  }
-  $Text{'text'} .= "\n"  if (substr($Text{'text'}, -1, 1) ne "\n");
-  $Text{'minor'} = 0;      # Default as major edit
-  $Text{'newauthor'} = 1;  # Default as new author
-  $Text{'summary'} = '';
-  &OpenNewSection("text_$name", join($FS3, %Text));
-}
-
-sub GetPageFile {
-  my ($id) = @_;
-
-  return $PageDir . "/" . &GetPageDirectory($id) . "/$id.db";
-}
-
-sub OpenPage {
-  my ($id) = @_;
-  my ($fname, $data);
-
-  if ($OpenPageName eq $id) {
-    return;
-  }
-  %Section = ();
-  %Text = ();
-  $fname = &GetPageFile($id);
-  if (-f $fname) {
-    $data = &ReadFileOrDie($fname);
-    %Page = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  } else {
-    &OpenNewPage($id);
-  }
-  if ($Page{'version'} != 3) {
-    &UpdatePageVersion();
-  }
-  $OpenPageName = $id;
-}
-
-sub OpenSection {
-  my ($name) = @_;
-
-  if (!defined($Page{$name})) {
-    &OpenNewSection($name, "");
-  } else {
-    %Section = split(/$FS2/, $Page{$name}, -1);
-  }
-}
-
-sub OpenText {
-  my ($name) = @_;
-
-  if (!defined($Page{"text_$name"})) {
-    &OpenNewText($name);
-  } else {
-    &OpenSection("text_$name");
-    %Text = split(/$FS3/, $Section{'data'}, -1);
-  }
-}
-
-sub OpenDefaultText {
-  &OpenText('default');
-}
-
-# Called after OpenKeptRevisions
-sub OpenKeptRevision {
-  my ($revision) = @_;
-
-  %Section = split(/$FS2/, $KeptRevisions{$revision}, -1);
-  %Text = split(/$FS3/, $Section{'data'}, -1);
-}
-
-sub GetPageCache {
-  my ($name) = @_;
-
-  return $Page{"cache_$name"};
-}
-
-# Always call SavePage within a lock.
-sub SavePage {
-  my $file = &GetPageFile($OpenPageName);
-
-  $Page{'revision'} += 1;    # Number of edited times
-  $Page{'ts'} = $Now;        # Updated every edit
-  &CreatePageDir($PageDir, $OpenPageName);
-  &WriteStringToFile($file, join($FS1, %Page));
-}
-
-sub SaveSection {
-  my ($name, $data) = @_;
-
-  $Section{'revision'} += 1;   # Number of edited times
-  $Section{'ts'} = $Now;       # Updated every edit
-  $Section{'ip'} = $ENV{REMOTE_ADDR};
-  $Section{'id'} = $UserID;
-  $Section{'username'} = &GetParam("username", "");
-  $Section{'data'} = $data;
-  $Page{$name} = join($FS2, %Section);
-}
-
-sub SaveText {
-  my ($name) = @_;
-
-  &SaveSection("text_$name", join($FS3, %Text));
-}
-
-sub SaveDefaultText {
-  &SaveText('default');
-}
-
-sub SetPageCache {
-  my ($name, $data) = @_;
-
-  $Page{"cache_$name"} = $data;
-}
-
-sub UpdatePageVersion {
-  &ReportError(T('Bad page version (or corrupt page).'));
-}
-
-sub KeepFileName {
-  return $KeepDir . "/" . &GetPageDirectory($OpenPageName)
-         . "/$OpenPageName.kp";
-}
-
-sub SaveKeepSection {
-  my $file = &KeepFileName();
-  my $data;
-
-  return  if ($Section{'revision'} < 1);  # Don't keep "empty" revision
-  $Section{'keepts'} = $Now;
-  $data = $FS1 . join($FS2, %Section);
-  &CreatePageDir($KeepDir, $OpenPageName);
-  &AppendStringToFile($file, $data);
-}
-
-sub ExpireKeepFile {
-  my ($fname, $data, @kplist, %tempSection, $expirets);
-  my ($anyExpire, $anyKeep, $expire, %keepFlag, $sectName, $sectRev);
-  my ($oldMajor, $oldAuthor);
-
-  $fname = &KeepFileName();
-  return  if (!(-f $fname));
-  $data = &ReadFileOrDie($fname);
-  @kplist = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  return  if (length(@kplist) < 1);  # Also empty
-  shift(@kplist)  if ($kplist[0] eq "");  # First can be empty
-  return  if (length(@kplist) < 1);  # Also empty
-  %tempSection = split(/$FS2/, $kplist[0], -1);
-  if (!defined($tempSection{'keepts'})) {
-#   die("Bad keep file." . join("|", %tempSection));
-    return;
-  }
-  $expirets = $Now - ($KeepDays * 24 * 60 * 60);
-  return  if ($tempSection{'keepts'} >= $expirets);  # Nothing old enough
-
-  $anyExpire = 0;
-  $anyKeep   = 0;
-  %keepFlag  = ();
-  $oldMajor  = &GetPageCache('oldmajor');
-  $oldAuthor = &GetPageCache('oldauthor');
-  foreach (reverse @kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    $sectRev = $tempSection{'revision'};
-    $expire = 0;
-    if ($sectName eq "text_default") {
-      if (($KeepMajor  && ($sectRev == $oldMajor)) ||
-          ($KeepAuthor && ($sectRev == $oldAuthor))) {
-        $expire = 0;
-      } elsif ($tempSection{'keepts'} < $expirets) {
-        $expire = 1;
-      }
-    } else {
-      if ($tempSection{'keepts'} < $expirets) {
-        $expire = 1;
-      }
-    }
-    if (!$expire) {
-      $keepFlag{$sectRev . "," . $sectName} = 1;
-      $anyKeep = 1;
-    } else {
-      $anyExpire = 1;
-    }
-  }
-
-  if (!$anyKeep) {  # Empty, so remove file
-    unlink($fname);
-    return;
-  }
-  return  if (!$anyExpire);  # No sections expired
-  open (OUT, ">$fname") or die (Ts('cant write %s', $fname) . ": $!");
-  foreach (@kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    $sectRev = $tempSection{'revision'};
-    if ($keepFlag{$sectRev . "," . $sectName}) {
-      print OUT $FS1, $_;
-    }
-  }
-  close(OUT);
-}
-
-sub OpenKeptList {
-  my ($fname, $data);
-
-  @KeptList = ();
-  $fname = &KeepFileName();
-  return  if (!(-f $fname));
-  $data = &ReadFileOrDie($fname);
-  @KeptList = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-}
-
-sub OpenKeptRevisions {
-  my ($name) = @_;  # Name of section
-  my ($fname, $data, %tempSection);
-
-  %KeptRevisions = ();
-  &OpenKeptList();
-
-  foreach (@KeptList) {
-    %tempSection = split(/$FS2/, $_, -1);
-    next  if ($tempSection{'name'} ne $name);
-    $KeptRevisions{$tempSection{'revision'}} = $_;
-  }
-}
-
-sub LoadUserData {
-  my ($data, $status);
-
-  %UserData = ();
-  ($status, $data) = &ReadFile(&UserDataFilename($UserID));
-  if (!$status) {
-    $UserID = 112;  # Could not open file.  Later warning message?
-    return;
-  }
-  %UserData = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-}
-
-sub UserDataFilename {
-  my ($id) = @_;
-
-  return ""  if ($id < 1);
-  return $UserDir . "/" . ($id % 10) . "/$id.db";
 }
 
 # ==== Misc. functions ====
@@ -1754,7 +1447,7 @@ sub UserCanEdit {
   my ($id, $deepCheck) = @_;
 
   # Optimized for the "everyone can edit" case (don't check passwords)
-  if (($id ne "") && (-f &GetLockedPageFile($id))) {
+  if (($id ne "") && (-f &PurpleWiki::Database::GetLockedPageFile($id))) {
     return 1  if (&UserIsAdmin());  # Requires more privledges
     # Later option for editor-level to edit these pages?
     return 0;
@@ -1777,7 +1470,7 @@ sub UserCanEdit {
 sub UserIsBanned {
   my ($host, $ip, $data, $status);
 
-  ($status, $data) = &ReadFile("$DataDir/banlist");
+  ($status, $data) = &PurpleWiki::Database::ReadFile("$DataDir/banlist");
   return 0  if (!$status);  # No file exists, so no ban
   $ip = $ENV{'REMOTE_ADDR'};
   $host = &GetRemoteHost(0);
@@ -1816,175 +1509,6 @@ sub UserIsEditor {
   return 0;
 }
 
-sub GetLockedPageFile {
-  my ($id) = @_;
-
-  return $PageDir . "/" . &GetPageDirectory($id) . "/$id.lck";
-}
-
-sub RequestLockDir {
-  my ($name, $tries, $wait, $errorDie) = @_;
-  my ($lockName, $n);
-
-  &CreateDir($TempDir);
-  $lockName = $LockDir . $name;
-  $n = 0;
-  while (mkdir($lockName, 0555) == 0) {
-    if ($! != 17) {
-      die(Ts('can not make %s', $LockDir) . ": $!\n")  if $errorDie;
-      return 0;
-    }
-    return 0  if ($n++ >= $tries); 
-    sleep($wait);
-  }
-  return 1;
-}
-
-sub ReleaseLockDir {
-  my ($name) = @_;
-  rmdir($LockDir . $name);
-}
-
-sub RequestLock {
-  # 10 tries, 3 second wait, die on error
-  return &RequestLockDir("main", 10, 3, 1);
-}
-
-sub ReleaseLock {
-  &ReleaseLockDir('main');
-}
-
-sub ForceReleaseLock {
-  my ($name) = @_;
-  my $forced;
-
-  # First try to obtain lock (in case of normal edit lock)
-  # 5 tries, 3 second wait, do not die on error
-  $forced = !&RequestLockDir($name, 5, 3, 0);
-  &ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
-  return $forced;
-}
-
-sub RequestCacheLock {
-  # 4 tries, 2 second wait, do not die on error
-  return &RequestLockDir('cache', 4, 2, 0);
-}
-
-sub ReleaseCacheLock {
-  &ReleaseLockDir('cache');
-}
-
-sub RequestDiffLock {
-  # 4 tries, 2 second wait, do not die on error
-  return &RequestLockDir('diff', 4, 2, 0);
-}
-
-sub ReleaseDiffLock {
-  &ReleaseLockDir('diff');
-}
-
-# Index lock is not very important--just return error if not available
-sub RequestIndexLock {
-  # 1 try, 2 second wait, do not die on error
-  return &RequestLockDir('index', 1, 2, 0);
-}
-
-sub ReleaseIndexLock {
-  &ReleaseLockDir('index');
-}
-
-sub ReadFile {
-  my ($fileName) = @_;
-  my ($data);
-  local $/ = undef;   # Read complete files
-
-  if (open(IN, "<$fileName")) {
-    $data=<IN>;
-    close IN;
-    return (1, $data);
-  }
-  return (0, "");
-}
-
-sub ReadFileOrDie {
-  my ($fileName) = @_;
-  my ($status, $data);
-
-  ($status, $data) = &ReadFile($fileName);
-  if (!$status) {
-    die(Ts('Can not open %s', $fileName) . ": $!");
-  }
-  return $data;
-}
-
-sub WriteStringToFile {
-  my ($file, $string) = @_;
-
-  open (OUT, ">$file") or die(Ts('cant write %s', $file) . ": $!");
-  print OUT  $string;
-  close(OUT);
-}
-
-sub AppendStringToFile {
-  my ($file, $string) = @_;
-
-  open (OUT, ">>$file") or die(Ts('cant write %s', $file) . ": $!");
-  print OUT  $string;
-  close(OUT);
-}
-
-sub CreateDir {
-  my ($newdir) = @_;
-
-  mkdir($newdir, 0775)  if (!(-d $newdir));
-}
-
-sub CreatePageDir {
-  my ($dir, $id) = @_;
-  my $subdir;
-
-  &CreateDir($dir);  # Make sure main page exists
-  $subdir = $dir . "/" . &GetPageDirectory($id);
-  &CreateDir($subdir);
-  if ($id =~ m|([^/]+)/|) {
-    $subdir = $subdir . "/" . $1;
-    &CreateDir($subdir);
-  }
-}
-
-sub AllPagesList {
-  my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
-
-  @pages = ();
-  # The following was inspired by the FastGlob code by Marc W. Mengel.
-  # Thanks to Bob Showalter for pointing out the improvement.
-  opendir(PAGELIST, $PageDir);
-  @dirs = readdir(PAGELIST);
-  closedir(PAGELIST);
-  @dirs = sort(@dirs);
-  foreach $dir (@dirs) {
-    next  if (($dir eq '.') || ($dir eq '..'));
-    opendir(PAGELIST, "$PageDir/$dir");
-    @pageFiles = readdir(PAGELIST);
-    closedir(PAGELIST);
-    foreach $id (@pageFiles) {
-      next  if (($id eq '.') || ($id eq '..'));
-      if (substr($id, -3) eq '.db') {
-        push(@pages, substr($id, 0, -3));
-      } elsif (substr($id, -4) ne '.lck') {
-        opendir(PAGELIST, "$PageDir/$dir/$id");
-        @subpageFiles = readdir(PAGELIST);
-        closedir(PAGELIST);
-        foreach $subId (@subpageFiles) {
-          if (substr($subId, -3) eq '.db') {
-            push(@pages, "$id/" . substr($subId, 0, -3));
-          }
-        }
-      }
-    }
-  }
-  return sort(@pages);
-}
 
 sub CalcDay {
   my ($ts) = @_;
@@ -2164,7 +1688,7 @@ sub DoOtherRequest {
     return;
   }
   # Later improve error message
-  &ReportError(T('Invalid URL.'));
+  &ReportError('Invalid URL.');
 }
 
 sub DoEdit {
@@ -2185,20 +1709,20 @@ sub DoEdit {
     return;
   }
   # Consider sending a new user-ID cookie if user does not have one
-  &OpenPage($id);
-  &OpenDefaultText();
+  &PurpleWiki::Database::OpenPage($id, \%Page, $Now);
+  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text, \%Section, $Now);
   $pageTime = $Section{'ts'};
   $header = Ts('Editing %s', $id);
   # Old revision handling
   $revision = &GetParam('revision', '');
   $revision =~ s/\D//g;  # Remove non-numeric chars
   if ($revision ne '') {
-    &OpenKeptRevisions('text_default');
+    &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions);
     if (!defined($KeptRevisions{$revision})) {
       $revision = '';
       # Later look for better solution, like error message?
     } else {
-      &OpenKeptRevision($revision);
+      &PurpleWiki::Database::OpenKeptRevision($revision, \%KeptRevisions, \%Section, \%Text);
       $header = Ts('Editing revision %s of', $revision) . " $id";
     }
   }
@@ -2497,7 +2021,7 @@ sub DoUpdatePrefs {
   $TimeZoneOffset = &GetParam("tzoffset", 0) * (60 * 60);
   print T('Local time:'), ' ', &TimeToText($Now), '<br>';
 
-  &SaveUserData();
+  &PurpleWiki::Database::SaveUserData(\%UserData, $UserID);
   print '<b>', T('Preferences saved.'), '</b>';
   print &GetCommonFooter();
 }
@@ -2524,7 +2048,7 @@ sub UpdateEmailList {
         or die(Ts('Could not append to %s:', "$DataDir/emails") . " $!\n");
       print NOTIFY $new_email, "\n";
       close(NOTIFY);
-      &ReleaseLock();
+      &PurpleWiki::Database::ReleaseLock();
     }
     elsif ((not $notify) and $already_in_list) {
       &RequestLock() or die(T('Could not get mail lock'));
@@ -2534,7 +2058,7 @@ sub UpdateEmailList {
         print NOTIFY "$_" unless /$new_email/;
       }
       close(NOTIFY);
-      &ReleaseLock();
+      &PurpleWiki::Database::ReleaseLock();
     }
   }
 }
@@ -2564,7 +2088,7 @@ sub UpdatePrefNumber {
 sub DoIndex {
   print &GetHeader('', T('Index of all pages'), '');
   print '<br>';
-  &PrintPageList(&AllPagesList());
+  &PrintPageList(&PurpleWiki::Database::AllPagesList());
   print &GetCommonFooter();
 }
 
@@ -2572,8 +2096,8 @@ sub DoIndex {
 sub DoNewLogin {
   # Later consider warning if cookie already exists
   # (maybe use "replace=1" parameter)
-  &CreateUserDir();
-  $SetCookie{'id'} = &GetNewUserId;
+  &PurpleWiki::Database::CreateUserDir();
+  $SetCookie{'id'} = &PurpleWiki::Database::GetNewUserId;
   $SetCookie{'randkey'} = int(rand(1000000000));
   $SetCookie{'rev'} = 1;
   %UserCookie = %SetCookie;
@@ -2582,7 +2106,7 @@ sub DoNewLogin {
   %UserData = %UserCookie;
   $UserData{'createtime'} = $Now;
   $UserData{'createip'} = $ENV{REMOTE_ADDR};
-  &SaveUserData();
+  &PurpleWiki::Database::SaveUserData(\%UserData, $UserID);
 }
 
 sub DoEnterLogin {
@@ -2611,8 +2135,7 @@ sub DoLogin {
   $password = &GetParam("p_password",  "");
   if (($uid > 199) && ($password ne "") && ($password ne "*")) {
     $UserID = $uid;
-    &LoadUserData();
-    if ($UserID > 199) {
+    if (&PurpleWiki::Database::LoadUserData($UserID, \%UserData)) {
       if (defined($UserData{'password'}) &&
           ($UserData{'password'} eq $password)) {
         $SetCookie{'id'} = $uid;
@@ -2634,50 +2157,6 @@ sub DoLogin {
   print &GetMinimumFooter();
 }
 
-sub GetNewUserId {
-  my ($id);
-
-  $id = 1001;
-  while (-f &UserDataFilename($id+1000)) {
-    $id += 1000;
-  }
-  while (-f &UserDataFilename($id+100)) {
-    $id += 100;
-  }
-  while (-f &UserDataFilename($id+10)) {
-    $id += 10;
-  }
-  &RequestLock() or die(T('Could not get user-ID lock'));
-  while (-f &UserDataFilename($id)) {
-    $id++;
-  }
-  &WriteStringToFile(&UserDataFilename($id), "lock");  # reserve the ID
-  &ReleaseLock();
-  return $id;
-}
-
-# Later get user-level lock
-sub SaveUserData {
-  my ($userFile, $data);
-
-  &CreateUserDir();
-  $userFile = &UserDataFilename($UserID);
-  $data = join($FS1, %UserData);
-  &WriteStringToFile($userFile, $data);
-}
-
-sub CreateUserDir {
-  my ($n, $subdir);
-
-  if (!(-d "$UserDir/0")) {
-    &CreateDir($UserDir);
-
-    foreach $n (0..9) {
-      $subdir = "$UserDir/$n";
-      &CreateDir($subdir);
-    }
-  }
-}
 
 sub DoSearch {
   my ($string) = @_;
@@ -2715,7 +2194,7 @@ sub PrintLinkList {
   my ($link, $extra, @links, %pgExists);
 
   %pgExists = ();
-  foreach $page (&AllPagesList()) {
+  foreach $page (&PurpleWiki::Database::AllPagesList()) {
     $pgExists{$page} = 1;
   }
   $names = &GetParam("names", 1);
@@ -2766,7 +2245,7 @@ sub GetFullLinkList {
   }
 
   %pgExists = ();
-  @pglist = &AllPagesList();
+  @pglist = &PurpleWiki::Database::AllPagesList();
   foreach $name (@pglist) {
     $pgExists{$name} = 1;
   }
@@ -2811,8 +2290,8 @@ sub GetPageLinks {
   my ($text, @links);
 
   @links = ();
-  &OpenPage($name);
-  &OpenDefaultText();
+  &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
+  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username", ""), \%Page, \%Text,\%Section, $Now);
   $text = $Text{'text'};
   $text =~ s/<html>((.|\n)*?)<\/html>/ /ig;
   $text =~ s/<nowiki>(.|\n)*?\<\/nowiki>/ /ig;
@@ -2890,11 +2369,11 @@ sub DoPost {
   $string .= "\n"  if (!($string =~ /\n$/));
 
   # Lock before getting old page to prevent races
-  &RequestLock() or die(T('Could not get editing lock'));
+  &PurpleWiki::Database::RequestLock() or die(T('Could not get editing lock'));
   # Consider extracting lock section into sub, and eval-wrap it?
   # (A few called routines can die, leaving locks.)
-  &OpenPage($id);
-  &OpenDefaultText();
+  &PurpleWiki::Database::OpenPage($id, \%Page, $Now);
+  &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text,\%Section, $Now);
   $old = $Text{'text'};
   $oldrev = $Section{'revision'};
   $pgtime = $Section{'ts'};
@@ -2902,7 +2381,7 @@ sub DoPost {
   $preview = 0;
   $preview = 1  if (&GetParam("Preview", "") ne "");
   if (!$preview && ($old eq $string)) {  # No changes (ok for preview)
-    &ReleaseLock();
+    &PurpleWiki::Database::ReleaseLock();
     &ReBrowsePage($id, "", 1);
     return;
   }
@@ -2916,7 +2395,7 @@ sub DoPost {
   $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
   # Detect editing conflicts and resubmit edit
   if (($oldrev > 0) && ($newAuthor && ($oldtime != $pgtime))) {
-    &ReleaseLock();
+    &PurpleWiki::Database::ReleaseLock();
     if ($oldconflict>0) {  # Conflict again...
       &DoEdit($id, 2, $pgtime, $string, $preview);
     } else {
@@ -2925,7 +2404,7 @@ sub DoPost {
     return;
   }
   if ($preview) {
-    &ReleaseLock();
+    &PurpleWiki::Database::ReleaseLock();
     &DoEdit($id, 0, $pgtime, $string, 1);
     return;
   }
@@ -2939,54 +2418,26 @@ sub DoPost {
     $isEdit = 1;
   }
   if (!$isEdit) {
-    &SetPageCache('oldmajor', $Section{'revision'});
+    &PurpleWiki::Database::SetPageCache(\%Page, 'oldmajor', $Section{'revision'});
   }
   if ($newAuthor) {
-    &SetPageCache('oldauthor', $Section{'revision'});
+    &PurpleWiki::Database::SetPageCache(\%Page, 'oldauthor', $Section{'revision'});
   }
-  &SaveKeepSection();
-  &ExpireKeepFile();
+  &PurpleWiki::Database::SaveKeepSection(\%Section, $Now);
+  &PurpleWiki::Database::ExpireKeepFile(\%Page, $Now);
   if ($UseDiff) {
-    &UpdateDiffs($id, $editTime, $old, $string, $isEdit, $newAuthor);
+    &PurpleWiki::Database::UpdateDiffs(\%Page, \%KeptRevisions, $id, $editTime, $old, $string, $isEdit, $newAuthor);
   }
   $Text{'text'} = $string;
   $Text{'minor'} = $isEdit;
   $Text{'newauthor'} = $newAuthor;
   $Text{'summary'} = $summary;
   $Section{'host'} = &GetRemoteHost(1);
-  &SaveDefaultText();
-  &SavePage();
+  &PurpleWiki::Database::SaveDefaultText(\%Text, \%Page, \%Section, $UserID, GetParam("username", ""), $Now);
+  &PurpleWiki::Database::SavePage(\%Page, $Now);
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $Section{'host'});
-  &ReleaseLock();
+  &PurpleWiki::Database::ReleaseLock();
   &ReBrowsePage($id, "", 1);
-}
-
-sub UpdateDiffs {
-  my ($id, $editTime, $old, $new, $isEdit, $newAuthor) = @_;
-  my ($editDiff, $oldMajor, $oldAuthor);
-
-  $editDiff  = &GetDiff($old, $new, 0);     # 0 = already in lock
-  $oldMajor  = &GetPageCache('oldmajor');
-  $oldAuthor = &GetPageCache('oldauthor');
-  if ($UseDiffLog) {
-    &WriteDiff($id, $editTime, $editDiff);
-  }
-  &SetPageCache('diff_default_minor', $editDiff);
-  if ($isEdit || !$newAuthor) {
-    &OpenKeptRevisions('text_default');
-  }
-  if (!$isEdit) {
-    &SetPageCache('diff_default_major', "1");
-  } else {
-    &SetPageCache('diff_default_major', &GetKeptDiff($new, $oldMajor, 0));
-  }
-  if ($newAuthor) {
-    &SetPageCache('diff_default_author', "1");
-  } elsif ($oldMajor == $oldAuthor) {
-    &SetPageCache('diff_default_author', "2");
-  } else {
-    &SetPageCache('diff_default_author', &GetKeptDiff($new, $oldAuthor, 0));
-  }
 }
 
 # Translation note: the email messages are still sent in English
@@ -3060,9 +2511,9 @@ sub SearchTitleAndBody {
   my ($string) = @_;
   my ($name, $freeName, @found);
 
-  foreach $name (&AllPagesList()) {
-    &OpenPage($name);
-    &OpenDefaultText();
+  foreach $name (&PurpleWiki::Database::AllPagesList()) {
+    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
+    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text, \%Section, $Now);
     if (($Text{'text'} =~ /$string/i) || ($name =~ /$string/i)) {
       push(@found, $name);
     } elsif ($FreeLinks && ($name =~ m/_/)) {
@@ -3080,9 +2531,9 @@ sub SearchBody {
   my ($string) = @_;
   my ($name, @found);
 
-  foreach $name (&AllPagesList()) {
-    &OpenPage($name);
-    &OpenDefaultText();
+  foreach $name (&PurpleWiki::Database::AllPagesList()) {
+    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
+    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text, \%Section, $Now);
     if ($Text{'text'} =~ /$string/i){
       push(@found, $name);
     }
@@ -3126,15 +2577,6 @@ sub WriteRcLog {
   close(OUT);
 }
 
-sub WriteDiff {
-  my ($id, $editTime, $diffString) = @_;
-
-  open (OUT, ">>$DataDir/diff_log") or die(T('can not write diff_log'));
-  print OUT  "------\n" . $id . "|" . $editTime . "\n";
-  print OUT  $diffString;
-  close(OUT);
-}
-
 sub DoMaintain {
   my ($name, $fname, $data);
   print &GetHeader('', T('Maintenance on all pages'), '');
@@ -3150,20 +2592,20 @@ sub DoMaintain {
     }
   }
   &RequestLock() or die(T('Could not get maintain-lock'));
-  foreach $name (&AllPagesList()) {
-    &OpenPage($name);
-    &OpenDefaultText();
-    &ExpireKeepFile();
+  foreach $name (&PurpleWiki::Database::AllPagesList()) {
+    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
+    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text,\%Section, $Now);
+    &PurpleWiki::Database::ExpireKeepFile(\%Page, $Now);
     print ".... "  if ($name =~ m|/|);
     print &GetPageLink($name), "<br>\n";
   }
   &WriteStringToFile($fname, "Maintenance done at " . &TimeToText($Now));
-  &ReleaseLock();
+  &PurpleWiki::Database::ReleaseLock();
   # Do any rename/deletion commands
   # (Must be outside lock because it will grab its own lock)
   $fname = "$DataDir/editlinks";
   if (-f $fname) {
-    $data = &ReadFileOrDie($fname);
+    $data = &PurpleWiki::Database::ReadFileOrDie($fname);
     print '<hr>', T('Processing rename/delete commands:'), "<br>\n";
     &UpdateLinksList($data, 1, 1);  # Always update RC and links
     unlink("$fname.old");
@@ -3221,7 +2663,7 @@ sub DoPageLock {
     return;
   }
   return  if (!&ValidIdOrDie($id));       # Later consider nicer error?
-  $fname = &GetLockedPageFile($id);
+  $fname = &PurpleWiki::Database::GetLockedPageFile($id);
   if (&GetParam("set", 1)) {
     &WriteStringToFile($fname, "editing locked.");
   } else {
@@ -3240,7 +2682,7 @@ sub DoEditBanned {
 
   print &GetHeader("", "Editing Banned list", "");
   return  if (!&UserIsAdminOrError());
-  ($status, $banList) = &ReadFile("$DataDir/banlist");
+  ($status, $banList) = &PurpleWiki::Database::ReadFile("$DataDir/banlist");
   $banList = ""  if (!$status);
   print &GetFormStart();
   print GetHiddenValue("edit_ban", 1), "\n";
@@ -3331,13 +2773,13 @@ sub UpdateLinksList {
       &RenameTextLinks($1, $2);
     }
   }
-  &ReleaseLock();
+  &PurpleWiki::Database::ReleaseLock();
 }
 
 sub BuildLinkIndex {
   my (@pglist, $page, @links, $link, %seen);
 
-  @pglist = &AllPagesList();
+  @pglist = &PurpleWiki::Database::AllPagesList();
   %LinkIndex = ();
   foreach $page (@pglist) {
     &BuildLinkIndexPage($page);
@@ -3397,7 +2839,7 @@ sub EditRecentChangesFile {
   my ($status, $fileData, $errorText, $rcline, @rclist);
   my ($outrc, $ts, $page, $junk);
 
-  ($status, $fileData) = &ReadFile($fname);
+  ($status, $fileData) = &PurpleWiki::Database::ReadFile($fname);
   if (!$status) {
     # Save error text if needed.
     $errorText = "<p><strong>Could not open $RCName log file:"
@@ -3439,9 +2881,9 @@ sub DeletePage {
     return;
   }
   
-  $fname = &GetPageFile($page);
+  $fname = &PurpleWiki::Database::GetPageFile($page);
   unlink($fname)  if (-f $fname);
-  $fname = $KeepDir . "/" . &GetPageDirectory($page) .  "/$page.kp";
+  $fname = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($page) .  "/$page.kp";
   unlink($fname)  if (-f $fname);
   &EditRecentChanges(1, $page, "")  if ($doRC);  # Delete page
   # Currently don't do anything with page text
@@ -3518,9 +2960,9 @@ sub RenameKeepText {
   my ($fname, $status, $data, @kplist, %tempSection, $changed);
   my ($sectName, $newText);
 
-  $fname = $KeepDir . "/" . &GetPageDirectory($page) .  "/$page.kp";
+  $fname = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($page) .  "/$page.kp";
   return  if (!(-f $fname));
-  ($status, $data) = &ReadFile($fname);
+  ($status, $data) = &PurpleWiki::Database::ReadFile($fname);
   return  if (!$status);
   @kplist = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
   return  if (length(@kplist) < 1);  # Also empty
@@ -3589,10 +3031,10 @@ sub RenameTextLinks {
   @pageList = split(' ', $LinkIndex{$oldCanonical});
   foreach $page (@pageList) {
     $changed = 0;
-    &OpenPage($page);
+    &PurpleWiki::Database::OpenPage($page, \%Page, $Now);
     foreach $section (keys %Page) {
       if ($section =~ /^text_/) {
-        &OpenSection($section);
+        %Section = &OpenSection($section, GetParam("username", ""));
         %Text = split(/$FS3/, $Section{'data'}, -1);
         $oldText = $Text{'text'};
         $newText = &SubstituteTextLinks($old, $new, $oldText);
@@ -3613,7 +3055,7 @@ sub RenameTextLinks {
       # Later: add other text-sections (categories) here
     }
     if ($changed) {
-      $file = &GetPageFile($page);
+      $file = &PurpleWiki::Database::GetPageFile($page);
       &WriteStringToFile($file, join($FS1, %Page));
     }
     &RenameKeepText($page, $old, $new);
@@ -3636,12 +3078,12 @@ sub RenamePage {
     print "Rename: new page $new is invalid, error is: $status<br>\n";
     return;
   }
-  $newfname = &GetPageFile($new);
+  $newfname = &PurpleWiki::Database::GetPageFile($new);
   if (-f $newfname) {
     print "Rename: new page $new already exists--not renamed.<br>\n";
     return;
   }
-  $oldfname = &GetPageFile($old);
+  $oldfname = &PurpleWiki::Database::GetPageFile($old);
   if (!(-f $oldfname)) {
     print "Rename: old page $old does not exist--nothing done.<br>\n";
     return;
@@ -3650,8 +3092,8 @@ sub RenamePage {
   &CreatePageDir($PageDir, $new);  # It might not exist yet
   rename($oldfname, $newfname);
   &CreatePageDir($KeepDir, $new);
-  $oldkeep = $KeepDir . "/" . &GetPageDirectory($old) .  "/$old.kp";
-  $newkeep = $KeepDir . "/" . &GetPageDirectory($new) .  "/$new.kp";
+  $oldkeep = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($old) .  "/$old.kp";
+  $newkeep = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($new) .  "/$new.kp";
   unlink($newkeep)  if (-f $newkeep);  # Clean up if needed.
   rename($oldkeep,  $newkeep);
   &EditRecentChanges(2, $old, $new)  if ($doRC);
