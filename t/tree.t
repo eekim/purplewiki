@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 254 };
+BEGIN { plan tests => 258 };
 
 use IO::File;
 use PurpleWiki::Tree;
@@ -32,14 +32,14 @@ my $wikiContent = &readFile('t/tree_test01.txt');
 my $wiki = PurpleWiki::Tree->new('title'=>'Tree Test 1');
 $wiki->parse($wikiContent);
 
-# Document.  (4 tests)
+# Document.  (Tests 1-4)
 
 ok($wiki->title eq 'Tree Test 1');
 ok(ref $wiki->root eq 'PurpleWiki::StructuralNode');
 ok($wiki->root->type eq 'document');
 ok(scalar @{$wiki->root->children} == 2);
 
-# Basic Wiki Test (5 tests)
+# Basic Wiki Test (Tests 5-9)
 
 ok($wiki->root->children->[0]->type eq 'section');
 ok(scalar @{$wiki->root->children->[0]->children} == 2);
@@ -49,7 +49,7 @@ ok($wiki->root->children->[0]->children->[0]->content->[0]->type
 ok($wiki->root->children->[0]->children->[0]->content->[0]->content 
     eq 'Basic Wiki Test');
 
-# Introduction (28 tests)
+# Introduction (Tests 10-37)
 
 ok($wiki->root->children->[0]->children->[1]->type eq 'section');
 ok(scalar @{$wiki->root->children->[0]->children->[1]->children}
@@ -109,7 +109,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[9]->content->
 ok($wiki->root->children->[0]->children->[1]->children->[9]->content->
     [2]->content eq "  If so, then be happy!");
 
-# Unordered list.  (23 tests)
+# Unordered list.  (Tests 38-60)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->type
     eq 'section');
@@ -165,7 +165,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [1]->children->[2]->children->[4]->content->[0]->content eq
     'This is item three of the sublist.');
 
-# Ordered list.  (14 tests)
+# Ordered list.  (Tests 61-74)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [2]->type eq 'ol');
@@ -201,7 +201,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [2]->children->[2]->children->[2]->content->[0]->content eq
     'Only one way to find out.');
 
-# Mixed unordered and ordered.  (13 tests)
+# Mixed unordered and ordered.  (Tests 75-87)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [3]->type eq 'ul');
@@ -235,7 +235,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [3]->children->[3]->content->[0]->content eq
     'Backed to unordered list.');
 
-# Mixed ordered and unordered.  (13 tests)
+# Mixed ordered and unordered.  (Tests 88-100)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [4]->type eq 'ol');
@@ -269,7 +269,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [4]->children->[3]->content->[0]->content eq
     'Number three.');
 
-# Definition list.  (15 tests)
+# Definition list.  (Tests 100-115)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [5]->type eq 'dl');
@@ -308,7 +308,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [5]->children->[4]->children->[1]->content->[0]->content eq
     'This should be indented again.');
 
-# The rest of lists.  (9 tests)
+# The rest of lists.  (Tests 116-124)
 
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [6]->type eq 'p');
@@ -329,7 +329,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[10]->children->
     [8]->content->[0]->content eq 'Did it work?');
 
-# Quote formatting.  (22 tests)
+# Quote formatting.  (Tests 125-146)
 
 ok($wiki->root->children->[0]->children->[1]->children->[11]->type
     eq 'section');
@@ -377,7 +377,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [1]->content->[6]->content eq '.');
 
-# HTML formatting.  (33 tests)
+# HTML formatting.  (Tests 147-179)
 
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [2]->type eq 'p');
@@ -448,7 +448,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [2]->content->[11]->content eq '.');
 
-# Indented text.  (15 tests)
+# Indented text.  (Tests 180-194)
 
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [3]->type eq 'indent');
@@ -485,7 +485,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[11]->children->
     [4]->content->[0]->content eq 'Text after indentation.');
 
-# Links.  (52 tests)
+# Links.  (Tests 195-250)
 
 ok($wiki->root->children->[0]->children->[1]->children->[12]->type
     eq 'section');
@@ -498,7 +498,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->type eq 'p');
 ok(scalar @{$wiki->root->children->[0]->children->[1]->children->
-    [12]->children->[1]->content} == 15);
+    [12]->children->[1]->content} == 17);
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[0]->type eq 'text');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
@@ -550,19 +550,27 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[11]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[11]->content eq 'UseMod:InterWiki');
+    [1]->content->[11]->content eq 'UseMod');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[12]->type eq 'text');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[12]->content eq " link?  Finally, how about separating a\n");
+    [1]->content->[12]->content eq ":");
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[13]->type eq 'wikiword');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[13]->content eq 'WordFromNumbers');
+    [1]->content->[13]->content eq 'InterWiki');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [1]->content->[14]->type eq 'text');
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
-    [1]->content->[14]->content eq "123 using double quotes?");
+    [1]->content->[14]->content eq " link?  Finally, how about separating a\n");
+ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
+    [1]->content->[15]->type eq 'wikiword');
+ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
+    [1]->content->[15]->content eq 'WordFromNumbers');
+ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
+    [1]->content->[16]->type eq 'text');
+ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
+    [1]->content->[16]->content eq "123 using double quotes?");
 
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->type eq 'p');
@@ -593,7 +601,7 @@ ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
 ok($wiki->root->children->[0]->children->[1]->children->[12]->children->
     [2]->content->[4]->content eq '?');
 
-# Conclusion.  (8 tests)
+# Conclusion.  (Tests 251-258)
 
 ok($wiki->root->children->[1]->type eq 'section');
 ok(scalar @{$wiki->root->children->[1]->children} == 2);
