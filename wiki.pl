@@ -30,10 +30,10 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
-
 package UseModWiki;
+use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use strict;
+use Authen::Captcha;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use Digest::MD5;
@@ -789,12 +789,15 @@ sub WikiHTML {
 }
 
 sub DoEditPrefs {
-  my ($check, $recentName, %labels);
-
-  $recentName = $config->RCName;
-  $recentName =~ s/_/ /g;
-  &DoNewLogin() if (!$user);
+  my $captchaCode;
+  if (!$user) {  # set up Authen::Captcha
+      my $captcha = Authen::Captcha->new(data_folder => $config->CaptchaDataDir,
+                                         output_folder => $config->CaptchaOutputDir);
+      $captchaCode = $captcha->generate_code(7);
+  }
   $wikiTemplate->vars(&globalTemplateVars,
+                      captcha => $captchaCode,
+                      captchaDir => $config->CaptchaWebDir,
                       rcDefault => $config->RcDefault,
                       serverTime => &TimeToText(time - $TimeZoneOffset),
                       tzOffset => &GetParam('tzoffset', 0));
@@ -818,18 +821,47 @@ sub GetFormCheck {
 }
 
 sub DoUpdatePrefs {
-  my $username = &GetParam("p_username",  "");
-  my $errorUserName = 0;
-  if ($username) {
-      if (length($username) > 50) {  # Too long
-          $errorUserName = 1;
+  my $captchaCode = &GetParam("captcha", "");
+  if ($captchaCode) {  # human confirmation
+      my $humanCode = &GetParam("human_code", "");
+      my $captcha = Authen::Captcha->new(data_folder => $config->CaptchaDataDir,
+                                         output_folder => $config->CaptchaOutputDir);
+      my $result = $captcha->check_code($humanCode, $captchaCode);
+      if ($result == -1) { # code expired
+          $wikiTemplate->vars(&globalTemplateVars);
+          print &GetHttpHeader . $wikiTemplate->process('errors/captchaInvalid');
+          return;
       }
-      elsif ($userDb->idFromUsername($username)) {   # already used
-          $errorUserName = 1;
+      elsif ($result < 0) { # invalid code
+          $wikiTemplate->vars(&globalTemplateVars);
+          print &GetHttpHeader . $wikiTemplate->process('errors/captchaInvalid');
+          return;
+      }
+      elsif ($result == 0) { # file error
+          $wikiTemplate->vars(&globalTemplateVars);
+          print &GetHttpHeader . $wikiTemplate->process('errors/captchaInvalid');
+          return;
+      }
+  }
+  my $username = &GetParam("p_username",  "");
+  if ($username) {
+      if ( (length($username) > 50) || # Too long
+           ($userDb->idFromUsername($username)) ) {   # already used
+          $wikiTemplate->vars(&globalTemplateVars,
+                              userName => $username);
+          print &GetHttpHeader . $wikiTemplate->process('errors/usernameInvalid');
+          return;
       }
       else {
+          &DoNewLogin if (!$user);  # should always be true
           $user->username($username);
       }
+  }
+  elsif (!$user) { # no username entered
+      $wikiTemplate->vars(&globalTemplateVars,
+                          userName => $username);
+      print &GetHttpHeader . $wikiTemplate->process('errors/usernameInvalid');
+      return;
   }
   else {
       $username = $user->username;
@@ -868,20 +900,13 @@ sub DoUpdatePrefs {
 
   $TimeZoneOffset = GetParam("tzoffset", 0) * (60 * 60);
 
-  if ($errorUserName) {
-      $wikiTemplate->vars(&globalTemplateVars,
-                          userName => undef);
-      print &GetHttpHeader . $wikiTemplate->process('errors/usernameInvalid');
-  }
-  else {
-      $userDb->saveUser($user);
-      $wikiTemplate->vars(&globalTemplateVars,
-                          passwordRemoved => $passwordRemoved,
-                          passwordChanged => $passwordChanged,
-                          serverTime => &TimeToText(time-$TimeZoneOffset),
-                          localTime => &TimeToText(time));
-      print &GetHttpHeader . $wikiTemplate->process('preferencesUpdated');
-  }
+  $userDb->saveUser($user);
+  $wikiTemplate->vars(&globalTemplateVars,
+                      passwordRemoved => $passwordRemoved,
+                      passwordChanged => $passwordChanged,
+                      serverTime => &TimeToText(time-$TimeZoneOffset),
+                      localTime => &TimeToText(time));
+  print &GetHttpHeader . $wikiTemplate->process('preferencesUpdated');
 }
 
 sub UpdatePrefCheckbox {

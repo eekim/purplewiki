@@ -54,7 +54,7 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 # variable outside the config file. That's painful.
 my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
-    BracketText UseAmPm FreeUpper ShowEdits NonEnglish
+    UseAmPm FreeUpper ShowEdits NonEnglish
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
 my @SCALAR_CONFIGS = qw( DatabasePackage
     DataDir ReposPath ScriptName SiteName HomePage RCName 
@@ -64,7 +64,8 @@ my @SCALAR_CONFIGS = qw( DatabasePackage
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
     LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
     ParserDriver UserDatabaseDriver ACLDriver LocaleFile
-    ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage);
+    ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage
+    CaptchaDataDir CaptchaOutputDir CaptchaWebDir);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching
