@@ -531,6 +531,10 @@ sub _parseList {
         $currentNode, $paramRef, $nodeContentRef,
         @nodeContents) = @_;
 
+    if ($listLength == ${$listDepthRef}  && $currentNode->type ne $listType) {
+	$currentNode = $currentNode->parent;
+	$currentNode = $currentNode->insertChild(type=>$listType);
+    }
     while ($listLength > ${$listDepthRef}) {
         # Nested lists are children of list items, not of other lists.
         # We need to find the last list item (if it exists) and

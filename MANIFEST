@@ -81,6 +81,7 @@ t/parser_freelinks.t
 t/parser_hr.t
 t/parser_interlinks.t
 t/parser_lists.t
+t/parser_mixedlists.t
 t/parser_pre.t
 t/sequence.t
 t/structural_node.t
