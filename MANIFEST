@@ -42,6 +42,7 @@ t/parser04.t
 t/parser05.t
 t/parser06.t
 t/parser07.t
+t/parser08.t
 t/sequence.t
 t/structural_node.t
 t/tree.t
@@ -56,5 +57,6 @@ t/tree_test08.txt
 t/tree_test09.txt
 t/tree_test10.txt
 t/tree_test11.txt
+t/tree_test12.txt
 wiki.pl
 wiki_trans.pl
