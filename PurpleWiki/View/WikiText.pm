@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.9 2003/01/02 06:07:10 eekim Exp $
+# $Id: WikiText.pm,v 1.10 2003/01/17 06:26:11 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -170,7 +170,7 @@ my %inlineActionMap = (
 sub view {
     my ($wikiTree, %params) = @_;
 
-    my $outputString = &_printHeader($wikiTree->lastNid);
+    my $outputString = &_printHeader($wikiTree);
     $outputString .= &_traverseStructural($wikiTree->root->children, 0);
     return $outputString;
 }
@@ -263,9 +263,29 @@ sub _printNid {
 }
 
 sub _printHeader {
-    my $lastNid = shift;
+    my $wikiTree = shift;
+    my $header;
 
-    return "[lastnid $lastNid]\n" if ($lastNid);
+    $header = "[lastnid " . $wikiTree->lastNid . "]\n"
+        if ($wikiTree->lastNid);
+    $header .= "[title " . $wikiTree->title . "]\n"
+        if ($wikiTree->title);
+    $header .= "[subtitle " . $wikiTree->subtitle . "]\n"
+        if ($wikiTree->subtitle);
+    $header .= "[docid " . $wikiTree->id . "]\n"
+        if ($wikiTree->id);
+    if ($wikiTree->authors) {
+        foreach my $author (@{$wikiTree->authors}) {
+            $header .= "[author " . $author->[0];
+            $header .= " " . $author->[1] if (scalar @{$author} > 1);
+            $header .= "]\n";
+        }
+    }
+    $header .= "[date " . $wikiTree->date . "]\n"
+        if ($wikiTree->date);
+    $header .= "[version " . $wikiTree->version . "]\n"
+        if ($wikiTree->title);
+    return "$header\n";
 }
 
 1;
