@@ -55,6 +55,7 @@ extras/mt/purple.pl
 extras/rss/README
 extras/rss/rssCreate
 extras/rss/wikirss
+extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
 extras/wiki_trans.pl
@@ -128,6 +129,17 @@ t/txt/tree_test08.txt
 t/txt/tree_test09.txt
 t/txt/tree_test11.txt
 t/txt/tree_test12.txt
+t/txt/moin1.txt
+t/txt/moin_dl.txt
+t/txt/moin_indented1.txt
+t/txt/moin_indented2.txt
+t/txt/moin_mixedlists1.txt
+t/txt/moin_mixedlists2.txt
+t/txt/moin_ol1.txt
+t/txt/moin_ol2.txt
+t/txt/moin_pre1.txt
+t/txt/moin_pre2.txt
+t/txt/moin_ul.txt
 wikidb/config
 wikidb/intermap
 wikidb/templates/editConflict.ht
