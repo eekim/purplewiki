@@ -17,6 +17,7 @@ RCName      = RecentChanges   # Name of changes page (change space to _)
 DatabasePackage = PurpleWiki::DefaultArchive
 #DatabasePackage = PurpleWiki::Database::Pages
 DataDir     = "rDB"
+#DataDir     = "newDB"
 LocalSequenceDir = $DataDir
 
 # Recent Changes

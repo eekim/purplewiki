@@ -46,12 +46,18 @@ sub new {
   my $proto = shift;
   my $config = shift;
   die "No config\n" unless $config;
+  my %args = @_;
   my $class = ref($proto) || $proto;
   my $self = {};
 
   $self->{script} = $config->ScriptName;
   my $loc = $config->DataDir;
   substr($loc,-1) = '' if (substr($loc,-1) eq '/');
+  if ($args{create} && !-d $loc) {
+      mkdir $loc;
+  } elsif (!-d $loc) {
+      die "No datadir $loc\n";
+  }
   $self->{datadir} = $loc;
   bless $self, $class;
   $self;
@@ -89,7 +95,6 @@ sub putPage {
 #for (keys %args) { print STDERR "PP:$_ = $args{$_}\n"; }
   $id =~ s|/|\+|g;
   my $now = time;
-  my $user = $args{userId};
   my $page = PurpleWiki::DefaultPage->new(id => $id, datadir => $self->{datadir});
   return "Lock Failed" unless ($page->_requestLock());
   my $old_contents = $page->_getText();
@@ -110,13 +115,12 @@ sub putPage {
   $page->_writePage($contents);
 
   $args{host} = $ENV{REMOTE_ADDR} unless ($args{host});
-  my %props = ( ts => $now, id => $id );
-  for my $pname ('revision', 'userId', 'host', 'changeSummary' ) {
+  for my $pname ('userId', 'host', 'changeSummary' ) {
       my $pval = $args{$pname};
       $props{$pname} = (defined($pval)) ? $pval : $page->{$pname};
   }
   $page->_writeMeta(\%props);
-#print STDERR "putPage($props{id}, $props{revision}, $props{ts})\n";
+#print STDERR "putPage($props{id}, $props{revision}\n";
 
   $page->_releaseLock();
   return "";
@@ -300,7 +304,7 @@ sub new {
 sub getUserID {
     my $self = shift;
     $self->_readMeta();
-    $self->{userID};
+    $self->{userId};
 }
 
 # Returns the revision of this Page.
@@ -315,7 +319,8 @@ sub getRevision {
 sub getTime {
     my $self = shift;
     $self->_readMeta();
-    $self->{ts}
+    my $file = $self->_revPath() . '.txt';
+    (stat($file))[9];
 }
 
 #
@@ -358,7 +363,7 @@ sub _readPage {
 
 sub _readMeta {
   my $self = shift;
-  return if (defined($self->{ts}));
+  return if (defined($self->{changeSummary}));
   my $rev = $self->{revision};
   $self->{revision} = $rev = $self->_getCurrentRev unless $rev;
  

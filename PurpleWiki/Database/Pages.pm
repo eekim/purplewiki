@@ -338,7 +338,7 @@ sub getRevisions {
     my $currentSection = $page->_getSection();
     push @pageHistory, $self->_getRevisionHistory($id, $currentSection, 1);
     my $krev = new PurpleWiki::Database::KeptRevision(id => $id);
-    foreach my $section ( sort {-($a->getRevision() <=> $b->getRevision())}
+    foreach my $section ( sort {($b->getRevision() <=> $a->getRevision())}
                                $krev->getSections() ) {
         # If KeptRevision == Current Revision don't print it. - matthew
         if ($section->getRevision() != $currentSection->getRevision()) {
@@ -447,16 +447,32 @@ sub getRevision {
 # Gets the timestamp of this Page. 
 sub getTime {
     my $self = shift;
-    my $section;
-    if ($self->{selectrevision}) {
-        unless ($section = $self->{section}) {
-            $self->_getText();
-            $section = $self->{section};
-        }
-    } else {
-        $section = $self->_getSection();
-    }
+    my $section = $self->_revSection();
     return ($section && $section->getTS());
+}
+
+sub _revSection {
+    my $self = shift;
+    my $section = $self->{section};
+    return $section if $section;
+    if ($self->{selectrevision}) {
+        $self->_getText();
+        $self->{section};
+    } else {
+        $self->_getSection();
+    }
+}
+
+sub getHost {
+    my $self = shift;
+    my $section = $self->_revSection();
+    return ($section && $section->getHome());
+}
+
+sub getSummary {
+    my $self = shift;
+    my $section = $self->_revSection();
+    return ($section && $section->getSummary());
 }
 
 #

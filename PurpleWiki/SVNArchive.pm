@@ -45,16 +45,17 @@ use SVN::Core;
 sub new {
   my $proto = shift;
   my $config = shift;
+  my %args = @_;
   die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
 
   $self->{script} = $config->ScriptName;
-  my $dir = $self->{repos_dir} = $config->ReposDir;
-  my $loc = $config->DataDir;
-  $loc .= '/' unless (substr($loc,-1) eq '/');
-  $self->{repos_loc} = $loc;
-  return undef unless $self->_init($dir);
+  my $reposPath = $self->{reposPath} = $config->ReposPath;
+  substr($reposPath,-1) = '' if (substr($reposPath,-1) eq '/');
+  my $reposdir = $config->DataDir;
+  $self->{repository} = $reposdir;
+  return undef unless $self->_init($reposdir, $args{create});
   bless $self, $class;
   $self;
 }
@@ -62,8 +63,21 @@ sub new {
 sub _init {
   my $self = shift;
   my $path = shift;
+  my $create = shift;
 
-  my $repos = $self->{repos_ptr} = SVN::Repos::open(path)
+  if ($create && !-d $path) {
+      mkdir $path || die "Can't create $path $!\n";
+  } elsif (!-d $path) {
+      die "No repository $path\n";
+  }
+  if ($create && !-d "$path/db") {
+      my $repos = $self->{repos_ptr} = SVN::Repos::create($path);
+                  || die "Can't create repository";
+  } elsif (!-d "$path/db") {
+      die "No repository $path\n";
+  }
+      
+  my $repos = $self->{repos_ptr} = SVN::Repos::open($path)
   return undef unless $repos;
   my $fs_ptr = $self->{fs_ptr} = $repos->fs()
   $self->{youngest} = $fs_ptr->youngest_rev()
@@ -81,7 +95,7 @@ sub getPage {
 sub _repos_path {
   my $self = shift;
   my $id = shift;
-  "$self->{repos_loc}/$id";
+  "$self->{reposPath}/$id";
 }
 
 sub _get_page {
@@ -107,7 +121,7 @@ sub _get_root {
 
   $rev = $self->{youngest} unless $rev;
 
-  return $self->{fs_ptr}->revision_root(rev)
+  return $self->{fs_ptr}->revision_root(rev);
 }
 
 # $pages->putPage(<named args>)
@@ -142,6 +156,9 @@ sub putPage {
 
   return "" if ($contents eq $old_contents);
 
+  # this rev is created from oldrev if supplied, so apply change to that rev
+  # in theory if this one isn't current it will flag the conflict so we will
+  # need to deal with that later.
   my $rev = $args{oldrev} || $repos->youngest;
   my $txn = $repos->fs_begin_txn_for_commit($rev, $user, $log_msg);
   my $fs = $self->{fs_ptr};
@@ -157,8 +174,7 @@ sub putPage {
   $root->send_string($wikitext, $tx_handler, $tx_baton);
 
   $args{host} =  $ENV{REMOTE_ADDR} unless ($args{host});
-  my %props = ( ts => $now, contents => $contents, name => $id, id => $id );
-  for my $pname ('revision', 'userId', 'ip', 'host', 'changeSummary' ) {
+  for my $pname ('userId', 'host', 'changeSummary' ) {
       my $pval = $args{$pname};
       $props{$pname} = (defined($pval)) ? $pval : $page->{$pname};
   }
