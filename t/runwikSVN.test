@@ -11,7 +11,7 @@ BEGIN {
         print STDERR "Could not find Subversion modules, skipping tests\n";
         exit;
     }
-    plan tests => 82;
+    plan tests => 85;
 };
 
 END {
@@ -35,7 +35,7 @@ local (*OUT);
     open(OUT, ">&STDOUT") || die "Error open $!\n";
 
     my ($test_in, $test_out, $compare);
-    for my $seq (0..81) {
+    for my $seq (0..84) {
         $test_in = "$testdir/request.$seq";
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";
