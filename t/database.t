@@ -28,6 +28,8 @@ ok(PurpleWiki::Database::ReleaseLock($config) && ! -d $lockdir);
 
 # diff handling elsewhere, in the page tests
    
-unlink($file);
-rmdir($dir);
-rmdir($tempdir);
+sub END { 
+    unlink($file);
+    rmdir($dir);
+    rmdir($tempdir);
+}
