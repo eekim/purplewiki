@@ -31,6 +31,7 @@ package PurpleWiki::View::rawtext;
 use 5.005;
 use strict;
 use warnings;
+use PurpleWiki::Transclusion;
 use PurpleWiki::View::Driver;
 
 ############### Package Globals ###############
@@ -57,6 +58,9 @@ sub new {
     $self->{listNumber} = 1;
     $self->{prevDefType} = "";
     $self->{links} = [];
+    $self->{transcluder} = new PurpleWiki::Transclusion(
+        config => $self->{config},
+        url => $self->{url});
 
     bless($self, $class);
     return $self;
@@ -141,7 +145,17 @@ sub iPost { shift->{outputString} .= "_" }
 
 sub textMain { shift->{outputString} .= shift->content }
 sub nowikiMain { shift->{outputString} .= shift->content }
-sub transclusionMain { shift->{outputString} .= shift->content }
+sub transclusionMain {
+    my ($self, $nodeRef) = @_;
+    my $transcluded = $self->{transcluder}->get($nodeRef->content);
+    if (ref $transcluded) {
+        # Add the transcluded content into our tree if it's a reference
+        $self->traverse($transcluded->content);
+    } else {
+        # Add the transcluded string to our output if it isn't a reference
+        $self->{outputString} .= $transcluded;
+    }
+}
 sub linkMain { shift->{outputString} .= shift->content }
 
 sub transclusionPre { shift->{outputString} .= "transclude: " }
