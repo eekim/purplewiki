@@ -95,7 +95,7 @@ sub parse {
     my $tree = PurpleWiki::Tree->new;
     my ($currentNode, @sectionState, $nodeContent);
     my ($listLength, $sectionLength, $indentLength);
-    my ($line, $listType, $currentNid);
+    my ($line, $listType);
 
     my %listMap = ('ul' => '(\*+)\s*(.*)',
                    'ol' => '(\#+)\s*(.*)',
@@ -332,6 +332,7 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
+            my $currentNid;
             $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
             $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
@@ -354,7 +355,7 @@ sub parse {
                 }
             }
             if ($nodeContent =~ s/\s*\{nid ([A-Z0-9]+)\}$//s) {
-		$currentNid = $1;
+                $currentNid = $1;
             }
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent, %params));
@@ -504,10 +505,10 @@ sub _terminateNode {
     # routine does the adding.
 
     my ($currentNode, $nodeContentRef, %params) = @_;
-    my ($currentNid);
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
         ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
+        my $currentNid;
         chomp ${$nodeContentRef};
         if (${$nodeContentRef} =~ s/\s*\{nid ([A-Z0-9]+)\}$//s) {
             $currentNid = $1;
@@ -532,8 +533,8 @@ sub _parseList {
         @nodeContents) = @_;
 
     if ($listLength == ${$listDepthRef}  && $currentNode->type ne $listType) {
-	$currentNode = $currentNode->parent;
-	$currentNode = $currentNode->insertChild(type=>$listType);
+        $currentNode = $currentNode->parent;
+        $currentNode = $currentNode->insertChild(type=>$listType);
     }
     while ($listLength > ${$listDepthRef}) {
         # Nested lists are children of list items, not of other lists.
