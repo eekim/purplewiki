@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 15 };
+BEGIN { plan tests => 17 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -28,7 +28,7 @@ sub readFile {
 
 #########################
 
-### tree_test08.txt -- Document metadata.
+### tree_test09.txt -- InterWikiLinks
 
 my $config = new PurpleWiki::Config($configdir);
 my $wikiContent = &readFile('t/tree_test09.txt');
@@ -61,6 +61,8 @@ ok($wiki->root->children->[0]->children->[3]->type eq 'p');
 ok($wiki->root->children->[0]->children->[3]->content->[0]->type
     eq 'text');
 ok($wiki->root->children->[0]->children->[3]->content->[0]->content
-    eq 'Eekim:Home/Test');
-
-__END__;
+    eq 'Eekim:Home');
+ok($wiki->root->children->[0]->children->[3]->content->[1]->type
+    eq 'wikiword');
+ok($wiki->root->children->[0]->children->[3]->content->[1]->content
+    eq '/Test');

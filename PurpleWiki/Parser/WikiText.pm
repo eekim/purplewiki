@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.11 2003/07/19 08:11:24 eekim Exp $
+# $Id: WikiText.pm,v 1.12 2003/07/19 08:24:11 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -482,6 +482,14 @@ sub _parseInlineNode {
                         push @inlineNodes,
                             PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                         'content'=>$page);
+                    }
+                    elsif ($page =~ /(.*)(\/$rxSubpage(?:\#[A-Z0-9]+)?)$/) {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>"$site:$1");
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                        'content'=>$2);
                     }
                     else {
                         push @inlineNodes,
