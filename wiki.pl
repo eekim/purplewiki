@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.8 2003/07/19 07:20:15 eekim Exp $
+# $Id: wiki.pl,v 1.9 2003/07/19 08:56:47 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -41,7 +41,7 @@ use PurpleWiki::Database::KeptRevision;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 
-my $CONFIG_DIR='/home/cdent/testwiki';
+my $CONFIG_DIR='/var/www/wikidb';
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
@@ -53,7 +53,7 @@ my %InterSite;
 my $user;               # our reference to the logged in user
 my %UserCookie;         # The cookie received from the user
 my %SetCookie;          # The cookie to be sent to the user
-my $MainPage;           # ?
+#my $MainPage;           # ?
 my $q;                  # CGI query reference
 my $Now;                # The time at the beginning of the request
 my $UserID;             # UserID of the current session. FIXME: can we
@@ -85,6 +85,7 @@ sub pageExists {
     my $id = shift;
     my (@temp);
 
+    my $MainPage = $PurpleWiki::Page::MainPage;
     $id =~ s|^/|$MainPage/|;
     if ($config->FreeLinks) {
         $id = &FreeToNormal($id);
@@ -105,7 +106,7 @@ sub InitRequest {
 
   $Now = time;                     # Reset in case script is persistent
   $ScriptName = $q->url('relative' => 1);  # Name used in links
-  $MainPage = ".";       # For subpages only, the name of the top-level page
+  $PurpleWiki::Page::MainPage = ".";  # For subpages only, the name of the top-level page
   &PurpleWiki::Database::CreateDir($config->DataDir);  # Create directory if it doesn't exist
   if (!-d $config->DataDir) {
     &ReportError("Could not create " . $config->DataDir . "$!");
@@ -224,8 +225,8 @@ sub BrowsePage {
       $oldId = '';
     }
   }
-  $MainPage = $id;
-  $MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
+  $PurpleWiki::Page::MainPage = $id;
+  $PurpleWiki::Page::MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
   $fullHtml = &GetHeader($id, &QuoteHtml($id), $oldId);
 
   if ($revision ne '') {
@@ -592,6 +593,7 @@ sub GetPageLink {
   my ($id) = @_;
   my $name = $id;
 
+  my $MainPage = $PurpleWiki::Page::MainPage;
   $id =~ s|^/|$MainPage/|;
   if ($config->FreeLinks) {
     $id = &FreeToNormal($id);
@@ -603,6 +605,7 @@ sub GetPageLink {
 sub GetPageLinkText {
   my ($id, $name) = @_;
 
+  my $MainPage = $PurpleWiki::Page::MainPage;
   $id =~ s|^/|$MainPage/|;
   if ($config->FreeLinks) {
     $id = &FreeToNormal($id);
@@ -1390,8 +1393,8 @@ sub DoEdit {
             'NOTE: This preview shows the revision of the other author.',
             "</b><hr>\n";
     }
-    $MainPage = $id;
-    $MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
+    $PurpleWiki::Page::MainPage = $id;
+    $PurpleWiki::Page::MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
     print &WikiToHTML($id,$oldText) . "<hr>\n";
     print "<h2>", 'Preview only, not yet saved', "</h2>\n";
   }
