@@ -2,7 +2,7 @@
 #
 # wikiwhiteboard.pl -- perl port of Danny Ayers's WikiWhiteboard
 #
-# $Id: wikiwhiteboard.pl,v 1.1 2003/08/28 17:17:34 eekim Exp $
+# $Id: wikiwhiteboard.pl,v 1.2 2003/08/29 18:45:13 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2003.  All rights reserved.
 #
@@ -37,9 +37,9 @@ my $uriBase = 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?';
 
 my $q = new CGI;
 
-my $pageName = $q->keywords;
-
-if ($pageName) {
+if ($q->keywords) {
+    my @pages = $q->keywords;
+    my $pageName = $pages[0];
     my $filename = "$configDir/wikiwhiteboard/$pageName.svg";
 
     if (!-e $filename) {
@@ -76,5 +76,5 @@ else {
         }
     }
 
-    $q->redirect("$uriBase$pageName");
+    print $q->redirect("$uriBase$pageName");
 }
