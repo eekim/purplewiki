@@ -15,6 +15,10 @@ a.nid {
     color: #C8A8FF;  /* light purple */
 }
 
+/* Places NIDs in parentheses.  Internet Explorer currently does not
+   support these CSS elements, hence this functionality is built into
+   the wikihtml.pm View driver for now and is commented out here.
+
 a.nid:before {
     content: "(";
 }
@@ -22,6 +26,7 @@ a.nid:before {
 a.nid:after {
     content: ")";
 }
+*/
 
 .extlink {
     background: #F3F3F3;
