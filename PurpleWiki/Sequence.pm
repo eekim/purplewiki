@@ -134,7 +134,7 @@ sub _tieIndex {
     my $index = shift;
 
     tie %$index, 'DB_File', $self->{indexfile}, 
-        O_RDWR|O_CREAT, 0444, $DB_HASH or
+        O_RDWR|O_CREAT, 0666, $DB_HASH or
         die "unable to tie " . $self->{indexfile} . ' ' . $!;
 }
 
