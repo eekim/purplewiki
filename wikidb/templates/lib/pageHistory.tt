@@ -1,3 +1,4 @@
+<p>
 [% FOREACH page = pageHistory %]
   Revision [% page.revision %]:
   <a href="[% page.pageUrl %]">View</a>
@@ -13,7 +14,7 @@
   [% END %]
   . . [% page.dateTime %] by
   [% IF page.user %]
-    <a href="[% baseUrl %]?[% page.user %]">[% page.user %]</a>
+    [% page.user %]
   [% ELSE %]
     [% page.host %]
   [% END %]
@@ -22,3 +23,4 @@
   [% END %]
   <br />
 [% END %]
+</p>

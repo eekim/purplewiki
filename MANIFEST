@@ -48,6 +48,7 @@ PurpleWiki/View/wikitext.pm
 PurpleWiki/View/xhtml.pm
 README
 UPGRADE
+docs/FightingSpam.wiki
 docs/INames.wiki
 docs/Templates.wiki
 etc/purple.css
@@ -210,4 +211,3 @@ wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
 wikidb/templates/lib/searchResults.tt
 wiki.pl
-META.yml                                 Module meta-data (added by MakeMaker)
