@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.13 2003/08/18 07:10:53 eekim Exp $
+# $Id: Page.pm,v 1.14 2003/08/22 01:00:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -34,7 +34,7 @@ use PurpleWiki::Database::Page;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.13 2003/08/18 07:10:53 eekim Exp $
+# $Id: Page.pm,v 1.14 2003/08/22 01:00:42 cdent Exp $
 
 use vars qw($MainPage $VERSION);
 $VERSION = '0.9';
@@ -43,7 +43,7 @@ sub exists {
     my $id = shift;
     my $config = shift;
 
-    $id =~ s|^/|$MainPage/|;
+    $id =~ s|^/|$MainPage/| if defined($MainPage);
     if ($config->FreeLinks) {
         $id = &FreeToNormal($id, $config);
     }
