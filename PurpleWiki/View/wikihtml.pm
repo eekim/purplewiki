@@ -348,7 +348,7 @@ sub _wikiLink {
 
 sub _quoteHtml {
     my ($self, $nodeRef) = @_;
-    my $html = $nodeRef->content;
+    my $html = $nodeRef->content || '';
 
     $html =~ s/&/&amp;/g;
     $html =~ s/</&lt;/g;

@@ -78,7 +78,7 @@ sub getInterWikiLink {
     
     my $results;
     $results = (&InterPageLink($id, $config))[0];
-    return _makeURL($results);
+    return $results ? _makeURL($results) : '';
 }
 
 sub getFreeLink {
