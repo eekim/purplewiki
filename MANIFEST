@@ -6,6 +6,7 @@ README
 wiki.pl
 wiki_trans.pl
 etc/config
+etc/intermap
 etc/purplewiki.css
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
