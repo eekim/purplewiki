@@ -1179,7 +1179,7 @@ sub CreateNewUser {  # same as DoNewLogin, but no login
   $user->setField('createip', $ENV{REMOTE_ADDR});
   $user->save;
   # go back to being a guest
-  my $localId = $session->param('userId');
+  my $localId = $user->getID;
   $UserID = 200;
   $user = new PurpleWiki::Database::User('id' => $UserID);
   $session->param('userId', 200);
@@ -1258,22 +1258,50 @@ sub DoGetEname {
     my $localId = &CreateNewUser if ($UserID < 400);
     my $spkey = $config->{ServiceProviderKey};
     my $rtnUrl = $config->{ReturnUrl};
-    my $rsid = md5_hex("$UserID$spkey");
+    my $rsid = &Digest::MD5::md5_hex("$localId$spkey");
     print "Location: http://dev.idcommons.net/register.html?registry=blueoxen&local_id=$localId&rsid=$rsid&rtn=$rtnUrl\n\n";
 }
 
 sub DoAssociateEname {
     my ($ename, $localId, $rrsid) = @_;
 
-    if ( $rrsid = md5_hex($localId . $config->{ServiceProviderKey} . 'x') &&
+    if ( $rrsid = &Digest::MD5::md5_hex($localId . $config->{ServiceProviderKey} . 'x') &&
          ($UserID == 200) ) {
         # associate ename with ID
         $user = new PurpleWiki::Database::User('id' => $localId);
         $user->setField('username', $ename);
         $user->save;
         # now login
-        my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->{ReturnUrl});
-        print "Location: $redirectUrl\n\n";
+        my $spit = XDI::SPIT->new;
+        my ($idBroker, $enumber) = $spit->resolveBroker($ename);
+        if ($idBroker) {
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $config->{ReturnUrl});
+            print "Location: $redirectUrl\n\n";
+        }
+        else {
+            $wikiTemplate->vars(siteName => $config->SiteName,
+                                cssFile => $config->StyleSheet,
+                                siteBase => $config->SiteBase,
+                                baseUrl => $config->ScriptName,
+                                homePage => $config->HomePage,
+                                userName => $user->getUsername,
+                                escapedUserName => uri_escape($user->getUsername),
+                                preferencesUrl => $config->ScriptName . '?action=editprefs');
+            print &GetHttpHeader . $wikiTemplate->process('errors/enameInvalid');
+        }
+    }
+    else {
+        if ($UserID != 200) {
+            print STDERR "NOT GUEST USER\n";
+        }
+        $wikiTemplate->vars(siteName => $config->SiteName,
+                            cssFile => $config->StyleSheet,
+                            siteBase => $config->SiteBase,
+                            baseUrl => $config->ScriptName,
+                            homePage => $config->HomePage,
+                            userName => $user->getUsername,
+                            escapedUserName => uri_escape($user->getUsername),>                             preferencesUrl => $config->ScriptName . '?action=editprefs');
+        print &GetHttpHeader . $wikiTemplate->process('errors/badEnameRegistration');
     }
 }
 
