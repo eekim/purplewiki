@@ -122,7 +122,7 @@ sub view {
     eval "require $viewer";
     if ($@) { # driver not found
         # FIXME: Need better exception handling.
-        return "Error: $driver View driver not found.";
+        return "Error: Unable to load \"$driver\" view driver: $@\n";
     }
     else {
         my $driverObj = $viewer->new(%params);
