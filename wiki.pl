@@ -339,7 +339,7 @@ sub DoRc {
               pageName => $pages->getName($pageId),
               time => CalcTime($page->{timeStamp}),
               numChanges => $page->{numChanges},
-              summary => QuoteHtml($page->{summary}),
+              summary => QuoteHtml($page->{changeSummary}),
               userName => $page->{userName},
               userId => $page->{userId},
               host => $page->{host},

@@ -282,7 +282,7 @@ sub recentChanges {
         $pages->{$p} = { numChanges => 1, pageId => $id };
 #print STDERR "Got $id ",$$h{$p}->action,"\n";
         $pages->{$p}->{timeStamp} = $t;
-        $pages->{$p}->{summary} = $_[4];
+        $pages->{$p}->{changeSummary} = $_[4];
         $pages->{$p}->{userId} = $_[2];
         ($pages->{$p}->{userId}, $pages->{$p}->{host}) = ($`, $')
             if ($pages->{$p}->{userId} =~ /:/);

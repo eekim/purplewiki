@@ -2,9 +2,9 @@
 
 my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
-$configdir = "r";
+$configdir = "t";
 $dodiff=1;
-$testdir="out";
+$testdir="t/out";
 while (@ARGV) {
     $a = shift(@ARGV);
     if ($a =~ /^-1/) {

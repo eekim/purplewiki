@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 16};
+BEGIN { plan tests => 17};
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
@@ -62,6 +62,11 @@ Hello this is a wiki page, using WikiPage as a WikiWord. {nid 1}
 * this is a list two {nid 4}
 
 [http://www.burningchrome.com/ this is a link] {nid 5}
+EOF
+
+my $rcResult = <<EOF;
+:changeSummary >> :host >> :numChanges >> 1:pageId >> AnotherPage:userId >> :userName >> 
+:changeSummary >> :host >> :numChanges >> 1:pageId >> WikiPage:userId >> :userName >> 
 EOF
 
 # parse first content
@@ -138,6 +143,16 @@ $pages->deletePage($id2);
 ok(!$pages->pageExists($id2));
 @id_list = $pages->allPages();
 ok(join(",", @id_list), $index2);
+
+my $rc = $pages->recentChanges();
+my $recentCh = '';
+for my $h (@$rc) {
+    for (sort keys %$h) {
+        $recentCh .= ":$_ >> $$h{$_}" unless ($_ eq 'timeStamp');
+    }
+    $recentCh .= "\n";
+}
+ok($recentCh, $rcResult);
 
 sub END {
     unlink('t/tDB/sequence');

@@ -140,13 +140,13 @@ sub AllPagesList {
 # Populates a hash reference with recent changes.
 # Data structure:
 #   $recentChanges = [
-#     { timeStamp => ,  # time stamp
-#       pageId => ,     # page Id
-#       numChanges => , # number of times changed
-#       summary => ,    # change summary
-#       userName => ,   # username
-#       userId => ,     # user ID
-#       host => ,       # hostname
+#     { timeStamp => ,   # time stamp
+#       pageId => ,      # page Id
+#       numChanges => ,  # number of times changed
+#       changeSummary =>,# change summary
+#       userName => ,    # username
+#       userId => ,      # user ID
+#       host => ,        # hostname
 #     },
 #     ...
 #   ]
