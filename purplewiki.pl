@@ -14,16 +14,13 @@ my $wiki = PurpleWiki::Tree->new('title'=>$ARGV[0]);
 $wiki->parse($wikiContent, 'add_node_ids'=>1);
 
 if (@ARGV == 2) {
-    $wiki->view($ARGV[1]);
+    print $wiki->view($ARGV[1]);
 }
 else {
-    $wiki->view('Debug');
+    print $wiki->view('Debug');
 }
 
 #$wiki->view('XHTML','collapse'=>[2]);
-#$wiki->view('Text');
-#$wiki->view('Purple');
-#$wiki->view('Wiki');
 
 # fini
 

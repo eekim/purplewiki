@@ -449,16 +449,16 @@ sub view {
     my ($driver, %params) = @_;
 
     if (lc($driver) eq 'xhtml') {
-        &PurpleWiki::View::XHTML::view($this, %params);
+        return &PurpleWiki::View::XHTML::view($this, %params);
     }
     elsif (lc($driver) eq 'debug') {
-        &PurpleWiki::View::Debug::view($this, %params);
+        return &PurpleWiki::View::Debug::view($this, %params);
     } 
     elsif (lc($driver) eq 'wikihtml') {
-        &PurpleWiki::View::WikiHTML::view($this, %params);
+        return &PurpleWiki::View::WikiHTML::view($this, %params);
     }
     elsif (lc($driver) eq 'wiki') {
-        &PurpleWiki::View::WikiText::view($this, %params);
+        return &PurpleWiki::View::WikiText::view($this, %params);
     }
 }
 

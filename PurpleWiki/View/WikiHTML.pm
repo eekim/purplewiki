@@ -9,218 +9,223 @@ my @sectionState;
 
 my %structuralActionMap = (
                'section' => {
-                   'pre' => sub { push @sectionState, 'section' },
+                   'pre' => sub { push @sectionState, 'section'; return; },
                    'mid' => \&_traverseStructuralWithChild,
-                   'post' => sub { pop @sectionState },
+                   'post' => sub { pop @sectionState; return; },
                },
                'indent' => {
-                   'pre' => sub { print "<div class=\"indent\">\n"},
+                   'pre' => sub { return "<div class=\"indent\">\n"},
                    'mid' => \&_traverseStructuralWithChild,
-                   'post' => sub { print "</div>"},
+                   'post' => sub { return "</div>"},
                },
                'ul' => {
-                   'pre' => sub { print "<ul>\n" },
+                   'pre' => sub { return "<ul>\n" },
                    'mid' => \&_traverseStructuralWithChild,
-                   'post' => sub { print "</ul>" },
+                   'post' => sub { return "</ul>" },
                },
                'ol' => {
-                   'pre' => sub { print "<ol>\n" },
+                   'pre' => sub { return "<ol>\n" },
                    'mid' => \&_traverseStructuralWithChild,
-                   'post' => sub { print "</ol>" },
+                   'post' => sub { return "</ol>" },
                },
                'dl' => {
-                   'pre' => sub { print "<dl>\n" },
+                   'pre' => sub { return "<dl>\n" },
                    'mid' => \&_traverseStructuralWithChild,
-                   'post' => sub { print "</dl>"},
+                   'post' => sub { return "</dl>"},
                },
                'h' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<h' . &_headerLevel . '>';
-                                  &_printAnchor($nid); },
+                                  return '<h' . &_headerLevel . '>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</h' . &_headerLevel . '>' },
+                                   return &_printNid($nid) .
+                                       '</h' . &_headerLevel . '>'; }
                },
                'p' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<p>';
-                                  &_printAnchor($nid); },
+                                  return '<p>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</p>'; },
+                                   return &_printNid($nid) .
+                                       '</p>'; },
                },
                'li' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<li>';
-                                  &_printAnchor($nid); },
+                                  return '<li>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</li>'; },
+                                   return &_printNid($nid) .
+                                       '</li>'; },
                },
                'dd' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<dd>';
-                                  &_printAnchor($nid); },
+                                  return '<dd>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</dd>'; },
+                                   return &_printNid($nid) .
+                                       '</dd>'; },
                },
                'dt' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<dt>';
-                                  &_printAnchor($nid); },
+                                  return '<dt>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</dt>'; },
+                                   return &_printNid($nid) .
+                                       '</dt>'; },
                },
                'pre' => {
                    'pre' => sub { my $nid = shift;
-                                  print '<pre>';
-                                  &_printAnchor($nid); },
+                                  return '<pre>' .
+                                      &_printAnchor($nid); },
                    'mid' => \&_traverseInlineIfContent,
                    'post' => sub { my $nid = shift;
-                                   &_printNid($nid);
-                                   print '</pre>'; },
+                                   return &_printNid($nid) .
+                                       '</pre>'; },
                },
                );
 
 my %inlineActionMap = (
              'b' => {
-                 'pre' => sub { print '<b>' },
+                 'pre' => sub { return '<b>' },
                  'mid' => \&_traverseInlineWithData,
-                 'post' => sub {print '</b>' },
+                 'post' => sub {return '</b>' },
              },
              'i' => {
-                 'pre' => sub { print '<i>' },
+                 'pre' => sub { return '<i>' },
                  'mid' => \&_traverseInlineWithData,
-                 'post' => sub { print '</i>' },
+                 'post' => sub { return '</i>' },
              },
              'tt' => {
-                 'pre' => sub { print '<tt>' },
+                 'pre' => sub { return '<tt>' },
                  'mid' => \&_traverseInlineWithData,
-                 'post' => sub { print '</tt>' },
+                 'post' => sub { return '</tt>' },
              },
              'text' => {
-                 'pre' => sub {},
+                 'pre' => sub { return },
                  'mid' => \&_printInlineData,
-                 'post' => sub {}
+                 'post' => sub { return }
              },
              'nowiki' => {
-                 'pre' => sub {},
+                 'pre' => sub { return },
                  'mid' => \&_printInlineData,
-                 'post' => sub {}
+                 'post' => sub { return }
              }
              );
 
 sub view {
     my ($wikiTree, %params) = @_;
 
-    &_printHeader($wikiTree->title, $wikiTree->lastNid);
-    &_traverseStructural($wikiTree->root->children, 0);
-    &_printFooter;
+    return &_traverseStructural($wikiTree->root->children, 0);
 }
 
 sub _traverseStructural {
     my ($nodeListRef, $indentLevel) = @_;
+    my $outputString;
 
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
             if (defined($structuralActionMap{$node->type})) {
-                &{$structuralActionMap{$node->type}{'pre'}}($node->id);
-                &{$structuralActionMap{$node->type}{'mid'}}($node,
-                                                            $indentLevel);
-                &{$structuralActionMap{$node->type}{'post'}}($node->id);
+                $outputString .=
+                    &{$structuralActionMap{$node->type}{'pre'}}($node->id);
+                $outputString .=
+                    &{$structuralActionMap{$node->type}{'mid'}}($node,
+                                                                $indentLevel);
+                $outputString .=
+                    &{$structuralActionMap{$node->type}{'post'}}($node->id);
             } 
-            &_terminateLine unless ($node->type eq 'section');
+            $outputString .= &_terminateLine unless ($node->type eq 'section');
         }
     }
+    return $outputString;
 }
 
 sub _terminateLine {
-    print "\n";
+    return "\n";
 }
 
 sub _traverseInlineIfContent {
     my $structuralNode = shift;
     my $indentLevel = shift;
     if ($structuralNode->content) {
-        _traverseInline($structuralNode->content, $indentLevel);
+        return _traverseInline($structuralNode->content, $indentLevel);
     }
 }
 
 sub _traverseInlineWithData {
     my $inlineNode = shift;
     my $indentLevel = shift;
-    _traverseInline($inlineNode->children, $indentLevel);
+    return _traverseInline($inlineNode->children, $indentLevel);
 }
 
 sub _printInlineData {
     my $inlineNode = shift;
-    print &_quoteHtml($inlineNode->content);
+    return &_quoteHtml($inlineNode->content);
 }
 
 sub _traverseStructuralWithChild {
     my $structuralNode = shift;
     my $indentLevel = shift;
-    _traverseStructural($structuralNode->children, $indentLevel + 1);
+    return _traverseStructural($structuralNode->children, $indentLevel + 1);
 }
 
 sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
+    my $outputString;
 
     foreach my $inlineNode (@{$nodeListRef}) {
         if ($inlineNode->type eq 'link' || $inlineNode->type eq 'url') {
-            print '<a href="' . $inlineNode->href . '">';
-            print &_quoteHtml($inlineNode->content);
-            print '</a>';
+            $outputString .= '<a href="' . $inlineNode->href . '">';
+            $outputString .= &_quoteHtml($inlineNode->content);
+            $outputString .= '</a>';
         }
         elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
             my $pageName = $inlineNode->content;
             $pageName =~ s/\#(\d+)$//;
             my $pageNid = $1;
             if ($inlineNode->content =~ /:/) {
-                print '<a href="' . &PurpleWiki::Page::getInterWikiLink($pageName);
+                $outputString .= '<a href="' . &PurpleWiki::Page::getInterWikiLink($pageName);
 
-                print "#nid$pageNid" if ($pageNid);
-                print '">' . $inlineNode->content . '</a>';
+                $outputString .= "#nid$pageNid" if ($pageNid);
+                $outputString .= '">' . $inlineNode->content . '</a>';
             }
             elsif (&PurpleWiki::Page::exists($pageName)) {
                 if ($inlineNode->type eq 'freelink') {
-                    print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
+                    $outputString .= '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
                         '">';
                 }
                 else {
-                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName);
-                    print "#nid$pageNid" if ($pageNid);
-                    print '">';
+                    $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName);
+                    $outputString .= "#nid$pageNid" if ($pageNid);
+                    $outputString .= '">';
                 }
-                print $inlineNode->content . '</a>';
+                $outputString .= $inlineNode->content . '</a>';
             }
             else {
-                print $inlineNode->content;
+                $outputString .= $inlineNode->content;
                 if ($inlineNode->type eq 'freelink') {
-                    print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
+                    $outputString .= '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
                         '">';
                 }
                 else {
-                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
+                    $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
                         '">';
                 }
-                print '?</a>';
+                $outputString .= '?</a>';
             }
         }
         elsif (defined($inlineActionMap{$inlineNode->type})) {
-            &{$inlineActionMap{$inlineNode->type}{'pre'}};
-            &{$inlineActionMap{$inlineNode->type}{'mid'}}($inlineNode,
+            $outputString .= &{$inlineActionMap{$inlineNode->type}{'pre'}};
+            $outputString .= &{$inlineActionMap{$inlineNode->type}{'mid'}}($inlineNode,
                                                           $indentLevel);
-            &{$inlineActionMap{$inlineNode->type}{'post'}};
+            $outputString .= &{$inlineActionMap{$inlineNode->type}{'post'}};
         }
     }
+    return $outputString;
 }
 
 sub _quoteHtml {
@@ -244,22 +249,17 @@ sub _headerLevel {
 sub _printAnchor {
     my $nid = shift;
 
-    print '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>' if ($nid);
+    return '<a name="nid0' . $nid . '" id="nid0' . $nid . '"></a>' if ($nid);
 }
 
 sub _printNid {
     my $nid = shift;
 
     if ($nid) {
-        print ' &nbsp;&nbsp; <a class="nid" href="#nid0' . $nid . '">';
-        print "(0$nid)</a>";
+        my $outputString = ' &nbsp;&nbsp; <a class="nid" href="#nid0' . $nid . '">';
+        $outputString .= "(0$nid)</a>";
+        return $outputString;
     }
-}
-
-sub _printHeader {
-}
-
-sub _printFooter {
 }
 
 
