@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.9 2003/08/29 18:40:50 eekim Exp $
+# $Id: wikihtml.pm,v 1.10 2003/12/01 09:17:06 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -297,11 +297,17 @@ sub _nid {
     my %params = @_;
     my $string = '';
 
+    my $nidFace = '#';
+
+    if ($params{config}->ShowNid) {
+        $nidFace = $nid;
+    }
+
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
 	                   'title="' . "$nid" . '" href="' .
 			   $params{url} . '#nid' .
-			   $nid . '">#</a>';
+			   $nid . '">' . $nidFace . '</a>';
     }
 
     return $string;

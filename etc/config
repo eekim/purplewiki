@@ -53,6 +53,7 @@ FreeLinks              # if set use [[word]] links
 WikiLinks              # if set use LinkPattern
 AdminDelete            # if set Admin only page
 RunCGI                 # if set Run script as CGI
+ShowNid                # if set value of Nid is shown
 #EmailNotify            # if set use email notices
 #EmbedWiki              # if set no headers/footers
 #NonEnglish             # non english characters in links?
