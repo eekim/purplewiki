@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>[% siteName %]: [% pageName %]</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+<h1>History of [% pageName %]</h1>
+
+<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+<a href="[% preferencesUrl %]">Preferences</a></div>
+
+<hr />
+
+[% FOREACH page = pageHistory %]
+  Revision [% page.revision %]:
+  <a href="[% page.pageUrl %]">View</a>
+  [% IF page.diffUrl %]
+    <a href="[% page.diffUrl %]">Diff</a>
+  [% ELSE %]
+    Diff
+  [% END %]
+  . . [% page.dateTime %] by
+  [% IF page.user %]
+    <a href="[% baseUrl %]?[% page.user %]">[% page.user %]</a>
+  [% ELSE %]
+    [% page.host %]
+  [% END %]
+  [% IF page.summary %]
+    <b>[% page.summary %]</b>
+  [% END %]
+  <br />
+[% END %]
+
+<hr />
+
+<div>
+<form method="get" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+Search:
+<input type="text" name="search"  size="20" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+
+</body>
+</html>
