@@ -45,20 +45,13 @@ sub search {
     my $query = shift;
     my @results;
 
-    my $name;
+    my $nameHash;
 
-    foreach $name (PurpleWiki::Database::AllPagesList()) {
+    foreach $nameHash (PurpleWiki::Database::AllPagesList()) {
+	my $name = $nameHash->{pageName};
         if ($name =~ /$query/i) {
             my $page = $self->_getAndOpenPage($name);
             push(@results, $self->_getResult($page));
-        } elsif ($self->config()->FreeLinks() && ($name =~ m/_/)) {
-            my $freeName = $name;
-            $freeName =~ s/_/ /g;
-            if ($freeName =~ /$query/i) {
-                my $page = $self->_getAndOpenPage($name);
-                push(@results, $self->_getResult($page));
-                next; # FIXME: this effort at skipping the text read uglifies 
-            }
         } else {
             my $page = $self->_getAndOpenPage($name);
             my $text = $page->getText();
