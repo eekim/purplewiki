@@ -2,7 +2,7 @@ package PurpleWiki::Page;
 
 # mappings between PurpleWiki code and code withing useMod
 
-# $Id: Page.pm,v 1.2 2002/10/23 07:09:47 eekim Exp $
+# $Id: Page.pm,v 1.3 2002/10/23 08:23:11 cdent Exp $
 
 sub exists {
     my $id = shift;
@@ -31,9 +31,7 @@ sub getInterWikiLink {
 sub getFreeLink {
     my $id = shift;
 
-    #my $results = &UseModWiki::StorePageOrEditLink($id, '');
     my $results = (&UseModWiki::GetPageOrEditLink($id, ''))[0];
-    print STDERR "freelink: $results\n";
     return _makeURL($results);
 
 }
