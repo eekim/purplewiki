@@ -64,6 +64,8 @@ my %InterSite;
 my $userDb;
 my $user;               # our reference to the logged in user
 my $session;            # CGI::Session object
+my $visitedPagesCache;
+my $visitedPagesCacheSize = 5;
 
 my $q;                  # CGI query reference
 my $Now;                # The time at the beginning of the request
@@ -135,6 +137,8 @@ sub InitCookie {
   if ($user && $user->tzOffset != 0) {
     $TimeZoneOffset = $user->tzOffset * (60 * 60);
   }
+
+  $visitedPagesCache = $session->param('visitedPagesCache') || {};
 }
 
 sub DoBrowseRequest {
@@ -269,11 +273,14 @@ sub BrowsePage {
       &DoRc($id, $pageName, $revision, $goodRevision, $lastEdited, $body);
       return;
   }
+  &updateVisitedPagesCache($id);
+  my @vPages = &visitedPages;
   $wikiTemplate->vars(siteName => $config->SiteName,
                       pageName => $pageName,
                       cssFile => $config->StyleSheet,
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
+		      visitedPages => \@vPages,
                       homePage => $config->HomePage,
                       showRevision => $revision,
                       revision => $goodRevision,
@@ -353,11 +360,13 @@ sub DoRc {
               changeUrl => $config->ScriptName .
                   '?action=history&id=' . $page->{name} };
     }
+    my @vPages = &visitedPages;
     $wikiTemplate->vars(siteName => $config->SiteName,
                         pageName => $pageName,
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
+			visitedPages => \@vPages,
                         homePage => $config->HomePage,
                         showRevision => $revision,
                         revision => $goodRevision,
@@ -409,11 +418,13 @@ sub DoHistory {
         }
     }
 
+    my @vPages = &visitedPages;
     $wikiTemplate->vars(siteName => $config->SiteName,
                         pageName => $id,
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
+			visitedPages => \@vPages,
                         homePage => $config->HomePage,
                         userName => $username,
                         escapedUserName => uri_escape($username),
@@ -1724,6 +1735,36 @@ sub logSession {
     print FH "\t" . $q->remote_host . "\t" . $session->param('userId') . "\t" .
         $q->referer . "\n";
     close FH;
+}
+
+sub updateVisitedPagesCache {
+    my $id = shift;
+
+    my @pages = keys %{$visitedPagesCache};
+    if (!$visitedPagesCache->{$id} &&
+	(scalar @pages == $visitedPagesCacheSize)) {
+	my $oldest;
+	my $oldestTime = 0;
+	foreach my $page (@pages) {
+	    if ($visitedPagesCache->{$id} < $oldestTime) {
+		$oldest = $page;
+		$oldestTime = $visitedPagesCache->{$oldest};
+	    }
+	}
+	$visitedPagesCache->{$oldest} = undef;
+    }
+    $visitedPagesCache->{$id} = time;
+    $session->param('visitedPagesCache', $visitedPagesCache);
+}
+
+sub visitedPages {
+    my @pages = sort { $visitedPagesCache->{$b} <=> $visitedPagesCache->{$a} }
+        keys %{$visitedPagesCache};
+    return map {
+	my $pageName = $_;
+	$pageName =~ s/_/ /g if ($config->FreeLinks);
+	return $pageName
+    } @pages;
 }
 
 &DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.
