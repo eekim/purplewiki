@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.3 2004/01/05 22:46:21 cdent Exp $
+# $Id: MovableType.pm,v 1.4 2004/01/05 23:01:30 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -135,6 +135,7 @@ Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 =head1 SEE ALSO
 
+L<PurpleWiki::Search::Interface>.
 L<PurpleWiki::Search::Engine>.
 L<PurpleWiki::Search::Result>.
 
