@@ -213,7 +213,7 @@ sub BrowsePage {
 
   if (!$acl->canRead($user, $id)) {
       $wikiTemplate->vars(&globalTemplateVars);
-      print GetHttpHeader . $wikiTemplate->process('errors/viewNotAllowed');
+      print &GetHttpHeader . $wikiTemplate->process('errors/viewNotAllowed');
       return;
   }
   my ($userId, $username);
