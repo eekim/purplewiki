@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.6.2.6 2003/06/14 20:15:04 cdent Exp $
+# $Id: wiki.pl,v 1.6.2.7 2003/06/19 05:10:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -258,7 +258,7 @@ sub BrowsePage {
     $fullHtml .= &GetDiffHTML($page, $keptRevision, $showDiff, $id, $diffRevision, $newText);
   }
 
-  $fullHtml .= &WikiToHTML($text->getText());
+  $fullHtml .= &WikiToHTML($id, $text->getText());
 
   $fullHtml .= "<hr>\n"  if (!&GetParam('embed', $config->EmbedWiki));
   if ($id eq $config->RCName) {
@@ -984,10 +984,12 @@ sub GetRedirectPage {
 # ==== Common wiki markup ====
 sub WikiToHTML {
   # Use the PurpleWiki::View::wikihtml driver to parse wiki pages to HTML
-  my ($pageText) = @_;
+  my $id = shift;
+  my $pageText = shift;
 
   my $wiki = $wikiParser->parse($pageText, config => $config, 'freelink' => $config->FreeLinks);
-  return $wiki->view('wikihtml', config => $config);
+  my $url = $q->url(-full => 1) . '?' . $id;
+  return $wiki->view('wikihtml', config => $config, url => $url);
 }
 
 sub QuoteHtml {
@@ -1447,7 +1449,7 @@ sub DoEdit {
     }
     $MainPage = $id;
     $MainPage =~ s|/.*||;  # Only the main page name (remove subpage)
-    print &WikiToHTML($oldText) . "<hr>\n";
+    print &WikiToHTML($id,$oldText) . "<hr>\n";
     print "<h2>", 'Preview only, not yet saved', "</h2>\n";
   }
   print &GetHistoryLink($id, 'View other revisions') . "<br>\n";

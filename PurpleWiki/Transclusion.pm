@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.1.2.4 2003/06/12 22:32:42 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.5 2003/06/19 05:10:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,7 +39,7 @@ use LWP::UserAgent;
 # good by any stretch of the imagination. It is simply to
 # demonstrate the possibilities that these features allow.
 
-# $Id: Transclusion.pm,v 1.1.2.4 2003/06/12 22:32:42 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.5 2003/06/19 05:10:23 cdent Exp $
 
 # The name of the index file. It's directory comes from Config.
 my $INDEX_FILE = 'sequence.index';
@@ -59,9 +59,10 @@ sub new {
     bless ($self, $class);
     my %params = @_; 
 
-    my $config = $params{config};
+    $self->{config} = $params{config};
+    $self->{url} = $params{url};
 
-    $self->_tieHash($config->DataDir() . '/' . $INDEX_FILE);
+    $self->_tieHash($self->{config}->DataDir() . '/' . $INDEX_FILE);
 
     return $self;
 }
@@ -83,18 +84,30 @@ sub get {
     # get the URL that hosts this nid out of the the db
     my $url = $self->{db}->{$nid}; 
 
-    # request the content of the URL 
-    my $ua = new LWP::UserAgent(agent => ref($self));
-    my $request = new HTTP::Request('GET', $url);
-    my $result = $ua->request($request);
-    
     my $content;
-    if ($result->is_success()) {
-        $content = $result->content();
-        $content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is;
-        $content =~ s/&nbsp;&nbsp;\s*<a class="nid" title="0$nid".*$//is;
+
+    # if the page being retrieved is a wiki page
+    # and source and target are the same, don't
+    # try to retrieve. Same url on static content
+    # is fine.
+    # FIXME: assumes that anything not the wiki
+    # is static content
+    my $scriptName = $self->{config}->ScriptName;
+    if ($url =~ /$scriptName/ && $url eq $self->{url}) {
+        $content = q(Transclusion loop, please remove.);
     } else {
-        $content = "unable to retrieve content";
+        # request the content of the URL 
+        my $ua = new LWP::UserAgent(agent => ref($self));
+        my $request = new HTTP::Request('GET', $url);
+        my $result = $ua->request($request);
+    
+        if ($result->is_success()) {
+            $content = $result->content();
+            $content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is;
+            $content =~ s/&nbsp;&nbsp;\s*<a class="nid" title="0$nid".*$//is;
+        } else {
+            $content = "unable to retrieve content";
+        }
     }
 
     $content = qq(<span id="$nidLong" class="transclusion">) .

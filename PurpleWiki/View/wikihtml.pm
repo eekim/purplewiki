@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.12 2003/06/19 03:22:09 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.13 2003/06/19 05:10:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -80,7 +80,9 @@ sub transcludeContent {
     my %params = @_;
     require PurpleWiki::Transclusion;
 
-    my $space = new PurpleWiki::Transclusion(config => $params{config});
+    my $space = new PurpleWiki::Transclusion(config => $params{config},
+        url => $params{url}
+    );
 
     return $space->get($node->content);
 }
