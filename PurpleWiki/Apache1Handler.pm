@@ -30,7 +30,6 @@
 
 package PurpleWiki::Apache1Handler;
 
-use lib '/home/cjdent/src/PurpleWiki/';
 use strict;
 use IO::File;
 use PurpleWiki::Config;
