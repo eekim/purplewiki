@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.7 2003/06/20 23:54:01 cdent Exp $
+# $Id: wiki.pl,v 1.8 2003/07/19 07:20:15 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -630,63 +630,6 @@ sub GetOldPageLink {
   }
   return &ScriptLink("action=$kind&id=$id&revision=$revision", $name);
 }
-
-sub GetPageOrEditLink {
-  my ($id, $name) = @_;
-  my (@temp);
-
-  if ($name eq "") {
-    $name = $id;
-    if ($config->FreeLinks) {
-      $name =~ s/_/ /g;
-    }
-  }
-  $id =~ s|^/|$MainPage/|;
-  if ($config->FreeLinks) {
-    $id = &FreeToNormal($id);
-  }
-  my $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
-  if ($page->pageExists()) {      # Page file exists
-    return &GetPageLinkText($id, $name);
-  }
-  if ($config->FreeLinks) {
-    if ($name =~ m| |) {  # Not a single word
-      $name = "[$name]";  # Add brackets so boundaries are obvious
-    }
-  }
-  return $name . &GetEditLink($id,"?");
-}
-
-sub InterPageLink {
-    my ($id) = @_;
-    my ($name, $site, $remotePage, $url, $punct);
-
-    ($id, $punct) = &SplitUrlPunct($id);
-
-    $name = $id;
-    ($site, $remotePage) = split(/:/, $id, 2);
-    $url = &GetSiteUrl($site);
-    return ("", $id . $punct)  if ($url eq "");
-    $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
-    $url .= $remotePage;
-    return ("<a href=\"$url\">$name</a>", $punct);
-}
-
-sub SplitUrlPunct {
-    my ($url) = @_;
-    my ($punct);
-
-    if ($url =~ s/\"\"$//) {
-      return ($url, "");   # Delete double-quote delimiters here
-    }
-    $punct = "";
-    ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
-    $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
-    return ($url, $punct);
-}
-
-
-
 
 sub GetSiteUrl {
     my ($site) = @_;
