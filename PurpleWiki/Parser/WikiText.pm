@@ -156,7 +156,9 @@ sub parse {
     # by a header.  If users want to have hard rules separating
     # sections (i.e. separating headers), they should define that in
     # the stylesheet instead of using hard rules.  Expecting this
-    # behavior from users is probably a bit too draconian, however.
+    # behavior from users is probably a bit too draconian, however,
+    # and there may in fact be times when this is indeed the desired
+    # behavior (for example, as a placeholder for future content).
     # The resulting data structure from a series of hard rules
     # followed by headers won't be "clean," but it shouldn't be
     # harmful either.
@@ -313,10 +315,7 @@ sub parse {
         elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
             $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, undef);
             $listLength = length $1;
             $nodeContent = "$2\n";
             while ($listLength > $indentDepth) {
@@ -333,14 +332,7 @@ sub parse {
         elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
             $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
             $sectionLength = length $1;
             $nodeContent = $2;
             if ($sectionLength > $sectionDepth) {
@@ -371,51 +363,27 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\s+\S.*)$/) {  # preformatted or continued li
-            my $string = $1;
-            if (($currentNode->type eq 'li') || ($currentNode->type eq 'dd') ||
-                (($currentNode->type eq 'p') && ($indentDepth > 0))) {
-                $string =~ s/^\s+//;
-            }
-            elsif ($currentNode->type ne 'pre') {
-                while ($listDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $listDepth--;
-                }
-                while ($indentDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $indentDepth--;
-                }
+            if ($currentNode->type ne 'pre' && $currentNode->type ne 'li' &&
+                $currentNode->type ne 'dd' &&
+                !($currentNode->type eq 'p' && $indentDepth > 0) ) {
+                $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
                 $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
                 $currentNode = $currentNode->insertChild('type'=>'pre');
             }
-            $nodeContent .= "$string\n";
+            $nodeContent .= "$1\n";
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^\s*$/) {  # blank line
             $currentNode = &_terminateNode($currentNode, \$nodeContent,
                                                 %params);
-            while ($listDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $listDepth--;
-            }
-            while ($indentDepth > 0) {
-                $currentNode = $currentNode->parent;
-                $indentDepth--;
-            }
+            $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
         }
         else {
             if (($currentNode->type ne 'p') && ($currentNode->type ne 'li') &&
                 ($currentNode->type ne 'dd')) {
-                while ($listDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $listDepth--;
-                }
-                while ($indentDepth > 0) {
-                    $currentNode = $currentNode->parent;
-                    $indentDepth--;
-                }
+                $currentNode = &_resetList($currentNode, \$listDepth, \$indentDepth);
                 $currentNode = &_terminateNode($currentNode,
                                                     \$nodeContent,
                                                     %params);
@@ -439,7 +407,35 @@ sub parse {
 
 ### private
 
+sub _resetList {
+    # "Resets" lists.  When a new node is about to be created, this
+    # routine makes sure that any previous lists or indentations are
+    # reset to the correct nesting depth.
+
+    my ($currentNode, $listDepthRef, $indentDepthRef) = @_;
+
+    if ($listDepthRef && ${$listDepthRef}) {
+        while (${$listDepthRef} > 1) {
+            $currentNode = $currentNode->parent->parent;
+            ${$listDepthRef}--;
+        }
+        $currentNode = $currentNode->parent;
+        ${$listDepthRef} = 0;
+    }
+    if ($indentDepthRef) {
+        while (${$indentDepthRef} > 0) {
+            $currentNode = $currentNode->parent;
+            ${$indentDepthRef}--;
+        }
+    }
+    return $currentNode;
+}
+
 sub _terminateNode {
+    # "Closes" nodes.  When the parser knows that it is ready to add
+    # content to the node (i.e. when it sees a blank line), this
+    # routine does the adding.
+
     my ($currentNode, $nodeContentRef, %params) = @_;
     my ($currentNid);
 
@@ -459,24 +455,46 @@ sub _terminateNode {
 }
 
 sub _parseList {
+    # List parsing is mostly handled the same, which is why it gets
+    # its own subroutine.  The main thing this routine does is handle
+    # the nesting properly.
+
     my ($listType, $listLength, $listDepthRef,
         $currentNode, $paramRef, $nodeContentRef,
         @nodeContents) = @_;
-    my ($currentNid);
 
     while ($listLength > ${$listDepthRef}) {
-        $currentNode = $currentNode->insertChild('type'=>$listType);
+        # Nested lists are children of list items, not of other lists.
+        # We need to find the last list item (if it exists) and
+        # create a sublist there; otherwise, we need to create a list
+        # item and give it a sublist.
+        if ($currentNode->type eq 'ul' || $currentNode->type eq 'ol' ||
+            $currentNode->type eq 'dl') {
+            my $kidsRef = $currentNode->children;
+            if ($kidsRef) {
+                $currentNode = $kidsRef->[scalar @{$kidsRef} - 1];
+            }
+            else {
+                if ($listType eq 'dl') {
+                    $currentNode = $currentNode->insertChild(type=>'dd');
+                }
+                else {
+                    $currentNode = $currentNode->insertChild(type=>'li');
+                }
+            }
+        }
+        $currentNode = $currentNode->insertChild(type=>$listType);
         ${$listDepthRef}++;
     }
-    while ($listLength < ${$listDepthRef}) {
-        $currentNode = $currentNode->parent;
+    while ($listLength < ${$listDepthRef}) {  # assert($listLength != 0)
+        $currentNode = $currentNode->parent->parent;
         ${$listDepthRef}--;
     }
     if ($listType eq 'dl') {
         $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
-        $currentNid = $1;
-        $currentNode = $currentNode->insertChild('type'=>'dt',
-            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
+        my $currentNid = $1;
+        $currentNode = $currentNode->insertChild(type=>'dt',
+            content=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }

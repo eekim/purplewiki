@@ -31,6 +31,7 @@ package PurpleWiki::View::debug;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::View::Driver;
 
 ############### Package Globals ###############
@@ -49,7 +50,7 @@ sub new {
 
     # Object State
     $self->{outputString} = "";
-    $self->{indentLevel} = 0;
+    $self->{indentLevel} = -1;
 
     bless($self, $class);
     return $self;
@@ -66,19 +67,39 @@ sub view {
     return $self->{outputString};
 }
 
-sub Main {
+sub recurse {
     my ($self, $nodeRef) = @_;
-    if ($nodeRef->type =~ /^(section|indent|ul|ol|dl)$/) {
-        $self->{indentLevel}++;
-    }
-}
 
-sub Post {
-    my ($self, $nodeRef) = @_;
-    if ($nodeRef->type =~ /^(section|indent|ul|ol|dl)$/) {
+    # recurse() should never be called on an undefined node.
+    if (not defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+
+    if (defined $nodeRef->children) {
+        $self->{indentLevel}++;
+        $self->traverse($nodeRef->children);
         $self->{indentLevel}--;
     }
 }
+
+#sub Main {
+#    my ($self, $nodeRef) = @_;
+#    if ($nodeRef->type =~ /^(section|indent|ul|ol|dl)$/) {
+#        $self->{indentLevel}++;
+#    }
+#}
+
+#sub Post {
+#    my ($self, $nodeRef) = @_;
+#    if ($nodeRef->type =~ /^(section|indent|ul|ol|dl)$/) {
+#        $self->{indentLevel}--;
+#    }
+#}
 
 sub sectionPre { shift->_headingWithNewline(@_) }
 sub indentPre { shift->_headingWithNewline(@_) }

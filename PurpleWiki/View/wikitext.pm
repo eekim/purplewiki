@@ -31,6 +31,7 @@ package PurpleWiki::View::wikitext;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::View::Driver;
 
 ############### Package Globals ###############
@@ -159,9 +160,10 @@ sub ddPre {
     shift->{outputString} .= ':' 
 }
 
-sub liPost { shift->_showNID(@_) }
+sub liMain { shift->_liRecurse(@_) }
+sub ddMain { shift->_liRecurse(@_) }
+
 sub dtPost { shift->_showNID(@_) }
-sub ddPost { shift->_showNID(@_) }
 
 sub prePre { &_hardRule(shift) }
 
@@ -287,6 +289,21 @@ sub _hardRule {
         }
         $self->{isPrevSection} = 0;
     }
+}
+
+sub _liRecurse { # also used for dd
+    my ($self, $nodeRef) = @_;
+
+    if (!defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+    # display NID here
+    $self->_showNID($nodeRef);
+    $self->traverse($nodeRef->children) if defined $nodeRef->children;
 }
 
 sub _endList {

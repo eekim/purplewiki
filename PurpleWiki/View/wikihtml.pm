@@ -31,6 +31,7 @@ package PurpleWiki::View::wikihtml;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::Transclusion;
 use PurpleWiki::View::Driver;
 
@@ -154,9 +155,22 @@ sub prePre {
     $self->_openTagWithNID(@_);
 }
 
+sub liMain { shift->_liRecurse(@_) }
+sub ddMain { shift->_liRecurse(@_) }
+
+sub liPost {
+    my ($self, $nodeRef) = @_;
+
+    $self->{outputString} .= '</' . $nodeRef->type . '>';
+}
+
+sub ddPost {
+    my ($self, $nodeRef) = @_;
+
+    $self->{outputString} .= '</' . $nodeRef->type . '>';
+}
+
 sub pPost { shift->_closeTagWithNID(@_) }
-sub liPost { shift->_closeTagWithNID(@_) }
-sub ddPost { shift->_closeTagWithNID(@_) }
 sub dtPost { shift->_closeTagWithNID(@_) }
 sub prePost { shift->_closeTagWithNID(@_) }
 
@@ -229,6 +243,21 @@ sub _hardRule {
         }
         $self->{isPrevSection} = 0;
     }
+}
+
+sub _liRecurse { # also used for dd
+    my ($self, $nodeRef) = @_;
+
+    if (!defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+    # display NID here
+    $self->{outputString} .= $self->_nid($nodeRef->id);
+    $self->traverse($nodeRef->children) if defined $nodeRef->children;
 }
 
 sub _openTagWithNID {
