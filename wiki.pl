@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.10 2003/07/19 09:08:41 eekim Exp $
+# $Id: wiki.pl,v 1.11 2003/08/28 17:17:34 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -916,7 +916,8 @@ sub WikiToHTML {
 
   my $wiki = $wikiParser->parse($pageText, config => $config, 'freelink' => $config->FreeLinks);
   my $url = $q->url(-full => 1) . '?' . $id;
-  return $wiki->view('wikihtml', config => $config, url => $url);
+  return $wiki->view('wikihtml', config => $config, url => $url,
+                     pageName => $id);
 }
 
 sub QuoteHtml {

@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.7 2003/08/18 07:10:54 eekim Exp $
+# $Id: wikihtml.pm,v 1.8 2003/08/28 17:17:35 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -72,6 +72,21 @@ sub closeTagWithNid {
     my %params = @_;
 
     return &_nid($node->id, %params) . &closeTag($node);
+}
+
+sub sketch {
+    my $node = shift;
+    my %params = @_;
+
+    return q{<form name="SvgForm" action="/cgi-bin/wikiwhiteboard.pl" method="POST" onsubmit="from=document.forms['SvgForm'];frm.svg.value= window.getSVG(); return true;">} . "\n" .
+        '<input type="submit" value="Save" />' . "\n" .
+        '<input type="hidden" name="pageName" value="' . $params{pageName} .
+        '" />' . "\n" .
+        '<input type="hidden" name="svg" value="" />' . "\n" .
+        '<input type="submit" name="submit" value="clear" />' . "\n" .
+        "</form>\n" .
+        '<embed src="/cgi-bin/wikiwhiteboard.pl?' . $params{pageName} .
+        '" width="500" height="300" pluginspage="http://www.adobe.com/svg/viewer/install" />' . "\n";
 }
 
 # inline node event handlers
@@ -200,6 +215,9 @@ sub registerHandlers {
 
     $PurpleWiki::View::EventHandler::structuralHandler{pre}->{pre} = \&openTagWithNid;
     $PurpleWiki::View::EventHandler::structuralHandler{pre}->{post} = \&closeTagWithNid;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{sketch}->{main} =
+        \&sketch;
 
     $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} = \&openTag;
     $PurpleWiki::View::EventHandler::inlineHandler{b}->{post} = \&closeTag;

@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.18 2003/08/18 07:10:53 eekim Exp $
+# $Id: WikiText.pm,v 1.19 2003/08/28 17:17:35 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -147,6 +147,9 @@ sub parse {
             else {
                 push @authors, [$authorString];
             }
+        }
+        elsif ($line =~ /^\{sketch\}$/) {
+            $currentNode->insertChild(type=>'sketch');
         }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
             #

@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.8 2003/08/18 07:10:54 eekim Exp $
+# $Id: wikitext.pm,v 1.9 2003/08/28 17:17:35 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -144,6 +144,8 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::structuralHandler{dd}->{post} = \&showNid;
 
     $PurpleWiki::View::EventHandler::structuralHandler{pre}->{post} = \&showNid;
+    $PurpleWiki::View::EventHandler::structuralHandler{sketch}->{main} =
+        sub { return "{sketch}\n\n"; };
 
     $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} =
         sub { return "'''"; };
