@@ -37,7 +37,7 @@ package PurpleWiki::Config;
 use strict;
 use Carp;
 use AppConfig;
-use base qw(Apache::Singleton);
+use base qw(PurpleWiki::Singleton);
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -81,12 +81,8 @@ sub new {
     my $directory = shift || croak "you must provide a config directory";
 
     $self->_init($directory);
-    $class->_set_instance($self);
+    $class->setInstance($self);
     return $self;
-}
-
-sub instance {
-    return shift->_get_instance();
 }
 
 sub _init {
