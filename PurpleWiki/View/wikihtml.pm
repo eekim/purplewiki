@@ -156,7 +156,7 @@ sub hPre {
 sub hPost { 
     my ($self, $node) = @_; 
     $self->{outputString} .= $self->_nid($node->id); 
-    $self->{outputString} .= '</h' . $self->_headerLevel() . '>';
+    $self->{outputString} .= '</h' . $self->_headerLevel() . ">\n";
 }
 
 sub pPre {
@@ -183,13 +183,13 @@ sub ddMain { shift->_liRecurse(@_) }
 sub liPost {
     my ($self, $nodeRef) = @_;
 
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
 }
 
 sub ddPost {
     my ($self, $nodeRef) = @_;
 
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
 }
 
 sub pPost { shift->_closeTagWithNID(@_) }
@@ -291,7 +291,7 @@ sub _openTagWithNID {
 sub _closeTagWithNID {
     my ($self, $nodeRef) = @_;
     $self->{outputString} .= $self->_nid($nodeRef->id);
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
 }
 
 sub _openLinkTag { 
@@ -315,7 +315,7 @@ sub _wikiLink {
         $linkString .= '<a href="' .
             &PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
-        $linkString .= '">' . $nodeRef->content . '</a>';
+        $linkString .= '" class="wikiword">' . $nodeRef->content . '</a>';
     } elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
@@ -324,7 +324,7 @@ sub _wikiLink {
             $linkString .= '<a href="' . 
             &PurpleWiki::Page::getWikiWordLink($pageName);
             $linkString .= "#nid$pageNid" if $pageNid;
-            $linkString .= '">';
+            $linkString .= '" class="wikiword">';
         }
         $linkString .= $nodeRef->content . '</a>';
     } else {
@@ -336,7 +336,7 @@ sub _wikiLink {
             $linkString .= $nodeRef->content;
             $linkString .= '<a href="' .
                 &PurpleWiki::Page::getWikiWordLink($pageName) .
-                    '">';
+                    '" class="wikiword">';
         }
         $linkString .= '?</a>';
     }
