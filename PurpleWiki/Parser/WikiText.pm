@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.14 2003/07/19 21:52:46 eekim Exp $
+# $Id: WikiText.pm,v 1.15 2003/07/19 22:02:21 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -57,7 +57,7 @@ my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
 my $rxSubpage = '[A-Z]+[a-z]+\w*';
 my $rxQuoteDelim = '(?:"")?';
 my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
-my $rxTransclusion = '\[t[A-Z0-9]+\]';
+my $rxTransclusion = '\[t [A-Z0-9]+\]';
 
 ### constructor
 
