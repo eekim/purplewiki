@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.10 2004/02/12 17:39:53 cdent Exp $
+# $Id: Transclusion.pm,v 1.11 2004/02/12 18:22:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,6 +33,7 @@ package PurpleWiki::Transclusion;
 use strict;
 use DB_File;
 use LWP::UserAgent;
+use PurpleWiki::Sequence;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -59,8 +60,6 @@ sub new {
     $self->{url} = $params{url};
     $self->{outputType} = $params{outputType};
 
-    $self->_tieHash($self->{config}->DataDir() . '/' . $INDEX_FILE);
-
     return $self;
 }
 
@@ -79,7 +78,9 @@ sub get {
     my $content;
 
     # get the URL that hosts this nid out of the the db
-    my $url = $self->{db}->{$nid}; 
+    my $sequence = new PurpleWiki::Sequence($self->{config}->DataDir(),
+        $self->{config}->RemoteSequence());
+    my $url = $sequence->getURL($nid); 
 
     $content = "no URL for $nid" unless $url;
 
@@ -169,9 +170,7 @@ these features allow.
 
 =head2 new(%params)
 
-Creates a new Transclusion object associated with the sequence.index
-in the DataDir. The index is used to find the URL from which a
-particular NID originates. See get() for more.
+Creates a new Transclusion object. See get() for more.
 
 There are three parameters:
 
@@ -183,7 +182,7 @@ There are three parameters:
 
 =head2 get($nid)
 
-Takes $nid, looks it up in the sequence.index and then uses HTTP to
+Takes $nid, looks it up using PurpleWiki::Sequence and then uses HTTP to
 retrieve the page on which that NID is found. The retrieved page is
 parsed to gather the content associated with the NID. A string
 containing the content or an error message if it could not be obtained
