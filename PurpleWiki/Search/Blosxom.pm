@@ -1,6 +1,6 @@
 # PurpleWiki::Search::Blosxom.pm
 #
-# $Id: Blosxom.pm,v 1.1 2004/01/05 22:57:42 eekim Exp $
+# $Id: Blosxom.pm,v 1.2 2004/01/05 23:29:26 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -56,7 +56,7 @@ sub search {
         }
         $fh->close;
     }
-    foreach my $file (keys %files) {
+    foreach my $file (sort {$files{$b} <=> $files{$a}} keys %files) {
         my ($title, $body) = &_parseBlosxomFile($file);
         if ($title =~ /$query/i || $body =~ /$query/i) {
             my $result = new PurpleWiki::Search::Result;
