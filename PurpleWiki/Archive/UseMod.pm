@@ -418,7 +418,7 @@ sub _getRevisionHistory {
     return { revision => $rev,
              dateTime => UseModWiki::TimeToText($ts),
              host => $host,
-             user => $user,
+             userId => $uid,
              summary => $summary };
 }
 

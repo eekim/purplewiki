@@ -364,7 +364,7 @@ sub getRevisions {
     $t = _svn_time($t);
     $u =~ s/:.*$//;
 #print STDERR "log (r=>$r, u=>$u, t=>$t, s=>$l) $#response\n";
-    push( @response, {revision=>$r, user=>$u,
+    push( @response, {revision=>$r, userId=>$u,
                       dateTime=>UseModWiki::TimeToText($t), summary=>$l} );
   }
 

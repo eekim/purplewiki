@@ -300,12 +300,10 @@ sub getRevisions {
             { revision => $rev,
               dateTime => UseModWiki::TimeToText($pageTime),
               host => $page->{host},
-              user => $page->getUserID(),
+              userId => $page->getUserID(),
               summary => ($summary && ($summary ne "*"))
                           ? UseModWiki::QuoteHtml($summary) : '',
-              pageUrl => $pageUrl,
-              diffUrl => $diffUrl,
-              editUrl => $editUrl } );
+            } );
     }
     @revisions;
 }
