@@ -9,7 +9,7 @@ use PurpleWiki::UseMod::User::UseMod;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $datadir = 'tDB';
+my $datadir = 't/tDB';
 my $userName = '@blueoxen*eekim';
 
 #########################

@@ -11,10 +11,10 @@ use PurpleWiki::Misc;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-my $file = "tDB/$$";
-my $dir = "tDB/testdir$$";
+my $file = "t/tDB/$$";
+my $dir = "t/tDB/testdir$$";
 my $content = "sample content";
-my $tempdir = 'tDB/temp';
+my $tempdir = 't/tDB/temp';
 my $lockdir = "$tempdir/lockmain";
 
 

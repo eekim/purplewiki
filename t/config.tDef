@@ -17,8 +17,8 @@ RCName      = RecentChanges   # Name of changes page (change space to _)
 DatabasePackage = PurpleWiki::Archive::PlainText
 #DatabasePackage = PurpleWiki::Archive::UseMod
 #DatabasePackage = PurpleWiki::Archive::Subversion
-#ReposPath   = /wiki
-DataDir     = rDB
+ReposPath   = /wiki
+DataDir     = t/tDB
 LocalSequenceDir = $DataDir
 
 # Recent Changes
@@ -70,12 +70,6 @@ UseAmPm                # if set use am/pm in times
 FreeUpper              # if set force upper case
 #ShowEdits             # if set show minor edits
 
-# PurpleWiki Modules
-ParserDriver        = PurpleWiki::Parser::WikiText
-TemplateDriver      = PurpleWiki::Template::TT
-UserDatabaseDriver  = PurpleWiki::UseMod::User::UseMod
-ACLDriver           = PurpleWiki::ACL
-
 # == You should not have to change anything below this line. =============
 PageDir     = $DataDir/page      # Stores page data
 UserDir     = $DataDir/user      # Stores user data
@@ -85,7 +79,7 @@ LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = t/intermap         # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
-TemplateDir = wikidb/templates
+TemplateDir = t/templates
 LocaleFile  = t/messages.l10n
 
 # == End of Configuration =================================================

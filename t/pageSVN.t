@@ -10,6 +10,8 @@ BEGIN { plan tests => 11};
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
+system('cp t/config.tSVN t/config');
+
 my $configdir = 't';
 my $id = 'WikiPage';
 my $newcontent = "Describe the new page here.\n";
@@ -123,4 +125,5 @@ ok($output, $second_expected_content);
 
 sub END {
     unlink('t/tDB/sequence');
+    system('cp t/config.tDef t/config');
 }

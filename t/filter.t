@@ -54,5 +54,5 @@ foreach (@nids) {
 }
 
 sub END {
-    unlink('tDB/sequence');
+    unlink('t/tDB/sequence');
 }
