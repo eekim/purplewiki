@@ -1019,23 +1019,7 @@ sub GetFormCheck {
 }
 
 sub DoUpdatePrefs {
-  my ($username, $password);
-
-  if (!$user) {
-      $wikiTemplate->vars(siteName => $config->SiteName,
-                          cssFile => $config->StyleSheet,
-                          siteBase => $config->SiteBase,
-                          baseUrl => $config->ScriptName,
-                          homePage => $config->HomePage,
-                          userName => undef,
-                          escapedUserName => undef,
-                          userId => undef,
-                          preferencesUrl => $config->ScriptName . '?action=editprefs');
-      print &GetHttpHeader . $wikiTemplate->process('errors/prefsInvalidUserId');
-      return;
-  }
-
-  $username = &GetParam("p_username",  "");
+  my $username = &GetParam("p_username",  "");
 
   my $errorUserName = 0;
   if (length($username) > 50) {  # Too long
@@ -1048,7 +1032,7 @@ sub DoUpdatePrefs {
       $user->username($username);
   }
 
-  $password = &GetParam("p_password",  "");
+  my $password = &GetParam("p_password",  "");
 
   my $passwordRemoved = 0;
   my $passwordChanged = 0;

@@ -193,8 +193,8 @@ wikidb/templates/errors/pageNameSlashNotAllowed.tt
 wikidb/templates/errors/pageNameTooLong.tt
 wikidb/templates/errors/pageNameTooManyChars.tt
 wikidb/templates/errors/pageNameTooManySlashes.tt
-wikidb/templates/errors/prefsInvalidUserId.tt
 wikidb/templates/errors/urlInvalid.tt
+wikidb/templates/errors/usernameInvalid.tt
 wikidb/templates/errors/xsidInvalid.tt
 wikidb/templates/lib/diffs.tt
 wikidb/templates/lib/pageHistory.tt
