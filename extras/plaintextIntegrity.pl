@@ -119,6 +119,8 @@ for my $subdir ('A'..'Z', 'misc') {
                             }
                         }
                     }
+                    # TODO: antispam stuff would go here
+
                     # if files are out of order, smoosh them down
                     my @revisions = sort keys %txt;
                     my $i = 1;
@@ -133,12 +135,20 @@ for my $subdir ('A'..'Z', 'misc') {
                         $lastRev = $rev;
                     }
                     # update current, timestamps
-
-                    my $timeStamp = &checkMetaFile("$dir/$entry/$lastRev.meta");
-                    my @finfo = stat("$dir/$entry");
-                    if ($finfo[9] != $timeStamp) {
-                        utime($timeStamp, $timeStamp, "$dir/$entry");
-                        print "Updated timestamp of $dir/$entry.\n";
+                    if (!$seenCurrent) {
+                        &createCurrentFile($entry, $lastRev);
+                        print "Created current file for $entry.\n";
+                    }
+                    else {
+                        open(CURRENT, "$dir/$entry/current");
+                        my $rev = <CURRENT>;
+                        close(CURRENT);
+                        chomp $rev;
+                        if ($rev != $lastRev) {
+                            unlink("$dir/$entry/current");
+                            &createCurrentFile($entry, $lastRev);
+                            print "Corrected current file for $entry.\n";
+                        }
                     }
                 }
                 else {  # can't open page dir
@@ -195,6 +205,7 @@ sub checkMetaFile {
                 }
                 else {
                     $userId = $1;
+                    # TODO: check for user remapping here
                 }
             }
             else {  # bad data
@@ -206,6 +217,18 @@ sub checkMetaFile {
         return 0;
     }
     return $timeStamp;
+}
+
+sub createCurrentFile {
+    my ($name, $rev) = @_;
+
+    my $subDir = substr($name, 0, 1);
+    if ($subDir !~ /^[A-Z]$/) {
+        $subDir = 'misc';
+    }
+    open(CURRENT, ">$dataDir/$subDir/$name/current");
+    print CURRENT "$rev\n";
+    close(CURRENT);
 }
 
 sub createMetaFile {
@@ -220,6 +243,7 @@ sub createMetaFile {
     print META "host=\n";
     print META "timeStamp=" . time . "\n";
     print META "userId=\n";
+    close(META);
 }
 
 sub yesNo {

@@ -71,6 +71,7 @@ extras/createUsernameIndex.pl
 extras/deleteUser.pl
 extras/dumpSequence.pl
 extras/moinConvert.pl
+extras/plaintextIntegrity.pl
 extras/purple
 extras/purpleConvert.pl
 extras/search.cgi
