@@ -11,12 +11,13 @@ PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Tree.pm
+PurpleWiki/Parser/WikiText.pm
 PurpleWiki/View/Debug.pm
 PurpleWiki/View/WikiHTML.pm
 PurpleWiki/View/WikiText.pm
 t/inline_node.t
+t/parser.t
 t/structural_node.t
-t/tree.t
 t/tree_test01.txt
 t/tree_test02.txt
 t/tree_test03.txt

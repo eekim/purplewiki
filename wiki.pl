@@ -2,7 +2,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.1 2002/11/25 03:12:35 eekim Exp $
+# $Id: wiki.pl,v 1.2 2002/11/25 06:10:49 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -32,7 +32,7 @@
 package UseModWiki;
 use lib '/home/eekim/devel/PurpleWiki';
 use strict;
-use PurpleWiki::Tree;
+use PurpleWiki::Parser::WikiText;
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
@@ -65,11 +65,11 @@ $DataDir     = "/home/eekim/www/local/purplewikidb"; # Main wiki directory
 $UseConfig   = 1;       # 1 = use config file,    0 = do not look for config
 
 # Default configuration (used if UseConfig is 0)
-$CookieName  = "Wiki";          # Name for this wiki (for multi-wiki sites)
-$SiteName    = "Wiki";          # Name of site (used for titles)
+$CookieName  = "PurpleWiki";    # Name for this wiki (for multi-wiki sites)
+$SiteName    = "PurpleWiki";    # Name of site (used for titles)
 $HomePage    = "HomePage";      # Home page (change space to _)
 $RCName      = "RecentChanges"; # Name of changes page (change space to _)
-$LogoUrl     = "/wiki.gif";     # URL for site logo ("" for no logo)
+$LogoUrl     = "";              # URL for site logo ("" for no logo)
 $ENV{PATH}   = "/usr/bin/";     # Path used to find "diff"
 $ScriptTZ    = "";              # Local time zone ("" means do not print)
 $RcDefault   = 30;              # Default number of RecentChanges days
@@ -135,6 +135,9 @@ $InterFile   = "$DataDir/intermap"; # Interwiki site->url map
 $RcFile      = "$DataDir/rclog";    # New RecentChanges logfile
 $RcOldFile   = "$DataDir/oldrclog"; # Old RecentChanges logfile
 $IndexFile   = "$DataDir/pageidx";  # List of all pages
+
+# Instantiate PurpleWiki parser.
+our $wikiParser = PurpleWiki::Parser::WikiText->new;
 
 # The "main" program, called at the end of this script file.
 sub DoWikiRequest {
@@ -1172,8 +1175,7 @@ sub GetRedirectPage {
 sub WikiToHTML {  # Use the PurpleWiki::View::WikiHTML driver to parse wiki pages to HTML
   my ($pageText) = @_;
 
-  my $wiki = PurpleWiki::Tree->new();
-  $wiki->parse($pageText);
+  my $wiki = $wikiParser->parse($pageText);
   return $wiki->view('WikiHTML');
 }
 
@@ -3201,8 +3203,7 @@ sub DoPost {
   # clean \r out of string
   $string =~ s/\r//g;
 
-  my $wiki = PurpleWiki::Tree->new();
-  $wiki->parse($string, 'add_node_ids'=>1);
+  my $wiki = $wikiParser->parse($string, 'add_node_ids'=>1);
   my $output = $wiki->view('wiki');
 
   $string = $output;

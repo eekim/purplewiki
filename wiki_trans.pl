@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 use IO::File;
-use PurpleWiki::Tree;
+use PurpleWiki::Parser::WikiText;
 
 if (@ARGV < 1) {
   print "Usage: $0 wikifile.txt [output_driver]\n";
@@ -9,9 +9,9 @@ if (@ARGV < 1) {
 }
 
 my $wikiContent = &readFile($ARGV[0]);
-my $wiki = PurpleWiki::Tree->new('title'=>$ARGV[0]);
-
-$wiki->parse($wikiContent, 'add_node_ids'=>0);
+my $wikiParser = PurpleWiki::Parser::WikiText->new;
+my $wiki = $wikiParser->parse($wikiContent, 'add_node_ids'=>1);
+$wiki->title($ARGV[0]);
 
 if (@ARGV == 2) {
     print $wiki->view($ARGV[1]);
