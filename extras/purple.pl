@@ -26,6 +26,7 @@ no warnings 'redefine';
 use lib '/home/cdent/src/PurpleWiki.nidGen';
 use PurpleWiki::Parser::WikiText;
 use MT;
+use MT::Blog;
 use MT::Entry;
 use MT::Comment;
 use MT::Template::Context;
@@ -101,16 +102,21 @@ my $commentSaveSub = sub {
     # for retrieving the permalink of the associated entry
     my $entry = MT::Entry->load($comment->entry_id);
 
-    # process text
-    $text =~ s/\r//g;
-    my $parser = PurpleWiki::Parser::WikiText->new();
-    my $wiki = $parser->parse($text, 'add_node_ids' => 1,
-        'url' => $entry->permalink);
-    $text = $wiki->view('wikitext');
-    $text =~ s/\r//g;
+    my $blog = MT::Blog->load($entry->blog_id);
+    if (grep /^purpleIN$/, @{$blog->comment_text_filters}) {
 
-    # save it
-    $comment->text($text);
+        # process text
+        $text =~ s/\r//g;
+        my $parser = PurpleWiki::Parser::WikiText->new();
+        my $wiki = $parser->parse($text, 'add_node_ids' => 1,
+            'url' => $entry->permalink);
+        $text = $wiki->view('wikitext');
+        $text =~ s/\r//g;
+
+        # save it
+        $comment->text($text);
+    }
+
     $comment->SUPER::save(@_) or return;
 };
 
