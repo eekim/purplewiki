@@ -1,6 +1,6 @@
 # PurpleWiki::View::text.pm
 #
-# $Id: text.pm,v 1.2 2003/01/09 06:33:19 eekim Exp $
+# $Id: text.pm,v 1.3 2003/01/18 06:11:15 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -48,7 +48,7 @@ sub view {
     my $text;
 
     if (defined $params{show_links} && $params{show_links} == 0) {
-    $showLinks = 0;
+        $showLinks = 0;
     }
     $Text::Wrap::columns = $columns;
     $Text::Wrap::huge = 'overflow';
@@ -63,15 +63,15 @@ sub view {
                   1, 0);
     # check for links
     if ($showLinks) {
-    if (scalar @links > 0) {
-        $text .= "\n\n";
-        $text .= "LINK REFERENCES\n\n";
-        $linksIndex = 1;
-        foreach my $link (@links) {
-        $text .= "    [$linksIndex] $link\n";
-        $linksIndex++;
+        if (scalar @links > 0) {
+            $text .= "\n\n";
+            $text .= "LINK REFERENCES\n\n";
+            $linksIndex = 1;
+            foreach my $link (@links) {
+                $text .= "    [$linksIndex] $link\n";
+                $linksIndex++;
+            }
         }
-    }
     }
     return $text;
 }
@@ -82,112 +82,112 @@ sub _traverseStructural {
 
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
-        # add blank line
-        if ( ( ($node->type eq 'h') || ($node->type eq 'p') ||
-           ($node->type eq 'pre') ) ||
-         ( ( ($prevNodeType eq 'ul') || ($prevNodeType eq 'ol') ||
-             ($prevNodeType eq 'dl') ) &&
-           ( ($node->type eq 'li') || ($node->type eq 'dt') ) ) ||
-         ( ( ($node->type eq 'dt') || ($node->type eq 'dd') ) &&
-           ($prevNodeType eq 'dd') ) ) {
-        $outputString .= "\n";
-        }
-        # set indentation appropriately
+            # add blank line
+            if ( ( ($node->type eq 'h') || ($node->type eq 'p') ||
+                   ($node->type eq 'pre') ) ||
+                 ( ( ($prevNodeType eq 'ul') || ($prevNodeType eq 'ol') ||
+                     ($prevNodeType eq 'dl') ) &&
+                   ( ($node->type eq 'li') || ($node->type eq 'dt') ) ) ||
+                 ( ( ($node->type eq 'dt') || ($node->type eq 'dd') ) &&
+                   ($prevNodeType eq 'dd') ) ) {
+                $outputString .= "\n";
+            }
+            # set indentation appropriately
             my $initialOffset = 1;
             my $subsequentOffset = 1;
-        my $subsequentMore = 0;
+            my $subsequentMore = 0;
             if ($node->type eq 'li') {
-        $initialOffset = 2;
-        $subsequentOffset = 2;
-                if ($listType eq 'ul') {
-            $subsequentMore = 2;
-                }
-                elsif ($listType eq 'ol') {
-            $subsequentMore = 3;
-                }
-            }
-        elsif ($node->type eq 'dt') {
                 $initialOffset = 2;
                 $subsequentOffset = 2;
-        }
-        my $initialIndent = ' ' x ( ($level - $initialOffset) * 4);
-        my $subsequentIndent = ' ' x ( ($level - $subsequentOffset) * 4
-        + $subsequentMore);
-        # parse content
+                if ($listType eq 'ul') {
+                    $subsequentMore = 2;
+                }
+                elsif ($listType eq 'ol') {
+                    $subsequentMore = 3;
+                }
+            }
+            elsif ($node->type eq 'dt') {
+                $initialOffset = 2;
+                $subsequentOffset = 2;
+            }
+            my $initialIndent = ' ' x ( ($level - $initialOffset) * 4);
+            my $subsequentIndent = ' ' x ( ($level - $subsequentOffset) * 4
+                                           + $subsequentMore);
+            # parse content
             if ($node->content) {
                 my $nodeString;
                 foreach my $inlineNode (@{$node->content}) {
                     if ($inlineNode->children) {
-            $nodeString .= &_inlineFormat($inlineNode->type);
+                        $nodeString .= &_inlineFormat($inlineNode->type);
                         $nodeString .= &_traverseInline($inlineNode->children,
-                            $level);
-            $nodeString .= &_inlineFormat($inlineNode->type);
+                                                        $level);
+                        $nodeString .= &_inlineFormat($inlineNode->type);
                     }
                     else {
                         $nodeString .= $inlineNode->content;
-            # check for links
-            if ($showLinks) {
-                if ($inlineNode->type eq 'link') {
-                $nodeString .= '[' . $linksIndex . ']';
-                push @links, $inlineNode->href;
-                $linksIndex++;
+                        # check for links
+                        if ($showLinks) {
+                            if ($inlineNode->type eq 'link') {
+                                $nodeString .= '[' . $linksIndex . ']';
+                                push @links, $inlineNode->href;
+                                $linksIndex++;
+                            }
+                        }
+                    }
+                    if ($node->type eq 'li') {
+                        if ($listType eq 'ul') {
+                            $nodeString = '* ' . $nodeString;
+                        }
+                        elsif ($listType eq 'ol') {
+                            $nodeString = $listNumber . '. ' . $nodeString;
+                            $listNumber++;
+                        }
+                    }
+                    elsif ($node->type eq 'h') {
+                        $nodeString = uc($nodeString);
+                    }
+                }
+                if ($node->type eq 'pre') {
+                    $outputString .= &Text::Wrap::wrap($initialIndent,
+                                                       $subsequentIndent,
+                                                       $nodeString);
+                }
+                else {
+                    $outputString .= &Text::Wrap::fill($initialIndent,
+                                                       $subsequentIndent,
+                                                       $nodeString);
                 }
             }
-                    }
-            if ($node->type eq 'li') {
-            if ($listType eq 'ul') {
-                $nodeString = '* ' . $nodeString;
-            }
-            elsif ($listType eq 'ol') {
-                $nodeString = $listNumber . '. ' . $nodeString;
-                $listNumber++;
-            }
-            }
-            elsif ($node->type eq 'h') {
-            $nodeString = uc($nodeString);
-            }
-        }
-        if ($node->type eq 'pre') {
-            $outputString .= &Text::Wrap::wrap($initialIndent,
-                               $subsequentIndent,
-                               $nodeString);
-        }
-        else {
-            $outputString .= &Text::Wrap::fill($initialIndent,
-                               $subsequentIndent,
-                               $nodeString);
-        }
-            }
             if ($node->children) {
-        if ($node->type eq 'ul') {
-            $outputString .= &_traverseStructural($node->children,
-                              $node->type,
-                              'ul',
-                              $listNumber,
-                              $level + 1);
-        }
-        elsif ($node->type eq 'ol') {
-            $outputString .= &_traverseStructural($node->children,
-                              $node->type,
-                              'ol',
-                              1,
-                              $level + 1);
-        }
-        else {
-            $outputString .= &_traverseStructural($node->children,
-                              $node->type,
-                              $listType,
-                              $listNumber,
-                              $level + 1);
-        }
+                if ($node->type eq 'ul') {
+                    $outputString .= &_traverseStructural($node->children,
+                                                          $node->type,
+                                                          'ul',
+                                                          $listNumber,
+                                                          $level + 1);
+                }
+                elsif ($node->type eq 'ol') {
+                    $outputString .= &_traverseStructural($node->children,
+                                                          $node->type,
+                                                          'ol',
+                                                          1,
+                                                          $level + 1);
+                }
+                else {
+                    $outputString .= &_traverseStructural($node->children,
+                                                          $node->type,
+                                                          $listType,
+                                                          $listNumber,
+                                                          $level + 1);
+                }
             }
-        # terminate content with newline
-        if ( ($node->type ne 'section') && ($node->type ne 'ul') &&
-         ($node->type ne 'ol') && ($node->type ne 'dl') &&
-         ($node->type ne 'indent') ) {
-        $outputString .= "\n";
-        }
-        $prevNodeType = $node->type;
+            # terminate content with newline
+            if ( ($node->type ne 'section') && ($node->type ne 'ul') &&
+                 ($node->type ne 'ol') && ($node->type ne 'dl') &&
+                 ($node->type ne 'indent') ) {
+                $outputString .= "\n";
+            }
+            $prevNodeType = $node->type;
         }
     }
     return $outputString;
@@ -202,9 +202,9 @@ sub _traverseInline {
             $outputString .= $node->content;
         }
         else {
-        $outputString .= &_inlineFormat($node->type);
+            $outputString .= &_inlineFormat($node->type);
             $outputString .= &_traverseInline($node->children, $level);
-        $outputString .= &_inlineFormat($node->type);
+            $outputString .= &_inlineFormat($node->type);
         }
     }
     return $outputString;
@@ -214,10 +214,10 @@ sub _inlineFormat {
     my $nodeType = shift;
 
     if ($nodeType eq 'i') {
-    return '_';
+        return '_';
     }
     elsif ($nodeType eq 'b') {
-    return '*';
+        return '*';
     }
     return '';
 }
