@@ -5,6 +5,10 @@ of the tasks listed in this document.
 UPGRADING FROM V0.94
 ====================
 
+internationalization.  move templates folder to templates/en.  remove
+CreateLinkText from config.  move wikidb/messages.l10n to wikidb.  add
+LocaleFile to config.
+
 config changes:
 
   TemplateDriver = TT   -->   TemplateDriver = PurpleWiki::Template::TT

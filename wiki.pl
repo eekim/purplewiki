@@ -59,7 +59,7 @@ my $visitedPagesCacheSize = 7;
 my $q;                  # CGI query reference
 my $Now;                # The time at the beginning of the request
 
-my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
+my $TimeZoneOffset;     # User's preference for timezone. FIXME: can we
                         # get this off $user reliably? Doesn't look
                         # worth it.
 
@@ -540,7 +540,9 @@ sub WikiToHTML {
 
   my $wiki = $wikiParser->parse($pageText, 'freelink' => $config->FreeLinks);
   my $url = $q->url(-full => 1) . '?' . $id;
-  return $wiki->view('wikihtml', url => $url, pageName => $id);
+  my @languages = &preferredLanguages;
+  return $wiki->view('wikihtml', url => $url, pageName => $id,
+                     languages => \@languages);
 }
 
 sub QuoteHtml {
