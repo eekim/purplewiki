@@ -613,7 +613,7 @@ sub ValidIdOrDie {
                         pageName => $id);
     $error = ValidId($id);
     if ($error ne "") {
-        print GetHttpHeader() . $wikiTemplate->process('errors/$error');
+        print GetHttpHeader() . $wikiTemplate->process("errors/$error");
         return 0;
     }
     return 1;
