@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Engine.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Engine.pm,v 1.3 2004/01/01 01:20:35 cdent Exp $
+# $Id: Engine.pm,v 1.4 2004/01/01 01:34:23 cdent Exp $
 
 package PurpleWiki::Search::Engine;
 
@@ -58,6 +58,9 @@ sub asHTML {
             my $url = $result->getURL();
             my $title = $result->getTitle();
             my $summary = $result->getSummary();
+
+            # deal with null titles
+            $title = $url unless $title;
 
             $string .=<<"EOT";
 <p class="searchresult"><a href="$url">$title</a><br />
