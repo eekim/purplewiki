@@ -34,6 +34,13 @@ my $config = new PurpleWiki::Config($configdir);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my ($input, $output, $shouldBe, $wiki, $diff);
 
+my $database_package = $config->DatabasePackage
+                         || "PurpleWiki::Database::Page";
+eval "require $database_package";
+$database_package .= "s" unless ($database_package =~ /s$/);
+my $pages = $database_package->new ($config);
+$config->{pages} = $pages;
+
 # FIXME: move those files not yet used into the live @files
 #        as willpower allows.
 #my @files = qw(tree_freelinks tree_hr tree_interlinks tree_lists tree_pre

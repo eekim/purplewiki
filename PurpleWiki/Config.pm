@@ -56,7 +56,8 @@ my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
     BracketText UseAmPm FreeUpper ShowEdits NonEnglish
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
-my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName 
+my @SCALAR_CONFIGS = qw( DatabasePackage
+    DataDir ScriptName SiteName HomePage RCName 
     FullUrl ScriptTZ RcDefault KeepDays CreateLinkText
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory

@@ -28,7 +28,135 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
+package PurpleWiki::Database::Pages;
+
+use PurpleWiki::Database;
+
+sub new {
+  my $proto = shift;
+  my $class = ref($proto) || $proto;
+  my $self = {};
+  my $config = (@_) ? shift : PurpleWiki::Config->instance();
+  $self->{script} = $config->ScriptName;
+  $self->{fs1} = $config->FS1;
+  $self->{fs2} = $config->FS2;
+  $self->{fs3} = $config->FS3;
+  $self->{fs} = $config->FS;
+  $self->{pagedir} = $config->PageDir;
+  $self->{usediff} = $config->UseDiff;
+  $self->{rcfile} = $config->RcFile;
+  bless $self, $class;
+  $self;
+}
+
+sub newPageId {
+  my $self = shift;
+  my $id = shift;
+  PurpleWiki::Database::Page->new(id => $id, pages => $self);
+}
+
+sub newPageText {
+  my ($self, $id, $wikitext) = @_;
+  PurpleWiki::Database::Page->new(id => $id,
+                                  pages => $self,
+                                  wikitext => $wikitext);
+}
+
+sub newPage {
+  my $self = shift;
+
+  my $page = PurpleWiki::Database::Page->new(pages => $self, @_);
+  $self->_newVersion($page) if (defined($page->{wikitext}));
+  $page;
+}
+
+sub _newVersion {
+my ($self, $page) = @_;
+  use PurpleWiki::Database::KeptRevision;
+  my $fsexp = $self->{fs};
+  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
+  $page->_openPage();
+  my $text = $page->_getText();
+  my $section = $page->getSection();
+  my $old = $text->getText();
+  my $oldrev = $section->getRevision();
+  my $pgtime = $page->getTS();
+  my $now = $page->{timestamp};
+
+  $page->{wikitext} =~ s/$fsexp//g;
+  my $wikitext = $page->{wikitext};
+  $self->{summary} =~ s/$fsexp//g;
+  if ($self->{usediff}) {
+    # FIXME: how many args does it take to screw a pooch?
+    PurpleWiki::Database::UpdateDiffs($page, $keptRevision, $id,
+        $now, $old, $string, 0, $page->{newauthor});
+  }
+  $text->setText($wikitext);
+  $text->setNewAuthor($page->{newauthor});
+  $text->setSummary($page->{summary});
+  $section->setHost($page->{host});
+  $section->setRevision($section->getRevision() + 1);
+  $section->setTS($now);
+  $section->setUsername($self->{username});
+  $section->setUserID($self->{userid});
+  $keptRevision->addSection($section, $now);
+  $keptRevision->trimKepts($now);
+  $keptRevision->save();
+  $page->setRevision($section->getRevision());
+  $page->setTS($now);
+  $self->WriteRcLog($page->{id}, $page->{summary}, $now,
+                    $self->{username}, $page->{host} || $page->{ip});
+}
+
+sub allPages {
+  my $self = shift;
+  (PurpleWiki::Database::AllPagesList());
+}
+
+# pages->recentChanges(backto => $starttime, count => $count)
+sub recentChanges {
+  my $self = shift;
+  my $config = $self->{config} || PurpleWiki::Conifg->instance();
+  my %params = @_;
+  my $starttime = 0;
+  $starttime = $params{backto} if ($params{backto});
+  PurpleWiki::Database::recentChanges($config, $starttime);
+}
+
+sub releaseLock {
+  PurpleWiki::Database::ReleaseLock;
+}
+
+sub requestLock {
+  PurpleWiki::Database::RequestLock;
+}
+
+sub forceReleaseLock {
+  PurpleWiki::Database::ForceReleaseLock;
+}
+
+# Note: all diff and recent-list operations should be done within locks.
+sub WriteRcLog {
+  my ($self, $id, $summary, $editTime, $name, $rhost) = @_;
+  my ($extraTemp, %extra);
+
+  %extra = ();
+  $extra{'id'} = $user->id  if ($user);
+  $extra{'name'} = $name  if ($name ne "");
+  $extraTemp = join($self->{fs2}, %extra);
+  # The two fields at the end of a line are kind and extension-hash
+  my $rc_line = join($self->{fs3}, $editTime, $id, $summary,
+                     0, $rhost, "0", $extraTemp);
+  my $rc_file = $self->{rcfile};
+  if (!open(OUT, ">>$rc_file")) {
+    die("Recent Changes log error($rc_file): $!");
+  }
+  print OUT  $rc_line . "\n";
+  close(OUT);
+}
+
 package PurpleWiki::Database::Page;
+
 
 # PurpleWiki Page Data Access
 
@@ -39,6 +167,9 @@ use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;
+use PurpleWiki::Database::KeptRevision;
+use PurpleWiki::Search::Result;
+use PurpleWiki::Parser::WikiText;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -51,34 +182,66 @@ my $DATA_VERSION = 3;            # the data format version
 # at least 'id', will also take 'now' for the time of
 # the current CGI request and 'userID' and 'username' to
 # be passed to Section for the creation of new Text.
+#
+# page->new ( named parameters )
+#    id        => Page Identifier, the database key for reading and writing
+#    wikitext  => If present, this is the source, not the DB
+#    newauthor => New author flag 
+#    summary   => The change description
+#    host      => Hostname of the post request
+#    username  => User's name
+#    userid    => User's Identifier
+#    now       => Update time (time integer)
+#    pages     => The database service object
+#
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
-    my %args = @_;
-    my $self = { %args };
-    $self->{config} = PurpleWiki::Config->instance();
+    my $self = { @_ };
     bless ($self, $class);
     return $self;
 }
 
+# page->getIP()
+sub getIP {
+  my $self = shift;
+  $self->{ip};
+}
+
+# page->getLockState()
+sub getLockState {
+    return (-f shift->getLockedPageFile());
+}
+
+# page->getUserID()
+sub getUserID {
+   shift->{userID};
+}
+
+
 # A shim to facillitate other callers
 sub pageExists {
     my $self = shift;
-    return $self->pageFileExists();
+    return (-f $self->getPageFile());
 }
 
+# Causes an error because the data in the 
 # Returns true if the page file associated with this
 # page exists.
 sub pageFileExists {
     my $self = shift;
 
-    my $filename = $self->getPageFile();
-
-    return (-f $filename);
+    return (-f $self->getPageFile());
 }
 
 # Returns the revision of this Page.
 sub getRevision {
+    my $self = shift;
+    return $self->getSection()->getRevision();
+}
+
+# Returns the revision of this Page. Internal, get if from the page, not section
+sub _getRevision {
     my $self = shift;
     return $self->{revision};
 }
@@ -89,6 +252,8 @@ sub setRevision {
     my $revision = shift;
     $self->{revision} = $revision;
 }
+
+sub getTime { shift->{ts}; }
 
 # Gets the timestamp of this Page. 
 sub getTS {
@@ -123,8 +288,9 @@ sub setPageCache {
 
 # Opens the page file associated with the id of this
 # Page.
-sub openPage {
+sub _openPage {
     my $self = shift;
+    return if ($self->{open});
 
     if ($self->pageFileExists()) {
         my $filename = $self->getPageFile();
@@ -135,25 +301,142 @@ sub openPage {
         $self->_openNewPage();
     }
 
-    if ($self->getVersion() != $DATA_VERSION) {
+    if ($self->{version} != $DATA_VERSION) {
         $self->_updatePageVersion();
     }
+    $self->{open} = 1;
 }
 
-# Retrieves the default text data by getting the
-# Section and then the text in that Section.
-# Or creates a new one.
+sub _getText {
+    my $self = shift;
+    my $section = $self->getSection();
+    return $section->getText();
+}
+
+# Or creates a new one (or lets getSectin create it)
 sub getText {
     my $self = shift;
-
-    if (!defined($self->{text_default})) {
-            return $self->createNewText();
+    my $selectversion = "";
+    $self->{selectedversion} = $selectversion = shift if @_;
+    $self->_openPage();
+    if ($selectversion && ($selectversion != $self->{version})) {
+        my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
+        return $krev->getRevision($selectversion)->getText();
     } else {
         my $section = $self->getSection();
+        my $text = $section->getText();
+        return $text->getText() if (ref($text));
         return $section->getText();
     }
 }
 
+# page->getWikiHTML()
+#
+# format the page for HTML output
+#
+sub getWikiHTML {
+    my $self = shift;
+    my $id = shift;
+
+    my $url = $self->{pages}->{script} . '?' . $id;
+    my $parser = PurpleWiki::Parser::WikiText->new();
+    my $wiki = $parser->parse($self->getText(),
+                   add_node_ids => 0,
+                   url => $url,
+               );
+    return $wiki->view('wikihtml', url => $url);
+}
+
+# Retrieves the default text data by getting the
+# Section and then the text in that Section.
+# page->getPageNode($Id, $nid)
+#
+# get just one node
+#
+sub getPageNode {
+  my ($self, $id, $nid) = @_;
+  my $parser = new PurpleWiki::Parser::WikiText;
+  if ($self->pageExists()) {
+    my $tree = $parser->parse($self->getText(), 'add_node_ids' => 0);
+    return $tree->view('subtree', 'nid' => uc($nid));
+  } 
+  ""
+}
+
+# page->searchResult([text])
+sub searchResult {
+    my $self = shift;
+    my $text = shift || $self->getText();
+    my $name = $self->getID();
+
+    my $result = new PurpleWiki::Search::Result();
+    $result->title($name);
+    $result->modifiedTime($self->getTS());
+    $result->url($self->getWikiWordLink($name));
+    $result->summary(substr($text->getText(), 0, 99) . '...');
+
+    return $result;
+}
+
+sub getRevisions {
+    my $self = shift;
+    my @pageHistory = ();
+    my $id = $self->{id};
+    push @pageHistory, _getRevisionHistory($id, $self->getSection, 1);
+    my $krev = new PurpleWiki::Database::KeptRevision(id => $id);
+    foreach my $section ( sort {-($a->getRevision() <=> $b->getRevision())}
+                               $krev->getSections() ) {
+        # If KeptRevision == Current Revision don't print it. - matthew
+        if ($section->getRevision() != $self->getSection()->getRevision()) {
+            push @pageHistory, $self->_getRevisionHistory($id, $section, 0);
+        }
+    }
+    (@pageHistory);
+}
+
+sub _getRevisionHistory {
+    my ($self, $id, $section, $isCurrent) = @_;
+    my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
+
+    my $text = $section->getText();
+    $rev = $section->getRevision();
+    $summary = $text->getSummary();
+    if ((defined($section->getHost())) && ($section->getHost() ne '')) {
+        $host = $section->getHost();
+    } else {
+        $host = $section->getIP();
+        $host =~ s/\d+$/xxx/;      # Be somewhat anonymous (if no host)
+    }
+    $user = $section->getUsername();
+    $uid = $section->getUserID();
+    $ts = $section->getTS();
+
+    if ($isCurrent) {
+        $pageUrl = $self->{pages}->{script} . "?$id";
+    }
+    else {
+        $pageUrl = $self->{pages}->{script} .
+          "?action=browse&amp;id=$id&amp;revision=$rev";
+        $diffUrl = $self->{pages}->{script} .
+            "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
+        $editUrl = $self->{pages}->{script} .
+            "?action=edit&amp;id=$id&amp;revision=$rev";
+    }
+    if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
+        $summary = QuoteHtml($summary);   # Thanks Sunir! :-)
+    }
+    else {
+        $summary = '';
+    }
+    return { revision => $rev,
+             dateTime => TimeToText($ts),
+             host => $host,
+             user => $user,
+             summary => $summary,
+             pageUrl => $pageUrl,
+             diffUrl => $diffUrl,
+             editUrl => $editUrl };
+}
 # Retrieves the Section if it already
 # exists. If not a new one is created
 # and returned.
@@ -172,20 +455,14 @@ sub getSection {
     }
 }
 
-# Creates an empty new Text and Section 
-sub createNewText {
-    my $self = shift;
-    my $section = $self->getSection();
-    return $section->getText();
-}
-
 # Retrives the version of this page.
 sub getVersion {
     my $self = shift;
-    return $self->{version};
+
+    return $self->{selectversion};
 }
 
-# Retrieves the id of this page.
+# Retrieves the page id.
 sub getID {
     my $self = shift;
     return $self->{id};
@@ -201,8 +478,8 @@ sub getNow {
 sub getPageFile {
     my $self = shift;
 
-    return $self->{config}->PageDir . '/' . $self->getPageDirectory() . '/' .
-        $self->getID() . '.db';
+    return $self->{pages}->{pagedir} . '/' . $self->getPageDirectory() . '/' .
+        $self->{id} . '.db';
 }
 
 # Determines the directory of this Page.
@@ -211,14 +488,13 @@ sub getPageDirectory {
 
     my $directory = 'other';
 
-    if ($self->getID() =~ /^([a-zA-Z])/) {
+    if ($self->{id} =~ /^([a-zA-Z])/) {
         $directory = uc($1);
     }
 
     return $directory;
 }
 
-# Causes an error because the data in the 
 # Page file is out of date.
 sub _updatePageVersion {
     my $self = shift;
@@ -235,7 +511,7 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    my $regexp = $self->{config}->FS1;
+    my $regexp = $self->{pages}->{fs1};
     my %tempHash = split(/$regexp/, $data, -1);
     
     foreach my $key (keys(%tempHash)) {
@@ -255,6 +531,8 @@ sub _openNewPage {
     $self->{ts} = $self->getNow();
 }
 
+# page->save();
+#
 # Saves the Page by serialize it and its constituent parts to
 # a string and then writing to disk.
 sub save {
@@ -271,14 +549,14 @@ sub save {
 sub getLockedPageFile {
     my $self = shift;
     my $id = $self->getID();
-    return $self->{config}->PageDir . '/' . $self->getPageDirectory() . "/$id.lck";
+    return $self->{pages}->{pagedir} . '/' . $self->getPageDirectory() . "/$id.lck";
 }
 
 # Creates the directory where this Page is stored.
 sub _createPageDir {
     my $self = shift;
     my $id = $self->getID();
-    my $dir = $self->{config}->PageDir;
+    my $dir = $self->{pages}->{pagedir};
     my $subdir;
 
     PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
@@ -298,7 +576,7 @@ sub serialize {
 
     my $sectionData = $self->getSection()->serialize();
 
-    my $separator = $self->{config}->FS1;
+    my $separator = $self->{pages}->{fs1};
 
     my $data = join($separator, map {$_ . $separator . ($self->{$_} || '')} 
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',

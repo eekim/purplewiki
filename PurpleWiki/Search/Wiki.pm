@@ -33,8 +33,8 @@ package PurpleWiki::Search::Wiki;
 use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
-use PurpleWiki::Database;
-use PurpleWiki::Page;
+#use PurpleWiki::Database;
+#use PurpleWiki::Page;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -47,16 +47,14 @@ sub search {
 
     my $nameHash;
 
-    foreach $nameHash (PurpleWiki::Database::AllPagesList()) {
-	my $name = $nameHash->{pageName};
+    foreach my $page ($self->pages->allPages()) {
+	  my $name = $page->pageName;
         if ($name =~ /$query/i) {
-            my $page = $self->_getAndOpenPage($name);
-            push(@results, $self->_getResult($page));
+            push(@results, $page->searchResult($page));
         } else {
-            my $page = $self->_getAndOpenPage($name);
             my $text = $page->getText();
             if ($text->getText() =~ /$query/i) {
-                push(@results, $self->_getResult($page, $text));
+                push(@results, $page->searchResult($page));
             }
         }
     }
@@ -65,31 +63,6 @@ sub search {
         @results;
 
     return @results;
-}
-
-sub _getAndOpenPage {
-    my $self = shift;
-    my $name = shift;
-
-    my $page = new PurpleWiki::Database::Page(id => $name, now => time);
-    $page->openPage();
-
-    return $page;
-}
-
-sub _getResult {
-    my $self = shift;
-    my $page = shift;
-    my $text = shift || $page->getText();
-    my $name = $page->getID();
-
-    my $result = new PurpleWiki::Search::Result();
-    $result->title($name);
-    $result->modifiedTime($page->getTS());
-    $result->url(PurpleWiki::Page::getWikiWordLink($name));
-    $result->summary(substr($text->getText(), 0, 99) . '...');
-
-    return $result;
 }
 
 1;

@@ -31,7 +31,7 @@
 package PurpleWiki::Page;
 
 use PurpleWiki::Config;
-use PurpleWiki::Database::Page;
+use PurpleWiki::Database;
 
 # mappings between PurpleWiki code and code within useMod
 
@@ -49,7 +49,7 @@ sub exists {
     if ($config->FreeLinks) {
         $id = FreeToNormal($id, $config);
     }
-    my $page = new PurpleWiki::Database::Page('id' => $id);
+    my $page = $config->{pages}->newPageId($id);
     return $page->pageExists();
 }
 
@@ -112,7 +112,7 @@ sub GetPageOrEditLink {
   if ($config->FreeLinks) {
     $id = FreeToNormal($id);
   }
-  my $page = new PurpleWiki::Database::Page('id' => $id);
+  my $page = $config->{pages}->newPageId($id);
   if ($page->pageExists()) {      # Page file exists
     return GetPageLinkText($id, $name);
   }

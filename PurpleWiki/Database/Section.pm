@@ -94,12 +94,12 @@ sub getIP {
 }
 
 # Gets the user ID that last editied this Section.
-sub getID {
+sub getUserID {
     my $self = shift;
     return $self->{id};
 }
 
-sub setID {
+sub setUserID {
     my $self = shift;
     $self->{id} = shift;
 }

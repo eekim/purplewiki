@@ -63,6 +63,13 @@ EOF
 
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
+my $database_package = $config->DatabasePackage
+                       || "PurpleWiki::Database::Page";
+eval "require $database_package";
+$database_package .= "s" unless ($database_package =~ /s$/);
+my $pages = $database_package->new ($config);
+$config->{pages} = $pages;
+
 my $parser = PurpleWiki::Parser::WikiText->new();
 my $wiki = $parser->parse($content, add_node_ids => 1);
 my $output = $wiki->view('wikitext');
@@ -75,31 +82,28 @@ ok($output, $expected_content);
 ## we'll do the whole bag
 # lock
 ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
-my $keptRevision = new PurpleWiki::Database::KeptRevision(
-    id => $id);
-my $page = new PurpleWiki::Database::Page('id' => $id,
-                                          'now' => time);
-$page->openPage();
+my $page = $pages->newPage('id' => $id, 'now' => time);
 
 # stored id should be the same as what we gave it
 ok($page->getID(), $id);
 
 # stored text should be empty at this stage
-my $text = $page->getText();
-my $section = $page->getSection();
-my $oldText = $text->getText();
+my $oldText = $page->getText();
 ok($oldText, $newcontent);
 
 # revision should be 0
-my $oldrev = $section->getRevision();
+my $oldrev = $page->getRevision();
 ok($oldrev, 0);
 
-# set text
-$text->setText($output);
-ok($text->getText(), $expected_content);
+# add a new wikitext to the page
+$page = $pages->newPage(id => $id,
+                        wikitext => $output,
+                        timestamp => time);
+my $getText = $page->getText();
+ok($getText, $expected_content);
 
-# set revision
-ok($section->setRevision($section->getRevision() + 1), 1);
+# adding the wikitext should make a new version
+ok($page->getRevision(), 1);
 
 # save page
 ok($page->save(), -f $idFilename);
@@ -109,10 +113,9 @@ ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 undef($page);
 
 # load the page up and make sure the id and text are right
-my $newPage = new PurpleWiki::Database::Page('id' => $id);
-$newPage->openPage();
+my $newPage = $pages->newPageId($id);
 ok($newPage->getID(), $id);
-ok($newPage->getText()->getText(), $expected_content);
+ok($newPage->getText(), $expected_content);
 
 # parse second content
 $wiki = $parser->parse($second_content, add_node_ids => 1);

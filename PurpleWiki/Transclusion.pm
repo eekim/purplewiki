@@ -54,13 +54,11 @@ my $INDEX_FILE = 'sequence.index';
 # aware of new writes? Presumably not?
 sub new {
     my $class = shift;
-    my $self = {};
+    my $self = { @_ };
+    $self->{config} = PurpleWiki::Config->instance()
+        unless (defined($self->{config}));
+    $self->{pages} = $self->{config}->{pages} unless (defined($self->{pages}));
     bless ($self, $class);
-    my %params = @_; 
-
-    $self->{config} = PurpleWiki::Config->instance();
-    $self->{url} = $params{url};
-    $self->{outputType} = $params{outputType};
 
     return $self;
 }
@@ -96,18 +94,10 @@ sub get {
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
         } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
-            my ($pageName) = ($url =~ /\?([^&]+)\b/);
-            my $page = new PurpleWiki::Database::Page(id => $pageName);
-            my $parser = new PurpleWiki::Parser::WikiText;
-            if ($page->pageExists()) {
-                $page->openPage();
-                my $tree = $parser->parse($page->getText()->getText(),
-                             'add_node_ids' => 0);
-                $content = $tree->view('subtree', 
-                                       'nid' => uc($nid));
-            } 
-            
-            $content = "transclusion index out of sync" if not $content;
+            my ($id) = ($url =~ /\?([^&]+)\b/);
+            $content=($self->{pages}->newPageId($id)
+                           ->getPageNode($id, uc($nid)))
+                     || "transclusion index out of sync";
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));
