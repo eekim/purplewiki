@@ -94,4 +94,5 @@ InterFile   = $DataDir/intermap  # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 
+
 # == End of Configuration =================================================

@@ -114,21 +114,21 @@ sub ulPre {
     my ($self, $nodeRef) = @_;
 
     $self->_hardRule(0);
-    $self->{outputString} .= '<' . $nodeRef->type . '>';
+    $self->{outputString} .= '<' . $nodeRef->type . ">\n";
 }
 
 sub olPre {
     my ($self, $nodeRef) = @_;
 
     $self->_hardRule(0);
-    $self->{outputString} .= '<' . $nodeRef->type . '>';
+    $self->{outputString} .= '<' . $nodeRef->type . ">\n";
 }
 
 sub dlPre {
     my ($self, $nodeRef) = @_;
 
     $self->_hardRule(0);
-    $self->{outputString} .= '<' . $nodeRef->type . '>';
+    $self->{outputString} .= '<' . $nodeRef->type . ">\n";
 }
 
 sub bPre { shift->{outputString} .= '<' . shift->type . '>' }
@@ -156,14 +156,14 @@ sub hPre {
 sub hPost { 
     my ($self, $node) = @_; 
     $self->{outputString} .= $self->_nid($node->id); 
-    $self->{outputString} .= '</h' . $self->_headerLevel() . '>';
+    $self->{outputString} .= '</h' . $self->_headerLevel() . ">\n";
 }
 
 sub pPre {
-    my $self = shift;
+    my ($self, $node) = @_;
 
     $self->_hardRule(0);
-    $self->_openTagWithNID(@_);
+    $self->_openTagWithNID($node);
 }
 
 sub liPre { shift->_openTagWithNID(@_) }
@@ -175,6 +175,7 @@ sub prePre {
 
     $self->_hardRule(0);
     $self->_openTagWithNID(@_);
+    $self->{outputString} .= "\n";
 }
 
 sub liMain { shift->_liRecurse(@_) }
@@ -183,18 +184,24 @@ sub ddMain { shift->_liRecurse(@_) }
 sub liPost {
     my ($self, $nodeRef) = @_;
 
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
 }
 
 sub ddPost {
     my ($self, $nodeRef) = @_;
 
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
+}
+
+sub prePost {
+    my $self = shift;
+    
+    $self->{outputString} .= "\n";
+    $self->_closeTagWithNID(@_);
 }
 
 sub pPost { shift->_closeTagWithNID(@_) }
 sub dtPost { shift->_closeTagWithNID(@_) }
-sub prePost { shift->_closeTagWithNID(@_) }
 
 sub sketchMain { 
     my $self = shift;
@@ -291,14 +298,14 @@ sub _openTagWithNID {
 sub _closeTagWithNID {
     my ($self, $nodeRef) = @_;
     $self->{outputString} .= $self->_nid($nodeRef->id);
-    $self->{outputString} .= '</' . $nodeRef->type . '>';
+    $self->{outputString} .= '</' . $nodeRef->type . ">\n";
 }
 
 sub _openLinkTag { 
     my ($self, $nodeRef) = @_;
     my $class = $nodeRef->class || 'extlink';
-    $self->{outputString} .= '<a class="' . $class . '" href="';
-    $self->{outputString} .= $_[1]->href . '">';
+    $self->{outputString} .= '<a href="';
+    $self->{outputString} .= $_[1]->href . qq(" class="$class">);
 }
 
 sub _wikiLink {
@@ -315,28 +322,30 @@ sub _wikiLink {
         $linkString .= '<a href="' .
             &PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
-        $linkString .= '">' . $nodeRef->content . '</a>';
+        $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
     } elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
-            &PurpleWiki::Page::getFreeLink($nodeRef->content) .  '">';
+                &PurpleWiki::Page::getFreeLink($nodeRef->content) . 
+                '" class="freelink">';
         } else {
             $linkString .= '<a href="' . 
             &PurpleWiki::Page::getWikiWordLink($pageName);
             $linkString .= "#nid$pageNid" if $pageNid;
-            $linkString .= '">';
+            $linkString .= '" class="wikiword">';
         }
         $linkString .= $nodeRef->content . '</a>';
     } else {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '[' . $nodeRef->content . ']';
             $linkString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($nodeRef->content) .  '">';
+                &PurpleWiki::Page::getFreeLink($nodeRef->content) .
+                '" class="freelink">';
         } else {
             $linkString .= $nodeRef->content;
             $linkString .= '<a href="' .
                 &PurpleWiki::Page::getWikiWordLink($pageName) .
-                    '">';
+                    '" class="wikiword">';
         }
         $linkString .= '?</a>';
     }
@@ -384,13 +393,14 @@ sub _nid {
     my ($self, $nid) = @_;
     my $string = '';
 
-    my $nidFace = '#';
-
-    if ($self->{config}->ShowNid) {
-        $nidFace = "($nid)";
-    }
 
     if ($nid) {
+        my $nidFace = '#';
+
+        if ($self->{config}->ShowNid) {
+            $nidFace = "($nid)";
+        }
+
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
             'title="' . "$nid" . '" href="' .
             $self->{url} . '#nid' .

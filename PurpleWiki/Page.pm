@@ -129,6 +129,7 @@ sub FreeToNormal {
   my $config = PurpleWiki::Config->instance();
 
   $id =~ s/ /_/g;
+  $id =~ s/[\r\n]/_/g;
   $id = ucfirst($id);
   if (index($id, '_') > -1) {  # Quick check for any space/underscores
     $id =~ s/__+/_/g;
