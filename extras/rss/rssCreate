@@ -1,6 +1,9 @@
 #!/usr/bin/perl
+#
+# Uses PurpleWiki::Rss to create a full RSS 1.0 feed of the
+# last 15 changes on the wiki. Can be run from cron or as
+# needed.
 
-use lib '/home/cdent/src/PurpleWiki';
 use PurpleWiki::Config;
 use PurpleWiki::Rss;
 
