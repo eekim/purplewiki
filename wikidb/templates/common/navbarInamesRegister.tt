@@ -9,5 +9,6 @@
 [% ELSE %]
 i-name:
 <input type="text" name="xri_iname" size="20" />
+(<a href="[% baseUrl %]?action=getiname">get an i-name!</a>)
 [% END %]
 </form>
