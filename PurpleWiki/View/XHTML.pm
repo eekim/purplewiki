@@ -6,7 +6,84 @@ use PurpleWiki::Tree;
 
 my @sectionState;
 
-# functions
+my %structuralActionMap = (
+			   'section' => {
+			       'pre' => sub { push @sectionState, 'section' },
+			       'mid' => \&_traverseStructuralWithChild,
+			       'post' => sub { pop @sectionState },
+			   },
+			   'indent' => {
+			       'pre' => sub
+			       { print "<div class=\"indent\">\n"},
+			       'mid' => \&_traverseStructuralWithChild,
+			       'post' => sub { print "</div>"},
+			   },
+			   'ul' => {
+			       'pre' => sub { print "<ul>\n" },
+			       'mid' => \&_traverseStructuralWithChild,
+			       'post' => sub { print "</ul>" },
+			   },
+			   'ol' => {
+			       'pre' => sub { print "<ol>\n" },
+			       'mid' => \&_traverseStructuralWithChild,
+			       'post' => sub { print "</ol>" },
+			   },
+			   'dl' => {
+			       'pre' => sub { print "<dl>\n" },
+			       'mid' => \&_traverseStructuralWithChild,
+			       'post' => sub { print "</dl>"},
+			   },
+			   'h' => {
+			       'pre' => sub
+			       { print '<h' . &_headerLevel . '>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub
+			       { print '</h' . &_headerLevel . '>' },
+			   },
+			   'p' => {
+			       'pre' => sub { print '<p>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub { print '</p>' },
+			   },
+			   'li' => {
+			       'pre' => sub { print '<li>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub { print '</li>' },
+			   },
+			   'dd' => {
+			       'pre' => sub { print '<dd>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub { print '</dd>' },
+			   },
+			   'dt' => {
+			       'pre' => sub { print '<dt>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub { print '</dt>' },
+			   },
+			   'pre' => {
+			       'pre' => sub { print '<pre>' },
+			       'mid' => \&_traverseInlineIfContent,
+			       'post' => sub { print '</pre>' },
+			   },
+			   );
+
+my %inlineActionMap = (
+		     'b' => {
+			 'pre' => sub { print '<b>' },
+			 'mid' => \&_traverseInlineWithData,
+			 'post' => sub {print '</b>' },
+		     },
+		     'i' => {
+			 'pre' => sub { print '<i>' },
+			 'mid' => \&_traverseInlineWithData,
+			 'post' => sub { print '</i>' },
+		     },
+		     'tt' => {
+			 'pre' => sub { print '<tt>' },
+			 'mid' => \&_traverseInlineWithData,
+			 'post' => sub { print '</tt>' },
+		     },
+		       );
 
 sub view {
     my ($wikiTree, %params) = @_;
@@ -21,70 +98,39 @@ sub _traverseStructural {
 
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
-            if ($node->type eq 'section') {
-                push @sectionState, 'section';
-                &_traverseStructural($node->children, $indentLevel + 1);
-                pop @sectionState;
-            }
-            elsif ($node->type eq 'indent') {
-                print "<div class=\"indent\">\n";
-                &_traverseStructural($node->children, $indentLevel + 1);
-                print '</div>';
-            }
-            elsif ($node->type eq 'ul') {
-                print "<ul>\n";
-                &_traverseStructural($node->children, $indentLevel + 1);
-                print '</ul>';
-            }
-            elsif ($node->type eq 'ol') {
-                print "<ol>\n";
-                &_traverseStructural($node->children, $indentLevel + 1);
-                print '</ol>';
-            }
-            elsif ($node->type eq 'dl') {
-                print "<dl>\n";
-                &_traverseStructural($node->children, $indentLevel + 1);
-                print '</dl>';
-            }
-            elsif ($node->type eq 'h') {
-                print '<h' . &_headerLevel . '>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</h' . &_headerLevel . '>';
-            }
-            elsif ($node->type eq 'p') {
-                print '<p>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</p>';
-            }
-            elsif ($node->type eq 'li') {
-                print '<li>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</li>';
-            }
-            elsif ($node->type eq 'dd') {
-                print '<dd>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</dd>';
-            }
-            elsif ($node->type eq 'dt') {
-                print '<dt>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</dt>';
-            }
-            elsif ($node->type eq 'pre') {
-                print '<pre>';
-                &_traverseInline($node->content->data, $indentLevel)
-                    if ($node->content);
-                print '</pre>';
-            }
-            print "\n" if ($node->type ne 'section');
+	    if (defined($structuralActionMap{$node->type})) {
+		&{$structuralActionMap{$node->type}{'pre'}};
+		&{$structuralActionMap{$node->type}{'mid'}}($node,
+							    $indentLevel);
+		&{$structuralActionMap{$node->type}{'post'}};
+	    } 
+	    &_terminateLine unless ($node->type eq 'section');
         }
     }
+}
+
+sub _terminateLine {
+    print "\n";
+}
+
+sub _traverseInlineIfContent {
+    my $node = shift;
+    my $indentLevel = shift;
+    if ($node->content) {
+	_traverseInline($node->content->data, $indentLevel);
+    }
+}
+
+sub _traverseInlineWithData {
+    my $node = shift;
+    my $indentLevel = shift;
+    _traverseInline($node->data, $indentLevel);
+}
+
+sub _traverseStructuralWithChild {
+    my $node = shift;
+    my $indentLevel = shift;
+    _traverseStructural($node->children, $indentLevel + 1);
 }
 
 sub _traverseInline {
@@ -92,29 +138,21 @@ sub _traverseInline {
 
     foreach my $node (@{$nodeListRef}) {
         if (ref $node) {
-            if ($node->type eq 'b') {
-                print '<b>';
-                &_traverseInline($node->data, $indentLevel);
-                print '</b>';
-            }
-            elsif ($node->type eq 'i') {
-                print '<i>';
-                &_traverseInline($node->data, $indentLevel);
-                print '</i>';
-            }
-            elsif ($node->type eq 'tt') {
-                print '<tt>';
-                &_traverseInline($node->data, $indentLevel);
-                print '</tt>';
-            }
+	    if ($node->type eq 'nowiki') {
+                print &_quoteHtml($node->data->[0]);
+	    }
             elsif ($node->type eq 'link') {
                 print '<a href="' . $node->href . '">';
                 print &_quoteHtml($node->data->[0]);
                 print '</a>';
             }
-            elsif ($node->type eq 'nowiki') {
-                print &_quoteHtml($node->data->[0]);
+	    elsif (defined($inlineActionMap{$node->type})) {
+		&{$inlineActionMap{$node->type}{'pre'}};
+		&{$inlineActionMap{$node->type}{'mid'}}($node,
+							$indentLevel);
+		&{$inlineActionMap{$node->type}{'post'}};
             }
+
         }
         else {
             print &_quoteHtml($node);
