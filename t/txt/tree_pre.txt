@@ -12,7 +12,3 @@ The function, {{{helloWorld()}}}, tells the story.
 {{{
 Okay, now for some real {{{funkiness}}}!
 }}}
-
-MoinMoin funkiness: {{{
-code excerpt
-}}}

@@ -1,12 +1,20 @@
+{{{
 void helloWorld() {
     printf("Hello, world!\n");
 }
+}}}
 
+{{{
   more preformatted content.
  pretty cool, eh?
+}}}
 
+{{{
 Yeah, pretty cool.
+}}}
 
-The function, <tt>helloWorld()</tt>, tells the story.
+The function, {{{helloWorld()}}}, tells the story.
 
-Okay, now for some real <tt>funkiness</tt>!
+{{{
+Okay, now for some real {{{funkiness}}}!
+}}}
