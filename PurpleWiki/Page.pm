@@ -1,6 +1,6 @@
 # PurpleWiki::Page.pm
 #
-# $Id: Page.pm,v 1.7 2002/11/24 08:23:13 eekim Exp $
+# $Id: Page.pm,v 1.8 2002/11/24 08:55:15 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -31,13 +31,13 @@ package PurpleWiki::Page;
 
 # mappings between PurpleWiki code and code withing useMod
 
-# $Id: Page.pm,v 1.7 2002/11/24 08:23:13 eekim Exp $
+# $Id: Page.pm,v 1.8 2002/11/24 08:55:15 eekim Exp $
 
 sub exists {
     my $id = shift;
 
     if (defined &UseModWiki::pageExists) {
-        (defined &UseModWiki::pageExists($id)) ? return 1 : return undef;
+        &UseModWiki::pageExists($id) ? return 1 : return 0;
     }
     else {
         return 0;
