@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.11 2003/06/15 00:13:49 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.12 2003/06/19 03:22:09 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -236,6 +236,7 @@ sub registerHandlers {
 sub view {
     my ($wikiTree, %params) = @_;
 
+    @sectionState = ();
     &registerHandlers;
     $params{url} = '' unless defined($params{url});
     return &PurpleWiki::View::EventHandler::view($wikiTree, %params);
