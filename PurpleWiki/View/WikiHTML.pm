@@ -1,5 +1,6 @@
 package PurpleWiki::View::WikiHTML;
 
+use PurpleWiki::Page;
 use PurpleWiki::Tree;
 
 # globals
@@ -173,11 +174,43 @@ sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
 
     foreach my $inlineNode (@{$nodeListRef}) {
-        if ($inlineNode->type eq 'link' || $inlineNode->type eq 'wikiword' ||
-            $inlineNode->type eq 'url' || $inlineNode->type eq 'freelink') {
+        if ($inlineNode->type eq 'link' || $inlineNode->type eq 'url') {
             print '<a href="' . $inlineNode->href . '">';
             print &_quoteHtml($inlineNode->content);
             print '</a>';
+        }
+        elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
+            if (&PurpleWiki::Page::exists($inlineNode->content)) {
+                if ($inlineNode->type eq 'freelink') {
+                    print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
+                        '">';
+                }
+                elsif ($inlineNode->content =~ /:/) {
+                    print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
+                        '">';
+                }
+                else {
+                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
+                        '">';
+                }
+                print $inlineNode->content . '</a>';
+            }
+            else {
+                print $inlineNode->content;
+                if ($inlineNode->type eq 'freelink') {
+                    print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
+                        '">';
+                }
+                elsif ($inlineNode->content =~ /:/) {
+                    print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
+                        '">';
+                }
+                else {
+                    print '<a href="' . &PurpleWiki::Page::getWikiWordLink($inlineNode->content) .
+                        '">';
+                }
+                print '?</a>';
+            }
         }
         elsif (defined($inlineActionMap{$inlineNode->type})) {
             &{$inlineActionMap{$inlineNode->type}{'pre'}};
