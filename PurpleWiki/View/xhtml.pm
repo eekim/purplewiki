@@ -1,6 +1,6 @@
 # PurpleWiki::View::xhtml.pm
 #
-# $Id: xhtml.pm,v 1.1.2.1 2003/01/20 23:03:13 eekim Exp $
+# $Id: xhtml.pm,v 1.1.2.2 2003/01/20 23:15:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -56,9 +56,9 @@ sub _htmlHeader {
     $outputString = "<html>\n<head>\n";
     $outputString .= '<title>' . $wikiTree->title . "</title>\n"
         if ($wikiTree->title);
-    if ($params{cssFile}) {
+    if ($params{css_file}) {
         $outputString .= '<link rel="stylesheet" href="';
-        $outputString .= $params{cssFile};
+        $outputString .= $params{css_file};
         $outputString .= '" type="text/css" />' . "\n";
     }
     if ($wikiTree->lastNid) {
