@@ -1,20 +1,22 @@
 #!/usr/bin/perl
 
 use IO::File;
+use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
 if (@ARGV < 1) {
-  print "Usage: $0 wikifile.txt [output_driver]\n";
+  print "Usage: $0 config_dir wikifile.txt [output_driver]\n";
   exit;
 }
 
-my $wikiContent = &readFile($ARGV[0]);
+my $config = PurpleWiki::Config->new($ARGV[0]);
+my $wikiContent = &readFile($ARGV[1]);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
-my $wiki = $wikiParser->parse($wikiContent, 'add_node_ids'=>1);
+my $wiki = $wikiParser->parse($wikiContent, config=>$config, add_node_ids=>1);
 $wiki->title($ARGV[0]) if (!$wiki->title);
 
-if (@ARGV == 2) {
-    print $wiki->view($ARGV[1]);
+if (@ARGV == 3) {
+    print $wiki->view($ARGV[2]);
 }
 else {
     print $wiki->view('debug');
