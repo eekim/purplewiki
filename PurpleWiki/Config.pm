@@ -106,7 +106,7 @@ sub _init {
     # because it is expanded in the file
     $self->{AppConfig}->set('DataDir', $directory);
 
-    $self->{AppConfig}->file($file) || die "unable to parse config file";
+    $self->{AppConfig}->file($file) || die "unable to parse config file: $file";
     $self->_initLinkPatterns();
 
     # make sure LocalSequenceDir is set to DataDir if it
