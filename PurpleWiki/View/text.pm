@@ -1,6 +1,6 @@
 # PurpleWiki::View::text.pm
 #
-# $Id: text.pm,v 1.4 2003/06/20 23:54:02 cdent Exp $
+# $Id: text.pm,v 1.5 2003/08/14 07:01:51 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -296,22 +296,14 @@ __END__
 
 PurpleWiki::View::text - Plain text view driver
 
-=head1 SYNOPSIS
-
-  use PurpleWiki::View::text;
-
-=head1 DESCRIPTION
-
-blah blah blah
-
-=head1 METHODS
-
-blah blah blah
-
 =head1 AUTHORS
 
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::EventHandler>.
 
 =cut

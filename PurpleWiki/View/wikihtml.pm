@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.5 2003/07/23 04:39:42 eekim Exp $
+# $Id: wikihtml.pm,v 1.6 2003/08/14 07:01:51 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -295,22 +295,14 @@ __END__
 
 PurpleWiki::View::wikihtml - WikiHTML view driver
 
-=head1 SYNOPSIS
-
-  use PurpleWiki::View::wikihtml;
-
-=head1 DESCRIPTION
-
-blah blah blah
-
-=head1 METHODS
-
-blah blah blah
-
 =head1 AUTHORS
 
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::EventHandler>.
 
 =cut

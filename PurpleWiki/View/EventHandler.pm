@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.3 2003/06/24 00:37:37 eekim Exp $
+# $Id: EventHandler.pm,v 1.4 2003/08/14 07:01:51 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -219,16 +219,17 @@ __END__
 
 PurpleWiki::View::EventHandler - Event handlers for View drivers
 
-=head1 SYNOPSIS
-
-
 =head1 DESCRIPTION
 
-blah blah blah
+This is a generic module for serializing a PurpleWiki::Tree.  It
+assigns a pre, main, and post event for all node types, both
+structural and inline.  These events are meant to be overridden by the
+actual view drivers.  See these drivers for an example of how to use
+EventHandler.
 
-=head1 METHODS
-
-blah blah blah
+Eventually, we plan on converting this module into a base class from
+which all view drivers inherit.  There would be a method for each
+event, and view drivers would simply override these methods.
 
 =head1 AUTHORS
 

@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.6 2003/07/31 04:21:53 cdent Exp $
+# $Id: wikitext.pm,v 1.7 2003/08/14 07:01:51 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -264,22 +264,14 @@ __END__
 
 PurpleWiki::View::wikitext - WikiText view driver
 
-=head1 SYNOPSIS
-
-  use PurpleWiki::View::wikitext;
-
-=head1 DESCRIPTION
-
-blah blah blah
-
-=head1 METHODS
-
-blah blah blah
-
 =head1 AUTHORS
 
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::EventHandler>.
 
 =cut
