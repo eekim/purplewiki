@@ -122,17 +122,15 @@ PurpleWiki::View::Filter - A Quick Access View Filter.
 
     my $config = new PurpleWiki::Config('/path/to/wikidb');
     my $parser = new PurpleWiki::Parser::WikiText;
-    my $filter = new PurpleWiki::View::Filter(config => $config);
+    my $filter = new PurpleWiki::View::Filter();
 
-    my $page = new PurpleWiki::Database::Page(id => $pageName, 
-                                              config => $config);
+    my $page = new PurpleWiki::Database::Page(id => $pageName);
+                                              
 
     die "$page does not exist!\n" if not $page->pageExists();
     $page->openPage();
 
-    my $tree = $parser->parse($page->getText()->getText(), 
-                              'add_node_ids' => 0,
-                              'config' => $config);
+    my $tree = $parser->parse($page->getText()->getText(), 'add_node_ids'=>0);
 
     $filter->setFilter(imageMain => sub {print shift->content."\n"});
     $filter->process($tree);
