@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.7.6.2 2003/05/21 05:19:01 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.3 2003/05/21 06:13:24 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -59,6 +59,10 @@ sub parse {
     my %params = @_;
 
     $url = $params{url};
+
+    # set default parameters
+    $params{wikiword} = 1 if (!defined $params{wikiword});
+    $params{freelink} = 1 if (!defined $params{freelink});
 
     my $tree = PurpleWiki::Tree->new;
     my ($currentNode, @sectionState, $isStart, $nodeContent);
@@ -124,20 +128,23 @@ sub parse {
             foreach $listType (keys(%listMap)) {
                 if ($line =~ /^$listMap{$listType}$/) {
                     $currentNode = &_terminateParagraph($currentNode,
-                                                        \$nodeContent);
+                                                        \$nodeContent,
+                                                        %params);
                     while ($indentDepth > 0) {
                         $currentNode = $currentNode->parent;
                         $indentDepth--;
                     }
                     $currentNode = &_parseList($listType, length $1,
                                                \$listDepth, $currentNode,
+                                               \%params,
                                                $2, $3);
                     $isStart = 0 if ($isStart);
                 }
             }
         }
         elsif ($line =~ /^(\:+)(.*)$/) {  # indented paragraphs
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -155,7 +162,7 @@ sub parse {
             $nodeContent =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'p',
-                'content'=>&_parseInlineNode($nodeContent));
+                'content'=>&_parseInlineNode($nodeContent, %params));
             if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
                 $currentNode->id($currentNid);
             }
@@ -164,7 +171,8 @@ sub parse {
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^(\=+)\s+(.+)\s+\=+/) {  # header/section
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -194,7 +202,7 @@ sub parse {
             $nodeContent =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
             $currentNid = $1;
             $currentNode = $currentNode->insertChild('type'=>'h',
-                'content'=>&_parseInlineNode($nodeContent));
+                'content'=>&_parseInlineNode($nodeContent, %params));
             if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
                 $currentNode->id($currentNid);
             }
@@ -213,14 +221,16 @@ sub parse {
                     $indentDepth--;
                 }
                 $currentNode = &_terminateParagraph($currentNode,
-                                                    \$nodeContent);
+                                                    \$nodeContent,
+                                                    %params);
                 $currentNode = $currentNode->insertChild('type'=>'pre');
             }
             $nodeContent .= "$1\n";
             $isStart = 0 if ($isStart);
         }
         elsif ($line =~ /^\s*$/) {  # blank line
-            $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+            $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                                %params);
             while ($listDepth > 0) {
                 $currentNode = $currentNode->parent;
                 $listDepth--;
@@ -241,14 +251,16 @@ sub parse {
                     $indentDepth--;
                 }
                 $currentNode = &_terminateParagraph($currentNode,
-                                                    \$nodeContent);
+                                                    \$nodeContent,
+                                                    %params);
                 $currentNode = $currentNode->insertChild('type'=>'p');
             }
             $nodeContent .= "$line\n";
             $isStart = 0 if ($isStart);
         }
     }
-    $currentNode = &_terminateParagraph($currentNode, \$nodeContent);
+    $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
+                                        %params);
     if (scalar @authors > 0) {
         $tree->authors(\@authors);
     }
@@ -262,7 +274,7 @@ sub parse {
 ### private
 
 sub _terminateParagraph {
-    my ($currentNode, $nodeContentRef) = @_;
+    my ($currentNode, $nodeContentRef, %params) = @_;
     my ($currentNid);
 
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre')) {
@@ -272,7 +284,7 @@ sub _terminateParagraph {
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
-        $currentNode->content(&_parseInlineNode(${$nodeContentRef}));
+        $currentNode->content(&_parseInlineNode(${$nodeContentRef}, %params));
         undef ${$nodeContentRef};
         return $currentNode->parent;
     }
@@ -281,7 +293,7 @@ sub _terminateParagraph {
 
 sub _parseList {
     my ($listType, $listLength, $listDepthRef,
-        $currentNode, @nodeContents) = @_;
+        $currentNode, $paramRef, @nodeContents) = @_;
     my ($currentNid);
 
     while ($listLength > ${$listDepthRef}) {
@@ -296,7 +308,7 @@ sub _parseList {
     $currentNid = $1;
     if ($listType eq 'dl') {
         $currentNode = $currentNode->insertChild('type'=>'dt',
-            'content'=>&_parseInlineNode($nodeContents[0]));
+            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
@@ -304,7 +316,7 @@ sub _parseList {
         $nodeContents[1] =~  s/\s+\[nid ([A-Z0-9]+)\]$//s;
         $currentNid = $1;
         $currentNode = $currentNode->insertChild('type'=>'dd',
-            'content'=>&_parseInlineNode($nodeContents[1]));
+            'content'=>&_parseInlineNode($nodeContents[1], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
@@ -312,7 +324,7 @@ sub _parseList {
     }
     else {
         $currentNode = $currentNode->insertChild('type'=>'li',
-            'content'=>&_parseInlineNode($nodeContents[0]));
+            'content'=>&_parseInlineNode($nodeContents[0], %{$paramRef}));
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
             $currentNode->id($currentNid);
         }
@@ -322,7 +334,7 @@ sub _parseList {
 }
 
 sub _parseInlineNode {
-    my $text = shift;
+    my ($text, %params) = @_;
     my (@inlineNodes);
 
     # markup regular expressions
@@ -341,20 +353,27 @@ sub _parseInlineNode {
     my $rxQuoteDelim = '(?:"")?';
     my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
 
-    my @nodes = split(/($rxNowiki |
-			$rxTt |
-			$rxFippleQuotes |
-			$rxB |
-			$rxTripleQuotes |
-			$rxI |
-			$rxDoubleQuotes |
-			\[$rxProtocols$rxAddress\s*.*?\] |
-			$rxProtocols$rxAddress |
-			(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim |
-			[A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim |
-			$rxWikiWord(?:\#\d+)?$rxQuoteDelim |
-			$rxDoubleBracketed
-			)/xs, $text);
+    my $rx = qq{
+        $rxNowiki |
+        $rxTt |
+        $rxFippleQuotes |
+        $rxB |
+        $rxTripleQuotes |
+        $rxI |
+        $rxDoubleQuotes |
+        \\\[$rxProtocols$rxAddress\\s*.*?\\\] |
+        $rxProtocols$rxAddress};
+    if ($params{wikiword}) {
+        $rx .= qq{ |
+        (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#\\d+)?$rxQuoteDelim |
+        [A-Z]\\w+:$rxWikiWord(?:\\\#\\d+)?$rxQuoteDelim |
+        $rxWikiWord(?:\\\#\d+)?$rxQuoteDelim};
+    }
+    if ($params{freelink}) {
+        $rx .= qq{ |
+        $rxDoubleBracketed};
+    }
+    my @nodes = split(/($rx)/xs, $text);
     foreach my $node (@nodes) {
         if ($node =~ /^$rxNowiki$/s) {
             $node =~ s/^<nowiki>//;
@@ -366,37 +385,37 @@ sub _parseInlineNode {
             $node =~ s/^<tt>//;
             $node =~ s/<\/tt>$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'tt',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^$rxFippleQuotes$/s) {
             $node =~ s/^'''//;
             $node =~ s/'''$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^$rxB$/s) {
             $node =~ s/^<b>//;
             $node =~ s/<\/b>$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^$rxTripleQuotes$/s) {
             $node =~ s/^'''//;
             $node =~ s/'''$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'b',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^$rxI$/s) {
             $node =~ s/^<i>//;
             $node =~ s/<\/i>$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^$rxDoubleQuotes$/s) {
             $node =~ s/^''//;
             $node =~ s/''$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
-                'children'=>&_parseInlineNode($node));
+                'children'=>&_parseInlineNode($node, %params));
         }
         elsif ($node =~ /^\[($rxProtocols$rxAddress)\s*(.*?)\]$/s) {
             # bracketed link
@@ -419,12 +438,14 @@ sub _parseInlineNode {
                                                 'content'=>$node);
             }
         }
-        elsif ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s) {
+        elsif ($params{wikiword} &&
+               ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
-        elsif ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s) {
+        elsif ($params{wikiword} &&
+               ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
             if (&PurpleWiki::Page::siteExists($site)) {
@@ -452,12 +473,13 @@ sub _parseInlineNode {
                                                 'content'=>$page);
             }
         }
-        elsif ($node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
+        elsif ($params{wikiword} &&
+               ($node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
-        elsif ($node =~ /$rxDoubleBracketed/s) {
+        elsif ($params{freelink} && ($node =~ /$rxDoubleBracketed/s)) {
             $node =~ s/^\[\[//;
             $node =~ s/\]\]$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
@@ -718,6 +740,9 @@ are supported:
 
   add_node_ids -- Add IDs to structural nodes that do not already
                   have them.
+
+  wikiword     -- Parse WikiWords.
+  freelink     -- Parse free links (e.g. [[free link]]).
 
 =head1 AUTHORS
 

@@ -1,6 +1,6 @@
 # PurpleWiki::View::debug.pm
 #
-# $Id: debug.pm,v 1.1 2003/01/18 05:23:45 eekim Exp $
+# $Id: debug.pm,v 1.1.6.1 2003/05/21 06:13:24 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,64 +32,91 @@ package PurpleWiki::View::debug;
 use 5.005;
 use strict;
 use PurpleWiki::Tree;
+use PurpleWiki::View::EventHandler;
+
+# structural node event handlers
+
+sub structuralStructurePre {
+    my ($node, %params) = @_;
+
+    return &_indent($params{indentLevel}, $node->type) . "\n";
+}
+
+sub structuralContentPre {
+    my ($node, %params) = @_;
+
+    return &_indent($params{indentLevel}, $node->type);
+}
+
+# inline node event handlers
+
+sub inlinePre {
+    my ($node, %params) = @_;
+
+    return uc($node->type) . ':';
+}
+
+sub inlineContentMain {
+    my ($node, %params) = @_;
+
+    return $node->content . "\n";
+}
 
 # functions
+
+sub registerHandlers {
+    $PurpleWiki::View::EventHandler::structuralHandler{section}->{pre} = \&structuralStructurePre;
+    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} = \&structuralStructurePre;
+    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&structuralStructurePre;
+    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{pre} = \&structuralStructurePre;
+    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{pre} = \&structuralStructurePre;
+
+    $PurpleWiki::View::EventHandler::structuralHandler{h}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{pre} = \&structuralContentPre;
+
+    $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{tt}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{url}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{image}->{pre} = \&inlinePre;
+
+    $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} = \&inlineContentMain;
+}
 
 sub view {
     my ($wikiTree, %params) = @_;
 
-    return 'title:' . $wikiTree->title . "\n" .
-        &_traverseStructural($wikiTree->root->children, 0);
+    &registerHandlers;
+    return &_header($wikiTree, %params) .
+        &PurpleWiki::View::EventHandler::view($wikiTree, %params);
 }
 
-sub _traverseStructural {
-    my ($nodeListRef, $indentLevel) = @_;
-    my $outputString;
+sub _header {
+    my ($wikiTree, %params) = @_;
 
-    if ($nodeListRef) {
-        foreach my $node (@{$nodeListRef}) {
-            $outputString .= ' ' x ($indentLevel * 2) . $node->type . ':';
-            if ( ($node->type eq 'section') || ($node->type eq 'indent') ||
-                 ($node->type eq 'ul') || ($node->type eq 'ol') ||
-                 ($node->type eq 'dl') ) {
-                $outputString .= "\n";
-            }
-            if ($node->content) {
-                foreach my $inlineNode (@{$node->content}) {
-                    $outputString .= uc($inlineNode->type) . ':'
-                        if ($inlineNode->type ne 'text');
-                    if ($inlineNode->children) {
-                        $outputString .= &_traverseInline($inlineNode->children,
-                                                          $indentLevel);
-                    }
-                    else {
-                        $outputString .= $inlineNode->content . "\n";
-                    }
-                }
-            }
-            if ($node->children) {
-                $outputString .= &_traverseStructural($node->children,
-                                                      $indentLevel + 1);
-            }
-        }
-    }
-    return $outputString;
+    return 'title:' . $wikiTree->title . "\n";
 }
 
-sub _traverseInline {
-    my ($nodeListRef, $indentLevel) = @_;
-    my $outputString;
+# private
 
-    foreach my $node (@{$nodeListRef}) {
-        if (defined $node->content) {
-            $outputString .= $node->content . "\n";
-        }
-        else {
-            $outputString .= uc($node->type) . ':';
-            $outputString .= &_traverseInline($node->children, $indentLevel);
-        }
-    }
-    return $outputString;
+sub _indent {
+    my ($indentLevel, $nodeType) = @_;
+
+    return ' ' x ($indentLevel * 2) . $nodeType . ':';
 }
 
 1;
@@ -97,7 +124,7 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::View::debug - Debug view driver
+PurpleWiki::View::debug - Debug View driver
 
 =head1 SYNOPSIS
 
