@@ -27,7 +27,7 @@ etc/config
 etc/intermap
 etc/purple.css
 etc/purplewiki.css
-extras/purple.pl
+extras/mt_purple.pl
 purple
 t/config
 t/config.t
