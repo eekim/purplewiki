@@ -28,10 +28,10 @@ sub readFile {
 
 #########################
 
-### tree_test10.txt -- Granular WikiWord links
+### tree_interlinks.txt -- Granular WikiWord links
 
 my $config = new PurpleWiki::Config($configdir);
-my $wikiContent = &readFile('t/txt/tree_test10.txt');
+my $wikiContent = &readFile('t/txt/tree_interlinks.txt');
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config => $config);
 
