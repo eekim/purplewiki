@@ -17,6 +17,7 @@ PurpleWiki/Database/Section.pm
 PurpleWiki/Database/Text.pm
 PurpleWiki/Database/User/UseMod.pm
 PurpleWiki/InlineNode.pm
+PurpleWiki/Locale.pm
 PurpleWiki/Page.pm
 PurpleWiki/Parser/MoinMoin.pm
 PurpleWiki/Parser/WikiText.pm
@@ -63,6 +64,7 @@ extras/createUsernameIndex.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
+extras/search.cgi
 extras/wiki_trans.pl
 extras/wikiwhiteboard/sketch.svg
 extras/wikiwhiteboard/wikiwhiteboard.pl
@@ -166,6 +168,7 @@ t/txt/moin_pre2.txt
 t/txt/moin_ul.txt
 wikidb/config
 wikidb/intermap
+wikidb/messages.l10n
 wikidb/templates/en/editConflict.tt
 wikidb/templates/en/editPage.tt
 wikidb/templates/en/handler.tt
