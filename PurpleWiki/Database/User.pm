@@ -1,7 +1,7 @@
 # PurpleWiki::Database::User
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: User.pm,v 1.1.2.2 2003/01/30 08:31:48 cdent Exp $
+# $Id: User.pm,v 1.1.2.3 2003/01/31 06:20:38 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,11 @@ package PurpleWiki::Database::User;
 
 # PurpleWiki User Data Access
 
-# $Id: User.pm,v 1.1.2.2 2003/01/30 08:31:48 cdent Exp $
+# $Id: User.pm,v 1.1.2.3 2003/01/31 06:20:38 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
+use PurpleWiki::Database;
 
 my @DataFields = (
     'username', 'id', 'randkey', 'rev', 'createtime', 'createip',
@@ -45,8 +46,10 @@ my @DataFields = (
     'rcshowedit', 'tzoffset', 'editrows', 'editcols',
 );
 
-# Creates a new user reference, may be a
-# a new one or an existing one.
+# Creates a new User, may be a reference to
+# a new one or an existing one. Accepts any
+# arguments and puts them onto $self, but 
+# only @DataFields are saved.
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -57,6 +60,9 @@ sub new {
     return $self;
 }
 
+# Initializes a new User object. If the 
+# user exists on disk, the disk file is loaded and
+# parsed. Otherwise a new user is created.
 sub _init {
     my $self = shift;
 
@@ -108,11 +114,6 @@ sub _getNewUserID {
     &PurpleWiki::Database::ReleaseLock();
     return $id;
 }
-
-
-
-
-
 
 sub getID {
     my $self = shift;
