@@ -23,6 +23,8 @@ WriteMakefile(
 	AppConfig => 1.55,
 	CGI => 0,
 	CGI::Carp => 0,
+        CGI::Session => 0,
+        XDI::SPIT => 0,
 	}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT   => 'WikiWiki with purple numbers',
