@@ -1,6 +1,7 @@
 # PurpleWiki::View::xhtml.pm
+# vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: xhtml.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id: xhtml.pm,v 1.6 2004/01/26 00:34:47 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -56,7 +57,11 @@ sub _htmlHeader {
     my ($wikiTree, %params) = @_;
     my $outputString;
 
-    $outputString = "<html>\n<head>\n";
+    $outputString = qq(<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 ) .
+       qq(Strict//EN"\n) .
+       qq("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">\n) .
+       qq(<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">) .
+       qq(<head>\n);
     $outputString .= '<title>' . $wikiTree->title . "</title>\n"
         if ($wikiTree->title);
     if ($params{css_file}) {
