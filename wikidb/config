@@ -22,6 +22,9 @@ CaptchaDataDir = $DataDir/captcha
 CaptchaOutputDir = /var/www/htdocs/captcha
 CaptchaWebDir = /captcha
 
+### Spam Regular Expressions
+#SpamRegexp = '/var/www/spamre.txt'
+
 ### PurpleWiki Modules
 ParserDriver        = PurpleWiki::Parser::WikiText
 TemplateDriver      = PurpleWiki::Template::TT

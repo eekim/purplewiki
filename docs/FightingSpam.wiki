@@ -51,3 +51,10 @@ link does not appear if {{{userName}}} is not defined (additions in
 </div>
 [% END %]
 }}}
+
+Finally, you can create a file of blacklisted regular expressions.
+Anytime someone attempts to add text that matches one of those
+expressions, the attempt will be rejected.  To use this feature, you
+create a file with blacklisted expressions on each line.  Then point
+the {{{SpamRegexp}}} variable in your config file to this file.  We
+advise you to limit this list to URLs to prevent false positives.

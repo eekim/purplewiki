@@ -62,6 +62,7 @@ docs/INames.wiki
 docs/Templates.wiki
 etc/purple.css
 etc/purplewiki.css
+etc/spamre.txt
 extras/blosxom/purple
 extras/mhonarc/README
 extras/mhonarc/mhpurple.pl
@@ -606,4 +607,3 @@ wikidb/templates/en/lib/pageHistory.tt
 wikidb/templates/en/lib/recentChanges.tt
 wikidb/templates/en/lib/searchResults.tt
 wiki.pl
-META.yml                                Module meta-data (added by MakeMaker)

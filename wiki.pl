@@ -844,6 +844,12 @@ sub GetFormCheck {
 }
 
 sub DoUpdatePrefs {
+  # if IP is on the banlist, don't allow updating preferences
+  if (!$acl->canEdit($user, undef)) {
+      $wikiTemplate->vars(&globalTemplateVars);
+      print GetHttpHeader() . $wikiTemplate->process('errors/editBlocked');
+      return;
+  }
   my $captchaCode = &GetParam("captcha", "");
   if ($captchaCode) {  # human confirmation
     my $humanCode = &GetParam("human_code", "");
@@ -1162,6 +1168,29 @@ sub DoPost {
   my $summary = GetParam("summary", "");
   my $authorAddr = $ENV{REMOTE_ADDR};
 
+  my $error_template = '';
+  $error_template = 'errors/editNotAllowed' if (!$acl->canEdit($user, $id));
+  $error_template = 'errors/pageCannotBeDefined'
+      if (($id eq 'SampleUndefinedPage') || ($id eq 'Sample_Undefined_Page'));
+  if ($config->SpamRegexp) {
+      my $foundSpam = 0;
+      if (open(SPAMRE, $config->SpamRegexp)) {
+          while (!$foundSpam && (my $re = <SPAMRE>)) {
+              chomp $re;
+              $foundSpam = 1 if ($string =~ /$re/);
+          }
+          close(SPAMRE);
+      }
+      $error_template = 'errors/editNotAllowed' if $foundSpam;
+  }
+
+  if ($error_template) {
+      $wikiTemplate->vars(&globalTemplateVars,
+                          pageName => $id);
+      print GetHttpHeader() . $wikiTemplate->process($error_template);
+      return;
+  }
+
   # adjust the contents of $string with the wiki drivers to save purple
   # numbers
 
@@ -1171,18 +1200,6 @@ sub DoPost {
   my $wiki = $wikiParser->parse($string,
                                 'add_node_ids'=>1,
                                 'freelink' => $config->FreeLinks);
-
-  my $error_template = '';
-  $error_template = 'errors/editNotAllowed'
-      if (!$acl->canEdit($user, $id));
-  $error_template = 'errors/pageCannotBeDefined'
-      if (($id eq 'SampleUndefinedPage') || ($id eq 'Sample_Undefined_Page'));
-  if ($error_template) {
-    $wikiTemplate->vars(&globalTemplateVars,
-                        pageName => $id);
-    print GetHttpHeader() . $wikiTemplate->process($error_template);
-    return;
-  }
 
   $summary =~ s/[\r\n]//g;
   # Add a newline to the end of the string (if it doesn't have one)
