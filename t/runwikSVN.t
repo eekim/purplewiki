@@ -19,7 +19,7 @@ END {
 }
 
 $ENV{PW_CONFIG_DIR} = 't';
-my $keep_errors = 0;
+my $keep_errors = 1;
 my $testdir = 't/out1';
 system('cp t/config.runSVN t/config');
 

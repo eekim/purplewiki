@@ -33,6 +33,9 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 package PurpleWiki::Archive::UseMod;
 
+use strict;
+use base 'PurpleWiki::Archive::Base';
+
 use PurpleWiki::Misc;
 use PurpleWiki::UseMod::Database;
 use PurpleWiki::Config;
@@ -61,7 +64,7 @@ sub new {
     $self->{fs3} = $config->FS3;
     $self->{fs} = $config->FS;
     $datadir = $config->DataDir;
-    $loc = $self->{pagedir} = $config->PageDir;
+    $self->{pagedir} = $config->PageDir;
     $self->{rcfile} = $config->RcFile;
     $self->{keepdays} = $config->KeepDays;
     $self->{keepdir} = $config->KeepDir;
@@ -148,16 +151,14 @@ sub putPage {
     return "Conflict";
   }
   my $section = $page->_getSection();
-  my $user = $args{userId};
-  my $userName = $user ? $user->username : undef;
+  my $userId = $args{userId};
 
   $page = PurpleWiki::Archive::ModPage->new(
                  pages => $self,
                  id => $id,
                  ts => $now,
                  text_default => $section,
-                 username => $userName,
-                 userid => $user );
+                 userid => $userId );
 
   my $fsexp = $self->{fs};
   my $keptRevision = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
@@ -173,15 +174,14 @@ sub putPage {
 #print STDERR "putPage($id, $newRev, $now)\n";
   $section->setRevision($newRev);
   $section->setTS($now);
-  $section->setUsername($userName);
   $section->setUserID($self->{userid});
   $keptRevision->addSection($section, $now);
   $keptRevision->trimKepts($now - ($self->{keepdays} * 24 * 60 * 60))
       if ($self->{keepdays});
   $keptRevision->save();
   $page->{revision} = $newRev;
-  $self->_WriteRcLog($args{pageId}, $args{changeSummary}, $now,
-                     $userName, $host);
+  $self->_WriteRcLog($args{pageId}, $args{changeSummary}, $now, $userId,
+                     $host);
 
   my $url = $args{url};
   &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
@@ -217,21 +217,24 @@ sub recentChanges {
 }
 
 sub _releaseLock {
-  PurpleWiki::UseMod::Database::ReleaseLock($self->{lockdir});
+  PurpleWiki::UseMod::Database::ReleaseLock(shift->{lockdir});
 }
 
 sub _requestLock {
-  # need to add code to force it when the lock is stale
-  PurpleWiki::UseMod::Database::RequestLock($self->{lockdir}, $self->{tempdir});
+    my $self = shift;
+
+    # need to add code to force it when the lock is stale
+    PurpleWiki::UseMod::Database::RequestLock($self->{lockdir},
+                                              $self->{tempdir});
 }
 
 sub _WriteRcLog {
-  my ($self, $id, $summary, $editTime, $username, $rhost) = @_;
+  my ($self, $id, $summary, $editTime, $userId, $rhost) = @_;
   my ($extraTemp, %extra);
 
   %extra = ();
-  $extra{'id'} = $user->id  if ($user);
-  $extra{'name'} = $username  if ($username ne "");
+  $extra{'id'} = $userId;
+  $extra{'name'} = "";
   $extraTemp = join($self->{fs2}, %extra);
   # The two fields at the end of a line are kind and extension-hash
   my $rc_line = join($self->{fs3}, $editTime, $id, $summary,
@@ -418,7 +421,7 @@ sub _getRevisionHistory {
     return { revision => $rev,
              dateTime => UseModWiki::TimeToText($ts),
              host => $host,
-             user => $user,
+             userId => $uid,
              summary => $summary };
 }
 
@@ -444,6 +447,7 @@ package PurpleWiki::Archive::ModPage;
 # $Id$
 
 use strict;
+use base 'PurpleWiki::Page';
 
 sub new {
     my $proto = shift;

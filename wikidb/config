@@ -66,7 +66,6 @@ RecentTop              # if set recent on top
 UseDiffLog             # if set save diffs to log
 KeepMajor              # if set keep major rev
 KeepAuthor             # if set keep author rev
-BracketText            # if set allow [URL text]
 UseAmPm                # if set use am/pm in times
 FreeUpper              # if set force upper case
 #ShowEdits             # if set show minor edits
@@ -82,7 +81,7 @@ SearchModule	=	Wiki
 # PurpleWiki Modules
 ParserDriver        = PurpleWiki::Parser::WikiText
 TemplateDriver      = PurpleWiki::Template::TT
-UserDatabaseDriver  = PurpleWiki::UseMod::User::UseMod
+UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
 ACLDriver           = PurpleWiki::ACL
 
 # Search Additional Config
@@ -104,7 +103,10 @@ UserDir     = $DataDir/user      # Stores user data
 TempDir     = $DataDir/temp      # Temporary files and locks
 LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
+SessionDir  = $DataDir/sessions  # sessions
 TemplateDir = $DataDir/templates # templates
 LocaleFile  = $DataDir/messages.l10n # Localization messages
-
+CaptchaDataDir = $DataDir/captcha
+CaptchaOutputDir = /var/www/htdocs/captcha
+CaptchaWebDir = /captcha
 # == End of Configuration =================================================

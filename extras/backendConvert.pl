@@ -30,10 +30,9 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
-
 package UseModWiki;
 use strict;
+use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
@@ -97,11 +96,11 @@ my ($rev, $host, $summary, $user);
 my %all = ();
 for my $id ($pages->allPages()) {
   for ($pages->getRevisions($id)) {
-    my ($rev, $host, $summary, $user, $pageTime)
-      = ($_->{revision}, $_->{host}, $_->{summary}, $_->{user}, $_->{dateTime});
+    my ($rev, $host, $summary, $userId, $pageTime)
+      = ($_->{revision}, $_->{host}, $_->{summary}, $_->{userId}, $_->{dateTime});
     while (1) {
       unless (defined($all{$pageTime})) {
-        $all{$pageTime} = [ $id, $rev, $host, $summary, $user ];
+        $all{$pageTime} = [ $id, $rev, $host, $summary, $userId ];
         last;
       }
       print STDERR "Dup time: $pageTime\n";
@@ -115,7 +114,7 @@ my $goodCount = 0;
 my $badCount = 0;
 
 for my $pageTime (sort { $a <=> $b } (keys %all)) {
-  my ($id, $rev, $host, $summary, $user) = @{$all{$pageTime}};
+  my ($id, $rev, $host, $summary, $userId) = @{$all{$pageTime}};
   my $page = $pages->getPage($id, $rev);
   print "$id, $rev\n" if $verb;
   if ($err = $newpages->putPage( pageId => $id,
@@ -123,7 +122,7 @@ for my $pageTime (sort { $a <=> $b } (keys %all)) {
                                  changeSummary => $summary,
                                  host => $host,
                                  timeStamp => $pageTime,
-                                 userId => $user )) {
+                                 userId => $userId )) {
     print STDERR "$id :: $rev -> $err\n";
     $badCount++;
   } else { $goodCount++; }

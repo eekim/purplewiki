@@ -11,7 +11,6 @@ UserName:
 [% userName %]
 [% ELSE %]
 <input type="text" name="p_username" size="20" maxlength="50" />
-(blank to remove, or valid page name)
 [% END %]
 <br />
 Set Password: <input type="password" name="p_password" size="15" maxlength="50" />
@@ -24,6 +23,15 @@ Default days to display: <input type="text" name="p_rcdays" value="[% rcDefault 
 <p><b>Misc:</b><br />
 Server time: [% serverTime %]<br />
 Time Zone offset (hours): <input type="text" name="p_tzoffset" value="[% tzOffset %]" size="4" maxlength="9" /></p>
+
+[% IF captcha %]
+<input type="hidden" name="captcha" value="[% captcha %]">
+<p><b>Confirmation:</b><br />
+Please enter the characters in the image below:
+<input type="text" name="human_code" size="10" /></p>
+
+<p><img src="[% captchaDir %]/[% captcha %].png" /></p>
+[% END %]
 
 <p><input type="submit" name="Save" value="Save" /></p>
 </form>

@@ -22,7 +22,7 @@ add:
   DefaultLanguage    = en
   #CookieName         = YourWiki
   ParserDriver       = PurpleWiki::Parser::WikiText
-  UserDatabaseDriver = PurpleWiki::UseMod::User::UseMod
+  UserDatabaseDriver = PurpleWiki::UserDB::UseMod
   ACLDriver          = PurpleWiki::ACL
   DatabasePackage = PurpleWiki::Archive::UseMod
 

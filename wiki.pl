@@ -30,10 +30,11 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
-
 package UseModWiki;
+use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use strict;
+my $useCap=0;
+eval "use Authen::Captcha; $useCap=1;";
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use PurpleWiki::Config;
@@ -64,11 +65,19 @@ my %modules = $config->Module;
 my @loaderror = ();
 
 for my $module (@modules) {
-    my $class = $modules{$module};
-    next unless $class;
+    loadModule($modules{$module});
+}
+
+for my $module (keys %modules) {
+    loadModule($modules{$module}) unless ($context{$module});
+}
+
+sub loadModule {
+    my $class = shift;
+    return unless $class;
     eval "require $class";
     if ($@) {
-        push(@loaderror, "Error $@ loading $class for $module\n");
+        push(@$loadErrors, "Error $@ loading $class for $module\n");
         next;
     }
     $class .= 's' if ($module eq 'pages' && substr($class,-1,1) ne 's');
@@ -79,7 +88,7 @@ for my $module (@modules) {
 
 #my $wikiParser = $context{wikiparser};
 #my $wikiTemplate = $context{template};
-#my $userDb = $context{userdb};
+my $userDb = $context{userdb};
 #my $acl = $context{acl};
 
 # Set our umask if one was put in the config file. - matthew
@@ -89,10 +98,17 @@ sub DoCommandRequest {
     my $request = InitCommandRequest();
     my $action = $request->action() || 'browse';
     my $actionClass = $config->Action->{$action};
-    if ($actionClass) {
-        $actionClass->$action($request);
-    }
+    $actionClass->$action($request) if ($actionClass);
     &logSession($request);
+}
+
+sub InitCommandRequst {
+    if (@loaderror) {
+        print STDERR join("\n",@loaderror),"\n";
+        die "Error initializing modules";
+    }
+    my $request = $context->{request}->parseRequest($context, argv => \@ARGV);
+    $request->{tzoffset} = 0;
 }
 
 sub DoCGIRequest {
@@ -105,16 +121,6 @@ sub DoCGIRequest {
     &logSession($request);
 }
 
-sub InitCommandRequst {
-    unless (@loaderror) {
-        print STDERR join("\n",@loaderror),"\n";
-        die "Error initializing modules";
-    }
-    my $request = $context->{request}->new($context, cgi => $q);
-    $request $request->parseARGV(\@ARGV);
-    $request->{tzoffset} = 0;
-}
-
 sub InitCGIRequest {
     my $q = new CGI;
     if (@loaderror) {
@@ -122,21 +128,19 @@ sub InitCGIRequest {
         print GetHttpHeader($q), $context->{template}->process('errors/internalError');
         return 0;
     }
-    my $request = $context->{request}->new($context, cgi => $q);
-    $request->parseCGI();
+    my $request = $context->{request}->parseRequest($context, cgi => $q);
     $request->{tzoffset} = 0;
     undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
 
-    my $siteId = $q->cookie($config->SiteName);
-    my $session = CGI::Session->new("driver:File", $siteId,
-                                {Directory => "$CONFIG_DIR/sessions"});
-    $request->session($session);
+    my $sid = ($config->CookieName) ? $q->cookie($config->CookieName)
+                                    : $q->cookie($config->SiteName);
+    $session = PurpleWiki::Session->new($sid);
     my $userId = $session->param('userId');
     $request->{user} = $userDb->loadUser($userId) if ($userId);
     $session->clear(['userId']) if (!$user);
+    $request->session($session);
 
     if ($user && $user->tzOffset != 0) {
-        $request->{tzoffset} = 0;
         $request->{tzoffset} = $user->tzOffset * (60 * 60);
     }
 
@@ -152,27 +156,13 @@ sub dumpParams {
   close $F;
 }
 
-sub getId {
-  my ($self, $req) = @_;
-
-  my $sid = ($config->CookieName) ? $q->cookie($config->CookieName) :
-      $q->cookie($config->SiteName);
-  $session = PurpleWiki::Session->new($sid);
-  my $userId = $session->param('userId');
-  $user = $userDb->loadUser($userId) if ($userId);
-  $session->clear(['userId']) if (!$user);
-
-  if ($user && $user->tzOffset != 0) {
-    $TimeZoneOffset = $user->tzOffset * (60 * 60);
-  }
-}
-
-sub parseCGI {
-  my ($self, $req) = @_;
+sub parseRequest {
+  my ($context) = shift;
+  my %args = @_;
   my ($id, $action, $text, $urlPage);
 
   if ($urlPage = (!$req->param) ? $self->{homepage}
-                         : $self->getParam($req, 'keywords', '')) {
+                                : $self->getParam($req, 'keywords', '')) {
     $self->{urlPage} = $urlPage;
     $id = $self->getId();
     $page = $self->{pages}->newPageId($id);
@@ -250,7 +240,8 @@ sub visitedPages {
     return @pages;
 }
 
-&DoCGIRequest()  if ($config->RunCGI && $ENV{SCRIPT_NAME} && $q = CGI new);
-&DoCommandLine();
+my $is_require = (caller($_))[7];
+&DoCGIRequest()  if (!$is_require && $config->RunCGI && $ENV{SCRIPT_NAME} && $q = CGI new);
+&DoCommandRequest() if (!$is_require && @ARGV);
 
 1;

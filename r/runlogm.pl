@@ -35,7 +35,8 @@ while (@ARGV) {
 }
 $ENV{PW_CONFIG_DIR} = $configdir;
 
-require './wiki.pl';
+{
+require 'wiki.pl';
 use CGI;
 
 open(ERR, ">&STDERR") || die "Error open $!\n";
@@ -83,7 +84,7 @@ if ($split) {
         $compare = "$testdir/wiki.$seq.html";
     }
 }
-
+}
 print ERR "end\n";
 
 exit;

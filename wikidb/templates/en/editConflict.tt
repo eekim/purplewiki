@@ -34,7 +34,6 @@ be saved.</b></p>
 </textarea>
 
 <p class='editsubmit'>Summarize changes: <input type="text" name="summary" size="60" maxlength="200" /><br />
-<input type="checkbox" name="recent_edit" value="on" />This change is a minor edit.<br />
 <input type="submit" name="Save" value="Save" />
 [% IF userName %]
   (Your user name is [% userName %].)

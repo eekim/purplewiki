@@ -7,7 +7,9 @@ Makefile.PL
 PurpleWiki/ACL.pm
 PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
+PurpleWiki/Archive/Base.pm
 PurpleWiki/Archive/PlainText.pm
+PurpleWiki/Archive/Sequence.pm
 PurpleWiki/Archive/Subversion.pm
 PurpleWiki/Archive/UseMod.pm
 PurpleWiki/Config.pm
@@ -15,6 +17,7 @@ PurpleWiki/InlineNode.pm
 PurpleWiki/Locale.pm
 PurpleWiki/Misc.pm
 PurpleWiki/NidHandler.pm
+PurpleWiki/Page.pm
 PurpleWiki/Parser/MoinMoin.pm
 PurpleWiki/Parser/WikiText.pm
 PurpleWiki/Search/Arts.pm
@@ -39,8 +42,8 @@ PurpleWiki/UseMod/Database.pm
 PurpleWiki/UseMod/KeptRevision.pm
 PurpleWiki/UseMod/Section.pm
 PurpleWiki/UseMod/Text.pm
-PurpleWiki/UseMod/User/UseMod.pm
 PurpleWiki/User.pm
+PurpleWiki/UserDB/UseMod.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/Filter.pm
@@ -62,12 +65,16 @@ extras/mhonarc/README
 extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
+extras/backendConvert.pl
 extras/createUsernameIndex.pl
 extras/deleteUser.pl
+extras/dumpSequence.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
 extras/search.cgi
+extras/sequenceIndex.pl
+extras/sessionAnalysis.pl
 extras/wiki_trans.pl
 extras/wikiwhiteboard/sketch.svg
 extras/wikiwhiteboard/wikiwhiteboard.pl

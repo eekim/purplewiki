@@ -1,5 +1,5 @@
 [% IF revision %]
-<p><b>Difference (from revision [% revision %] to current revision)</b>
+<p><b>Difference (from revision [% revision - 1%] to [% revision %])</b>
 [% ELSIF nodiff %]
 <p><b>No diff available -- this is the first [% diffType %] revision</b>
 [% ELSE %]

@@ -14,6 +14,7 @@ WriteMakefile(
         ],
     'INSTALLSCRIPT' => $cgiDir,
     'PREREQ_PM'		=> {
+        Authen::Captcha => 1.023,
         Template => 0,
     	Text::Wrap => 0,
         Text::Diff => 0,
