@@ -86,6 +86,7 @@ sub getPage {
 sub putPage {
   my $self = shift;
   my %args = @_;
+  my %props = ();
   my $tree = $args{tree};
   return "No data" unless (defined($tree));
   my $contents = $tree->view('wikitext');

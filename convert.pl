@@ -43,6 +43,14 @@ my $NEW_CONFIG = 'new';
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
+my $verb=0;
+while (@ARGV) {
+  $a = shift(@ARGV);
+  if ($a =~ /^-v/) {
+    $verb = 1;
+  }
+}
+
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
 # we only need one of each these per run
@@ -81,15 +89,10 @@ print STDERR "C:$config\n";
 my ($rev, $host, $summary, $user);
 my %all = ();
 for my $p ($pages->allPages($config)) {
-  #for my $y (keys %$p) { print "  $y->$p->{$y}\n"; }
   my $id = $p->{id};
-  #print STDERR "Id:$id\n";
   for ($pages->getRevisions($id)) {
     my ($rev, $host, $summary, $user, $pageTime)
       = ($_->{revision}, $_->{host}, $_->{summary}, $_->{user}, $_->{dateTime});
-    #my $pageTime = $pages->getPage($id, $rev)->getTime;
-    #print STDERR " R:$rev T:$pageTime\n";
-    #for my $x (keys %$_) { print "  $x->$_->{$x}\n"; }
     while (1) {
       unless (defined($all{$pageTime})) {
         $all{$pageTime} = [ $id, $rev, $host, $summary, $user ];
@@ -108,6 +111,7 @@ my $badCount = 0;
 for (sort { $a <=> $b } (keys %all)) {
   my ($id, $rev, $host, $summary, $user) = @{$all{$_}};
   my $page = $pages->getPage($id, $rev);
+  print "$id, $rev\n" if $verb;
   if ($err = $newpages->putPage( pageId => $id,
                                  tree => $page->getTree(),
                                  changeSummary => $summary,
