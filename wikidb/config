@@ -103,6 +103,7 @@ UserDir     = $DataDir/user      # Stores user data
 TempDir     = $DataDir/temp      # Temporary files and locks
 LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
+SessionDir  = $DataDir/sessions  # sessions
 TemplateDir = $DataDir/templates # templates
 LocaleFile  = $DataDir/messages.l10n # Localization messages
 CaptchaDataDir = $DataDir/captcha

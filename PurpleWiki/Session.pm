@@ -45,9 +45,11 @@ sub new {
     my $self = {};
 
     $self->{config} = PurpleWiki::Config->instance();
+    if (!-e $self->{config}->SessionDir) {
+        mkdir $self->{config}->SessionDir;
+    }
     $self->{session} = CGI::Session->new("driver:File", $sid,
-                                         {Directory => $self->{config}->DataDir .
-                                              '/sessions'});
+                                         {Directory => $self->{config}->SessionDir);
     bless($self, $this);
     return $self;
 }
