@@ -28,15 +28,15 @@ table {
     font-size: 11pt;
     clear: both;
     float: left;
-    width: 75%;
+    width: 80%;
     padding-top: 10px;
 }
 
 #sidebar {
     font-family: "Verdana", "Arial", sans-serif;
-    font-size: 11pt;
+    font-size: 9pt;
     float: right;
-    width: 24%;
+    width: 19%;
     padding-top: 10px;
 }
 
@@ -62,6 +62,10 @@ table {
 
 #footright {
     float: right;
+}
+
+tt, pre {
+    font-size: 10pt;
 }
 
 div.indent {

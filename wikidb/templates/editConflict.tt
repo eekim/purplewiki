@@ -29,7 +29,7 @@ be saved.</b></p>
   <input type="hidden" name="revision" value="[% revision %]" />
 [% END %]
 
-<textarea name="text" rows="20" cols="65" style="width:75%">
+<textarea name="text" rows="20" cols="80" style="width:100%">
 [% oldText %]
 </textarea>
 
@@ -49,7 +49,7 @@ be saved.</b></p>
 
 <p><b>This is the text you submitted:</b></p>
 
-<textarea name="newtext" rows="10" cols="65" wrap="virtual" style="width:75%">
+<textarea name="newtext" rows="10" cols="80" style="width:100%">
 [% newText %]
 </textarea>
 

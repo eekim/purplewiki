@@ -2,8 +2,6 @@
            title = "Removing edit lock"
 %]
 
-<p>This operation may take several seconds...'</p>
-
 [% IF forcedUnlock %]
 <h2>Forced Unlock</h2>
 [% ELSE %]

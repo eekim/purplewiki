@@ -3,13 +3,13 @@
 <div id="sidebar">
 [% IF visitedPages.size > 0 %]
 <div id="box">
-<h3>Visited Pages</h3>
+<h3>Your Visited Pages</h3>
 
-<ul>
+<p>
   [% FOREACH page = visitedPages %]
-  <li><a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a></li>
+  <a href="[% baseUrl %]?[% page.id %]">[% page.pageName %]</a><br />
   [% END %]
-</ul>
+</p>
 </div>
 [% END %]
 

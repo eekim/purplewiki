@@ -1,6 +1,6 @@
 Revision history for PurpleWiki.
 
-0.9.3 -- August 6, 2004
+0.93 -- August 9, 2004
 	- Customizable look-and-feel via templates.  Improved default
 	  look-and-feel.
 	- Fixed major bug with retrieving old versions of a page.

@@ -9,6 +9,7 @@ BookShelved http://bookshelved.org/cgi-bin/wiki.pl?
 C2find http://c2.com/cgi/wiki?FindPage&value=
 Cache http://www.google.com/search?q=cache:
 Collab http://collab.blueoxen.net/cgi-bin/wiki.pl?
+CommunityWiki http://www.emacswiki.org/cgi-bin/community/
 CraoWiki http://wiki.crao.net/index.php/
 CreationMatters http://www.ourpla.net/cgi-bin/wiki.pl?
 Dictionary http://www.dict.org/bin/Dict?Database=*&Form=Dict1&Strategy=*&Query=
@@ -26,7 +27,7 @@ IMDB http://us.imdb.com/Title?
 InfoAnarchy http://www.infoanarchy.org/wiki/wiki.pl?
 JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&redirect=
 JiniWiki http://www.cdegroot.com/cgi-bin/jini?
-JspWiki http://www.ecyrd.com/JSPWiki/Wiki.jsp?page=
+JspWiki http://www.jspwiki.org/Wiki.jsp?page=
 JuraWiki http://jurawiki.de/
 KnowHow http://www2.iro.umontreal.ca/~paquetse/cgi-bin/wiki.cgi?
 LanifexWiki http://opt.lanifex.com/cgi-bin/wiki.pl?
