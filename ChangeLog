@@ -9,7 +9,12 @@ Revision history for PurpleWiki.
 	    the wiki. See PurpleWiki/Search/*.pm for
 	    documentation and information.
           - Transclusions can now be presented as plain text rather than
-	    HTML.
+	    HTML. See PurpleWiki::Transclusion
+	  - mod_per 1 and mod_perl 2 handlers for displaying raw wikitext
+	    files as xhtml are now included. See PurpleWiki::Apache1Handler
+	    and PurpleWiki::Apache2Handler. Intended for use with tools
+	    that manipulate wikitext and PurpleNumbers external to the
+	    wiki proper.
 
 0.9 -- August 17, 2003
 	- Document-independent node IDs.

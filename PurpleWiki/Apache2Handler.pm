@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2Handler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2Handler.pm,v 1.1 2004/01/24 02:48:00 cdent Exp $
+# $Id: Apache2Handler.pm,v 1.2 2004/01/26 01:00:57 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -85,3 +85,43 @@ sub readFile {
 
 
 1;
+
+
+__END__
+
+=head1 NAME
+
+PurpleWiki::Apache2Handler - Wiki text display handler for mod_perl 2
+
+=head1 SYNOPSIS
+
+  in httpd.conf:
+
+  PerlRequire /path/to/PurpleWiki/Apache2Handler.pm
+  <FilesMatch *\.wiki>
+      SetHandler perl-script
+      PerlResponseHandler  PurpleWiki::Apache2Handler
+  </FilesMatch>
+
+=head1 DESCRIPTION
+
+A simple display handler for web content files that are formatted
+as PurpleWiki wikitext. The handler reads in the *.wiki file, parses
+it to a PurpleWiki::Tree and presents it as PurpleWiki::View::xhtml.
+
+=head1 METHODS
+
+=head2 handler()
+
+The default method for a mod_perl handler.
+
+=head1 BUGS
+
+When an error condition occurs, such as a file not found, an HTTP
+200 OK is still returned.
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+=cut
