@@ -30,7 +30,7 @@ my $userDir = $config->UserDir;
 my %users;  # $users{name} = id
 my %ids;    # $ids{id} = name
 my @userIds;
-find(sub {-f && !/^200\.db/ && /^(\d+)\.db/ && push @userIds, $1}, ( $userDir ) );
+find(sub {-f && /^(\d+)\.db/ && push @userIds, $1}, ( $userDir ) );
 
 my @toDelete;
 
@@ -38,19 +38,21 @@ my $userDb = new PurpleWiki::Database::User::UseMod;
 foreach my $userId (sort @userIds) {
     my $user = $userDb->loadUser($userId);
     if ($user) {
-        my $userName = $user->username;
-        if ($users{$userName}) { # duplicate
-            push @toDelete, $users{$userName};
-            delete $ids{$users{$userName}};
+        if (my $userName = $user->username) {
+            if ($users{$userName}) { # duplicate
+                push @toDelete, $users{$userName};
+                delete $ids{$users{$userName}};
+            }
+            $users{$userName} = $userId;
+            $ids{$userId} = $userName;
         }
-        $users{$userName} = $userId;
-        $ids{$userId} = $userName;
     }
     else {
         push @toDelete, $userId;
     }
 }
 
+print "Deleting " . scalar @toDelete . " lock files....\n";
 foreach my $userId (sort @toDelete) {
     unlink &fullPath($userId);
 }
@@ -60,14 +62,19 @@ my %persistentUsers;
 tie %persistentUsers, "DB_File", "$userDir/usernames.db",
     O_RDWR|O_CREAT, 0666, $DB_HASH;
 foreach my $oldUserId (sort keys %ids) {
+    print "Mapping $oldUserId to $currentId (";
     if ($oldUserId > $currentId) {
-        $persistentUsers{$ids{$oldUserId}} = $currentId;
         move(&fullPath($oldUserId), &fullPath($currentId));
         my $user = $userDb->loadUser($currentId);
         $user->id($currentId);
+        print $user->username . ")\n";
         $userDb->saveUser($user);
-        $currentId++;
     }
+    else {
+        print $ids{$oldUserId} . ")\n";
+    }
+    $persistentUsers{$ids{$oldUserId}} = $currentId;
+    $currentId++;
 }
 untie %persistentUsers;
 
