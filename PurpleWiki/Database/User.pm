@@ -110,13 +110,13 @@ sub _getNewUserID {
     while (-f $self->getUserFile($id+10)) {
         $id += 10;
     }
-    &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
+    PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
     while (-f $self->getUserFile($id)) {
         $id++;
     }
     $self->createUserDir();
-    &PurpleWiki::Database::WriteStringToFile($self->getUserFile($id), "lock");  # reserve the ID
-    &PurpleWiki::Database::ReleaseLock();
+    PurpleWiki::Database::WriteStringToFile($self->getUserFile($id), "lock");  # reserve the ID
+    PurpleWiki::Database::ReleaseLock();
     return $id;
 }
 

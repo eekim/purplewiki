@@ -47,7 +47,7 @@ sub exists {
 
     $id =~ s|^/|$MainPage/| if defined($MainPage);
     if ($config->FreeLinks) {
-        $id = &FreeToNormal($id, $config);
+        $id = FreeToNormal($id, $config);
     }
     my $page = new PurpleWiki::Database::Page('id' => $id);
     return $page->pageExists();
@@ -69,7 +69,7 @@ sub getWikiWordLink {
     my $id = shift;
 
     my $results;
-    $results = &GetPageOrEditLink($id, '');
+    $results = GetPageOrEditLink($id, '');
     return _makeURL($results);
 }
 
@@ -77,7 +77,7 @@ sub getInterWikiLink {
     my $id = shift;
     
     my $results;
-    $results = (&InterPageLink($id, $config))[0];
+    $results = (InterPageLink($id, $config))[0];
     return $results ? _makeURL($results) : '';
 }
 
@@ -85,7 +85,7 @@ sub getFreeLink {
     my $id = shift;
 
     my $results;
-    $results = (&GetPageOrEditLink($id, ''))[0];
+    $results = (GetPageOrEditLink($id, ''))[0];
     return _makeURL($results);
 }
 
@@ -110,18 +110,18 @@ sub GetPageOrEditLink {
   # the / is there but MainPage is not set.
   $id =~ s|^/|$MainPage/| if defined($MainPage);
   if ($config->FreeLinks) {
-    $id = &FreeToNormal($id);
+    $id = FreeToNormal($id);
   }
   my $page = new PurpleWiki::Database::Page('id' => $id);
   if ($page->pageExists()) {      # Page file exists
-    return &GetPageLinkText($id, $name);
+    return GetPageLinkText($id, $name);
   }
   if ($config->FreeLinks) {
     if ($name =~ m| |) {  # Not a single word
       $name = "[$name]";  # Add brackets so boundaries are obvious
     }
   }
-  return $name . &GetEditLink($id, "?");
+  return $name . GetEditLink($id, "?");
 }
 
 sub FreeToNormal {
@@ -157,10 +157,10 @@ sub GetPageLinkText {
   # the / is there but MainPage is not set.
   $id =~ s|^/|$MainPage/| if defined($MainPage);
   if ($config->FreeLinks) {
-    $id = &FreeToNormal($id);
+    $id = FreeToNormal($id);
     $name =~ s/_/ /g;
   }
-  return &ScriptLink($id, $name);
+  return ScriptLink($id, $name);
 }
 
 sub ScriptLink {
@@ -186,17 +186,17 @@ sub GetEditLink {
   my $config = PurpleWiki::Config->instance();
 
   if ($config->FreeLinks) {
-    $id = &FreeToNormal($id);
+    $id = FreeToNormal($id);
     $name =~ s/_/ /g;
   }
-  return &ScriptLink("action=edit&id=$id", $name);
+  return ScriptLink("action=edit&amp;id=$id", $name);
 }
 
 sub InterPageLink {
     my ($id) = @_;
     my ($name, $site, $remotePage, $url, $punct);
 
-    ($id, $punct) = &SplitUrlPunct($id);
+    ($id, $punct) = SplitUrlPunct($id);
 
     $name = $id;
     ($site, $remotePage) = split(/:/, $id, 2);

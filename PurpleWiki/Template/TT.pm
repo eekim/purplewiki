@@ -40,11 +40,14 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 sub process {
     my $self = shift;
     my $file = shift;
-    my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ] });
+    my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ] }) ||
+        die Template->error(), "\n";
     my $output;
 
     if ($template->process("$file.tt", $self->vars, \$output)) {
         return $output;
+    } else {
+        die $template->error(), "\n";
     }
     # FIXME: Need to exit gracefully if error is returned.
 }
