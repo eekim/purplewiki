@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.13 2003/01/30 18:27:17 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.14 2003/01/31 06:22:08 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -519,7 +519,6 @@ sub DoHistory {
   $keptRevision = new PurpleWiki::Database::KeptRevision($id);
   foreach my $section (reverse sort {$a->getRevision() <=> $b->getRevision()}
                     $keptRevision->getSections()) {
-    next if (!defined($section ));
     $html .= &GetHistoryLine($id, $section, $canEdit, 0);
   }
   print $html;
