@@ -31,11 +31,13 @@ package PurpleWiki::View::wikitext;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::View::Driver;
 
 ############### Package Globals ###############
 
-our $VERSION = '0.9.1';
+our $VERSION;
+$VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 our @ISA = qw(PurpleWiki::View::Driver);
 
@@ -47,11 +49,27 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = $class->SUPER::new(@_);
    
-    # Object State
+    ### Object State
     $self->{outputString} = "";
-    $self->{sectionDepth} = 0;
     $self->{indentDepth} = 0;
     $self->{listStack} = [];
+
+    # standard flag for determining whether or not a hard rule should
+    # be printed
+    $self->{isPrevSection} = 0;
+
+    # special case flag for handling hard rules (or not) at the
+    # beginning of a document
+    $self->{isStart} = 1;
+    $self->{emptyFirstSection} = 0;
+
+    # used for determining whether there should be hard rules with
+    # nested sections
+    $self->{sectionDepth} = 0;
+    $self->{depthLastClosedSection} = 0;
+
+    # needed for determining whether a WikiWord needs to be delimited
+    # from subsequent text
     $self->{lastInlineProcessed} = "";
 
     bless($self, $class);
@@ -62,21 +80,63 @@ sub view {
     my ($self, $wikiTree) = @_;
     $self->SUPER::view($wikiTree);
     $self->{outputString} = $self->_header($wikiTree) . $self->{outputString};
+    chomp $self->{outputString};
     return $self->{outputString};
 }
 
+# The most general case for generating hard rules is as follows: If
+# the first structured node of a new section (with the exception of
+# the very first section) does not begin with an h node, then print a
+# hard rule.  The trickiness is dealing with the exceptions: sections
+# at the beginning of a document and nested subsections.
+#
+# 
+#
+# When you create headers that are more than one level deeper than the
+# previous section, you get things like:
+#
+#   section:
+#     h:section 1
+#     section:
+#       section:
+#         h:section 1.1.1
+#
+# Note the two sections immediately nested after each other.  A
+# similar effect is possible when you have a hard rule followed by a
+# header that is one or more levels deeper:
+#
+#   section:
+#     h:section 1
+#   section:
+#     section:
+#       h:section 2.1
+#
+# Because of these two possible scenarios, it's not enough to simply
+# print a hard rule whenever you see nested sections one right after
+# the other.
+
 sub sectionPre { 
-    shift->{sectionDepth}++  
+    my $self = shift;
+    $self->{sectionDepth}++;
+    $self->_hardRule(1);
+    $self->{isPrevSection} = 1;
 }
 
 sub sectionPost {
     my $self = shift;
+    $self->{depthLastClosedSection} = $self->{sectionDepth};
     $self->{sectionDepth}--;
     $self->{lastInlineProcessed} = '';
+    $self->{emptyFirstSection} = 1
+        if ($self->{isStart} && $self->{isPrevSection});
+    $self->_hardRule(0);
+    $self->{isStart} = 0;
 }
 
 sub indentPre { 
-    shift->{indentDepth}++; 
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{indentDepth}++; 
 }
 
 sub indentPost { 
@@ -86,9 +146,23 @@ sub indentPost {
     $self->{outputString} .= "\n" if $self->{indentDepth} == 0; 
 }
 
-sub ulPre { push @{shift->{listStack}}, shift->type }
-sub olPre { push @{shift->{listStack}}, shift->type }
-sub dlPre { push @{shift->{listStack}}, shift->type }
+sub ulPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule(0);
+    push @{$self->{listStack}}, $nodeRef->type;
+}
+
+sub olPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule(0);
+    push @{$self->{listStack}}, $nodeRef->type;
+}
+
+sub dlPre {
+    my ($self, $nodeRef) = @_;
+    $self->_hardRule(0);
+    push @{$self->{listStack}}, $nodeRef->type;
+}
 
 sub ulPost { shift->_endList(@_) }
 sub olPost { shift->_endList(@_) }
@@ -96,6 +170,14 @@ sub dlPost { shift->_endList(@_) }
 
 sub hPre { 
     my $self = shift;
+    if ($self->{emptyFirstSection}) {
+        $self->{isPrevSection} = 1;
+        $self->{emptyFirstSection} = 0;
+        $self->_hardRule(0);
+    }
+    else {
+        $self->{isPrevSection} = 0;
+    }
     $self->{outputString} .= '=' x $self->{sectionDepth}. ' '; 
 }
 
@@ -108,6 +190,7 @@ sub hPost {
 
 sub pPre { 
     my $self = shift;
+    $self->_hardRule(0);
     $self->{outputString} .= ':' x $self->{indentDepth};
 }
 
@@ -133,9 +216,13 @@ sub ddPre {
     shift->{outputString} .= ':' 
 }
 
-sub liPost { shift->_showNID(@_) }
+sub liMain { shift->_liRecurse(@_) }
+sub ddMain { shift->_liRecurse(@_) }
+
 sub dtPost { shift->_showNID(@_) }
-sub ddPost { shift->_showNID(@_) }
+
+sub prePre { shift->_hardRule(0) }
+
 sub prePost { shift->_showNID(@_) }
 
 sub sketchMain { 
@@ -246,6 +333,35 @@ sub imagePost {
 
 ############### Private Methods ###############
 
+sub _hardRule {
+    my ($self, $isSection) = @_;
+
+    if ($self->{isPrevSection}) {
+        if (!$self->{isStart}) {
+            if (!$isSection || ($isSection &&
+                $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
+                $self->{outputString} .= "----\n\n";
+            }
+        }
+        $self->{isPrevSection} = 0;
+    }
+}
+
+sub _liRecurse { # also used for dd
+    my ($self, $nodeRef) = @_;
+
+    if (!defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+    # display NID here
+    $self->_showNID($nodeRef);
+    $self->traverse($nodeRef->children) if defined $nodeRef->children;
+}
+
 sub _endList {
     my $self = shift;
     pop @{$self->{listStack}};
@@ -270,7 +386,11 @@ sub _showNID {
 
 sub _nid {
     my ($self, $nid) = @_;
-    return " {nid $nid}";
+    my $string = ''; # avoid a unitialized value warning
+    if ($nid) {
+        $string = " {nid $nid}";
+    }
+    return $string;
 }
 
 sub _header {
