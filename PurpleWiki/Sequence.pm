@@ -40,7 +40,7 @@ use IO::File;
 use DB_File;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my $ORIGIN = '0';
 my $LOCK_WAIT = 1;

@@ -35,7 +35,7 @@ use PurpleWiki::Search::Result;
 use IO::File;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my $ENTRIES_CACHE_INDEX = '/home/eekim/www/local/blosxom/plugins/state/.entries_cache.index';
 my $DATA_DIR = '/home/eekim/writing/blog/eekim.com';

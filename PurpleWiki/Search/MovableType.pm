@@ -35,7 +35,7 @@ use base 'PurpleWiki::Search::Interface';
 use Time::Local;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # Where the searching is done.
 # Most of this taken from MT::App::Search

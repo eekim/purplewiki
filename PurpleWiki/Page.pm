@@ -37,7 +37,7 @@ use PurpleWiki::Database::Page;
 # $Id: Page.pm,v 1.16 2004/01/21 23:24:08 cdent Exp $
 
 use vars qw($MainPage $VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 sub exists {
     my $id = shift;

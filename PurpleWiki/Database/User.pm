@@ -38,7 +38,7 @@ use strict;
 use PurpleWiki::Database;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my @DataFields = (
     'username', 'id', 'randkey', 'rev', 'createtime', 'createip',

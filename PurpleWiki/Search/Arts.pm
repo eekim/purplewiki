@@ -42,7 +42,7 @@ use PurpleWiki::Search::Result;
 use IO::File;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my $FILE_MATCH = '\d+\.\d+\.wiki';
 

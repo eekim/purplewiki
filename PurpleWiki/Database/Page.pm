@@ -40,7 +40,7 @@ use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # defaults for Text Based data structure
 my $DATA_VERSION = 3;            # the data format version

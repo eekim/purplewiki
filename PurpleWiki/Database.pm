@@ -37,7 +37,7 @@ package PurpleWiki::Database;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # Reads a string from a given filename and returns the data.
 # If it cannot open the file, it dies with an error.

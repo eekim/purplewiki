@@ -37,7 +37,7 @@ package PurpleWiki::Database::Text;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # Creates a new Text. A text represents the actual
 # use visible and editable text of a WikiPage.  It

@@ -46,7 +46,7 @@ use PurpleWiki::Search::Result;
 use AppConfig;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # AppConfig values from the irclogger config file
 my @CONFIG = qw(channel wikiconfig url logfile);

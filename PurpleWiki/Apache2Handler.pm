@@ -40,7 +40,7 @@ use Apache::RequestIO ();
 use Apache::URI;
 use Apache::Const -compile => qw(OK);
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my $CONFIG = '/home/cdent/testpurple';
 my $CSS = '/~cdent/purple.css';

@@ -34,7 +34,7 @@ use strict;
 use PurpleWiki::InlineNode;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 ### constructor
 

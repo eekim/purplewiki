@@ -37,7 +37,7 @@ use PurpleWiki::Sequence;
 use PurpleWiki::Parser::WikiText;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # The name of the index file. Its directory comes from Config.
 my $INDEX_FILE = 'sequence.index';

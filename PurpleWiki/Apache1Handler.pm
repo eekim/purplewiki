@@ -38,7 +38,7 @@ use Apache;
 use Apache::Constants;
 use Apache::URI;
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 my $CONFIG = '/home/kb-dev/wikidata';
 my $CSS = '/css/purple.css';

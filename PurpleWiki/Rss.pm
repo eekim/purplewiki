@@ -43,7 +43,7 @@ use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 sub new {
     my $proto = shift;

@@ -39,7 +39,7 @@ use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 # Creates a new kept revision reference
 # Really just a collection of Sections

@@ -36,7 +36,7 @@ use PurpleWiki::View::rawtext;
 
 ############### Package Globals ###############
 
-our $VERSION = '0.9.1';
+our $VERSION = '0.9.2';
 
 our @ISA = qw(PurpleWiki::View::rawtext);
 

@@ -36,7 +36,7 @@ use PurpleWiki::Tree;
 
 ######## Package Globals ########
 
-our $VERSION = '0.9.1';
+our $VERSION = '0.9.2';
 
 # This probably belongs in StructuralNode.pm
 our @structuralNodeTypes = qw(document section indent ul ol dl h p li dd dt 

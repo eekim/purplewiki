@@ -34,7 +34,7 @@ package PurpleWiki::Search::Interface;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 sub new {
     my $class = shift;
