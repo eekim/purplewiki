@@ -76,6 +76,7 @@ sub parse {
     $currentNode = $this->root->insertChild('type' => 'section');
 
     foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
+        chomp $line;
         if ($isStart && $line =~ /^\[lastnid (\d+)\]$/) {
             $this->lastNid($1);
         }
