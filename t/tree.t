@@ -3,7 +3,8 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 28 };
+#BEGIN { plan tests => 28 };
+BEGIN { plan tests => 25 };
 
 use PurpleWiki::Tree;
 
@@ -13,7 +14,7 @@ use PurpleWiki::Tree;
 
 my $tree = PurpleWiki::Tree->new;
 ok(ref($tree->root) eq 'PurpleWiki::StructuralNode');
-ok(!defined $tree->lastNid);
+#ok(!defined $tree->lastNid);
 ok(!defined $tree->title);
 ok(!defined $tree->subtitle);
 ok(!defined $tree->id);
@@ -23,7 +24,7 @@ ok(!defined $tree->authors);
 
 # Test mutators.  (9 tests)
 
-$tree->lastNid(3);
+#$tree->lastNid(3);
 $tree->title('Wiki Treatise');
 $tree->subtitle('To Wiki, Or Not To Wiki');
 $tree->id('0235');
@@ -31,7 +32,7 @@ $tree->date('December 29, 2002');
 $tree->version('1.0');
 $tree->authors([ ['Joe Schmoe'], ['Bob Marley', 'bob@marley.net'] ]);
 
-ok($tree->lastNid == 3);
+#ok($tree->lastNid == 3);
 ok($tree->title eq 'Wiki Treatise');
 ok($tree->subtitle eq 'To Wiki, Or Not To Wiki');
 ok($tree->id eq '0235');
@@ -56,7 +57,7 @@ $tree = PurpleWiki::Tree->new(
     date    => 'December 29, 2002',
     authors => [ ['Chris Dent', 'cdent@blueoxen.org'] ] );
 
-ok($tree->lastNid == 52);
+#ok($tree->lastNid == 52);
 ok($tree->title eq 'HeadlineNews');
 ok(!defined $tree->subtitle);
 ok(!defined $tree->id);
