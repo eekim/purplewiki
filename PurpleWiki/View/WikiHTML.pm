@@ -1,3 +1,32 @@
+# PurpleWiki::View::WikiHTML.pm
+#
+# $Id: WikiHTML.pm,v 1.7 2002/11/22 21:18:10 eekim Exp $
+#
+# Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
+#
+# This file is part of PurpleWiki.  PurpleWiki is derived from:
+#
+#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
+#   AtisWiki v0.3             (c) Markus Denker 1998
+#   CVWiki CVS-patches        (c) Peter Merel 1997
+#   The Original WikiWikiWeb  (c) Ward Cunningham
+#
+# PurpleWiki is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the
+#    Free Software Foundation, Inc.
+#    59 Temple Place, Suite 330
+#    Boston, MA 02111-1307 USA
+
 package PurpleWiki::View::WikiHTML;
 
 use PurpleWiki::Page;
@@ -180,7 +209,9 @@ sub _traverseInline {
     foreach my $inlineNode (@{$nodeListRef}) {
         if ($inlineNode->type eq 'link' || $inlineNode->type eq 'url') {
             $outputString .= '<a href="' . $inlineNode->href . '">';
+            $outputString .= '[' if ($inlineNode->type eq 'link');
             $outputString .= &_quoteHtml($inlineNode->content);
+            $outputString .= ']' if ($inlineNode->type eq 'link');
             $outputString .= '</a>';
         }
         elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
@@ -196,7 +227,7 @@ sub _traverseInline {
             elsif (&PurpleWiki::Page::exists($pageName)) {
                 if ($inlineNode->type eq 'freelink') {
                     $outputString .= '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
-                        '">';
+                        '">[';
                 }
                 else {
                     $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName);
@@ -262,5 +293,29 @@ sub _printNid {
     }
 }
 
-
 1;
+__END__
+
+=head1 NAME
+
+PurpleWiki::View::WikiHTML - WikiHTML view driver
+
+=head1 SYNOPSIS
+
+  use PurpleWiki::View::WikiHTML;
+
+=head1 DESCRIPTION
+
+blah blah blah
+
+=head1 METHODS
+
+blah blah blah
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut
