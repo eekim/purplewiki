@@ -14,9 +14,9 @@ HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
-#DatabasePackage = PurpleWiki::DefaultArchive
+DatabasePackage = PurpleWiki::DefaultArchive
 #DatabasePackage = PurpleWiki::Database::Pages
-DatabasePackage = PurpleWiki::SVNArchive
+#DatabasePackage = PurpleWiki::SVNArchive
 DataDir     = tDB
 ReposPath   = /wiki
 LocalSequenceDir = $DataDir
@@ -29,6 +29,8 @@ RcDays      = 7
 RcDays      = 30
 RcDays      = 90
 KeepDays    = 14               # Days to keep old revisions
+
+DefaultLanguage = en
 
 # Password for administration and editing
 # FIXME: need better understanding of how these things are used
@@ -56,10 +58,7 @@ RunCGI                 # if set Run script as CGI
 
 # Create Link Options
 #CreateLinkBefore       # if set, puts create link (?) before the text
-                       # (PHPWiki-style)
-CreateLinkText = "?"   # text displayed in create link.  If not set,
-                       # displays the link using the "create" CSS style (
-                       # (MoinMoin and SocialText-style)
+                        # (PHPWiki-style)
 
 # Minor options:
 RecentTop              # if set recent on top
@@ -80,5 +79,7 @@ LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = t/intermap         # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
+TemplateDir = t/templates
+LocaleFile  = t/messages.l10n
 
 # == End of Configuration =================================================

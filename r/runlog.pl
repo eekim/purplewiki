@@ -24,7 +24,7 @@ while (@ARGV) {
         die "Bad option :$a:\n";
     }
 }
-$ENV{PURPLE_CONFIG_DIR} = $configdir;
+$ENV{PW_CONFIG_DIR} = $configdir;
 
 use CGI;
 

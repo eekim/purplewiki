@@ -1,4 +1,4 @@
-# PurpleWiki::Template::TT.pm
+# PurpleWiki::Session.pm
 #
 # $Id$
 #
@@ -27,30 +27,51 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Template::TT;
+package PurpleWiki::Session;
 
 use 5.005;
 use strict;
-use base 'PurpleWiki::Template::Base';
-use Template;
+use CGI::Session;
+use PurpleWiki::Config;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-sub process {
-    my $self = shift;
-    my $file = shift;
-    my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ],
-                                   POST_CHOMP => 1 }) ||
-        die Template->error(), "\n";
-    my $output;
+### constructor
 
-    if ($template->process("$file.tt", $self->vars, \$output)) {
-        return $output;
-    } else {
-        die $template->error(), "\n";
-    }
-    # FIXME: Need to exit gracefully if error is returned.
+sub new {
+    my $this = shift;
+    my $sid = shift;
+    my $self = {};
+
+    $self->{config} = PurpleWiki::Config->instance();
+    $self->{session} = CGI::Session->new("driver:File", $sid,
+                                         {Directory => $self->{config}->DataDir .
+                                              '/sessions'});
+    bless($self, $this);
+    return $self;
+}
+
+### methods
+
+sub param {
+    my $self = shift;
+    return $self->{session}->param(@_);
+}
+
+sub clear {
+    my $self = shift;
+    return $self->{session}->clear(@_);
+}
+
+sub id {
+    my $self = shift;
+    return $self->{session}->id(@_);
+}
+
+sub delete {
+    my $self = shift;
+    return $self->{session}->delete(@_);
 }
 
 1;
@@ -58,26 +79,24 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::Template::TT - Template Toolkit template driver.
+PurpleWiki::Session - Session management
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::Template::TT;
+  use PurpleWiki::Session;
+
+  my $sid;
+  my $session = PurpleWiki::Session->new($sid);
 
 =head1 DESCRIPTION
 
 
 
-=head1 FILTERS
-
-php filter
-
 =head1 METHODS
 
-=head2 process($file)
+=head2 new($sid)
 
-Returns the root StructuralNode object.
-
+Constructor.
 
 =head1 AUTHORS
 

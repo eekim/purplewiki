@@ -36,15 +36,12 @@ package UseModWiki;
 use strict;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
-use CGI::Session;
 use Digest::MD5;
-use PurpleWiki::ACL;
 use PurpleWiki::Config;
-use PurpleWiki::Database::User::UseMod;
-use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Search::Engine;
+use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PURPLE_CONFIG_DIR} || '/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'default/database/location';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -60,24 +57,32 @@ my $visitedPagesCacheSize = 7;
 
 my $q;                  # CGI query reference
 
-my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
+my $TimeZoneOffset;     # User's preference for timezone. FIXME: can we
                         # get this off $user reliably? Doesn't look
                         # worth it.
 
 # we only need one of each these per run
 my $config = new PurpleWiki::Config($CONFIG_DIR);
 my $pages;
-my $wikiParser = PurpleWiki::Parser::WikiText->new;
-# FIXME: would be cool if there were a way to factory these based off a
-#        config value.
-my $userDb = PurpleWiki::Database::User::UseMod->new;
-my $acl = PurpleWiki::ACL->new;
 
-# Select and load a  template driver
-my $templateDriver = $config->TemplateDriver();
-my $templateClass = "PurpleWiki::Template::$templateDriver";
-eval "require $templateClass";
-my $wikiTemplate = $templateClass->new;
+my $parserDriver = $config->ParserDriver;
+my $templateDriver = $config->TemplateDriver;
+my $userDbDriver = $config->UserDatabaseDriver;
+my $aclDriver = $config->ACLDriver;
+
+eval "require $parserDriver";
+die "$@" if ($@);
+eval "require $templateDriver";
+die "$@" if ($@);
+eval "require $userDbDriver";
+die "$@" if ($@);
+eval "require $aclDriver";
+die "$@" if ($@);
+
+my $wikiParser = $parserDriver->new;
+my $wikiTemplate = $templateDriver->new;
+my $userDb = $userDbDriver->new;
+my $acl = $aclDriver->new;
 
 # check for i-names support
 if ($config->UseINames) {
@@ -140,7 +145,7 @@ sub InitRequest {
 
   InitCookie();         # Reads in user data
   # tell the template object which language dir to use
-  #$wikiTemplate->language(&preferredLanguages);
+  $wikiTemplate->language(&preferredLanguages);
   return 1;
 }
 
@@ -148,9 +153,9 @@ sub InitCookie {
   $TimeZoneOffset = 0;
   undef $q->{'.cookies'};  # Clear cache if it exists (for SpeedyCGI)
 
-  my $sid = $q->cookie($config->SiteName);
-  $session = CGI::Session->new("driver:File", $sid,
-                               {Directory => "$CONFIG_DIR/sessions"});
+  my $sid = ($config->CookieName) ? $q->cookie($config->CookieName) :
+      $q->cookie($config->SiteName);
+  $session = PurpleWiki::Session->new($sid);
   my $userId = $session->param('userId');
   $user = $userDb->loadUser($userId) if ($userId);
   $session->clear(['userId']) if (!$user);
@@ -169,7 +174,8 @@ sub preferredLanguages {
     foreach my $lang (@langStrings) {
         if ($lang =~ /^\s*([^\;]+)\s*\;\s*q=(.+)\s*$/) {
             push @toSort, { lang => $1, q => $2 };
-        } else {
+        }
+        else {
             push @languages, $lang;
         }
     }
@@ -216,6 +222,11 @@ sub BrowsePage {
 
   my ($text);
 
+  if (!$acl->canRead($user, $id)) {
+      $wikiTemplate->vars(&globalTemplateVars);
+      print &GetHttpHeader . $wikiTemplate->process('errors/viewNotAllowed');
+      return;
+  }
   my ($userId, $username);
   if ($user) {
       $userId = $user->id;
@@ -276,14 +287,17 @@ sub BrowsePage {
   $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $pageName,
                       expandedPageName => &expandPageName($pageName),
+                      id => $id,
                       visitedPages => \@vPages,
                       revision => $revision,
                       body => $body,
                       lastEdited => TimeToText($page->getTime),
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$keywords",
-                      editUrl => $config->ScriptName
-                          . "?action=edit&amp;id=$id" .  $editRevisionString,
+                      editUrl => $acl->canEdit($user, $id)
+                          ?   $config->ScriptName . "?action=edit&amp;id=$id" .
+                              $editRevisionString
+                          : undef,
                       revisionsUrl =>
                           $config->ScriptName . "?action=history&amp;id=$id",
                       diffUrl => $config->ScriptName
@@ -346,7 +360,8 @@ sub DoRc {
                         recentChanges => \@recentChanges,
                         pageUrl => $config->ScriptName . "?$id",
                         backlinksUrl => $config->ScriptName . "?search=$id",
-                        editUrl => $config->ScriptName . "?action=edit&amp;id=$id",
+                        editUrl => $acl->canEdit($user, $id) ?
+                            $config->ScriptName . "?action=edit&amp;id=$id" : undef,
                         revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id",
                         diffUrl => $config->ScriptName . "?action=browse&amp;diff=1&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewRecentChanges');
@@ -376,7 +391,9 @@ sub DoHistory {
 
 # ==== page-oriented functions ====
 sub GetHttpHeader {
-    my $cookie = $q->cookie(-name => $config->SiteName,
+    my $cookieName = ($config->CookieName) ? $config->CookieName :
+        $config->SiteName;
+    my $cookie = $q->cookie(-name => $cookieName,
                             -value => $session->id,
                             -path => $config->ScriptDir,
                             -expires => '+7d');
@@ -752,7 +769,7 @@ sub WikiHTML {
     my ($id, $wiki, $url) = @_;
     return "<p>New page, edit to create</p>" unless $wiki;
     $wiki->view('wikihtml', url => $url, pageName => $id,
-                languages => \[&preferredLanguages]);
+                languages => [&preferredLanguages]);
 }
 
 sub DoEditPrefs {
@@ -1049,7 +1066,7 @@ sub DoSearch {
         return;
     }
     # do the new pluggable search
-    my $search = new PurpleWiki::Search::Engine(config => $config);
+    my $search = new PurpleWiki::Search::Engine;
     $search->search($string);
 
     $wikiTemplate->vars(&globalTemplateVars,
@@ -1282,7 +1299,9 @@ sub globalTemplateVars {
             baseUrl => $config->ScriptName,
             homePage => $config->HomePage,
             userName => $user ? $user->username : undef,
-            preferencesUrl => $config->ScriptName . '?action=editprefs');
+            userId => $user ? $user->id : undef,
+            preferencesUrl => $config->ScriptName . '?action=editprefs',
+            sessionId => $session ? $session->id : undef);
 }
 
 my $is_require = (caller($_))[7];

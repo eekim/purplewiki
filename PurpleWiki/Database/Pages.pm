@@ -222,6 +222,7 @@ sub pageExists {
 sub _getPageFile {
     my $self = shift;
     my $id = shift;
+    $id =~ s|/|+/g;   # handle 'subpages' by translating '/' to '+'
 
     return $self->{pagedir} . '/' . _getPageDirectory($id) . '/' . $id . '.db';
 }

@@ -96,7 +96,7 @@ sub AUTOLOAD {
     }
 
     eval '$self->SUPER::'.$method.'(@_);';
-    croak "Could not find method: $AUTOLOAD\n" if $@;
+    croak "Could not find method: $method, $@\n" if $@;
 }
 1;
 __END__

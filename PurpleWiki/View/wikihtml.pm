@@ -32,6 +32,7 @@ use 5.005;
 use strict;
 use warnings;
 use Carp;
+use PurpleWiki::Locale;
 use PurpleWiki::Transclusion;
 use PurpleWiki::View::Driver;
 use PurpleWiki::Misc;
@@ -51,6 +52,7 @@ sub new {
     my $class = ref($proto) || $proto;
     my $self = $class->SUPER::new(@_);
 
+    $self->{locale} = PurpleWiki::Locale->new(@{$self->{languages}});
     ### Object State
     $self->{outputString} = "";
     $self->{pageName} = "";
@@ -344,7 +346,7 @@ sub _wikiLink {
         $linkString .= $nodeRef->content . '</a>';
     }
     else {
-        my $createLinkText = $self->{config}->CreateLinkText;
+        my $createLinkText = $self->{locale}->createLinkText;
         if ($nodeRef->type eq 'freelink') {
             if ($createLinkText) {
                 my $linkText .= '[' . $nodeRef->content . ']';

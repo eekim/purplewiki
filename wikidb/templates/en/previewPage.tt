@@ -9,7 +9,7 @@ replace the latest revision with this text.</b></p>
 
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 <input type="hidden" name="title" value="[% id %]" />
-<input type="hidden" name="oldrev" value="[% oldrev %]" />
+<input type="hidden" name="oldtime" value="[% pageTime %]" />
 <input type="hidden" name="oldconflict" value="0" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />
@@ -32,5 +32,20 @@ replace the latest revision with this text.</b></p>
 <input type="submit" name="Preview" value="Preview" /></p>
 
 <div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
+
+<hr />
+
+<h2>Preview:</h2>
+
+[% IF isConflict %]
+<p><b>NOTE: This preview shows the revision of the other author.</b></p>
+<hr />
+[% END %]
+
+[% body %]
+
+<hr />
+
+<h2>Preview only, not yet saved</h2>
 
 [% INCLUDE common/footer.tt %]

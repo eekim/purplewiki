@@ -19,6 +19,9 @@ DatabasePackage = PurpleWiki::Database::Pages
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
+DefaultLanguage = en           # Default language to use
+#CookieName = YourWiki         # Cookie name.
+
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
 RcDays      = 1                # List of days for links on RecentChanges
@@ -54,9 +57,6 @@ ShowNid                # if set value of Nid is shown
 # Create Link Options
 #CreateLinkBefore       # if set, puts create link (?) before the text
                        # (PHPWiki-style)
-CreateLinkText = "?"   # text displayed in create link.  If not set,
-                       # displays the link using the "create" CSS style (
-                       # (MoinMoin and SocialText-style)
 
 # Minor options:
 RecentTop              # if set recent on top
@@ -76,8 +76,11 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
-# Template Modules
-TemplateDriver = TT
+# PurpleWiki Modules
+ParserDriver        = PurpleWiki::Parser::WikiText
+TemplateDriver      = PurpleWiki::Template::TT
+UserDatabaseDriver  = PurpleWiki::Database::User::UseMod
+ACLDriver           = PurpleWiki::ACL
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
@@ -103,5 +106,6 @@ InterFile   = $DataDir/intermap  # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 TemplateDir = $DataDir/templates # templates
+LocaleFile  = $DataDir/messages.l10n # Localization messages
 
 # == End of Configuration =================================================

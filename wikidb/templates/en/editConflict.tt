@@ -7,10 +7,24 @@
 replace the latest revision with this text.</b></p>
 [% END %]
 
+<h2>Edit Conflict!</h2>
+
+[% IF editConflict > 1 %]
+<h3>(This is a new conflict.)</h3>
+[% END %]
+
+<p><b>Someone saved this page after you started editing. The top
+textbox contains the saved text. Only the text in the top textbox will
+be saved.</b></p>
+
+<p>Scroll down to see your edited text.</p>
+
+<p>Last save time: [% lastSavedTime %] (Current time is: [% currentTime %])</p>
+
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 <input type="hidden" name="title" value="[% id %]" />
-<input type="hidden" name="oldrev" value="[% oldrev %]" />
-<input type="hidden" name="oldconflict" value="0" />
+<input type="hidden" name="oldtime" value="[% pageTime %]" />
+<input type="hidden" name="oldconflict" value="[% isConflict %]" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />
 [% END %]
@@ -31,21 +45,14 @@ replace the latest revision with this text.</b></p>
 [% END %]
 <input type="submit" name="Preview" value="Preview" /></p>
 
+<hr />
+
+<p><b>This is the text you submitted:</b></p>
+
+<textarea name="newtext" rows="10" cols="80" style="width:100%">
+[% newText %]
+</textarea>
+
 <div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
-
-<hr />
-
-<h2>Preview:</h2>
-
-[% IF isConflict %]
-<p><b>NOTE: This preview shows the revision of the other author.</b></p>
-<hr />
-[% END %]
-
-[% body %]
-
-<hr />
-
-<h2>Preview only, not yet saved</h2>
 
 [% INCLUDE common/footer.tt %]

@@ -131,13 +131,6 @@ Creates a new PurpleWiki::Search::Engine.
 Passes the query to each of the configured search modules, 
 requiring their code as necessary. Nothing is returned.
 
-=item asHTML()
-
-Returns an HTML string of the results, ordered by search module.
-Results within each module are ordered according to the module.
-Generally results are in reverse chronological order according
-to last modified time.
-
 =item config()
 
 Provides access to the L<PurpleWiki::Config> object passed in
