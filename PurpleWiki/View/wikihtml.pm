@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.9 2003/06/14 01:52:12 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.10 2003/06/14 20:15:04 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,7 +35,6 @@ use strict;
 use PurpleWiki::Page;
 use PurpleWiki::Tree;
 use PurpleWiki::View::EventHandler;
-use PurpleWiki::Transclusion;
 
 # globals
 
@@ -79,6 +78,7 @@ sub closeTagWithNid {
 sub transcludeContent {
     my $node = shift;
     my %params = @_;
+    require PurpleWiki::Transclusion;
 
     my $space = new PurpleWiki::Transclusion(config => $params{config});
 

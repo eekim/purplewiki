@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2.2.4 2003/06/12 22:32:42 cdent Exp $
+# $Id: Database.pm,v 1.2.2.5 2003/06/14 20:15:04 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,13 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2.2.4 2003/06/12 22:32:42 cdent Exp $
+# $Id: Database.pm,v 1.2.2.5 2003/06/14 20:15:04 cdent Exp $
 
 use strict;
 
+# Reads a string from a given filename and returns the data.
+# If it cannot open the file, it dies with an error.
+# Public
 sub ReadFileOrDie {
   my $fileName = shift;
   my ($status, $data);
@@ -47,6 +50,10 @@ sub ReadFileOrDie {
   return $data;
 }
 
+# Reads a string from a given filename and returns a
+# status value and the string. 1 for success, 0 for 
+# failure.
+# Public
 sub ReadFile {
   my $fileName = shift;
   my ($data);
@@ -60,6 +67,9 @@ sub ReadFile {
   return (0, "");
 }
 
+# Creates a directory if it doesn't already exist.
+# FIXME: there should be some error checking here.
+# Public
 sub CreateDir {
     my $newdir = shift;
 
@@ -70,7 +80,8 @@ sub CreateDir {
 # We require it in here rather than at the top in
 # case we never need it in the current running
 # process.
-sub GetDiff {
+# Private
+sub _GetDiff {
     require Text::Diff;
     my ($old, $new, $lock) = @_;
 
@@ -78,7 +89,12 @@ sub GetDiff {
     return $diff_out;
 }
 
-sub RequestLockDir {
+# Creates a directory that acts as a general locking
+# mechanism for the system.
+# FIXME: ForceReleaseLock (below) is not immediately accessible
+# to mortals.
+# Private.
+sub _RequestLockDir {
     my ($name, $tries, $wait, $errorDie, $config) = @_;
     my ($lockName, $n);
 
@@ -96,33 +112,44 @@ sub RequestLockDir {
     return 1;
 }
 
-sub ReleaseLockDir {
+# Removes the locking directory, destroying the lock
+# Private
+sub _ReleaseLockDir {
     my ($name, $config) = @_;
     rmdir($config->LockDir . $name);
 }
 
+# Requests a general editing lock for the system.
+# Public
 sub RequestLock {
     my $config = shift;
     # 10 tries, 3 second wait, die on error
-    return &RequestLockDir("main", 10, 3, 1, $config);
+    return &_RequestLockDir("main", 10, 3, 1, $config);
 }
 
+# Releases the general editing lock
+# Public
 sub ReleaseLock {
     my $config = shift;
-    &ReleaseLockDir('main', $config);
+    &_ReleaseLockDir('main', $config);
 }
 
+# Forces the lock to be released
+# Public
 sub ForceReleaseLock {
     my ($name, $config) = @_;
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !&RequestLockDir($name, 5, 3, 0, $config);
-    &ReleaseLockDir($name, $config);  # Release the lock, even if we didn't get it.
+    $forced = !&_RequestLockDir($name, 5, 3, 0, $config);
+    &_ReleaseLockDir($name, $config);  # Release the lock, even if we didn't get it.
     return $forced;
 }
 
+# Writes the given string to the given file. Dies
+# if it can't write.
+# Public
 sub WriteStringToFile {
     my $file = shift;
     my $string = shift;
@@ -132,6 +159,7 @@ sub WriteStringToFile {
     close(OUT);
  }
 
+# Not used?
 sub AppendStringToFile {
     my ($file, $string) = @_;
 
@@ -140,6 +168,9 @@ sub AppendStringToFile {
     close(OUT);
 }
 
+# Creates and returns an array containing a list of all the
+# wiki pages in the database.
+# Public
 sub AllPagesList {
     my $config = shift;
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
@@ -176,17 +207,19 @@ sub AllPagesList {
     return sort(@pages);
 }
 
+# Updates the diffs keps for a page.
+# Public
 sub UpdateDiffs {
     my $page = shift;
     my $keptRevision = shift;
     my ($id, $editTime, $old, $new, $isEdit, $newAuthor, $config) = @_;
     my ($editDiff, $oldMajor, $oldAuthor);
 
-    $editDiff  = &GetDiff($old, $new, 0);     # 0 = already in lock
+    $editDiff  = &_GetDiff($old, $new, 0);     # 0 = already in lock
     $oldMajor  = $page->getPageCache('oldmajor');
     $oldAuthor = $page->getPageCache('oldauthor');
     if ($config->UseDiffLog) {
-        &WriteDiff($id, $editTime, $editDiff, $config);
+        &_WriteDiff($id, $editTime, $editDiff, $config);
     }
     $page->setPageCache('diff_default_minor', $editDiff);
 
@@ -209,6 +242,8 @@ sub UpdateDiffs {
     }
 }
 
+# Retrieves a cached diff for a page.
+# Public
 sub GetCacheDiff {
   my ($page, $type) = @_;
   my ($diffText);
@@ -219,6 +254,8 @@ sub GetCacheDiff {
   return $diffText;
 }
 
+# Retrieves the diff of an old kept revision
+# Public
 sub GetKeptDiff {
     my $keptRevision = shift;
     my ($newText, $oldRevision, $lock) = @_;
@@ -227,10 +264,12 @@ sub GetKeptDiff {
     my $oldText = $section->getText()->getText();
 
     return ""  if ($oldText eq "");  # Old revision not found
-    return &GetDiff($oldText, $newText, $lock);
+    return &_GetDiff($oldText, $newText, $lock);
 }
 
-sub WriteDiff {
+# Writes out a diff to the diff log.
+# Private
+sub _WriteDiff {
     my ($id, $editTime, $diffString, $config) = @_;
 
     my $directory = $config->DataDir;

@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.6.2.5 2003/06/12 22:42:00 cdent Exp $
+# $Id: wiki.pl,v 1.6.2.6 2003/06/14 20:15:04 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -2084,13 +2084,13 @@ sub DoUnlock {
 
   print &GetHeader('', 'Removing edit lock', '');
   print '<p>', 'This operation may take several seconds...', "\n";
-  if (&ForceReleaseLock('main', $config)) {
+  if (&PurpleWiki::Database::ForceReleaseLock('main', $config)) {
     $LockMessage = 'Forced Unlock.';
   }
   # Later display status of other locks?
-  &ForceReleaseLock('cache', $config);
-  &ForceReleaseLock('diff', $config);
-  &ForceReleaseLock('index', $config);
+  &PurpleWiki::Database::ForceReleaseLock('cache', $config);
+  &PurpleWiki::Database::ForceReleaseLock('diff', $config);
+  &PurpleWiki::Database::ForceReleaseLock('index', $config);
   print "<br><h2>$LockMessage</h2>";
   print &GetCommonFooter();
 }
