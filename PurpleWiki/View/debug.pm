@@ -116,16 +116,16 @@ sub dtPre { shift->_heading(@_) }
 sub prePre { shift->_heading(@_) }
 sub sketchPre { shift->_heading(@_) }
 
-sub bPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub iPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub ttPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub nowikiPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub transclusionPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub linkPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub urlPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub wikiwordPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub freelinkPre { shift->{outputString} .= uc(shift->type) . ':' }
-sub imagePre { shift->{outputString} .= uc(shift->type) . ':' }
+sub bPre { &_showType(shift) }
+sub iPre { &_showType(shift) }
+sub ttPre { &_showType(shift) }
+sub nowikiPre { &_showType(shift) }
+sub transclusionPre { &_showType(shift) }
+sub linkPre { &_showType(shift) }
+sub urlPre { &_showType(shift) }
+sub wikiwordPre { &_showType(shift) }
+sub freelinkPre { &_showType(shift) }
+sub imagePre { &_showType(shift) }
 
 sub textMain { shift->{outputString} .= shift->content . "\n" }
 sub nowikiMain { shift->{outputString} .= shift->content . "\n" }
@@ -139,10 +139,16 @@ sub imageMain { shift->{outputString} .= shift->content . "\n" }
 
 ############### Private Methods ###############
 
+sub _showType {
+    my $nodeRef = shift;
+    return uc($nodeRef->type) . ':';
+}
+
 sub _heading {
     my ($self, $nodeRef) = @_;
     $self->{outputString} .= ' 'x(2 * $self->{indentLevel});
     $self->{outputString} .= $nodeRef->type.":";
+    $self->{outputString} .= $nodeRef->id.':' if ($nodeRef->id);
 }
 
 sub _headingWithNewline {

@@ -2,6 +2,6 @@
            title = "Error!"
 %]
 
-<h2>Invalid URL</h2>
+<h2>Invalid username.  Preferences not saved.</h2>
 
 [% INCLUDE common/footer.tt %]

@@ -353,8 +353,8 @@ sub parse {
                     $currentNode = $currentNode->insertChild(type=>'section');
                 }
             }
-            if ($nodeContent =~ s/\s+\{nid ([A-Z0-9]+)\}$//s) {
-                $currentNid = $1;
+            if ($nodeContent =~ s/\s*\{nid ([A-Z0-9]+)\}$//s) {
+		$currentNid = $1;
             }
             $currentNode = $currentNode->insertChild('type'=>'h',
                 'content'=>&_parseInlineNode($nodeContent, %params));
@@ -437,7 +437,7 @@ sub parse {
         }
         elsif ($line =~ /^\s*$/) {  # blank line
             if ($isBracePre) {
-                $nodeContent .= $line;
+                $nodeContent .= "\n";
             }
             else {
                 $currentNode = &_terminateNode($currentNode, \$nodeContent,
@@ -509,7 +509,7 @@ sub _terminateNode {
     if (($currentNode->type eq 'p') || ($currentNode->type eq 'pre') ||
         ($currentNode->type eq 'li') || ($currentNode->type eq 'dd')) {
         chomp ${$nodeContentRef};
-        if (${$nodeContentRef} =~ s/\s+\{nid ([A-Z0-9]+)\}$//s) {
+        if (${$nodeContentRef} =~ s/\s*\{nid ([A-Z0-9]+)\}$//s) {
             $currentNid = $1;
         }
         if (defined $currentNid && ($currentNid =~ /^[A-Z0-9]+$/)) {
@@ -531,6 +531,10 @@ sub _parseList {
         $currentNode, $paramRef, $nodeContentRef,
         @nodeContents) = @_;
 
+    if ($listLength == ${$listDepthRef}  && $currentNode->type ne $listType) {
+	$currentNode = $currentNode->parent;
+	$currentNode = $currentNode->insertChild(type=>$listType);
+    }
     while ($listLength > ${$listDepthRef}) {
         # Nested lists are children of list items, not of other lists.
         # We need to find the last list item (if it exists) and
@@ -559,7 +563,7 @@ sub _parseList {
         ${$listDepthRef}--;
     }
     if ($listType eq 'dl') {
-        $nodeContents[0] =~  s/\s+\{nid ([A-Z0-9]+)\}$//s;
+        $nodeContents[0] =~  s/\s*\{nid ([A-Z0-9]+)\}$//s;
         my $currentNid = $1;
         $currentNode = $currentNode->insertChild(type=>'dt',
             content=>&_parseInlineNode($nodeContents[0], %{$paramRef}));

@@ -7,8 +7,9 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
-SiteName    = TestWiki          # Name of site (used for titles)
+ScriptName  = http://your.site/cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
+ScriptDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
+SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
 RCName      = RecentChanges     # Name of changes page (change space to _)
 StyleSheet  = /purplewiki.css   # URL for CSS stylesheet (like "/wiki.css")
@@ -74,7 +75,6 @@ SearchModule	=	Wiki
 #SearchModule	=	Google
 
 # Template Modules
-TemplateDirectory = $DataDir/templates
 TemplateDriver = TT
 
 # Search Additional Config
@@ -86,6 +86,9 @@ TemplateDriver = TT
 #GoogleWSDL             =       /home/cdent/lib/GoogleSearch.wsdl
 #GoogleKey              =       XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
+# Identity Commons e-names
+#ServiceProviderKey = ""
+#ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 
 # == You should not have to change anything below this line. =============
 PageDir     = $DataDir/page      # Stores page data
@@ -96,6 +99,6 @@ LockDir     = $TempDir/lock      # DB is locked if this exists
 InterFile   = $DataDir/intermap  # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
-
+TemplateDir = $DataDir/templates # templates
 
 # == End of Configuration =================================================

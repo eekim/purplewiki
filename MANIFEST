@@ -14,9 +14,10 @@ PurpleWiki/Database/KeptRevision.pm
 PurpleWiki/Database/Page.pm
 PurpleWiki/Database/Section.pm
 PurpleWiki/Database/Text.pm
-PurpleWiki/Database/User.pm
+PurpleWiki/Database/User/UseMod.pm
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
+PurpleWiki/Parser/MoinMoin.pm
 PurpleWiki/Parser/WikiText.pm
 PurpleWiki/Search/Arts.pm
 PurpleWiki/Search/Blosxom.pm
@@ -34,6 +35,7 @@ PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Template/Base.pm
 PurpleWiki/Template/TT.pm
+PurpleWiki/User.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/Filter.pm
@@ -55,6 +57,7 @@ extras/mt/purple.pl
 extras/rss/README
 extras/rss/rssCreate
 extras/rss/wikirss
+extras/createUsernameIndex.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
@@ -78,10 +81,12 @@ t/parser_freelinks.t
 t/parser_hr.t
 t/parser_interlinks.t
 t/parser_lists.t
+t/parser_mixedlists.t
 t/parser_pre.t
 t/sequence.t
 t/structural_node.t
 t/tree.t
+t/userdb.t
 t/wikitext.t
 t/wikihtml.t
 t/output/hr1.txt
@@ -159,11 +164,13 @@ wikidb/templates/editConflict.tt
 wikidb/templates/editPage.tt
 wikidb/templates/loginResults.tt
 wikidb/templates/login.tt
+wikidb/templates/logout.tt
 wikidb/templates/pageIndex.tt
 wikidb/templates/preferencesEdit.tt
 wikidb/templates/preferencesUpdated.tt
 wikidb/templates/previewPage.tt
 wikidb/templates/removeEditLock.tt
+wikidb/templates/searchResults.tt
 wikidb/templates/viewDiff.tt
 wikidb/templates/viewPageHistory.tt
 wikidb/templates/viewPage.tt
@@ -178,6 +185,7 @@ wikidb/templates/errors/dataDirCannotCreate.tt
 wikidb/templates/errors/editBlocked.tt
 wikidb/templates/errors/editNotAllowed.tt
 wikidb/templates/errors/editSiteReadOnly.tt
+wikidb/templates/errors/enameInvalid.tt
 wikidb/templates/errors/pageCannotBeDefined.tt
 wikidb/templates/errors/pageNameInvalid.tt
 wikidb/templates/errors/pageNameMissingSubpage.tt
@@ -186,11 +194,11 @@ wikidb/templates/errors/pageNameSlashNotAllowed.tt
 wikidb/templates/errors/pageNameTooLong.tt
 wikidb/templates/errors/pageNameTooManyChars.tt
 wikidb/templates/errors/pageNameTooManySlashes.tt
-wikidb/templates/errors/prefsInvalidUserId.tt
 wikidb/templates/errors/urlInvalid.tt
+wikidb/templates/errors/usernameInvalid.tt
+wikidb/templates/errors/xsidInvalid.tt
 wikidb/templates/lib/diffs.tt
 wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
 wikidb/templates/lib/searchResults.tt
 wiki.pl
-META.yml                                 Module meta-data (added by MakeMaker)

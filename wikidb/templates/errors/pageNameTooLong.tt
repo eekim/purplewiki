@@ -2,14 +2,6 @@
            title = "Error!"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
-<hr />
-
 <h2>Page name is too long: [% pageName %]</h2>
-
-<hr />
-
-[% INCLUDE common/searchbar.tt %]
 
 [% INCLUDE common/footer.tt %]

@@ -195,20 +195,30 @@ sub AllPagesList {
         foreach $id (@pageFiles) {
             next  if (($id eq '.') || ($id eq '..'));
             if (substr($id, -3) eq '.db') {
-                push(@pages, substr($id, 0, -3));
+		my $pageName = substr($id, 0, -3);
+		$pageName =~ s/_/ /g if ($config->FreeLinks);
+                push(@pages, {
+		    'id' => substr($id, 0, -3),
+		    'pageName' => $pageName,
+                });
             } elsif (substr($id, -4) ne '.lck') {
                 opendir(PAGELIST, "$directory/$id");
                 @subpageFiles = readdir(PAGELIST);
                 closedir(PAGELIST);
                 foreach $subId (@subpageFiles) {
                     if (substr($subId, -3) eq '.db') {
-                        push(@pages, "$id/" . substr($subId, 0, -3));
+			my $pageName = "$id/" . substr($subId, 0, -3);
+			$pageName =~ s/_/ /g if ($config->FreeLinks);
+			push(@pages, {
+			    'id' => "$id/" . substr($subId, 0, -3),
+			    'pageName' => $pageName,
+			});
                     }
                 }
             }
         }
     }
-    return sort(@pages);
+    return sort { $a->{id} cmp $b->{id} } @pages;
 }
 
 # Updates the diffs keps for a page.
@@ -322,8 +332,13 @@ sub recentChanges {
             chomp $logEntry;
             my $fsexp = $config->FS3;
             my @entries = split /$fsexp/, $logEntry;
-            if (scalar @entries == 7 && $entries[0] >= $timeStamp) {  # Check timestamp
+            if (scalar @entries >= 6 && $entries[0] >= $timeStamp) {  # Check timestamp
                 my $name = $entries[1];
+		my $pageName = $name;
+
+		if ($config->FreeLinks) {
+		    $pageName =~ s/_/ /g;
+		}
                 if ( $pages{$name} &&
                     ($pages{$name}->{timeStamp} > $entries[0]) ) {
                     $pages{$name}->{numChanges}++;
@@ -334,6 +349,7 @@ sub recentChanges {
                     }
                     else {
                         $pages{$name}->{numChanges} = 1;
+			$pages{$name}->{pageName} = $pageName;
                     }
                     $pages{$name}->{timeStamp} = $entries[0];
                     if ($entries[2] ne '' && $entries[2] ne '*') {
@@ -350,10 +366,18 @@ sub recentChanges {
                     # Get extra info
                     my $fsexp = $config->FS2;
                     my %userInfo = split /$fsexp/, $entries[6];
-                    $pages{$name}->{userId} = $userInfo{id}
-                        if ($userInfo{id});
-                    $pages{$name}->{userName} = $userInfo{name}
-                        if ($userInfo{name});
+                    if ($userInfo{id}) {
+                        $pages{$name}->{userId} = $userInfo{id};
+                    }
+                    else {
+                        $pages{$name}->{userId} = '';
+                    }
+                    if ($userInfo{name}) {
+                        $pages{$name}->{userName} = $userInfo{name};
+                    }
+                    else {
+                        $pages{$name}->{userName} = '';
+                    }
                 }
             }
         }
@@ -363,7 +387,8 @@ sub recentChanges {
     # now parse pages hash into final data structure and return
     foreach my $name (sort { $pages{$b}->{timeStamp} <=> $pages{$a}->{timeStamp} } keys %pages) {
         push @recentChanges, { timeStamp => $pages{$name}->{timeStamp},
-                               name => $name,
+                               id => $name,
+			       pageName => $pages{$name}->{pageName},
                                numChanges => $pages{$name}->{numChanges},
                                summary => $pages{$name}->{summary},
                                userName => $pages{$name}->{userName},

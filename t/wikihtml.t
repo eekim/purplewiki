@@ -1,11 +1,11 @@
-# wikitext.t
+# wikihtml.t
 
 use strict;
 use warnings;
 use Test;
 use Text::Diff;
 
-BEGIN { plan tests => 12 };
+BEGIN { plan tests => 13 };
 
 use IO::File;
 use PurpleWiki::Parser::WikiText;
@@ -42,8 +42,8 @@ my ($input, $output, $shouldBe, $wiki, $diff);
 #               tree_test09 tree_test11 tree_test12
 #               hr1 hr2 hr3 hr4 hr5 hr6 hr7);
 my @files = qw(hr1 hr2 hr3 hr4 hr5 hr6 hr7
-               tree_hr tree_freelinks tree_lists tree_pre
-	       tree_test01 mixed_list);
+               tree_hr tree_freelinks tree_lists tree_pre tree_mixedlists
+	       tree_test01);
 
 foreach my $filename (@files) {
     print $filename, "\n";

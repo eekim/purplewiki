@@ -196,7 +196,6 @@ sub ddPost {
 sub prePost {
     my $self = shift;
     
-    $self->{outputString} .= "\n";
     $self->_closeTagWithNID(@_);
 }
 
@@ -330,7 +329,7 @@ sub _wikiLink {
             PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
-    } elsif (PurpleWiki::Page::exists($pageName)) {
+    } elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
                 PurpleWiki::Page::getFreeLink($nodeRef->content) . 
@@ -351,7 +350,7 @@ sub _wikiLink {
         } else {
             $linkString .= $nodeRef->content;
             $linkString .= '<a href="' .
-                PurpleWiki::Page::getWikiWordLink($pageName) .
+                &PurpleWiki::Page::getWikiWordLink($pageName) .
                     '" class="wikiword">';
         }
         $linkString .= '?</a>';
@@ -403,11 +402,13 @@ sub _nid {
 
     if ($nid) {
         my $nidFace = '#';
-
         if ($self->{config}->ShowNid) {
             $nidFace = "($nid)";
         }
 
+        if ($self->{config}->ShowNid) {
+            $nidFace = "($nid)";
+        }
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
             'title="' . "$nid" . '" href="' .
             $self->{url} . '#nid' .

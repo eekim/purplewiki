@@ -1,0 +1,14 @@
+<div class="navbar">
+<form method="GET" action="[% baseUrl %]">
+<a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+[% IF userName %]
+([% userName %]) |
+<a href="[% baseUrl %]?action=logout">Logout</a>
+[% ELSE %]
+e-name:
+<input type="text" name="xri_ename" size="20" />
+[% END %]
+</form>
+</div>

@@ -1,2 +1,14 @@
+</div>
+
+<div id="footer">
+<div id="footleft">
+[% INCLUDE common/pagebar.tt %]
+</div>
+<div id="footright">
+<a href="http://www.blueoxen.org/tools/purplewiki/">
+<span class="poweredby">PurpleWiki</span></a>
+</div>
+</div>
+
 </body>
 </html>

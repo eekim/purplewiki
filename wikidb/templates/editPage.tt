@@ -2,22 +2,20 @@
            title = "Editing $pageName"
 %]
 
-<hr />
-
 [% IF revision %]
 <p><b>Editing old revision [% revision %]. Saving this page will
 replace the latest revision with this text.</b></p>
 [% END %]
 
 <form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
-<input type="hidden" name="title" value="[% pageName %]" />
+<input type="hidden" name="title" value="[% id %]" />
 <input type="hidden" name="oldtime" value="[% pageTime %]" />
 <input type="hidden" name="oldconflict" value="0" />
 [% IF revision %]
   <input type="hidden" name="revision" value="[% revision %]" />
 [% END %]
 
-<textarea name="text" rows="20" cols="65" style="width:100%">
+<textarea name="text" rows="20" cols="65" style="width:75%">
 [% oldText %]
 </textarea>
 
@@ -25,16 +23,14 @@ replace the latest revision with this text.</b></p>
 <input type="checkbox" name="recent_edit" value="on" />This change is a minor edit.<br />
 <input type="submit" name="Save" value="Save" />
 [% IF userName %]
-  (Your user name is <a href="[% baseUrl %]?[% userName %]">[% userName %]</a>.)
+  (Your user name is [% userName %].)
 [% ELSE %]
-  (Visit <a href="[% preferencesUrl %]">Preferences</a> to set your user name.)
+  (<a href="[% baseUrl %]?action=login">Login</a> if you already have an
+  account, or visit <a href="[% preferencesUrl %]">Preferences</a> to
+  create one.)
 [% END %]
 <input type="submit" name="Preview" value="Preview" /></p>
 
 <div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
-
-<hr />
-
-<div class="pagebar"><a href="[% revisionsUrl %]">View other revisions</a></div>
 
 [% INCLUDE common/footer.tt %]

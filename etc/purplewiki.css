@@ -1,7 +1,9 @@
 body {
-    padding-top: 2em;
-    padding-left: 2em;
-    padding-right: 2em;
+    background-color: #FFF;
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
+    padding-left: 1em;
+    padding-right: 1em;
     padding-bottom: 50em;
     font-family: Verdana, Trebuchet, Arial, Helvetica;
     sans-serif;
@@ -9,14 +11,44 @@ body {
     background-color: #ffffff;
 }
 
-a { text-decoration: none; }
-a:hover { text-decoration: underline; }
-a:link {
-    color: #0000ff;
+table {
+    font-family: "Verdana", "Arial", sans-serif;
+    font-size: 11pt;
 }
 
-a:visited {
-    color: #ff0000;
+#header {
+    border-bottom: #000 1px solid;
+    padding-bottom: 4px;
+}
+
+#body {
+    padding-top: 10px;
+}
+
+#body #sidebar {
+    clear: both;
+    float: right;
+    width: 23%;
+    padding-left: 4px;
+    margin-left: 4px;
+    margin-bottom: 10px;
+    background: #EEE;
+    border: #000 1px solid;
+}
+
+#footer {
+    clear: both;
+    border-top: #000 1px solid;
+    padding-top: 4px;
+}
+
+#footleft {
+    float: left;
+    width: 75%;
+}
+
+#footright {
+    float: right;
 }
 
 div.indent {
@@ -32,15 +64,42 @@ a.nid {
     color: #C8A8FF;  /* light purple */
 }
 
-.extlink {
-        border-width: thin;
-        border-style: none none dotted none;
-        text-decoration: none;
+a {
+    text-decoration: none;
 }
 
-h6 { font-size: 90%; }
-h5 { font-size: 100%; }
-h4 { font-size: 115%; }
-h3 { font-size: 135%; }
-h2 { font-size: 165%; }
-h1 { font-size: 205%; }
+a:hover {
+    text-decoration: underline;
+}
+
+/* Places NIDs in parentheses.  Internet Explorer currently does not
+   support these CSS elements, hence this functionality is built into
+   the wikihtml.pm View driver for now and is commented out here.
+
+a.nid:before {
+    content: "(";
+}
+
+a.nid:after {
+    content: ")";
+}
+*/
+
+a.extlink {
+    border-width: 1px;
+    border-style: none none dotted none;
+}
+
+.poweredby {
+    font-family: verdana, sans-serif;
+    font-size: 10px;
+    font-weight:bold;
+    text-decoration:none;
+    color: white;
+    background-color: #8700FF;
+/*    border-left:1px solid #3C6;
+    border-top:1px solid #3C6; */
+    border-right:1px solid #063;
+    border-bottom:1px solid #063;
+    padding:0px 3px 0px 3px;
+}

@@ -44,7 +44,7 @@ ok($wiki->root->children->[0]->children->[0]->type eq 'pre');
 ok($wiki->root->children->[0]->children->[0]->content->[0]->type
     eq 'text');
 ok($wiki->root->children->[0]->children->[0]->content->[0]->content
-    eq "void helloWorld() {\n    printf(\"Hello, world!\\n\");\n}");
+    eq "void helloWorld() {\n    printf(\"Hello, world!\\n\");\n\n}");
 
 ok($wiki->root->children->[0]->children->[1]->type eq 'pre');
 ok($wiki->root->children->[0]->children->[1]->content->[0]->type

@@ -2,12 +2,6 @@
            title = "Error!"
 %]
 
-[% INCLUDE common/navbar.tt %]
-
-<hr />
-
 <h2>Could not create [% dataDir %]</h2>
-
-<hr />
 
 [% INCLUDE common/footer.tt %]
