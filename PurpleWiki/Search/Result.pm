@@ -169,31 +169,12 @@ the resulting list.
 
 Creates a new Result object.
 
-=item setURL($url)
+=head2 Accessors/Mutators
 
-Sets the URL of the object. No checking is performed.
-
-=item setTitle($title)
-
-Sets the title of the object. There are no explicit length
-restrictions.
-
-=item setSummary($summary)
-
-Sets the summary of the object. There are no explicit length
-restrictions.
-
-=item setModifiedTime($epochTime)
-
-Sets the Modified Time of the object to the provide epoch time
-(number of seconds since midnight, 1st of January 1970).
-
-=item getURL, getTitle, getSummary, getModifiedTime
-
-Access the stored URL, Title, Summary and Modified Time values.
-
-=back
-
+  url
+  title
+  summary
+  modifiedTime
 
 =head1 SEE ALSO
 
