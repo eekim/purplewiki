@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
+# $Id: Transclusion.pm,v 1.4 2003/08/13 04:28:06 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,7 +39,7 @@ use LWP::UserAgent;
 # good by any stretch of the imagination. It is simply to
 # demonstrate the possibilities that these features allow.
 
-# $Id: Transclusion.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
+# $Id: Transclusion.pm,v 1.4 2003/08/13 04:28:06 cdent Exp $
 
 # The name of the index file. It's directory comes from Config.
 my $INDEX_FILE = 'sequence.index';
@@ -101,10 +101,12 @@ sub get {
     
         if ($result->is_success()) {
             $content = $result->content();
-            $content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is;
-            $content =~ s/&nbsp;&nbsp;\s*<a class="nid" title="$nid".*$//is;
+            ($content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is &&
+                $content =~
+                    s/&nbsp;&nbsp;\s*<a class="nid" title="$nid".*$//is ) ||
+                ($content = "transclusion index out of sync");
         } else {
-            $content = "unable to retrieve content";
+            $content = "unable to retrieve content: " . $result->code();
         }
     }
 
