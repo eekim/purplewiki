@@ -1,6 +1,6 @@
 # PurpleWiki::View::Debug.pm
 #
-# $Id: Debug.pm,v 1.3 2002/11/22 21:17:36 eekim Exp $
+# $Id: Debug.pm,v 1.4 2002/11/24 07:45:46 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -39,57 +39,58 @@ use PurpleWiki::Tree;
 sub view {
     my ($wikiTree, %params) = @_;
 
-    print 'title:' . $wikiTree->title . "\n";
-    &_traverseStructural($wikiTree->root->children, 0);
+    return 'title:' . $wikiTree->title . "\n" .
+        &_traverseStructural($wikiTree->root->children, 0);
 }
 
 sub _traverseStructural {
     my ($nodeListRef, $indentLevel) = @_;
+    my $outputString;
 
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
-            print &_spaces($indentLevel, 0) . $node->type . ':';
+            $outputString .= ' ' x ($indentLevel * 2) . $node->type . ':';
             if ( ($node->type eq 'section') || ($node->type eq 'indent') ||
                  ($node->type eq 'ul') || ($node->type eq 'ol') ||
                  ($node->type eq 'dl') ) {
-                print "\n";
+                $outputString .= "\n";
             }
             if ($node->content) {
                 foreach my $inlineNode (@{$node->content}) {
-                    print uc($inlineNode->type) . ':' if ($inlineNode->type ne 'text');
+                    $outputString .= uc($inlineNode->type) . ':'
+                        if ($inlineNode->type ne 'text');
                     if ($inlineNode->children) {
-                        &_traverseInline($inlineNode->children, $indentLevel);
+                        $outputString .= &_traverseInline($inlineNode->children,
+                                                          $indentLevel);
                     }
                     else {
-                        print $inlineNode->content . "\n";
+                        $outputString .= $inlineNode->content . "\n";
                     }
                 }
             }
-            &_traverseStructural($node->children, $indentLevel + 1);
+            if ($node->children) {
+                $outputString .= &_traverseStructural($node->children,
+                                                      $indentLevel + 1);
+            }
         }
     }
+    return $outputString;
 }
 
 sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
+    my $outputString;
 
     foreach my $node (@{$nodeListRef}) {
         if (defined $node->content) {
-            print $node->content . "\n";
+            $outputString .= $node->content . "\n";
         }
         else {
-            print uc($node->type) . ':';
-            &_traverseInline($node->children, $indentLevel);
+            $outputString .= uc($node->type) . ':';
+            $outputString .= &_traverseInline($node->children, $indentLevel);
         }
     }
-}
-
-sub _spaces {
-    my $indentLevel = shift;
-
-    for (my $i = 0; $i < $indentLevel * 2; $i++) {
-        print ' ';
-    }
+    return $outputString;
 }
 
 1;
