@@ -96,13 +96,12 @@ for my $pageTime (sort { $a <=> $b } (keys %all)) {
                                    changeSummary => $summary,
                                    host => $host,
                                    timeStamp => $pageTime,
-                                   userId => $userId )) {
+                                   userId => $userId,
+                                   url => "$url?$id")) {
         print "$id :: $rev -> $err\n";
         $badCount++;
     }
     else {
-        &PurpleWiki::Archive::Sequence::updateNIDs($newpages, "$url?$id",
-                                                   $id, \$maxNID);
         $goodCount++;
     }
 }
