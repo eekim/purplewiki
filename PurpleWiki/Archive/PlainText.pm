@@ -159,33 +159,6 @@ sub deletePage {
   }
 }
 
-sub _find_dir {
-  my $dir = shift;
-  my $array_ref = shift;
-  my $oldest = shift;
-  my %dir;
-#print STDERR "_find_dir($dir, $#{$array_ref}, $oldest)\n";
-  if (tie %dir, IO::Dir, $dir) {
-    for my $entry (keys %dir) {
-      next if (substr($entry,0,1) eq '.');
-      my $a = $dir{$entry};
-      next unless ref($a);
-      my ($mode, $mtime) = ($a->mode, $a->mtime);
-      if (S_ISDIR($mode)) {
-        _find_dir("$dir/$entry", $array_ref);
-      } elsif (S_ISREG($mode)) {
-#print STDERR "$oldest :: $mtime ($entry)\n" if (!$oldest && $entry =~ /\.txt$/);
-        if ((!$oldest || $mtime > $oldest) && $entry =~ /\.txt$/) {
-          push @$array_ref, $dir;
-          untie %dir;
-          return;
-        }
-      }
-    }
-    untie %dir;
-  } else { print STDERR "Error reading dir $dir\nError: $!\n"; }
-}
-
 sub _find_txt {
   my $dir = shift;
   my $array_ref = shift;
@@ -214,9 +187,12 @@ sub allPages {
   my $self = shift;
   my $a_ref = [];
   my %ids = ();
-  _find_dir($self->{datadir}, $a_ref);
+  for my $subdir ('A'..'Z', 'misc') {
+    my $dir = $dir = $self->{datadir} . '/' . $subdir;
+    _find_txt($dir, $a_ref, $starttime) if (-d $dir);
+  }
   for (@$a_ref) {
-    if (m|/([^/]+)$|) {
+    if (m|/([^/]+)/[^/]+\.txt$|) {
       my $id = $1;
       $id =~ s|\+|/|g;
       $ids{$id}++;

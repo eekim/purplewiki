@@ -385,23 +385,34 @@ sub DoHistory {
     my $base = $config->ScriptName;
     my @vPages = &visitedPages;
     my @pageHistory = $pages->getRevisions($id);
-    my $first = 1;
+    my $count = 1;
     for my $pageinfo (@pageHistory) {
         my $rev = $pageinfo->{revision};
         if ($pageinfo->{user}) {
             $pageinfo->{userName} = $userDb->loadUser($pageinfo->{user})->username;
         }
-        if ($first) {
+        if ($count < scalar @pageHistory) {
+            if ($count == 1) {
+                $pageinfo->{diffUrl} = 
+                    "$base?action=browse&amp;diff=1&amp;id=$id";
+            }
+            else {
+                $pageinfo->{diffUrl} = 
+                    "$base?action=browse&amp;diff=1&amp;id=$id&amp;revision=$rev";
+            }
+        }
+        if ($count == 1) {
             $pageinfo->{pageUrl} = "$base?$id";
-            $first = 0;
-        } else {
+            $pageinfo->{editUrl} = 
+              "$base?action=edit&amp;id=$id";
+        }
+        else {
             $pageinfo->{pageUrl} = 
               "$base?action=browse&amp;id=$id&amp;revision=$rev";
-            $pageinfo->{diffUrl} = 
-              "$base?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
             $pageinfo->{editUrl} = 
               "$base?action=edit&amp;id=$id&amp;revision=$rev";
         }
+        $count++;
     }
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $id,
