@@ -31,7 +31,9 @@ extras/purple.pl
 purple
 t/config
 t/config.t
+t/database.t
 t/inline_node.t
+t/page.t
 t/parser01.t
 t/parser02.t
 t/parser03.t

@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.10 2003/06/14 20:15:04 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.11 2003/06/15 00:13:49 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -68,7 +68,7 @@ sub openTagWithNid {
 
 sub closeTagWithNid {
     my $node = shift;
-    my %params = shift;
+    my %params = @_;
 
     return &_nid($node->id, %params) . &closeTag($node);
 }
