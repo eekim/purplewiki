@@ -13,31 +13,36 @@ my %structuralActionMap = (
     'section' => {
         'pre' => sub { $sectionDepth++; },
         'mid' => \&_traverseStructuralWithChild,
-        'post' => sub { $sectionDepth--; },
+        'post' => sub { $sectionDepth--;
+                        undef $lastInlineProcessed; },
     },
     'indent' => {
         'pre' => sub { $indentDepth++; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { $indentDepth--;
-                        print "\n" if ($indentDepth == 0); },
+                        print "\n" if ($indentDepth == 0);
+                        undef $lastInlineProcessed; },
     },
     'ul' => {
         'pre' => sub { push @listStack, 'ul'; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0); },
+                        print "\n" if (scalar @listStack == 0);
+                        undef $lastInlineProcessed; },
     },
     'ol' => {
         'pre' => sub { push @listStack, 'ol'; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0); },
+                        print "\n" if (scalar @listStack == 0);
+                        undef $lastInlineProcessed; },
     },
     'dl' => {
         'pre' => sub { push @listStack, 'dl'; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0); },
+                        print "\n" if (scalar @listStack == 0);
+                        undef $lastInlineProcessed; },
     },
     'h' => {
         'pre' => sub { for (my $i = 0; $i < $sectionDepth; $i++) {
@@ -51,7 +56,8 @@ my %structuralActionMap = (
                         for (my $i = 0; $i < $sectionDepth; $i++) {
                             print '=';
                         }
-                        print "\n\n"; },
+                        print "\n\n";
+                        undef $lastInlineProcessed; },
         },
     'p' => {
         'pre' => sub { for (my $i = 0; $i < $indentDepth; $i++) {
@@ -61,7 +67,8 @@ my %structuralActionMap = (
         'post' => sub { my $nid = shift;
                         &_printNid($nid);
                         print "\n";
-                        print "\n" if ($indentDepth == 0); },
+                        print "\n" if ($indentDepth == 0);
+                        undef $lastInlineProcessed; },
     },
     'li' => {
         'pre' => sub { for (my $i = 0; $i < scalar @listStack; $i++) {
@@ -76,7 +83,8 @@ my %structuralActionMap = (
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
                         &_printNid($nid);
-                        print "\n"; },
+                        print "\n";
+                        undef $lastInlineProcessed; },
     },
     'dt' => {
         'pre' => sub { for (my $i = 0; $i < scalar @listStack; $i++) {
@@ -84,21 +92,24 @@ my %structuralActionMap = (
                        } },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid); },
+                        &_printNid($nid);
+                        undef $lastInlineProcessed; },
     },
     'dd' => {
         'pre' => sub { print ':'; },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
                         &_printNid($nid);
-                        print "\n"; },
+                        print "\n";
+                        undef $lastInlineProcessed; },
     },
     'pre' => {
         'pre' => sub {},
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
                         &_printNid($nid);
-                        print "\n\n"; },
+                        print "\n\n";
+                        undef $lastInlineProcessed; },
     },
     );
 
