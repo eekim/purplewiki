@@ -48,6 +48,8 @@ my @DataFields = (
     'rcshowedit', 'tzoffset', 'editrows', 'editcols',
 );
 
+my $fs1 = "\xb31";
+
 sub new {
     my $class = shift;
     my $self = {};
@@ -100,7 +102,7 @@ sub loadUser {
     if ($userId && -f $self->_userFile($userId)) {
         my $data = PurpleWiki::Misc::ReadFileOrDie($self->_userFile($userId));
         if ($data !~ /^lock/) {
-            my $regexp = $self->{config}->FS1;
+            my $regexp = $fs1;
             my %tempHash = split (/$regexp/, $data, -1);
             foreach my $key (keys(%tempHash)) {
                 $user->setField($key, $tempHash{$key});
@@ -121,12 +123,11 @@ sub saveUser {
     my $user = shift;
 
     # serialize data
-    my $separator = $self->{config}->FS1;
     my $string;
     foreach my $field (@DataFields) {
-        $string .= $field . $separator . $user->getField($field);
+        $string .= $field . $fs1 . $user->getField($field);
         if ($field ne $DataFields[$#DataFields]) {
-            $string .= $separator;
+            $string .= $fs1;
         }
     }
 

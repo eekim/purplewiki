@@ -97,7 +97,7 @@ t/inline_node.t
 t/intermap
 t/messages.l10n
 t/page.t
-t/pageMod.test
+t/pageMod.t
 t/pageSVN.test
 t/parser01.t
 t/parser02.t
@@ -114,8 +114,8 @@ t/parser_mixedlists.t
 t/parser_pre.t
 t/runlog.pl
 t/runTest.pl
-t/runwiki.test
-t/runwikMod.test
+t/runwiki.t
+t/runwikMod.t
 t/runwikSVN.test
 t/sequence.t
 t/structural_node.t

@@ -109,12 +109,6 @@ sub _init {
     $self->{AppConfig}->file($file) || die "unable to parse config file";
     $self->_initLinkPatterns();
 
-    # set the File Separators
-    $self->{AppConfig}->set('FS', $FS);
-    $self->{AppConfig}->set('FS1', $FS1);
-    $self->{AppConfig}->set('FS2', $FS2);
-    $self->{AppConfig}->set('FS3', $FS3);
-
     # make sure LocalSequenceDir is set to DataDir if it
     # wasn't already set
     if (!defined($self->{AppConfig}->get('LocalSequenceDir'))) {

@@ -76,7 +76,9 @@ my $config = new PurpleWiki::Config($configdir);
 my $database_package = $config->ArchiveDriver;
 eval "require $database_package";
 print "Error in Package: $database_package\nError:$@" if $@;
-print "DB $database_package\n";
+#print "DB $database_package\n";
+#my $x=$config->{AppConfig}->{STATE}->{VARIABLE};
+#for (keys %$x) { print "Cf: $_ > $$x{$_}\n"; }
 my $pages = $database_package->new ($config, create => 1);
 $config->{pages} = $pages;
 
@@ -127,6 +129,9 @@ $timediff = -$timediff if ($timediff < 0);
 ok($timediff < 100);
 ok($newPage->getID(), $id);
 ok($newPage->getTree()->view('wikitext'), $expected_content);
+
+sleep 1;  # if it runs to fast, the two posts get the same timestamp and
+          # possible test failures if they don't sort consistently
 
 # parse second content
 $wiki = $parser->parse($second_content, add_node_ids => 1);

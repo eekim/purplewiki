@@ -182,7 +182,7 @@ sub recentChanges {
     # parse logfile into pages hash
         while (my $logEntry = <IN>) {
             chomp $logEntry;
-            my $fsexp = $config->FS3;
+            my $fsexp = $PurpleWiki::Archive::UseMod::fs3;
             my @entries = split /$fsexp/, $logEntry;
             if (scalar @entries >= 6 && $entries[0] >= $timeStamp) {  # Check timestamp
                 my $name = $entries[1];
@@ -217,7 +217,6 @@ sub recentChanges {
 
                     # Get extra info
                     my $fsexp = $PurpleWiki::Archive::UseMod::fs2;
-my $x = $entries[6]; $x =~ s/$fsexp/^/g; print STDERR "E6:$x:\n";
                     my %userInfo = split /$fsexp/, $entries[6];
                     if ($userInfo{id}) {
                         $pages{$name}->{userId} = $userInfo{id};

@@ -8,8 +8,8 @@ $^W = 0;
 
 BEGIN { plan tests => 17; };
 
-system('cp t/config.tDef t/config');
 system('rm -fr t/tDB');
+system('cp t/config.tDef t/config');
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
@@ -73,9 +73,11 @@ EOF
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
 my $database_package = $config->ArchiveDriver;
-print "DB $database_package\n";
 eval "require $database_package";
 print "Error in Package: $database_package\nError:$@" if $@;
+#print "DB $database_package\n";
+#my $x=$config->{AppConfig}->{STATE}->{ARGCOUNT};
+#for (sort keys %$x) { print "Cf: $_ > $$x{$_}\n"; }
 my $pages = $database_package->new ($config, create => 1);
 $config->{pages} = $pages;
 

@@ -19,5 +19,5 @@ ok(ref $config eq 'PurpleWiki::Config');
 
 ok($config->UseSubpage == 1);
 ok($config->RCName eq 'RecentChanges');
-ok($config->FS1 eq "\xb31");
+ok($config->ArchiveDriver, 'PurpleWiki::Archive::PlainText');
 
