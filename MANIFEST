@@ -124,7 +124,6 @@ t/txt/tree_test11.txt
 t/txt/tree_test12.txt
 wikidb/config
 wikidb/intermap
-wikidb/templates/error.tt
 wikidb/templates/editConflict.tt
 wikidb/templates/editPage.tt
 wikidb/templates/pageIndex.tt
