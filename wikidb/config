@@ -74,6 +74,8 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
+# Template Modules
+TemplateDriver = TT
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
@@ -98,5 +100,4 @@ InterFile   = $DataDir/intermap  # Interwiki site->url map
 RcFile      = $DataDir/rclog     # New RecentChanges logfile
 RcOldFile   = $DataDir/oldrclog  # Old RecentChanges logfile
 TemplateDir = $DataDir/templates # templates
-
 # == End of Configuration =================================================

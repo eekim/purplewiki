@@ -1,9 +1,0 @@
-<div id='revisionInfo'>
-<TMPL_IF name=revision>
-Edited
-<TMPL_ELSE>
-Last edited
-</TMPL_IF>
-<TMPL_VAR name=lastEdited>
-<a href="<TMPL_VAR name=diffUrl>">(diff)</a>
-</div>

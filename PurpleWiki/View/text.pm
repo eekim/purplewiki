@@ -110,11 +110,11 @@ sub _structuralContent {
             }
         }
         if ($nodeRef->type eq 'pre') {
-            $self->{outputString} .= &Text::Wrap::wrap($self->{initialIndent},
+            $self->{outputString} .= Text::Wrap::wrap($self->{initialIndent},
                                      $self->{subsequentIndent},
                                      $nodeString);
         } else {
-            $self->{outputString} .= &Text::Wrap::fill($self->{initialIndent},
+            $self->{outputString} .= Text::Wrap::fill($self->{initialIndent},
                                      $self->{subsequentIndent},
                                      $nodeString);
         }

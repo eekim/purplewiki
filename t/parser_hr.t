@@ -1,6 +1,7 @@
 # parser_hr.t
 
 use strict;
+use warnings;
 use Test;
 
 BEGIN { plan tests => 34 };

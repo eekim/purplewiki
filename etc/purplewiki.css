@@ -2,9 +2,13 @@ body {
     background-color: #FFF;
     font-family: "Verdana", "Arial", sans-serif;
     font-size: 11pt;
-    padding-left: 10px;
-    padding-right: 10px;
+    padding-left: 1em;
+    padding-right: 1em;
     padding-bottom: 50em;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
+    sans-serif;
+    color: #000000;
+    background-color: #ffffff;
 }
 
 table {
@@ -52,7 +56,7 @@ div.indent {
 }
 
 a.nid {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
     font-style: normal;
     font-weight: bold;
     font-size: x-small;

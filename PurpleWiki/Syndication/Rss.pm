@@ -59,7 +59,7 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my $rcRef = &PurpleWiki::Database::recentChanges($self->{config});
+    my $rcRef = PurpleWiki::Database::recentChanges($self->{config});
     my @recentChanges = @{$rcRef};
 
     my $rss = new XML::RSS;

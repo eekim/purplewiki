@@ -47,7 +47,7 @@ sub ReadFileOrDie {
   my $fileName = shift;
   my ($status, $data);
 
-  ($status, $data) = &ReadFile($fileName);
+  ($status, $data) = ReadFile($fileName);
   if (!$status) {
     die("Can not open $fileName: $!");
   }
@@ -103,7 +103,7 @@ sub _RequestLockDir {
     my ($lockName, $n);
     my $config = PurpleWiki::Config->instance();
 
-    &CreateDir($config->TempDir);
+    CreateDir($config->TempDir);
     $lockName = $config->LockDir . $name;
     $n = 0;
     while (mkdir($lockName, 0555) == 0) {
@@ -129,13 +129,13 @@ sub _ReleaseLockDir {
 # Public
 sub RequestLock {
     # 10 tries, 3 second wait, die on error
-    return &_RequestLockDir("main", 10, 3, 1);
+    return _RequestLockDir("main", 10, 3, 1);
 }
 
 # Releases the general editing lock
 # Public
 sub ReleaseLock {
-    &_ReleaseLockDir('main');
+    _ReleaseLockDir('main');
 }
 
 # Forces the lock to be released
@@ -146,8 +146,8 @@ sub ForceReleaseLock {
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !&_RequestLockDir($name, 5, 3, 0);
-    &_ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
+    $forced = !_RequestLockDir($name, 5, 3, 0);
+    _ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
     return $forced;
 }
 
@@ -230,11 +230,11 @@ sub UpdateDiffs {
     my ($editDiff, $oldMajor, $oldAuthor);
     my $config = PurpleWiki::Config->instance();
 
-    $editDiff  = &_GetDiff($old, $new, 0);     # 0 = already in lock
+    $editDiff  = _GetDiff($old, $new, 0);     # 0 = already in lock
     $oldMajor  = $page->getPageCache('oldmajor');
     $oldAuthor = $page->getPageCache('oldauthor');
     if ($config->UseDiffLog) {
-        &_WriteDiff($id, $editTime, $editDiff);
+        _WriteDiff($id, $editTime, $editDiff);
     }
     $page->setPageCache('diff_default_minor', $editDiff);
 
@@ -242,7 +242,7 @@ sub UpdateDiffs {
         $page->setPageCache('diff_default_major', "1");
     } else {
         $page->setPageCache('diff_default_major',
-            &GetKeptDiff($keptRevision, $new, $oldMajor, 0));
+            GetKeptDiff($keptRevision, $new, $oldMajor, 0));
     }
 
     if ($newAuthor) {
@@ -253,7 +253,7 @@ sub UpdateDiffs {
         $page->setPageCache('diff_default_author', "2");
     } else {
         $page->setPageCache('diff_default_author',
-            &GetKeptDiff($keptRevision, $new, $oldAuthor, 0));
+            GetKeptDiff($keptRevision, $new, $oldAuthor, 0));
     }
 }
 
@@ -264,8 +264,8 @@ sub GetCacheDiff {
   my ($diffText);
 
   $diffText = $page->getPageCache("diff_default_$type");
-  $diffText = &GetCacheDiff($page, 'minor')  if ($diffText eq "1");
-  $diffText = &GetCacheDiff($page, 'major')  if ($diffText eq "2");
+  $diffText = GetCacheDiff($page, 'minor')  if ($diffText eq "1");
+  $diffText = GetCacheDiff($page, 'major')  if ($diffText eq "2");
   return $diffText;
 }
 
@@ -280,7 +280,7 @@ sub GetKeptDiff {
     my $oldText = $section->getText()->getText();
 
     return ""  if ($oldText eq "");  # Old revision not found
-    return &_GetDiff($oldText, $newText, $lock);
+    return _GetDiff($oldText, $newText, $lock);
 }
 
 # Writes out a diff to the diff log.

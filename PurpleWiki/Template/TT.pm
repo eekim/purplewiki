@@ -47,11 +47,14 @@ sub process {
     my $file = shift;
     my $template = Template->new({ INCLUDE_PATH => [ $self->templateDir ],
 				   POST_CHOMP => 1,
-                                   FILTERS => { 'php' => \&_phpFilter } });
+                                   FILTERS => { 'php' => \&_phpFilter } }) ||
+        die Template->error(), "\n";
     my $output;
 
     if ($template->process("$file.tt", $self->vars, \$output)) {
         return $output;
+    } else {
+        die $template->error(), "\n";
     }
     # FIXME: Need to exit gracefully if error is returned.
 }

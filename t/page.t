@@ -2,6 +2,7 @@
 # vi:sw=4:ts=4:ai:sm:et
 
 use strict;
+use warnings;
 use Test;
 
 BEGIN { plan tests => 11};

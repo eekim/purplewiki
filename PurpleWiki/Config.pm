@@ -62,7 +62,7 @@ my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
     LocalSequenceDir RemoteSequenceURL ServiceProviderKey ReturnUrl
-    ScriptDir);
+    ScriptDir TemplateDriver);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching
