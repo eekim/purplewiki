@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Wiki.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Wiki.pm,v 1.3 2004/01/07 01:20:14 cdent Exp $
+# $Id: Wiki.pm,v 1.4 2004/01/10 01:43:21 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -64,6 +64,9 @@ sub search {
             }
         }
     }
+
+    @results = sort {$b->getModifiedTime() <=> $a->getModifiedTime()}
+        @results;
 
     return @results;
 }

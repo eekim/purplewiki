@@ -1,7 +1,7 @@
 # PurpleWiki::Search::MovableType.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: MovableType.pm,v 1.6 2004/01/07 01:43:22 cdent Exp $
+# $Id: MovableType.pm,v 1.7 2004/01/10 01:43:21 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
@@ -52,7 +52,7 @@ sub search {
 
     my %terms = (status => MT::Entry::RELEASE());
 
-    my %args = ('sort' => 'created_on');
+    my %args = ('sort' => 'modified_on', direction => 'descend');
     my $iter = MT::Entry->load_iter(\%terms, \%args);
 
     while (my $entry = $iter->()) {
