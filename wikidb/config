@@ -15,15 +15,21 @@ RCName      = RecentChanges     # Name of changes page (change space to _)
 #FullUrl     = ""                # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""                # Local time zone
 #Umask       = 0002	             # the umask used when writing files
-DatabasePackage = PurpleWiki::Archive::PlainText
-#DatabasePackage = PurpleWiki::Archive::UseMod
-#DatabasePackage = PurpleWiki::Archive::Subversion
-#ReposPath = /wiki   # needed for Subversion back end
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live
 #RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
 DefaultLanguage = en           # Default language to use
 #CookieName = YourWiki         # Cookie name.
+
+# PurpleWiki Modules
+ParserDriver        = PurpleWiki::Parser::WikiText
+TemplateDriver      = PurpleWiki::Template::TT
+UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
+ACLDriver           = PurpleWiki::ACL
+ArchiveDriver       = PurpleWiki::Archive::PlainText
+#DatabasePackage = PurpleWiki::Archive::UseMod
+#DatabasePackage = PurpleWiki::Archive::Subversion
+#ReposPath = /wiki   # needed for Subversion back end
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days
@@ -78,12 +84,6 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
-# PurpleWiki Modules
-ParserDriver        = PurpleWiki::Parser::WikiText
-TemplateDriver      = PurpleWiki::Template::TT
-UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
-ACLDriver           = PurpleWiki::ACL
-
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
 #MovableTypeBlogID	=	1
@@ -98,6 +98,11 @@ ACLDriver           = PurpleWiki::ACL
 #ServiceProviderKey = ""
 #ReturnUrl			= "http://your.site/cgi-bin/wiki.pl?"
 
+# Captcha
+CaptchaDataDir = $DataDir/captcha
+CaptchaOutputDir = /var/www/htdocs/captcha
+CaptchaWebDir = /captcha
+
 # == You should not have to change anything below this line. =============
 UserDir     = $DataDir/user      # Stores user data
 TempDir     = $DataDir/temp      # Temporary files and locks
@@ -106,7 +111,4 @@ InterFile   = $DataDir/intermap  # Interwiki site->url map
 SessionDir  = $DataDir/sessions  # sessions
 TemplateDir = $DataDir/templates # templates
 LocaleFile  = $DataDir/messages.l10n # Localization messages
-CaptchaDataDir = $DataDir/captcha
-CaptchaOutputDir = /var/www/htdocs/captcha
-CaptchaWebDir = /captcha
 # == End of Configuration =================================================

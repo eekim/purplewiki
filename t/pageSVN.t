@@ -8,8 +8,7 @@ use Test;
 BEGIN {
     eval { require SVN::Repos; };
     if ($@) {
-        print STDERR "Error: $@\n";
-        print "Could not find Subversion modules, skiping tests\n";
+        print STDERR "Could not find Subversion modules, skipping tests\n";
         exit;
     }
     plan tests => 17;
@@ -80,7 +79,7 @@ EOF
 
 # parse first content
 my $config = new PurpleWiki::Config($configdir);
-my $database_package = $config->DatabasePackage;
+my $database_package = $config->ArchiveDriver;
 print STDERR "Error in Package: $database_package\nError:$@"
     unless (eval "require $database_package");
 my $pages = $database_package->new ($config, create => 1);

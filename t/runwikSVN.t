@@ -7,7 +7,7 @@ require "t/runTest.pl";
 BEGIN {
     eval { require SVN::Repos; };
     if ($@) {
-        print STDERR "Could not find Subversion modules, skiping tests\n";
+        print STDERR "Could not find Subversion modules, skipping tests\n";
         exit;
     }
     plan tests => 82;

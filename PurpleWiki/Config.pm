@@ -54,9 +54,9 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 # variable outside the config file. That's painful.
 my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
-    UseAmPm FreeUpper ShowEdits NonEnglish
+    UseAmPm FreeUpper ShowEdits NonEnglish 
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
-my @SCALAR_CONFIGS = qw( DatabasePackage
+my @SCALAR_CONFIGS = qw( ArchiveDriver
     DataDir ReposPath ScriptName SiteName HomePage RCName SessionDir
     FullUrl ScriptTZ RcDefault KeepDays CookieName
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir

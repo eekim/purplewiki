@@ -31,7 +31,6 @@
 #    Boston, MA 02111-1307 USA
 
 package UseModWiki;
-use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use strict;
 my $useCap=0;
 eval "use Authen::Captcha; $useCap=1;";
@@ -42,7 +41,7 @@ use PurpleWiki::Config;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/var/www/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -127,10 +126,10 @@ sub InitRequest {
 #dumpParams($q);
   }
 
-  my $database_package = $config->DatabasePackage;
-  print STDERR "Database Package $database_package\nError: $@\n"
-      unless (defined(eval "require $database_package"));
-  $pages = $database_package->new ($config, create => 1);
+  my $archiveDriver = $config->ArchiveDriver;
+  print STDERR "Archive Driver Error ($archiveDriver) $@\n"
+      unless (defined(eval "require $archiveDriver"));
+  $pages = $archiveDriver->new ($config, create => 1);
            # Object representing a page database
 
   if (!$pages) {
@@ -334,7 +333,8 @@ sub DoRc {
         my $pageId = $page->{pageId};
         my $userName;
         if ($page->{userId}) {
-            $userName = $userDb->loadUser($page->{userId})->username;
+            my $pageUser = $userDb->loadUser($page->{userId});
+            $userName = $pageUser->username if ($pageUser);
         }
         push @{$recentChanges[$#recentChanges]->{pages}},
             { id => $pageId,

@@ -34,7 +34,7 @@ my $config = new PurpleWiki::Config($configdir);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my ($input, $output, $shouldBe, $wiki, $diff);
 
-my $database_package = $config->DatabasePackage;
+my $database_package = $config->ArchiveDriver;
 print STDERR "Error in Package: $database_package\nError:$@"
     unless (eval "require $database_package");
 my $pages = $database_package->new ($config);
