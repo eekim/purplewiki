@@ -11,222 +11,212 @@ my $lastInlineProcessed;
 
 my %structuralActionMap = (
     'section' => {
-        'pre' => sub { $sectionDepth++; },
+        'pre' => sub { $sectionDepth++; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { $sectionDepth--;
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed; return; },
     },
     'indent' => {
-        'pre' => sub { $indentDepth++; },
+        'pre' => sub { $indentDepth++; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { $indentDepth--;
                         print "\n" if ($indentDepth == 0);
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed; return; },
     },
     'ul' => {
-        'pre' => sub { push @listStack, 'ul'; },
+        'pre' => sub { push @listStack, 'ul'; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0);
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return "\n" if (scalar @listStack == 0); },
     },
     'ol' => {
-        'pre' => sub { push @listStack, 'ol'; },
+        'pre' => sub { push @listStack, 'ol'; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0);
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return "\n" if (scalar @listStack == 0); },
     },
     'dl' => {
-        'pre' => sub { push @listStack, 'dl'; },
+        'pre' => sub { push @listStack, 'dl'; return; },
         'mid' => \&_traverseStructuralWithChild,
         'post' => sub { pop @listStack;
-                        print "\n" if (scalar @listStack == 0);
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return "\n" if (scalar @listStack == 0); },
     },
     'h' => {
-        'pre' => sub { for (my $i = 0; $i < $sectionDepth; $i++) {
-                           print '=';
-                       }
-                       print ' '; },
+        'pre' => sub { return '=' x $sectionDepth . ' '; },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        print ' ';
-                        for (my $i = 0; $i < $sectionDepth; $i++) {
-                            print '=';
-                        }
-                        print "\n\n";
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return &_printNid($nid) . ' ' .
+                            '=' x $sectionDepth . "\n\n"; },
         },
     'p' => {
-        'pre' => sub { for (my $i = 0; $i < $indentDepth; $i++) {
-                           print ':';
-                       } },
+        'pre' => sub { return ':' x $indentDepth; },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        print "\n";
-                        print "\n" if ($indentDepth == 0);
-                        undef $lastInlineProcessed; },
+                        my $outputString = &_printNid($nid) . "\n";
+                        $outputString .= "\n" if ($indentDepth == 0);
+                        undef $lastInlineProcessed;
+                        return $outputString; },
     },
     'li' => {
-        'pre' => sub { for (my $i = 0; $i < scalar @listStack; $i++) {
-                           if ($listStack[$#listStack] eq 'ul') {
-                               print '*';
-                           }
-                           else {
-                               print '#';
-                           }
+        'pre' => sub { if ($listStack[$#listStack] eq 'ul') {
+                           return '*' x scalar(@listStack) . ' ';
                        }
-                       print ' '; },
-        'mid' => \&_traverseInlineIfContent,
-        'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        print "\n";
-                        undef $lastInlineProcessed; },
-    },
-    'dt' => {
-        'pre' => sub { for (my $i = 0; $i < scalar @listStack; $i++) {
-                           print ';';
+                       else {
+                           return '#' x scalar(@listStack) . ' ';
                        } },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return &_printNid($nid) . "\n"; },
+    },
+    'dt' => {
+        'pre' => sub { return ';' x scalar(@listStack); },
+        'mid' => \&_traverseInlineIfContent,
+        'post' => sub { my $nid = shift;
+                        undef $lastInlineProcessed;
+                        return &_printNid($nid); },
     },
     'dd' => {
-        'pre' => sub { print ':'; },
+        'pre' => sub { return ':'; },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        print "\n";
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return &_printNid($nid) . "\n"; },
     },
     'pre' => {
-        'pre' => sub {},
+        'pre' => sub { return },
         'mid' => \&_traverseInlineIfContent,
         'post' => sub { my $nid = shift;
-                        &_printNid($nid);
-                        print "\n\n";
-                        undef $lastInlineProcessed; },
+                        undef $lastInlineProcessed;
+                        return &_printNid($nid) . "\n\n"; },
     },
     );
 
 my %inlineActionMap = (
     'b' => {
-        'pre' => sub { print "'''"; },
+        'pre' => sub { return "'''"; },
         'mid' => \&_traverseInlineWithData,
-        'post' => sub { print "'''";
-                        $lastInlineProcessed = 'b'; },
+        'post' => sub { $lastInlineProcessed = 'b';
+                        return "'''"; },
     },
     'i' => {
-        'pre' => sub { print "''"; },
+        'pre' => sub { return "''"; },
         'mid' => \&_traverseInlineWithData,
-        'post' => sub { print "''";
-                        $lastInlineProcessed = 'i'; },
+        'post' => sub { $lastInlineProcessed = 'i';
+                        return "''"; },
     },
     'tt' => {
-        'pre' => sub { print '<tt>'; },
+        'pre' => sub { return '<tt>'; },
         'mid' => \&_traverseInlineWithData,
-        'post' => sub { print '</tt>';
-                        $lastInlineProcessed = 'tt'; },
+        'post' => sub { $lastInlineProcessed = 'tt';
+                        return '</tt>'; },
     },
     'text' => {
         'pre' => sub { my $node = shift;
                        if ($lastInlineProcessed eq 'wikiword' &&
                            $node->content =~ /^\w/) {
-                           print '""';
+                           return '""';
+                       }
+                       else {
+                           return;
                        } },
         'mid' => \&_printInlineData,
-        'post' => sub { $lastInlineProcessed = 'text'; }
+        'post' => sub { $lastInlineProcessed = 'text'; return; }
     },
     'nowiki' => {
-        'pre' => sub { print '<nowiki>'; },
+        'pre' => sub { return '<nowiki>'; },
         'mid' => \&_printInlineData,
-        'post' => sub { print '</nowiki>';
-                        $lastInlineProcessed = 'nowiki'; }
+        'post' => sub { $lastInlineProcessed = 'nowiki';
+                        return '</nowiki>'; }
     }
     );
 
 sub view {
     my ($wikiTree, %params) = @_;
 
-    &_printHeader($wikiTree->lastNid);
-    &_traverseStructural($wikiTree->root->children, 0);
+    my $outputString = &_printHeader($wikiTree->lastNid);
+    $outputString .= &_traverseStructural($wikiTree->root->children, 0);
+    return $outputString;
 }
 
 sub _traverseStructural {
     my ($nodeListRef, $indentLevel) = @_;
+    my $outputString;
 
     if ($nodeListRef) {
         foreach my $node (@{$nodeListRef}) {
             if (defined($structuralActionMap{$node->type})) {
-                &{$structuralActionMap{$node->type}{'pre'}};
-                &{$structuralActionMap{$node->type}{'mid'}}($node,
+                $outputString .= &{$structuralActionMap{$node->type}{'pre'}};
+                $outputString .= &{$structuralActionMap{$node->type}{'mid'}}($node,
                                                             $indentLevel);
-                &{$structuralActionMap{$node->type}{'post'}}($node->id);
+                $outputString .= &{$structuralActionMap{$node->type}{'post'}}($node->id);
             } 
         }
     }
+    return $outputString;
 }
 
 sub _traverseInlineIfContent {
     my $structuralNode = shift;
     my $indentLevel = shift;
     if ($structuralNode->content) {
-        _traverseInline($structuralNode->content, $indentLevel);
+        return _traverseInline($structuralNode->content, $indentLevel);
     }
 }
 
 sub _traverseInlineWithData {
     my $inlineNode = shift;
     my $indentLevel = shift;
-    _traverseInline($inlineNode->children, $indentLevel);
+    return _traverseInline($inlineNode->children, $indentLevel);
 }
 
 sub _printInlineData {
     my $inlineNode = shift;
-    print $inlineNode->content;
+    return $inlineNode->content;
 }
 
 sub _traverseStructuralWithChild {
     my $structuralNode = shift;
     my $indentLevel = shift;
-    _traverseStructural($structuralNode->children, $indentLevel + 1);
+    return _traverseStructural($structuralNode->children, $indentLevel + 1);
 }
 
 sub _traverseInline {
     my ($nodeListRef, $indentLevel) = @_;
-
-    my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
-    my $rxSubpage = '[A-Z]+[a-z]+\w*';
-    my $rxQuoteDelim = '(?:"")?';
+    my $outputString;
 
     foreach my $inlineNode (@{$nodeListRef}) {
         if ($inlineNode->type eq 'link') {
-            print '[' . $inlineNode->href . ' ' . $inlineNode->content . ']';
+            $outputString .= '[' . $inlineNode->href . ' ' . $inlineNode->content . ']';
             $lastInlineProcessed = 'link';
         }
         elsif ($inlineNode->type eq 'wikiword') {
-            print $inlineNode->content;
+            $outputString .= $inlineNode->content;
             $lastInlineProcessed = 'wikiword';
         }
         elsif ($inlineNode->type eq 'url') {
-            print $inlineNode->content;
+            $outputString .= $inlineNode->content;
             $lastInlineProcessed = 'url';
         }
         elsif ($inlineNode->type eq 'freelink') {
-            print '[[' . $inlineNode->content . ']]';
+            $outputString .= '[[' . $inlineNode->content . ']]';
             $lastInlineProcessed = 'freelink';
         }
         elsif (defined($inlineActionMap{$inlineNode->type})) {
-            &{$inlineActionMap{$inlineNode->type}{'pre'}}($inlineNode);
-            &{$inlineActionMap{$inlineNode->type}{'mid'}}($inlineNode,
+            $outputString .=
+                &{$inlineActionMap{$inlineNode->type}{'pre'}}($inlineNode);
+            $outputString .=
+                &{$inlineActionMap{$inlineNode->type}{'mid'}}($inlineNode,
                                                           $indentLevel);
-            &{$inlineActionMap{$inlineNode->type}{'post'}};
+            $outputString .=
+                &{$inlineActionMap{$inlineNode->type}{'post'}};
         }
     }
+    return $outputString;
 }
 
 sub _headerLevel {
@@ -237,13 +227,13 @@ sub _headerLevel {
 
 sub _printNid {
     my $nid = shift;
-    print " [nid $nid]";
+    return " [nid $nid]";
 }
 
 sub _printHeader {
     my $lastNid = shift;
 
-    print "[lastnid $lastNid]\n" if ($lastNid);
+    return "[lastnid $lastNid]\n" if ($lastNid);
 }
 
 
