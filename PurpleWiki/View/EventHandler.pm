@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.4 2003/08/14 07:01:51 eekim Exp $
+# $Id: EventHandler.pm,v 1.5 2003/08/18 07:10:54 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,7 +31,8 @@ package PurpleWiki::View::EventHandler;
 
 use 5.005;
 use strict;
-use vars qw(%structuralHandler %inlineHandler);
+use vars qw(%structuralHandler %inlineHandler $VERSION);
+$VERSION = '0.9';
 
 use PurpleWiki::Tree;
 

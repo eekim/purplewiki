@@ -1,6 +1,6 @@
 # PurpleWiki::InlineNode.pm
 #
-# $Id: InlineNode.pm,v 1.7 2003/01/02 06:06:30 eekim Exp $
+# $Id: InlineNode.pm,v 1.8 2003/08/18 07:10:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,7 +33,7 @@ use 5.005;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '0.9';
 
 ### constructor
 

@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.4 2003/06/24 22:22:29 cdent Exp $
+# $Id: Database.pm,v 1.5 2003/08/18 07:10:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,9 +32,12 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.4 2003/06/24 22:22:29 cdent Exp $
+# $Id: Database.pm,v 1.5 2003/08/18 07:10:53 eekim Exp $
 
 use strict;
+
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 # Reads a string from a given filename and returns the data.
 # If it cannot open the file, it dies with an error.

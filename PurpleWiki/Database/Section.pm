@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Section.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
+# $Id: Section.pm,v 1.4 2003/08/18 07:10:53 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,13 @@ package PurpleWiki::Database::Section;
 
 # PurpleWiki Section Data Access
 
-# $Id: Section.pm,v 1.3 2003/06/20 23:54:02 cdent Exp $
+# $Id: Section.pm,v 1.4 2003/08/18 07:10:53 eekim Exp $
 
 use strict;
 use PurpleWiki::Database::Text;
+
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 # Creates a new Section reference, may be a
 # a new one or an existing one. Arguments

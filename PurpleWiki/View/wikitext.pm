@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikitext.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: wikitext.pm,v 1.7 2003/08/14 07:01:51 eekim Exp $
+# $Id: wikitext.pm,v 1.8 2003/08/18 07:10:54 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -34,6 +34,9 @@ use 5.005;
 use strict;
 use PurpleWiki::Tree;
 use PurpleWiki::View::EventHandler;
+
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 # globals
 

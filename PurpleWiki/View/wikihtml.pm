@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.6 2003/08/14 07:01:51 eekim Exp $
+# $Id: wikihtml.pm,v 1.7 2003/08/18 07:10:54 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -38,7 +38,8 @@ use PurpleWiki::View::EventHandler;
 
 # globals
 
-use vars qw(@sectionState);
+use vars qw(@sectionState $VERSION);
+$VERSION = '0.9';
 
 # structural node event handlers
 

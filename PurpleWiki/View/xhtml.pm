@@ -1,6 +1,6 @@
 # PurpleWiki::View::xhtml.pm
 #
-# $Id: xhtml.pm,v 1.3 2003/08/14 07:01:51 eekim Exp $
+# $Id: xhtml.pm,v 1.4 2003/08/18 07:10:54 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,6 +35,9 @@ use PurpleWiki::Page;
 use PurpleWiki::Tree;
 use PurpleWiki::View::EventHandler;
 use PurpleWiki::View::wikihtml;
+
+use vars qw($VERSION);
+$VERSION = '0.9';
 
 # functions
 
