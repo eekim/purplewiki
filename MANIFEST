@@ -28,7 +28,7 @@ PurpleWiki/Sequence.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
-PurpleWiki/View/EventHandler.pm
+PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/text.pm
 PurpleWiki/View/wikihtml.pm
