@@ -67,7 +67,7 @@ sub new {
 sub view {
     my ($self, $wikiTree) = @_;
     
-    if (!defined($self->{coloumns}) || $self->{columns} !~ /^\d+$/ || $self->{columns} < 10) {
+    if (!defined($self->{columns}) || $self->{columns} !~ /^\d+$/ || $self->{columns} < 10) {
         $self->{columns} = 72;
     }
     if (defined $self->{show_links} && $self->{show_links} == 0) {
@@ -301,3 +301,50 @@ sub _center {
 }
 1;
 __END__
+
+=head1 NAME
+
+PurpleWiki::View::text - View Driver used for Text Output.
+
+=head1 DESCRIPTION
+
+Prints out a text view of a PurpleWiki::Tree.
+
+=head1 OBJECT STATE
+
+=head2 outputString 
+
+This contains the current working copy of the text that is ultimately returned
+by view().
+
+=head1 METHODS
+
+=head2 new(config => $config, show_links => true/false, columns => $columns)
+
+Returns a new PurpleWiki::View::text object  If config is not passed in then a
+fatal error occurs.  show_links and columns are not required and default to
+true and 72 respectively.  show_links can also be written as showLinks.
+
+If show_links is true then links are marked with "[n]" style references, where
+n is an integer.  At the bottom of the output the references show what 
+URLs the links were pointing at.
+
+columns is the number of columns to make the text output fit into.
+
+=head2 view($wikiTree)
+
+Returns the output as a string of text.
+
+=head1 AUTHORS
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::Driver>
+
+=cut

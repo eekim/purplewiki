@@ -312,3 +312,43 @@ sub _header {
 }
 1;
 __END__
+
+=head1 NAME
+
+PurpleWiki::View::wikitext - View Driver used for WikiText output.
+
+=head1 DESCRIPTION
+
+Converts a PurpleWiki::Tree into WikiText. 
+
+=head1 OBJECT STATE
+
+=head2 outputString 
+
+This contains the current working copy of the text that is ultimately returned
+by view().
+
+=head1 METHODS
+
+=head2 new(config => $config)
+
+Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
+then a fatal error occurs.  
+
+=head2 view($wikiTree)
+
+Returns the output as a string of WikiText.
+
+=head1 AUTHORS
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::Driver>
+
+=cut

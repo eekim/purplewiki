@@ -220,40 +220,215 @@ PurpleWiki::View::Driver - View driver base class
 
 =head1 SYNOPSIS
 
+The PurpleWiki::View::Driver is primarily used as a base class, because by
+itself it doesn't do anything but traverse a PurpleWiki::Tree.  This example
+defines a view driver that extracts image links from a PurpleWiki::Tree.
+    
+    package PurpleWiki::View::getImages;
+    use strict;
+    use warnings;
+    use PurpleWiki::View::Driver;
 
+    use vars qw(@ISA);
+    @ISA = qw(PurpleWiki::View::Driver);
+
+    sub new {
+        my $prototype = shift;
+        my $class = ref($prototype) || $prototype;
+        my $self = $class->SUPER::new(@_);
+
+        # Object State
+        $self->{images} = [];
+
+        bless($self, $class);
+        return $self;
+    }
+
+    sub view {
+        my ($self, $tree) = @_;
+        $self->SUPER::view($tree);
+        return @{$self->{images}};
+    }
+
+    sub imageMain {
+        my ($self, $nodeRef) = @_;
+        push @{$self->{images}}, $nodeRef->href;
+    }
+
+    1;
 
 =head1 DESCRIPTION
 
+PurpleWiki::View::Driver is the base class used by all of the view drivers.
+Its default behavior is to recurse down a PurpleWiki::Tree depth first from
+left most (oldest) child to right most (youngest) child.  Child nodes are
+represented as a list within a PurpleWiki::Tree, so left most means the first
+child in the list and right most means the last child in the list.
 
+Other than the methods mentioned in the B<METHODS> section, this class also
+uses B<AUTOLOAD> to export pre, main, and post handling methods for every node
+type.  Three generic handlers are also exported via B<AUTOLOAD> and they are
+called simply "Pre()", "Main()", and "Post()" and get called on every node. 
+
+For example, for every node of type "section" the following handlers are
+exported via B<AUTOLOAD>:
+
+    sectionPre()
+    sectionMain()
+    sectionPost()
+
+The pre handler is called before the node, the main is called to process the
+node, and the post handler is called after the main handler has finished.  
+Since we're in a tree, the main handler may not finish until much recursion
+has occurred.
+
+The default action of both the generic and node specific pre and post handlers
+is to do a no-op.  The default generic Main handler is also a no-op.  The only
+methods exported via B<AUTOLOAD> which are not no-ops are the node specific main
+handlers.  Their default action is to call recurse(), which is documented in
+the B<METHODS> section below.
+
+The calling order of the handlers is as follows:
+
+    generic Pre handler (defaults to no-op)
+    node specific Pre handler (defaults to no-op)
+
+    generic Main handler (defaults to no-op)
+    node specific Main handler (defaults to recurse())
+
+    node specific Post handler (defaults to no-op)
+    generic Post handler (defaults to no-op)
+
+The only data passed into a handler is a reference to a node object.  So for
+example, the resulting method calls when processing a "ul" node would be as
+follows:
+    
+    $self->Pre($nodeRef);
+    $self->ulPre($nodeRef);
+
+    $self->Main($nodeRef);
+    $self->ulMain($nodeRef);
+
+    $self->ulPost($nodeRef);
+    $self->Post($nodeRef);
+
+This calling order is defined in processNode(), so if you overload that method
+you could possibly change the calling order.  Also remember that overloading
+a node specific main handler will stop the recursion at that node unless you
+explicitly call recurse() in your overloaded method.
+
+=head1 OBJECT STATE
+
+=head2 depth
+
+The driver's current depth while recursing through the PurpleWiki::Tree.  The
+value of depth should be 0 before and after a call to the view() method.  The
+value of depth is changed in processNode() and so is only sure to be correct as
+long as processNode() hasn't been overloaded in another class. 
+
+Since our object is a blessed hash reference you retrieve the value of depth
+like this: $self->{depth}
 
 =head1 METHODS
 
+The following methods are explicitly defined in F<Driver.pm> and are available
+for overloading.  In addition to these all of the methods generated via the
+B<AUTOLOAD> function are also availble for overloading.  The functions defined
+via B<AUTOLOAD> are talked about in the B<DESCRIPTION> section.
+
 =head2 new(config => $config)
 
-
+Returns a new PurpleWiki::View::Driver().  If config is not passed in then a
+fatal error occurs.  The state variable depth is set to 0 at this point.
 
 =head2 view($wikiTree)
 
+This method is the common entry point for most view drivers.  This method
+should be overloaded in derived classes and should return whatever is 
+appropriate for the derived class it's in.  
 
+This method returns nothing by default and it's only action is to call
+processNode() on the root of the wikiTree.  
+
+Every derived class should call $self->SUPER::view() in their overloaded
+version.
 
 =head2 recurse($nodeRef)
 
+If $nodeRef is a StructuralNode then recurse() calls traverse() on the
+node's content field and then calls traverse() on the node's children field.
 
+If $nodeRef is an InlineNode, then recurse() simply calls traverse() on the
+node's children field.
+
+This method returns nothing by default.  This method should only be overloaded
+if you want to make major changes to how a PurpleWiki::Tree is processed.  
+
+This method is the default action for the node specific main handlers defined
+via B<AUTOLOAD>.
 
 =head2 traverse($nodeListRef)
 
-
+Iterates through a list of nodes and calls processNode() on each one.  This
+method should only be overloaded if you want to make major changes to how a
+PurpleWiki::Tree is processed.  It returns nothing by default.
 
 =head2 processNode($nodeRef)
 
+Calls all of the handlers for a node and updates the value of the object state
+variable "depth."  The default behavior is as follows:
 
+=over
 
-=head2 noop()
+=item * 
 
+Increment depth.
 
+=item *
 
-=head1 AUTHOR
+Call generic Pre handler.
+
+=item *
+
+Call node specific Pre handler.
+
+=item *
+
+Call generic Main handler.
+
+=item *
+
+Call node specific Main handler.
+
+=item *
+
+Call node specific Post handler.
+
+=item *
+
+Call generic Post handler.
+
+=item *
+
+Decrement depth.
+
+=back
+
+This method returns nothing by default and should only be overloaded if you
+want to make major changes to how a PurpleWiki::Tree is processed.
+
+=head2 noop($nodeRef)
+
+Does nothing and returns nothing.  This is the default behavior of all but the
+node specific main handlers.  Sometimes it is useful to overload for debugging
+purposes.
+
+=head1 AUTHORS
 
 Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Tree>, L<PurpleWiki::StructuralNode>, L<PurpleWiki::InlineNode>.
 
 =cut

@@ -281,3 +281,53 @@ sub _nid {
 }
 1;
 __END__
+
+=head1 NAME
+
+PurpleWiki::View::wikihtml - View Driver used for HTML output.
+
+=head1 DESCRIPTION
+
+Converts a PurpleWiki::Tree into HTML.  The HTML should be XHTML compliant,
+but it isn't proper XHTML since no header or footer information is attached.
+The HTML returned here would be stuffed in the <body> section of an XHTML
+document.
+
+=head1 OBJECT STATE
+
+=head2 outputString 
+
+This contains the current working copy of the text that is ultimately returned
+by view().
+
+=head1 METHODS
+
+=head2 new(config => $config, url => $url, pageName => $pageName)
+
+Returns a new PurpleWiki::View::wikihtml object  If config is not passed in
+then a fatal error occurs.  
+
+url is the URL prepended to NIDs, defaults to the empty string. 
+
+pageName is the pageName used by sketch nodes for the SVG stuff, it defaults
+to the empty string.
+
+=head2 view($wikiTree)
+
+Returns the output as a string of sub-compliant XHTML text.  The output can 
+be made XHTML compliant if stuffed into the <body> section of a compliant
+XHTML document.
+
+=head1 AUTHORS
+
+Matthew O'Connor, E<lt>matthew@canonical.orgE<gt>
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::View::Driver>
+
+=cut
