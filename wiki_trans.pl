@@ -13,7 +13,7 @@ my $config = PurpleWiki::Config->new($ARGV[0]);
 my $wikiContent = &readFile($ARGV[1]);
 my $wikiParser = PurpleWiki::Parser::WikiText->new;
 my $wiki = $wikiParser->parse($wikiContent, config=>$config, add_node_ids=>0);
-$wiki->title($ARGV[0]) if (!$wiki->title);
+$wiki->title($ARGV[1]) if (!$wiki->title);
 
 if (@ARGV == 3) {
     print $wiki->view($ARGV[2]);
