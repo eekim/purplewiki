@@ -79,13 +79,12 @@ $wikiParser = PurpleWiki::Parser::WikiText->new;
 # FIXME: would be cool if there were a way to factory these based off a
 #        config value.
 $userDb = PurpleWiki::Database::User::UseMod->new;
-$wikiTemplate = new PurpleWiki::Template::TT;
 
 # Select and load a  template driver
 my $templateDriver = $config->TemplateDriver();
-my $class = "PurpleWiki::Template::$templateDriver";
-eval "require $class";
-$wikiTemplate = $class->new(templateDir => $config->TemplateDirectory());
+my $templateClass = "PurpleWiki::Template::$templateDriver";
+eval "require $templateClass";
+$wikiTemplate = $templateClass->new;
 
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;

@@ -218,7 +218,7 @@ sub AllPagesList {
             }
         }
     }
-    return sort(@pages);
+    return sort { $a->{id} cmp $b->{id} } @pages;
 }
 
 # Updates the diffs keps for a page.
