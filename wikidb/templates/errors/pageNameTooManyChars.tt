@@ -1,0 +1,35 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title>[% siteName %]: Error!</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+<h1>Error!</a></h1>
+
+<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+<a href="[% preferencesUrl %]">Preferences</a></div>
+
+<hr />
+
+<h2>Page name may not contain space characters: [% pageName %]</h2>
+
+<hr />
+
+<div>
+<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+Search:
+<input type="text" name="search"  size="20" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+
+</body>
+</html>

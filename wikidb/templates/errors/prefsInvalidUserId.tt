@@ -1,0 +1,39 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title>[% siteName %]: Saving Preferences</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+<h1>Saving Preferences</a></h1>
+
+<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+<a href="[% preferencesUrl %]">Preferences</a></div>
+
+<hr />
+
+<p><b>Invalid UserID [% userId %], preferences not saved.</b></p>
+
+[% IF userId == 111 %]
+<p>(Preferences require cookies, but no cookie was sent.)</p>
+[% END %]
+
+<hr />
+
+<div>
+<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+Search:
+<input type="text" name="search"  size="20" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+
+</body>
+</html>

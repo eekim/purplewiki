@@ -1,7 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>[% errorTitle %]</title>
+<title>[% siteName %]: Login Results</title>
 [% IF siteBase %]
   <base href="[% siteBase %]" />
 [% END %]
@@ -10,7 +11,7 @@
 [% END %]
 </head>
 <body>
-<h1>[% errorTitle %]</a></h1>
+<h1>Login Results</h1>
 
 <div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
 <a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
@@ -19,12 +20,16 @@
 
 <hr />
 
-<p>[% errorMessage %]</p>
+[% IF loginSuccess %]
+<p>Login for user ID [% userId %] complete.</p>
+[% ELSE %]
+<p>Login for user ID [% userId %] failed.</p>
+[% END %]
 
 <hr />
 
 <div>
-<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+<form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 Search:
 <input type="text" name="search"  size="20" />
 <input type="hidden" name="dosearch" value="1" />

@@ -67,64 +67,12 @@ sub search {
     return $self;
 }
 
-# string asHTML
-sub asHTML {
-    my $self = shift;
-
-    my $string;
-
-    $string .= '<ul>';
-    foreach my $module (@{$self->{modules}}) {
-        $string .= qq(<li><a href="#$module">$module</a></li>\n);
-    }
-    $string .= '</ul>';
-
-    foreach my $module (@{$self->{modules}}) {
-        $string .= qq(<h2><a name="$module">$module</a></h2>\n);
-
-        foreach my $result (@{$self->{results}{$module}}) {
-            my $url = $result->getURL;
-            my $title = $result->getTitle;
-            my $summary = $result->getSummary;
-            my $mtime = $result->getModifiedTime;
-
-            # deal with null titles
-            $title = $url unless $title;
-
-            $string .= qq{<p class="searchresult"><a href="$url">$title</a>};
-            $string .= ' -- <i>' . &_date($mtime) . '</i>' if ($mtime);
-            $string .=<<"EOT";
-<br />
-$summary</p>
-EOT
-        }
-        $string .= "\n";
-    }
-
-    return $string;
+sub modules {
+    return \@{shift->{modules}};
 }
 
-sub _date {
-    my $ts = shift;
-    my @datetime = localtime($ts);
-    my %monthNames = (
-        0 => 'Jan',
-        1 => 'Feb',
-        2 => 'Mar',
-        3 => 'Apr',
-        4 => 'May',
-        5 => 'Jun',
-        6 => 'Jul',
-        7 => 'Aug',
-        8 => 'Sep',
-        9 => 'Oct',
-        10 => 'Nov',
-        11 => 'Dec');
-    my $year = 1900 + $datetime[5];
-    my $month = $monthNames{$datetime[4]};
-    my $day = $datetime[3];
-
-    return "$month $day, $year";
+sub results {
+    return \%{shift->{results}};
 }
 
 sub config {

@@ -1,8 +1,9 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 <head>
-<title>[% siteName %]: [% pageName %]</title>
+<title>[% siteName %]: Search for: [% keywords %]</title>
 [% IF siteBase %]
   <base href="[% siteBase %]" />
 [% END %]
@@ -11,7 +12,7 @@
 [% END %]
 </head>
 <body>
-<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+<h1>Search for: [% keywords %]</h1>
 
 <div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
 <a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
@@ -20,41 +21,33 @@
 
 <hr />
 
-[% IF showRevision %]
-  [% IF revision %]
-  <p><b>Showing revision [% revision %]</b></p>
-  [% ELSE %]
-  <p><b>Revision [% showRevision %] not available (showing current
-  revision instead)</b></p>
+<ul>
+[% FOREACH module = modules %]
+  <li><a href="#[% module %]">[% module %]</a></li>
+[% END %]
+</ul>
+
+[% FOREACH module = modules %]
+  <h2><a name="[% module %]">[% module %]</a></h2>
+  [% FOREACH result = results.$module %]
+    <p><a href="[% result.url %]">[% result.title %]</a>
+    [% IF result.lastModified %]
+      -- <i>[% result.lastModified %]</i>
+    [% END %]
+    [% IF result.summary %]
+      <br />
+      [% result.summary %]
+    [% END %]
+    </p>
   [% END %]
 [% END %]
-
-[% body %]
 
 <hr />
 
 <div>
-[% IF revision %]
-<a href="[% pageUrl %]">View current revision</a>
-[% ELSE %]
-<a href="[% editUrl %]">Edit text of this page</a> |
-<a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
-</div>
-
-<div>
-[% IF revision %]
-Edited
-[% ELSE %]
-Last edited
-[% END %]
-[% lastEdited %]
-<a href="[% diffUrl %]">(diff)</a></div>
-
-<div>
 <form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 Search:
-<input type="text" name="search"  size="20" />
+<input type="text" name="search" value="[% keywords %]" size="20" />
 <input type="hidden" name="dosearch" value="1" />
 </form>
 </div>

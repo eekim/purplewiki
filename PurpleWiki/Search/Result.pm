@@ -46,52 +46,61 @@ sub new {
     return $self;
 }
 
-sub setTitle {
+sub title {
     my $self = shift;
 
-    $self->{title} = shift;
-    return $self;
-}
-
-sub setURL {
-    my $self = shift;
-
-    $self->{URL} = shift;
-    return $self;
-}
-
-sub setSummary {
-    my $self = shift;
-
-    $self->{summary} = shift;
-    return $self;
-}
-
-sub setModifiedTime {
-    my $self = shift;
-
-    $self->{mtime} = shift;
-    return $self;
-}
-
-sub getTitle {
-    my $self = shift;
+    $self->{title} = shift if @_;
     return $self->{title};
 }
 
-sub getURL {
+sub url {
     my $self = shift;
+
+    $self->{URL} = shift if @_;
     return $self->{URL};
 }
 
-sub getSummary {
+sub summary {
     my $self = shift;
+
+    $self->{summary} = shift if @_;
     return $self->{summary};
 }
 
-sub getModifiedTime {
+sub modifiedTime {
     my $self = shift;
+
+    $self->{mtime} = shift if @_;
     return $self->{mtime};
+}
+
+sub lastModified { # return a date/time string
+    return &_date(shift->{mtime});
+}
+
+### private
+
+sub _date {
+    my $ts = shift;
+    my @datetime = localtime($ts);
+    my %monthNames = (
+        0 => 'Jan',
+        1 => 'Feb',
+        2 => 'Mar',
+        3 => 'Apr',
+        4 => 'May',
+        5 => 'Jun',
+        6 => 'Jul',
+        7 => 'Aug',
+        8 => 'Sep',
+        9 => 'Oct',
+        10 => 'Nov',
+        11 => 'Dec');
+    my $year = 1900 + $datetime[5];
+    my $month = $monthNames{$datetime[4]};
+    my $day = $datetime[3];
+
+    return "$month $day, $year";
 }
 
 1;

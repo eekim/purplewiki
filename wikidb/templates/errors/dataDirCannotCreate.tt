@@ -1,0 +1,22 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title>[% siteName %]: Error!</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+<h1>Error!</h1>
+
+<hr />
+
+<h2>Could not create [% dataDir %]</h2>
+
+<hr />
+
+</body>
+</html>

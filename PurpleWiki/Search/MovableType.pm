@@ -63,10 +63,10 @@ sub search {
         next unless ($includedBlogs{$blog_id});
         if ($self->_search_hit($query, $entry)) {
             my $result = new PurpleWiki::Search::Result();
-            $result->setTitle($entry->title);
-            $result->setURL($entry->permalink);
-            $result->setModifiedTime($self->_calculateModifiedTime($entry));
-            $result->setSummary(substr($entry->text, 0, 99) . '...');
+            $result->title($entry->title);
+            $result->url($entry->permalink);
+            $result->modifiedTime($self->_calculateModifiedTime($entry));
+            $result->summary(substr($entry->text, 0, 99) . '...');
             push(@results, $result);
         }
     }

@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>[% siteName %]: [% pageName %]</title>
+<title>[% siteName %]: Saving Preferences</title>
 [% IF siteBase %]
   <base href="[% siteBase %]" />
 [% END %]
@@ -11,7 +11,7 @@
 [% END %]
 </head>
 <body>
-<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+<h1>Saving Preferences</h1>
 
 <div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
 <a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
@@ -20,36 +20,26 @@
 
 <hr />
 
-[% IF showRevision %]
-  [% IF revision %]
-  <p><b>Showing revision [% revision %]</b></p>
-  [% ELSE %]
-  <p><b>Revision [% showRevision %] not available (showing current
-  revision instead)</b></p>
-  [% END %]
+[% IF errorUserName %]
+<p>Invalid UserName [% username %]: not saved.</p>
+[% ELSIF NOT userName %]
+<p>UserName removed.</p>
+[% ELSE %]
+<p>UserName [% userName %] saved.</p>
 [% END %]
 
-[% body %]
+[% IF passwordRemoved %]
+<p>Password removed.</p>
+[% ELSIF passwordChanged %]
+<p>Password changed.</p>
+[% END %]
+
+<p>Server time: [% serverTime %]<br />
+Local time: [% localTime %]</p>
+
+<p><b>Preferences saved.</b></p>
 
 <hr />
-
-<div>
-[% IF revision %]
-<a href="[% pageUrl %]">View current revision</a>
-[% ELSE %]
-<a href="[% editUrl %]">Edit text of this page</a> |
-<a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
-</div>
-
-<div>
-[% IF revision %]
-Edited
-[% ELSE %]
-Last edited
-[% END %]
-[% lastEdited %]
-<a href="[% diffUrl %]">(diff)</a></div>
 
 <div>
 <form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">

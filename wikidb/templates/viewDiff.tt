@@ -1,7 +1,8 @@
-<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>[% wikiName %]: [% pageName %]</title>
+<title>[% siteName %]: [% pageName %]</title>
 <link rel="stylesheet" href="[% cssFile %]" />
 </head>
 <body>
@@ -69,7 +70,7 @@
 <div>Last edited [% lastEdited %]</div>
 
 <div>
-<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+<form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
 Search:
 <input type="text" name="search"  size="20" />
 <input type="hidden" name="dosearch" value="1" />

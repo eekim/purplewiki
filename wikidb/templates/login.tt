@@ -2,7 +2,7 @@
                       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-<title>[% siteName %]: [% pageName %]</title>
+<title>[% siteName %]: Login</title>
 [% IF siteBase %]
   <base href="[% siteBase %]" />
 [% END %]
@@ -11,7 +11,7 @@
 [% END %]
 </head>
 <body>
-<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+<h1>Login</h1>
 
 <div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
 <a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
@@ -20,36 +20,14 @@
 
 <hr />
 
-[% IF showRevision %]
-  [% IF revision %]
-  <p><b>Showing revision [% revision %]</b></p>
-  [% ELSE %]
-  <p><b>Revision [% showRevision %] not available (showing current
-  revision instead)</b></p>
-  [% END %]
-[% END %]
-
-[% body %]
+<form method="POST" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="enter_login" value="1" />
+<p>User ID number: <input type="text" name="p_userid"  size="15" maxlength="50" /><br />
+Password: <input type="password" name="p_password"  size="15" maxlength="50" /><br />
+<input type="submit" name="Login" value="Login" /></p>
+</form>
 
 <hr />
-
-<div>
-[% IF revision %]
-<a href="[% pageUrl %]">View current revision</a>
-[% ELSE %]
-<a href="[% editUrl %]">Edit text of this page</a> |
-<a href="[% revisionsUrl %]">View other revisions</a>
-[% END %]
-</div>
-
-<div>
-[% IF revision %]
-Edited
-[% ELSE %]
-Last edited
-[% END %]
-[% lastEdited %]
-<a href="[% diffUrl %]">(diff)</a></div>
 
 <div>
 <form method="GET" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">

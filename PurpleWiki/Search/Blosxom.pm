@@ -63,9 +63,9 @@ sub search {
         my ($title, $body) = &_parseBlosxomFile($file);
         if ($title =~ /$query/i || $body =~ /$query/i) {
             my $result = new PurpleWiki::Search::Result;
-            $result->setTitle($title);
-            $result->setModifiedTime($files{$file});
-            $result->setURL(&_fileToUrl($file, $files{$file}));
+            $result->title($title);
+            $result->modifiedTime($files{$file});
+            $result->url(&_fileToUrl($file, $files{$file}));
             push @results, $result;
         }
     }

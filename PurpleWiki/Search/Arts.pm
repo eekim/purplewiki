@@ -99,16 +99,16 @@ sub search {
 
                 # pack the results
                 my $result = new PurpleWiki::Search::Result();
-                $result->setTitle("$repository: $title");
-                $result->setURL($url);
-                $result->setSummary($summary);
-                $result->setModifiedTime((stat("$directory/$file"))[9]);
+                $result->title("$repository: $title");
+                $result->url($url);
+                $result->summary($summary);
+                $result->modifiedTime((stat("$directory/$file"))[9]);
                 push(@results, $result);
             }
         }
     }
 
-    @results = sort {$b->getModifiedTime() <=> $a->getModifiedTime()}
+    @results = sort {$b->modifiedTime() <=> $a->modifiedTime()}
         @results;
 
     return @results;

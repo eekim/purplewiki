@@ -68,7 +68,7 @@ sub search {
         }
     }
 
-    @results = sort {$b->getModifiedTime() <=> $a->getModifiedTime()}
+    @results = sort {$b->modifiedTime() <=> $a->modifiedTime()}
         @results;
 
     return @results;
@@ -93,10 +93,10 @@ sub _getResult {
     my $name = $page->getID();
 
     my $result = new PurpleWiki::Search::Result();
-    $result->setTitle($name);
-    $result->setModifiedTime($page->getTS());
-    $result->setURL(PurpleWiki::Page::getWikiWordLink($name, $self->config()));
-    $result->setSummary(substr($text->getText(), 0, 99) . '...');
+    $result->title($name);
+    $result->modifiedTime($page->getTS());
+    $result->url(PurpleWiki::Page::getWikiWordLink($name, $self->config()));
+    $result->summary(substr($text->getText(), 0, 99) . '...');
 
     return $result;
 }

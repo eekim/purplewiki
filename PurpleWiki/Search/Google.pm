@@ -56,9 +56,9 @@ sub search {
     if (@{$result->{resultElements}} > 0) {
         foreach my $element (@{$result->{resultElements}}) {
             my $result = new PurpleWiki::Search::Result;
-            $result->setURL($element->{URL});
-            $result->setTitle($element->{title});
-            $result->setSummary($element->{snippet});
+            $result->url($element->{URL});
+            $result->title($element->{title});
+            $result->summary($element->{snippet});
             push(@results, $result);
         }
     }
