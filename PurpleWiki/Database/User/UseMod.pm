@@ -146,12 +146,18 @@ sub saveUser {
 
 sub deleteUser {
     my $self = shift;
-    my $userFile = $self->_userFile(shift);
+    my $userName = shift;
 
     &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
-    if (-f $userFile) {
-        unlink $userFile;
-    }
+    my $userDir = $self->{config}->UserDir;
+    my %users;
+    tie %users, "DB_File", "$userDir/usernames.db";
+    my $userId = $users{$userName};
+    print STDERR "username = $userName\nuserid = $userId\n";
+    delete $users{$userName};
+    untie %users;
+    my $userFile = $self->_userFile($userId);
+    unlink $userFile if (-f $userFile);
     &PurpleWiki::Database::ReleaseLock();
 }
 
