@@ -127,7 +127,7 @@ sub putPage {
   }
 
   $page->{revision} = $rev+1;
-  $page->_writePage($contents);
+  $page->_writePage($contents, $args{timeStamp});
 
   my $url = $args{url};
   &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
@@ -431,6 +431,8 @@ sub _readMeta {
 
 sub _writePage {
   my $self = shift;
+  my $text = shift;
+  my $time = shift;
   my $rev = $self->getRevision();
   my $file = $self->_idPath() . "/$rev.txt";
   my $dir = $file;
@@ -439,11 +441,12 @@ sub _writePage {
 #print STDERR "File mkpath: $file\n",join("\n", File::Path::mkpath($dir)),"\n";
   my $fh = IO::File->new(">$file");
   if ($fh) {
-    print $fh $_[0];
+    print $fh $text;
     undef $fh
   } else {
     print STDERR "_writePage:$file\nError:$!\n";
   }
+  utime($time, $time, $file) if $time;
   $self->_writeCurrent($rev);
 }
 
