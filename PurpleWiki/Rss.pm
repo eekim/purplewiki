@@ -39,6 +39,7 @@ package PurpleWiki::Rss;
 
 use strict;
 use XML::RSS;
+use PurpleWiki::Config;
 use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 
@@ -49,6 +50,7 @@ sub new {
     my $proto = shift;
     my $self = { @_ };
     my $class = ref($proto) || $proto;
+    $self->{config} = PurpleWiki::Config->instance();
     die "No config object found" if not exists $self->{config};
     bless($self, $class);
     return $self;
@@ -103,17 +105,14 @@ sub _getWikiHTML {
     my $id = shift;
 
     my $url = $self->{config}->ScriptName . '?' . $id;
-    my $page = new PurpleWiki::Database::Page(id => $id,
-        config => $self->{config});
+    my $page = new PurpleWiki::Database::Page(id => $id);
     $page->openPage();
     my $parser = PurpleWiki::Parser::WikiText->new();
     my $wiki = $parser->parse($page->getText()->getText(),
         add_node_ids => 0,
-        config => $self->{config},
         url => $url,
     );
-    return $wiki->view('wikihtml', config => $self->{config},
-        url => $url);
+    return $wiki->view('wikihtml', url => $url);
 }
 
 
