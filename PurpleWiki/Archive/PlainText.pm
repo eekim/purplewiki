@@ -175,7 +175,7 @@ sub _find_txt {
       next unless ref($a);
       my ($mode, $mtime) = ($a->mode, $a->mtime);
       if (S_ISDIR($mode)) {
-        _find_txt("$dir/$entry", $array_ref);
+        _find_txt("$dir/$entry", $array_ref, $oldest);
       } elsif (S_ISREG($mode)) {
 #print STDERR "$oldest :: $mtime ($entry)\n" if (!$oldest && $entry =~ /\.txt$/);
         push @$array_ref, "$dir/$entry"
