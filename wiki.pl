@@ -352,6 +352,7 @@ sub DoRc {
     }
     my @vPages = &visitedPages;
     $wikiTemplate->vars(&globalTemplateVars,
+                        id => $id,
                         pageName => $pageName,
                         expandedPageName => &expandPageName($pageName),
                         visitedPages => \@vPages,
@@ -389,7 +390,7 @@ sub DoHistory {
     for my $pageinfo (@pageHistory) {
         my $rev = $pageinfo->{revision};
         if ($pageinfo->{userId}) {
-            my $pageUser = $userDb->loadUser($page->{userId});
+            my $pageUser = $userDb->loadUser($pageinfo->{userId});
             $pageinfo->{userName} = $pageUser->username if ($pageUser);
         }
         if ($count < scalar @pageHistory) {
@@ -644,7 +645,7 @@ sub DoOtherRequest {
       else { # return an error
       }
     } elsif ($action eq "login") {
-      DoEnterLogin();
+      DoEnterLogin(&GetParam("fromPage", ""));
     } elsif ($action eq "newlogin") {
       $user = undef;
       DoEditPrefs();  # Also creates new ID
@@ -996,12 +997,16 @@ sub CreateNewUser {  # same as DoNewLogin, but no login
 }
 
 sub DoEnterLogin {
-    $wikiTemplate->vars(&globalTemplateVars);
+    my $fromPage = shift;
+
+    $wikiTemplate->vars(&globalTemplateVars,
+                        fromPage => $fromPage);
     print GetHttpHeader() . $wikiTemplate->process('login');
 }
 
 sub DoLogin {
   my $success = 0;
+  my $fromPage = &GetParam("fromPage", "");
   my $username = &GetParam("p_username", "");
   my $password = &GetParam("p_password",  "");
   $password = '' if ($password eq '*');
@@ -1016,10 +1021,15 @@ sub DoLogin {
   else {
       $user = undef;
   }
-  $wikiTemplate->vars(&globalTemplateVars,
-                      enteredName => $username,
-                      loginSuccess => $success);
-  print GetHttpHeader() . $wikiTemplate->process('loginResults');
+  if ($success && $fromPage) {
+      print 'Location: ' . $config->ScriptName . "?$fromPage\n\n";
+  }
+  else {
+      $wikiTemplate->vars(&globalTemplateVars,
+                          enteredName => $username,
+                          loginSuccess => $success);
+      print GetHttpHeader() . $wikiTemplate->process('loginResults');
+  }
 }
 
 sub DoLogout {
