@@ -54,7 +54,7 @@ sub new {
 
   my $datadir;
   if ($config) {
-    $datadir = $config->Datadir;
+    $datadir = $config->DataDir;
     $self->{fs1} = $config->FS1;
     $self->{fs2} = $config->FS2;
     $self->{fs3} = $config->FS3;
@@ -66,7 +66,7 @@ sub new {
     $self->{keepdir} = $config->KeepDir;
   } else {
     my $x;
-    $datadir = $config->Datadir;
+    $datadir = $args{DataDir};
     $self->{fs} = "\xb3";
     $self->{fs1} = "\xb31";
     $self->{fs2} = "\xb32";
@@ -182,7 +182,8 @@ sub deletePage {
 }
 
 sub allPages {
-  my @l = (PurpleWiki::UseMod::Database::AllPagesList());
+  my $self = shift;
+  my @l = (PurpleWiki::UseMod::Database::AllPagesList($self->{pagedir}));
   grep(s|\+|/|g, @l);
   @l;
 }

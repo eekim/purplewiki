@@ -103,19 +103,19 @@ sub ForceReleaseLock {
 # wiki pages in the database.
 # Public
 sub AllPagesList {
-    my $config = PurpleWiki::Config->instance();
+    my $pageDir = shift;
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
     @pages = ();
     # The following was inspired by the FastGlob code by Marc W. Mengel.
     # Thanks to Bob Showalter for pointing out the improvement.
-    opendir(PAGELIST, $config->PageDir);
+    opendir(PAGELIST, $pageDir);
     @dirs = readdir(PAGELIST);
     closedir(PAGELIST);
     @dirs = sort(@dirs);
     foreach $dir (@dirs) {
         next  if (($dir eq '.') || ($dir eq '..'));
-        my $directory = $config->PageDir . "/$dir";
+        my $directory = "$pageDir/$dir";
         opendir(PAGELIST, $directory);
         @pageFiles = readdir(PAGELIST);
         closedir(PAGELIST);

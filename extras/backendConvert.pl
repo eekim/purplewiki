@@ -45,8 +45,8 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 my $fromDataDir='';
 my $toDataDir='';
-my $fromBackend='PurpleWiki::Archive::UseMod.pm';
-my $toBackend='PurpleWiki::Archive::PlainText.pm';
+my $fromBackend='PurpleWiki::Archive::UseMod';
+my $toBackend='PurpleWiki::Archive::PlainText';
 my $umask='';
 my $verb=0;
 while (@ARGV) {
@@ -57,8 +57,8 @@ while (@ARGV) {
     $fromDataDir = $' || shift(@ARGV);
   } elsif ($a =~ /^-C/) {
     $fromBackend = $' || shift(@ARGV);
-    if ($fromBackend !~ /[:\.]/) {
-        $fromBackend = "PurpleWiki::Archive::$fromBackend.pm";
+    if ($fromBackend !~ /:/) {
+        $fromBackend = "PurpleWiki::Archive::$fromBackend";
     }
   } elsif ($a =~ /^-n/) {
     $toDataDir = $' || shift(@ARGV);
@@ -77,8 +77,6 @@ local $| = 1;  # Do not buffer output
 my $pages;
 my $newpages;
 
-my $wikiParser = PurpleWiki::Parser::WikiText->new;
-
 umask(oct($umask)) if $umask;
 
 print STDERR "Database Package $toBackend\nError: $@\n"
@@ -90,7 +88,7 @@ $newpages || die "Can't open input database $toDataDir\n";
 
 print STDERR "Database Package $fromBackend\nError: $@\n"
     unless (defined(eval "require $fromBackend"));
-$pages = $fromBackend->new($config);
+$pages = $fromBackend->new(DataDir => $fromDataDir);
          # Object representing a page database
 
 $pages || die "Can't open input database $fromDataDir\n";

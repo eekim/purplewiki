@@ -66,10 +66,12 @@ sub new {
     my $this = shift;
     my $self = {};
     my $config = PurpleWiki::Config->instance();
-    $self->{sequence} = new PurpleWiki::Sequence($config->LocalSequenceDir,
-                                                 $config->RemoteSequenceURL);
-    $self->{wikiword} = $config->WikiLinks;
-    $self->{freelink} = $config->FreeLinks;
+    if ($config) {
+      $self->{sequence} = new PurpleWiki::Sequence($config->LocalSequenceDir,
+                                                   $config->RemoteSequenceURL);
+      $self->{wikiword} = $config->WikiLinks;
+      $self->{freelink} = $config->FreeLinks;
+    }
 
     bless($self, $this);
     return $self;
