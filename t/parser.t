@@ -1,4 +1,4 @@
-# tree.t
+# parser.t
 
 use strict;
 use Test;
@@ -6,7 +6,7 @@ use Test;
 BEGIN { plan tests => 258 };
 
 use IO::File;
-use PurpleWiki::Tree;
+use PurpleWiki::Parser::WikiText;
 
 sub readFile {
     my $fileName = shift;
@@ -29,8 +29,9 @@ sub readFile {
 ### tree_test01.txt
 
 my $wikiContent = &readFile('t/tree_test01.txt');
-my $wiki = PurpleWiki::Tree->new('title'=>'Tree Test 1');
-$wiki->parse($wikiContent);
+my $wikiParser = PurpleWiki::Parser::WikiText->new;
+my $wiki = $wikiParser->parse($wikiContent);
+$wiki->title('Tree Test 1');
 
 # Document.  (Tests 1-4)
 
