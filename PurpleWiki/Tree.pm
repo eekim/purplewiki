@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.16 2002/11/24 07:39:36 eekim Exp $
+# $Id: Tree.pm,v 1.17 2002/11/24 09:19:24 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -423,9 +423,16 @@ sub _parseInlineNode {
         }
         elsif ($node =~ /^$rxProtocols$rxAddress$/s) {
             # URL
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'url',
-                                                           'href'=>$node,
-                                                           'content'=>$node);
+            if ($node =~ /\.(?:jpg|gif|png|bmp|jpeg)$/i) {
+                push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'image',
+                                                               'href'=>$node,
+                                                               'content'=>$node);
+            }
+            else {
+                push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'url',
+                                                               'href'=>$node,
+                                                               'content'=>$node);
+            }
         }
         elsif ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s) {
             $node =~ s/""$//;

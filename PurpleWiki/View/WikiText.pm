@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.6 2002/11/24 08:37:50 eekim Exp $
+# $Id: WikiText.pm,v 1.7 2002/11/24 09:19:24 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -230,7 +230,7 @@ sub _traverseInline {
             $outputString .= $inlineNode->content;
             $lastInlineProcessed = 'wikiword';
         }
-        elsif ($inlineNode->type eq 'url') {
+        elsif ($inlineNode->type eq 'url' || $inlineNode->type eq 'image') {
             $outputString .= $inlineNode->content;
             $lastInlineProcessed = 'url';
         }

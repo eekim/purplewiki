@@ -1,6 +1,6 @@
 # PurpleWiki::View::WikiHTML.pm
 #
-# $Id: WikiHTML.pm,v 1.9 2002/11/24 08:57:56 eekim Exp $
+# $Id: WikiHTML.pm,v 1.10 2002/11/24 09:19:24 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -143,7 +143,14 @@ my %inlineActionMap = (
                  'pre' => sub { return },
                  'mid' => \&_printInlineData,
                  'post' => sub { return }
-             }
+             },
+             'image' => {
+                 'pre' => sub { return },
+                 'mid' => sub { my $node = shift;
+                                return '<img src="' . $node->href .
+                                    '" />'; },
+                 'post' => sub { return }
+             },
              );
 
 sub view {
