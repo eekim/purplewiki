@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2NidHandler.pm,v 1.1.2.2 2004/02/05 07:23:33 cdent Exp $
+# $Id: Apache2NidHandler.pm,v 1.1.2.3 2004/02/07 04:12:26 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,7 +31,7 @@
 package PurpleWiki::Apache2NidHandler;
 
 use strict;
-use lib '/home/cdent/src/PurpleWiki';
+use lib '/home/cdent/src/PurpleWiki.remote';
 use PurpleWiki::Config;
 use PurpleWiki::Sequence;
 use Apache::RequestRec ();
@@ -44,7 +44,7 @@ my $CONFIG = '/home/cdent/testpurple';
 sub handler {
     my $r = shift;
     my $pathInfo;
-    my $queryString; 
+    my $queryString = ''; 
     my $count;
     my $url;
     my $nid;
@@ -62,12 +62,14 @@ sub handler {
     # FIXME: do encoding of the passed url?
     $url =~ s/^(\w+:\/)(?!\/)/$1\//;
 
+    $queryString = '?' . $queryString if length($queryString);
+
     if (!defined($url)) {
         $nid = $count;
         _getURL($purpleConfig, $nid);
     } else {
         $count = 1 if (!length($count));
-        _getNIDs($purpleConfig, $count, "$url?$queryString");
+        _getNIDs($purpleConfig, $count, "$url$queryString");
     }
 
     # FIXME: sometimes okay is not the desired return code

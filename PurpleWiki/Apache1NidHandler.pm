@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache1NidHandler.pm,v 1.1.2.1 2004/02/05 07:20:22 cdent Exp $
+# $Id: Apache1NidHandler.pm,v 1.1.2.2 2004/02/07 04:12:26 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -28,7 +28,10 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Apache2NidHandler;
+# FIXME: this code has not been tested!!!!!!
+# FIXME: this code is so similar to the Apache2NidHandler there oughta
+#        be some merging
+package PurpleWiki::Apache1NidHandler;
 
 use strict;
 use lib '/home/cdent/src/PurpleWiki';
@@ -43,7 +46,7 @@ my $CONFIG = '/home/cdent/testpurple';
 sub handler {
     my $r = shift;
     my $pathInfo;
-    my $queryString; 
+    my $queryString = ''; 
     my $count;
     my $url;
     my $nid;
@@ -57,12 +60,14 @@ sub handler {
     $pathInfo =~ s/^\///;
     ($count, $url) = split('/', $pathInfo, 2);
 
+    $queryString = '?' . $queryString if length($queryString);
+
     if (!defined($url)) {
         $nid = $count;
         _getURL($purpleConfig, $nid);
     } else {
         $count = 1 if (!length($count));
-        _getNIDs($purpleConfig, $count, "$url?$queryString");
+        _getNIDs($purpleConfig, $count, "$url$queryString");
     }
 
     # FIXME: sometimes okay is not the desired return code
