@@ -315,11 +315,15 @@ as node IDs.
 
 =head1 METHODS
 
-=head2 new($datadir)
+=head2 new($datadir, [remotesequence])
 
 Constructor.  $datadir contains the Wiki configuration/database
 directory.  There, PurpleWiki::Sequence stores the last used ID and an
 index of node IDs to fully qualified URLs (used by Transclusion.pm).
+
+Optionally takes a second argument which points to a URL from which
+nids can be retrieved. This is an experimental feature and should
+not be relied upon to stick around.
 
 =head2 getNext($url)
 

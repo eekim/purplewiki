@@ -18,7 +18,8 @@ StyleSheet  = /~cdent/usemod.css  # URL for CSS stylesheet (like "/wiki.css")
 #FullUrl     = ""              # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""              # Local time zone
 #Umask       = 0002	       # the umask used when writing files
-#RemoteSequence = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
+LocalSequenceDir = $DataDir # The directory where purple number sequences live
+#RemoteSequenceURL = http://www.burningchrome.com:8000/~cdent/nid # EXPERIMENTAL
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days

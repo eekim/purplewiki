@@ -150,8 +150,8 @@ sub getURL {
     my $self = shift;
     my $nid = shift;
 
-    my $sequence = new PurpleWiki::Sequence($self->{config}->DataDir(),
-        $self->{config}->RemoteSequence());
+    my $sequence = new PurpleWiki::Sequence($self->{config}->LocalSequenceDir(),
+        $self->{config}->RemoteSequenceURL());
     return $sequence->getURL($nid); 
 }
 

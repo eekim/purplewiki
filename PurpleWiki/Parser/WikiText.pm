@@ -80,8 +80,8 @@ sub parse {
     my %params = @_;
 
     $url = $params{url};
-    $sequence = new PurpleWiki::Sequence($params{config}->DataDir,
-        $params{config}->RemoteSequence);
+    $sequence = new PurpleWiki::Sequence($params{config}->LocalSequenceDir,
+        $params{config}->RemoteSequenceURL);
 
     # set default parameters
     $params{wikiword} = $params{config}->WikiLinks
