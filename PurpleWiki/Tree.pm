@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.29 2004/01/24 02:30:22 cdent Exp $
+# $Id: Tree.pm,v 1.30 2004/02/17 05:49:57 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -125,9 +125,8 @@ sub view {
         return "Error: $driver View driver not found.";
     }
     else {
-	$viewer = "${viewer}::view";
-	no strict 'refs';
-        return &{$viewer}($this, %params);
+        my $driverObj = $viewer->new(%params);
+        return $driverObj->view($this);
     }
 }
 

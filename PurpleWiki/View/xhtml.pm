@@ -1,60 +1,35 @@
-# PurpleWiki::View::xhtml.pm
-# vi:ai:sm:et:sw=4:ts=4
-#
-# $Id: xhtml.pm,v 1.6 2004/01/26 00:34:47 cdent Exp $
-#
-# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
-#
-# This file is part of PurpleWiki.  PurpleWiki is derived from:
-#
-#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
-#   AtisWiki v0.3             (c) Markus Denker 1998
-#   CVWiki CVS-patches        (c) Peter Merel 1997
-#   The Original WikiWikiWeb  (c) Ward Cunningham
-#
-# PurpleWiki is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the
-#    Free Software Foundation, Inc.
-#    59 Temple Place, Suite 330
-#    Boston, MA 02111-1307 USA
-
 package PurpleWiki::View::xhtml;
-
 use 5.005;
 use strict;
-use PurpleWiki::Page;
-use PurpleWiki::Tree;
-use PurpleWiki::View::EventHandler;
+use warnings;
+use PurpleWiki::View::Driver;
 use PurpleWiki::View::wikihtml;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+############### Package Globals ###############
 
-# functions
+our $VERSION = '0.9.1';
+
+# Note that we don't inherit directly from Driver.pm like the other drivers.
+our @ISA = qw(PurpleWiki::View::wikihtml); 
+
+
+############### Overloaded Methods ###############
 
 sub view {
-    my ($wikiTree, %params) = @_;
+    my ($self, $wikiTree) = @_;
 
-    &PurpleWiki::View::wikihtml::registerHandlers;
-    return &_htmlHeader($wikiTree, %params) .
-        &PurpleWiki::View::EventHandler::view($wikiTree, %params) .
-        &_htmlFooter;
+    $self->SUPER::view($wikiTree);
+    $self->{outputString} = $self->_htmlHeader($wikiTree) .
+                            $self->{outputString} . $self->_htmlFooter();
+
+    return $self->{outputString};
 }
 
-# private
+
+############### Private Methods ###############
 
 sub _htmlHeader {
-    my ($wikiTree, %params) = @_;
+    my ($self, $wikiTree) = @_;
     my $outputString;
 
     $outputString = qq(<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 ) .
@@ -64,9 +39,9 @@ sub _htmlHeader {
        qq(<head>\n);
     $outputString .= '<title>' . $wikiTree->title . "</title>\n"
         if ($wikiTree->title);
-    if ($params{css_file}) {
+    if ($self->{params}->{css_file}) {
         $outputString .= '<link rel="stylesheet" href="';
-        $outputString .= $params{css_file};
+        $outputString .= $self->{params}->{css_file};
         $outputString .= '" type="text/css" />' . "\n";
     }
     $outputString .= "</head>\n<body>\n";
@@ -113,22 +88,5 @@ sub _htmlHeader {
 sub _htmlFooter {
     return "</body>\n</html>\n";
 }
-
 1;
 __END__
-
-=head1 NAME
-
-PurpleWiki::View::xhtml - XHTML view driver
-
-=head1 AUTHORS
-
-Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
-
-Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
-
-=head1 SEE ALSO
-
-L<PurpleWiki::View::EventHandler>.
-
-=cut

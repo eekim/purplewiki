@@ -1,312 +1,274 @@
-# PurpleWiki::View::text.pm
-#
-# $Id: text.pm,v 1.7 2004/01/21 23:24:08 cdent Exp $
-#
-# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
-#
-# This file is part of PurpleWiki.  PurpleWiki is derived from:
-#
-#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
-#   AtisWiki v0.3             (c) Markus Denker 1998
-#   CVWiki CVS-patches        (c) Peter Merel 1997
-#   The Original WikiWikiWeb  (c) Ward Cunningham
-#
-# PurpleWiki is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the
-#    Free Software Foundation, Inc.
-#    59 Temple Place, Suite 330
-#    Boston, MA 02111-1307 USA
-
 package PurpleWiki::View::text;
-
 use 5.005;
 use strict;
+use warnings;
 use Text::Wrap;
-use PurpleWiki::Tree;
-use PurpleWiki::View::EventHandler;
+use PurpleWiki::View::Driver;
 
-use vars qw($VERSION);
-$VERSION = '0.9.1';
+############### Package Globals ###############
 
-# globals
+our $VERSION = '0.9.1';
 
-my $initialIndent;
-my $subsequentIndent;
+our @ISA = qw(PurpleWiki::View::Driver);
 
-my $listNumber = 1;
-my $prevDefType;
 
-my @links;
-my $linksIndex = 1;
+############### Overloaded Methods ###############
 
-my $showLinks = 1;
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $self = $class->SUPER::new(@_);
 
-# structural node event handlers
+    # Object State
+    $self->{indentLevel} = 0;
+    $self->{outputString} = "";
+    $self->{listType} = "";
+    $self->{initialIndent} = "";
+    $self->{subsequentIndent} = "";
+    $self->{listNumber} = 1;
+    $self->{prevDefType} = "";
+    $self->{links} = [];
+    $self->{linksIndex} = 1;
+    $self->{showLinks} = 1;
 
-sub setIndent {
-    my ($structuralNode, %params) = @_;
+    bless($self, $class);
+    return $self;
+}
 
+sub view {
+    my ($self, $wikiTree) = @_;
+    
+    if (!defined($self->{coloumns}) || $self->{columns} !~ /^\d+$/ || $self->{columns} < 10) {
+        $self->{columns} = 72;
+    }
+    if (defined $self->{show_links} && $self->{show_links} == 0) {
+        $self->{showLinks} = 0;
+    }
+
+    $Text::Wrap::columns = $self->{columns};
+    $Text::Wrap::huge = 'overflow';
+
+    $self->SUPER::view($wikiTree);
+
+    $self->{outputString} = $self->_header($wikiTree) .
+                            $self->{outputString} .  $self->_footer;
+
+    return $self->{outputString};
+}
+
+sub Pre {
+    my ($self, $nodeRef) = @_;
+    if ($nodeRef->type =~ /^(ul|ol|dl|indent|section)$/) {
+        $self->{indentLevel}++;
+    }
+    $self->SUPER::Pre($nodeRef);
+}
+
+sub Post {
+    my ($self, $nodeRef) = @_;
+    if ($nodeRef->type =~ /^(ul|ol|dl|indent|section)$/) {
+        $self->{indentLevel}--;
+    }
+    $self->SUPER::Post($nodeRef);
+}
+
+sub sectionPre { shift->_setIndent(@_) }
+sub indentPre { shift->_setIndent(@_) }
+sub ulPre { shift->_setIndent(@_) }
+sub olPre { shift->_setIndent(@_) }
+sub dlPre { shift->_setIndent(@_) }
+
+sub ulMain { shift->_recurseList(@_) }
+sub olMain { shift->_recurseList(@_) }
+
+sub hPre { shift->_newLineSetIndent(@_) }
+sub pPre { shift->_newLineSetIndent(@_) }
+sub liPre { shift->_newLineSetIndent(@_) }
+sub dtPre { shift->_newLineSetIndent(@_) }
+sub prePre { shift->_newLineSetIndent(@_) }
+
+sub hMain { shift->_structuralContent(@_) }
+sub pMain { shift->_structuralContent(@_) }
+sub liMain { shift->_structuralContent(@_) }
+sub dtMain { shift->_structuralContent(@_) }
+sub ddMain { shift->_structuralContent(@_) }
+sub preMain { shift->_structuralContent(@_) }
+
+sub hPost { shift->{outputString} .= "\n" }
+sub pPost { shift->{outputString} .= "\n" }
+sub liPost { shift->{outputString} .= "\n" }
+sub prePost { shift->{outputString} .= "\n" }
+
+sub dtPost { 
+    my $self = shift;
+    $self->{prevDefType} = 'dt';
+    $self->{outputString} .= "\n";
+}
+
+sub ddPre {
+    my $self = shift;
+    $self->_setIndent(@_);
+    if ($self->{prevDefType} eq 'dd') {
+        $self->{outputString} .= "\n";
+    }
+}
+
+sub ddPost {
+    my $self = shift;
+    $self->{prevDefType} = 'dd';
+    $self->{outputString} .= "\n";
+}
+
+sub bPre { shift->{outputString} .= "*" }
+sub bPost { shift->{outputString} .= "*" }
+
+sub iPre { shift->{outputString} .= "_" }
+sub iPost { shift->{outputString} .= "_" }
+
+sub textMain { shift->{outputString} .= shift->content }
+sub nowikiMain { shift->{outputString} .= shift->content }
+sub transclusionMain { shift->{outputString} .= shift->content }
+sub linkMain { shift->{outputString} .= shift->content }
+
+sub transclusionPre { shift->{outputString} .= "transclude: " }
+
+sub linkPost {
+    my ($self, $nodeRef) = @_;
+    if ($self->{showLinks}) {
+        push @{$self->{links}}, $nodeRef->href;
+        $self->{linksIndex}++;
+        $self->{outputString} .= '[' . ($self->{linksIndex} - 1) . ']';
+    }
+}
+
+sub urlPre { shift->{outputString} .= shift->content }
+sub wikiwordPre { shift->{outputString} .= shift->content }
+sub freelinkPre { shift->{outputString} .= shift->content }
+sub imagePre { shift->{outputString} .= shift->content }
+
+
+############### Private Methods ###############
+
+sub _recurseList {
+    my ($self, $nodeRef) = @_;
+    $self->{listType} = $nodeRef->type;
+    $self->{listNumber} = 1 if $nodeRef->type eq 'ol';
+    $self->recurse($nodeRef);
+}
+
+sub _newLineSetIndent {
+    my $self = shift;
+    $self->_setIndent(@_);
+    $self->{outputString} .= "\n";
+}
+
+sub _structuralContent {
+    my ($self, $nodeRef) = @_;
+
+    if ($nodeRef->content) {
+        my $tmp = $self->{outputString};
+        $self->{outputString} = "";
+        $self->traverse($nodeRef->content);
+        my $nodeString = $self->{outputString};
+        $self->{outputString} = $tmp;
+        if ($nodeRef->type eq 'li') {
+            if ($self->{listType} eq 'ul') {
+                $nodeString = "* $nodeString";
+            }
+            elsif ($self->{listType} eq 'ol') {
+                $nodeString = $self->{listNumber}.". $nodeString";
+                $self->{listNumber}++;
+            }
+        }
+        if ($nodeRef->type eq 'pre') {
+            $self->{outputString} .= &Text::Wrap::wrap($self->{initialIndent},
+                                     $self->{subsequentIndent},
+                                     $nodeString);
+        }
+        else {
+            $self->{outputString} .= &Text::Wrap::fill($self->{initialIndent},
+                                     $self->{subsequentIndent},
+                                     $nodeString);
+        }
+    }
+}
+
+sub _setIndent {
+    my ($self, $nodeRef) = @_;
+
+    my $indent;
     my $initialOffset = 1;
     my $subsequentOffset = 1;
     my $subsequentMore = 0;
     my $listMore = 0;
-    if ($structuralNode->type eq 'li') {
+
+    if ($nodeRef->type eq 'li') {
         $initialOffset = 2;
         $subsequentOffset = 2;
         $listMore = 2;
-        if ($params{listType} eq 'ul') {
+
+        if ($self->{listType} eq 'ul') {
             $subsequentMore = 2;
-        }
-        elsif ($params{listType} eq 'ol') {
+        } elsif ($self->{listType} eq 'ol') {
             $subsequentMore = 3;
         }
-    }
-    elsif ($structuralNode->type eq 'dt') {
+    } elsif ($nodeRef->type eq 'dt') {
         $initialOffset = 2;
         $subsequentOffset = 2;
     }
-    $initialIndent = ' ' x ( ($params{indentLevel} - $initialOffset) * 4
-                             + $listMore);
-    $subsequentIndent = ' ' x ( ($params{indentLevel} - $subsequentOffset) * 4
-                                + $subsequentMore + $listMore);
-    return '';
+
+    $indent = 4*$self->{indentLevel} - 4*$initialOffset + $listMore;
+    $self->{initialIndent} = ' ' x $indent;
+
+    $indent = 4*$self->{indentLevel} - 4*$subsequentOffset + $subsequentMore 
+              + $listMore;
+    $self->{subsequentIndent} = ' ' x $indent;
 }
-
-sub recurseList {
-    my ($structuralNode, %params) = @_;
-
-    $params{indentLevel}++;
-    $params{listType} = $structuralNode->type;
-    if ($structuralNode->type eq 'ol') {
-        $listNumber = 1;
-    }
-    return &PurpleWiki::View::EventHandler::traverseStructural($structuralNode->children, %params);
-}
-
-sub structuralContent {
-    my ($structuralNode, %params) = @_;
-
-    if ($structuralNode->content) {
-        my $nodeString = &PurpleWiki::View::EventHandler::traverseInline($structuralNode->content, %params);
-        if ($structuralNode->type eq 'li') {
-            if ($params{listType} eq 'ul') {
-                $nodeString = "* $nodeString";
-            }
-            elsif ($params{listType} eq 'ol') {
-                $nodeString = "$listNumber. $nodeString";
-                $listNumber++;
-            }
-        }
-        if ($structuralNode->type eq 'pre') {
-            return &Text::Wrap::wrap($initialIndent,
-                                     $subsequentIndent,
-                                     $nodeString);
-        }
-        else {
-            return &Text::Wrap::fill($initialIndent,
-                                     $subsequentIndent,
-                                     $nodeString);
-        }
-    }
-}
-
-sub newLineSetIndent {
-    &setIndent;
-    return "\n";
-}
-
-sub newLine {
-    my $structuralNode = shift;
-
-    return "\n";
-}
-
-# inline node event handlers
-
-sub inlineContent {
-    my $inlineNode = shift;
-
-    return $inlineNode->content;
-}
-
-# functions
-
-sub registerHandlers {
-    $PurpleWiki::View::EventHandler::structuralHandler{section}->{pre} = \&setIndent;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} = \&setIndent;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&setIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{main} = \&recurseList;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{pre} = \&setIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{main} = \&recurseList;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{pre} = \&setIndent;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{h}->{pre} = \&newLineSetIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{h}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{h}->{post} = \&newLine;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} = \&newLineSetIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{p}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{p}->{post} = \&newLine;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} = \&newLineSetIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{li}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{li}->{post} = \&newLine;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{pre} = \&newLineSetIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{post} =
-        sub { $prevDefType = 'dt'; return "\n"; };
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{pre} =
-        sub { my ($structuralNode, %params) = @_;
-              &setIndent;
-              if ($prevDefType eq 'dd') {
-                  return "\n";
-              }
-              return ''; };
-    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{post} =
-        sub { $prevDefType = 'dd'; return "\n"; };
-
-    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{pre} = \&newLineSetIndent;
-    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{main} = \&structuralContent;
-    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{post} = \&newLine;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} =
-        sub { return '*'; };
-    $PurpleWiki::View::EventHandler::inlineHandler{b}->{post} =
-        sub { return '*'; };
-
-    $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} =
-        sub { return '_'; };
-    $PurpleWiki::View::EventHandler::inlineHandler{i}->{post} =
-        sub { return '_'; };
-
-    $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} = 
-    	sub { print "transclude: "; };
-    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{post} =
-        sub { my $inlineNode = shift;
-              if ($showLinks) {
-                  push @links, $inlineNode->href;
-                  $linksIndex++;
-                  return '[' . ($linksIndex - 1) . ']';
-              } };
-
-    $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} = \&inlineContent;
-}
-
-sub view {
-    my ($wikiTree, %params) = @_;
-
-    if ($params{columns} !~ /^\d+$/ || $params{columns} < 10) {
-        $params{columns} = 72;
-    }
-    if (defined $params{show_links} && $params{show_links} == 0) {
-        $showLinks = 0;
-    }
-
-    $Text::Wrap::columns = $params{columns};
-    $Text::Wrap::huge = 'overflow';
-
-    &registerHandlers;
-    return &_header($wikiTree, %params) .
-        &PurpleWiki::View::EventHandler::view($wikiTree, %params) .
-        &_footer;
-}
-
-# private
 
 sub _header {
-    my ($wikiTree, %params) = @_;
-    my $outputString;
+    my ($self, $wikiTree) = @_;
+    my $header = "";
 
-    $outputString = &_center($wikiTree->title, $params{columns})
-        if ($wikiTree->title);
-    $outputString .= &_center($wikiTree->subtitle, $params{columns})
-        if ($wikiTree->subtitle);
-    $outputString .= &_center($wikiTree->id, $params{columns})
-        if ($wikiTree->id);
-    $outputString .= &_center($wikiTree->date, $params{columns})
-        if ($wikiTree->date);
-    $outputString .= &_center($wikiTree->version, $params{columns})
-        if ($wikiTree->version);
-    return $outputString . "\n";
+    $header .= $self->_center($wikiTree->title, $self->{columns});
+    $header .= $self->_center($wikiTree->subtitle, $self->{columns});
+    $header .= $self->_center($wikiTree->id, $self->{columns});
+    $header .= $self->_center($wikiTree->date, $self->{columns});
+    $header .= $self->_center($wikiTree->version, $self->{columns});
+
+    return $header."\n";
 }
 
 sub _footer {
-    my $outputString;
+    my $self = shift;
+    my $footer = "";
 
-    if ($showLinks) {  # check for links
-        if (scalar @links > 0) {
-            $outputString = "\n\n";
-            $outputString .= "LINK REFERENCES\n\n";
-            $linksIndex = 1;
-            foreach my $link (@links) {
-                $outputString .= "    [$linksIndex] $link\n";
-                $linksIndex++;
+    if ($self->{showLinks}) {  # check for links
+        if (scalar @{$self->{links}} > 0) {
+            $footer = "\n\n";
+            $footer .= "LINK REFERENCES\n\n";
+            $self->{linksIndex} = 1;
+            foreach my $link (@{$self->{links}}) {
+                $footer .= "    [".$self->{linksIndex}."] $link\n";
+                $self->{linksIndex}++;
             }
         }
     }
-    return $outputString;
+
+    return $footer;
 }
 
 sub _center {
-    my ($outputString, $columns) = @_;
+    my ($self, $string, $columns) = @_;
     my $padding;
 
-    if (length $outputString > $columns) {
-        return $outputString . "\n";
-    }
-    else {
-        $padding = ($columns - length $outputString) / 2;
-        return ' ' x $padding . $outputString . "\n";
-    }
-}
+    return "" if not $string;
 
+    if (length $string > $columns) {
+        return $string . "\n";
+    }
+
+    $padding = ($columns - length $string) / 2;
+    return ' 'x$padding . $string. "\n";
+}
 1;
 __END__
-
-=head1 NAME
-
-PurpleWiki::View::text - Plain text view driver
-
-=head1 AUTHORS
-
-Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
-
-Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
-
-=head1 SEE ALSO
-
-L<PurpleWiki::View::EventHandler>.
-
-=cut

@@ -1,287 +1,226 @@
-# PurpleWiki::View::wikihtml.pm
-# vi:ai:sm:ts=4:sw=4:et
-#
-# $Id: wikihtml.pm,v 1.14 2004/02/12 18:22:42 cdent Exp $
-#
-# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
-#
-# This file is part of PurpleWiki.  PurpleWiki is derived from:
-#
-#   UseModWiki v0.92          (c) Clifford A. Adams 2000-2001
-#   AtisWiki v0.3             (c) Markus Denker 1998
-#   CVWiki CVS-patches        (c) Peter Merel 1997
-#   The Original WikiWikiWeb  (c) Ward Cunningham
-#
-# PurpleWiki is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the
-#    Free Software Foundation, Inc.
-#    59 Temple Place, Suite 330
-#    Boston, MA 02111-1307 USA
-
 package PurpleWiki::View::wikihtml;
-
 use 5.005;
 use strict;
-use PurpleWiki::Page;
-use PurpleWiki::Tree;
-use PurpleWiki::View::EventHandler;
+use warnings;
+use PurpleWiki::Transclusion;
+use PurpleWiki::View::Driver;
 
-# globals
+############### Package Globals ###############
 
-use vars qw(@sectionState $VERSION);
-$VERSION = '0.9.1';
+our $VERSION = '0.9.1';
 
-# structural node event handlers
+our @ISA = qw(PurpleWiki::View::Driver);
 
-sub openTag {
-    my $node = shift;
 
-    return '<' . $node->type . '>';
+############### Overloaded Methods ###############
+
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $self = $class->SUPER::new(@_);
+
+    # Object State
+    $self->{outputString} = "";
+    $self->{pageName} = "";
+    $self->{sectionState} = [];
+    $self->{url} = $self->{url} || "";
+    $self->{transcluder} = new PurpleWiki::Transclusion(
+                                                  config => $self->{config},
+                                                  url => $self->{url});
+
+    bless($self, $class);
+    return $self;
 }
 
-sub closeTag {
-    my $node = shift;
-
-    return '</' . $node->type . '>';
+sub view {
+    my ($self, $wikiTree) = @_;
+    $self->{sectionState} = [];
+    $self->SUPER::view($wikiTree);
+    return $self->{outputString};
 }
 
-sub closeTagWithNewline {
-    my $node = shift;
-
-    return &closeTag($node) . "\n";
+sub sectionPre { 
+    push @{shift->{sectionState}}, 'section'; 
 }
 
-sub openTagWithNid {
-    my $node = shift;
-
-    return &openTag($node) . &_anchor($node->id);
+sub sectionPost { 
+    pop @{shift->{sectionState}}; 
 }
 
-sub closeTagWithNid {
-    my $node = shift;
-    my %params = @_;
-
-    return &_nid($node->id, %params) . &closeTag($node);
+sub indentPre { 
+    shift->{outputString} .= "<div class=\"indent\">\n";
 }
 
-sub sketch {
-    my $node = shift;
-    my %params = @_;
+sub indentPost { 
+    shift->{outputString} .= "</div>\n";
+}
 
-    return q{<form name="SvgForm" action="/cgi-bin/wikiwhiteboard.pl" method="POST" onsubmit="frm=document.forms['SvgForm'];frm.svg.value= window.getSVG(); return true;">} . "\n" .
+sub ulPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub olPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub dlPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub bPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub iPre { shift->{outputString} .= '<' . shift->type . '>' }
+sub ttPre { shift->{outputString} .= '<' . shift->type . '>' }
+
+sub ulPost { shift->{outputString} .= '</' . shift->type . ">\n" }
+sub olPost { shift->{outputString} .= '</' . shift->type . ">\n" }
+sub dlPost { shift->{outputString} .= '</' . shift->type . ">\n" }
+
+sub hPre { 
+    my ($self, $node) = @_;
+    $self->{outputString} .= '<h' . $self->_headerLevel(); 
+    $self->{outputString} .= '>' . $self->_anchor($node->id); 
+}
+
+sub hPost { 
+    my ($self, $node) = @_; 
+    $self->{outputString} .= $self->_nid($node->id); 
+    $self->{outputString} .= '</h' . $self->_headerLevel() . '>';
+}
+
+sub pPre { shift->_openTagWithNID(@_) }
+sub liPre { shift->_openTagWithNID(@_) }
+sub ddPre { shift->_openTagWithNID(@_) }
+sub dtPre { shift->_openTagWithNID(@_) }
+sub prePre { shift->_openTagWithNID(@_) }
+
+sub pPost { shift->_closeTagWithNID(@_) }
+sub liPost { shift->_closeTagWithNID(@_) }
+sub ddPost { shift->_closeTagWithNID(@_) }
+sub dtPost { shift->_closeTagWithNID(@_) }
+sub prePost { shift->_closeTagWithNID(@_) }
+
+sub sketchMain { 
+    my $self = shift;
+
+    $self->{outputString} .= q{<form name="SvgForm" action="/cgi-bin/wikiwhiteboard.pl" method="POST" onsubmit="frm=document.forms['SvgForm'];frm.svg.value= window.getSVG(); return true;">} . "\n" .
         '<input type="submit" value="Save" />' . "\n" .
-        '<input type="hidden" name="pageName" value="' . $params{pageName} .
+        '<input type="hidden" name="pageName" value="' . $self->{pageName} .
         '" />' . "\n" .
         '<input type="hidden" name="svg" value="" />' . "\n" .
         '<input type="submit" name="submit" value="Clear" />' . "\n" .
         "</form>\n" .
-        '<embed src="/cgi-bin/wikiwhiteboard.pl?' . $params{pageName} .
+        '<embed src="/cgi-bin/wikiwhiteboard.pl?' . $self->{pageName} .
         '" width="500" height="300" pluginspage="http://www.adobe.com/svg/viewer/install" />' . "\n";
 }
 
-# inline node event handlers
+sub bPost { shift->{outputString} .= '</' . shift->type . '>' }
+sub iPost { shift->{outputString} .= '</' . shift->type . '>' }
+sub ttPost { shift->{outputString} .= '</' . shift->type . '>' }
 
-sub transcludeContent {
-    my $node = shift;
-    my %params = @_;
-    require PurpleWiki::Transclusion;
+sub textMain { shift->_quoteHtml(@_) }
+sub nowikiMain { shift->_quoteHtml(@_) }
+sub linkMain { shift->_quoteHtml(@_) }
+sub urlMain { shift->_quoteHtml(@_) }
 
-    my $space = new PurpleWiki::Transclusion(config => $params{config},
-        url => $params{url}
-    );
+sub imageMain { shift->{outputString} .= '<img src="' . shift->href . '" />' }
 
-    return $space->get($node->content);
+sub transclusionMain { 
+    my ($self, $nodeRef) = @_;
+    $self->{outputString} .= $self->{transcluder}->get($nodeRef->content);
 }
 
-sub inlineContent {
-    my $node = shift;
+sub linkPre { shift->_openLinkTag(@_) }
+sub urlPre { shift->_openLinkTag(@_) }
 
-    return &_quoteHtml($node->content);
+sub linkPost { shift->{outputString} .= '</a>' }
+sub urlPost { shift->{outputString} .= '</a>' }
+
+sub freelinkMain { shift->_wikiLink(@_) }
+sub wikiwordMain { shift->_wikiLink(@_) }
+
+
+############### Private Methods ###############
+
+sub _openTagWithNID {
+    my ($self, $nodeRef) = @_;
+    $self->{outputString} .= '<'.$nodeRef->type.'>';
+    $self->{outputString} .= $self->_anchor($nodeRef->id);
 }
 
-sub openLinkTag {
-    my $node = shift;
-    my $outputString;
-
-    $outputString = '<a class="extlink" href="' . $node->href . '">';
-    return $outputString;
+sub _closeTagWithNID {
+    my ($self, $nodeRef) = @_;
+    $self->{outputString} .= $self->_nid($nodeRef->id);
+    $self->{outputString} .= '</' . $nodeRef->type . '>';
 }
 
-sub closeLinkTag {
-    my $node = shift;
-    my $outputString;
-
-    $outputString .= '</a>';
-    return $outputString;
+sub _openLinkTag { 
+    my ($self, $nodeRef) = @_;
+    $self->{outputString} .= '<a class="extlink" href="';
+    $self->{outputString} .= $_[1]->href . '">';
 }
 
-sub wikiLink {
-    my $node = shift;
-    my %params = @_;
-    my $outputString;
+sub _wikiLink {
+    my ($self, $nodeRef) = @_;
+    my $pageName = $nodeRef->content;
+    my $linkString = "";
     my $pageNid;
 
-    my $pageName = $node->content;
     if ($pageName =~ s/\#([A-Z0-9]+)$//) {
         $pageNid = $1;
     }
 
-    if ($node->content =~ /:/) {
-        $outputString .= '<a href="' .
-            &PurpleWiki::Page::getInterWikiLink($pageName, $params{config});
-        $outputString .= "#nid$pageNid" if ($pageNid);
-        $outputString .= '">' . $node->content . '</a>';
-    }
-    elsif (&PurpleWiki::Page::exists($pageName, $params{config})) {
-        if ($node->type eq 'freelink') {
-            $outputString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($node->content, $params{config}) .
+    if ($nodeRef->content =~ /:/) {
+        $linkString .= '<a href="' .
+            &PurpleWiki::Page::getInterWikiLink($pageName, $self->{config});
+        $linkString .= "#nid$pageNid" if $pageNid;
+        $linkString .= '">' . $nodeRef->content . '</a>';
+    } elsif (&PurpleWiki::Page::exists($pageName, $self->{config})) {
+        if ($nodeRef->type eq 'freelink') {
+            $linkString .= '<a href="' .  
+                &PurpleWiki::Page::getFreeLink($nodeRef->content, 
+                                               $self->{config}) .  '">';
+        } else {
+            $linkString .= '<a href="' . 
+                &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config});
+            $linkString .= "#nid$pageNid" if $pageNid;
+            $linkString .= '">';
+        }
+        $linkString .= $nodeRef->content . '</a>';
+    } else {
+        if ($nodeRef->type eq 'freelink') {
+            $linkString .= '[' . $nodeRef->content . ']';
+            $linkString .= '<a href="' .
+                &PurpleWiki::Page::getFreeLink($nodeRef->content, 
+                                               $self->{config}) .  '">';
+        } else {
+            $linkString .= $nodeRef->content;
+            $linkString .= '<a href="' . 
+                &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config}) .
                 '">';
         }
-        else {
-            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName, $params{config});
-            $outputString .= "#nid$pageNid" if ($pageNid);
-            $outputString .= '">';
-        }
-        $outputString .= $node->content . '</a>';
+        $linkString .= '?</a>';
     }
-    else {
-        if ($node->type eq 'freelink') {
-            $outputString .= '[' . $node->content . ']';
-            $outputString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($node->content, $params{config}) .
-                '">';
-        }
-        else {
-            $outputString .= $node->content;
-            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName, $params{config}) .
-                '">';
-        }
-        $outputString .= '?</a>';
-    }
-    return $outputString;
+
+    $self->{outputString} .= $linkString;
 }
-
-# functions
-
-sub registerHandlers {
-    $PurpleWiki::View::EventHandler::structuralHandler{section}->{pre} =
-        sub { push @sectionState, 'section'; return ''; };
-    $PurpleWiki::View::EventHandler::structuralHandler{section}->{post} =
-        sub { pop @sectionState; return ''; };
-
-    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} =
-        sub { return "<div class=\"indent\">\n"; };
-    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{post} = 
-        sub { return "</div>\n"; };
-
-    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::structuralHandler{ul}->{post} = \&closeTagWithNewline;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::structuralHandler{ol}->{post} = \&closeTagWithNewline;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::structuralHandler{dl}->{post} = \&closeTagWithNewline;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{h}->{pre} =
-        sub { my $node = shift;
-              return '<h' . &_headerLevel . '>' . &_anchor($node->id); };
-    $PurpleWiki::View::EventHandler::structuralHandler{h}->{post} =
-        sub { my $node = shift; my %params = @_;
-              return &_nid($node->id, %params) . '</h' . &_headerLevel . '>'; };
-
-    $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} = \&openTagWithNid;
-    $PurpleWiki::View::EventHandler::structuralHandler{p}->{post} = \&closeTagWithNid;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{li}->{pre} = \&openTagWithNid;
-    $PurpleWiki::View::EventHandler::structuralHandler{li}->{post} = \&closeTagWithNid;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{pre} = \&openTagWithNid;
-    $PurpleWiki::View::EventHandler::structuralHandler{dd}->{post} = \&closeTagWithNid;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{pre} = \&openTagWithNid;
-    $PurpleWiki::View::EventHandler::structuralHandler{dt}->{post} = \&closeTagWithNid;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{pre} = \&openTagWithNid;
-    $PurpleWiki::View::EventHandler::structuralHandler{pre}->{post} = \&closeTagWithNid;
-
-    $PurpleWiki::View::EventHandler::structuralHandler{sketch}->{main} =
-        \&sketch;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::inlineHandler{b}->{post} = \&closeTag;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::inlineHandler{i}->{post} = \&closeTag;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{tt}->{pre} = \&openTag;
-    $PurpleWiki::View::EventHandler::inlineHandler{tt}->{post} = \&closeTag;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} =
-        sub { my $node = shift;
-              return '<img src="' . $node->href . '" />'; };
-
-    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&transcludeContent;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} = \&openLinkTag;
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
-    $PurpleWiki::View::EventHandler::inlineHandler{link}->{post} = \&closeLinkTag;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{url}->{pre} = \&openLinkTag;
-    $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContent;
-    $PurpleWiki::View::EventHandler::inlineHandler{url}->{post} = \&closeLinkTag;
-
-    $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&wikiLink;
-    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{main} = \&wikiLink;
-}
-
-sub view {
-    my ($wikiTree, %params) = @_;
-
-    @sectionState = ();
-    &registerHandlers;
-    $params{url} = '' unless defined($params{url});
-    return &PurpleWiki::View::EventHandler::view($wikiTree, %params);
-}
-
-# private
 
 sub _quoteHtml {
-    my ($html) = @_;
+    my ($self, $nodeRef) = @_;
+    my $html = $nodeRef->content;
 
     $html =~ s/&/&amp;/g;
     $html =~ s/</&lt;/g;
     $html =~ s/>/&gt;/g;
+
     if (1) {   # Make an official option?
         $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
     }
-    return $html;
+
+    $self->{outputString} .= $html;
 }
 
 sub _headerLevel {
-    my $headerLevel = scalar @sectionState + 1;
-    $headerLevel = 6 if ($headerLevel > 6);
+    my $self = shift;
+    my $headerLevel = scalar @{$self->{sectionState}} + 1;
+
+    $headerLevel = 6 if $headerLevel > 6;
     return $headerLevel;
 }
 
 # FIXME: goes to too much effort to avoid a void return
 sub _anchor {
-    my $nid = shift;
+    my ($self, $nid) = @_;
     my $string = '';
 
     if ($nid) {
@@ -293,41 +232,23 @@ sub _anchor {
 
 # FIXME: goes to too much effort to avoid a void return
 sub _nid {
-    my $nid = shift;
-    my %params = @_;
+    my ($self, $nid) = @_;
     my $string = '';
 
     my $nidFace = '#';
 
-    if ($params{config}->ShowNid) {
+    if ($self->{config}->ShowNid) {
         $nidFace = $nid;
     }
 
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
 	                   'title="' . "$nid" . '" href="' .
-			   $params{url} . '#nid' .
+			   $self->{url} . '#nid' .
 			   $nid . '">' . $nidFace . '</a>';
     }
 
     return $string;
 }
-
 1;
 __END__
-
-=head1 NAME
-
-PurpleWiki::View::wikihtml - WikiHTML view driver
-
-=head1 AUTHORS
-
-Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
-
-Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
-
-=head1 SEE ALSO
-
-L<PurpleWiki::View::EventHandler>.
-
-=cut
