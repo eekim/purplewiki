@@ -1,4 +1,4 @@
-# PurpleWiki::SVNDatabase::Pages
+# PurpleWiki::Archive::PlainText
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $

@@ -11,7 +11,7 @@ END {
 }
 
 $ENV{PW_CONFIG_DIR} = 't';
-my $keep_errors = 0;
+my $keep_errors = 1;
 my $testdir = 't/out';
 system('cp t/config.runDef t/config');
 
@@ -41,9 +41,9 @@ system('cp t/config.runDef t/config');
             if ($diff) {
                 print ERR "Seq $seq differs:\n";
                 print ERR $diff;
-                unlink $test_out unless ($keep_errors);
+#                unlink $test_out unless ($keep_errors);
             } else {
-                unlink $test_out;
+#                unlink $test_out;
             }
         } else { print ERR "Couldn't open $test_in: $!\n"; }
     }

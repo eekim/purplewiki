@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::UseMod::User::UseMod;
+package PurpleWiki::UserDB::UseMod;
 
 use strict;
 use DB_File;

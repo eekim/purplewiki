@@ -39,8 +39,8 @@ PurpleWiki/UseMod/Database.pm
 PurpleWiki/UseMod/KeptRevision.pm
 PurpleWiki/UseMod/Section.pm
 PurpleWiki/UseMod/Text.pm
-PurpleWiki/UseMod/User/UseMod.pm
 PurpleWiki/User.pm
+PurpleWiki/UserDB/UseMod.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/Filter.pm

@@ -82,7 +82,7 @@ SearchModule	=	Wiki
 # PurpleWiki Modules
 ParserDriver        = PurpleWiki::Parser::WikiText
 TemplateDriver      = PurpleWiki::Template::TT
-UserDatabaseDriver  = PurpleWiki::UseMod::User::UseMod
+UserDatabaseDriver  = PurpleWiki::UserDB::UseMod
 ACLDriver           = PurpleWiki::ACL
 
 # Search Additional Config

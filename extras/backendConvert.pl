@@ -30,10 +30,9 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-BEGIN {unshift(@INC,"/home/gerry/purple/blueoxen/branches/database-api-1");}
-
 package UseModWiki;
 use strict;
+use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
