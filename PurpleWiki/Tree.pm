@@ -7,6 +7,7 @@ use PurpleWiki::View::Debug;
 use PurpleWiki::View::WikiHTML;
 use PurpleWiki::View::WikiText;
 use PurpleWiki::View::XHTML;
+use PurpleWiki::Page;
 
 ### constructor
 
@@ -399,22 +400,26 @@ sub _parseInlineNode {
         elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),
                                                            'content'=>$node);
         }
         elsif ($node =~ /[A-Z]\w+:$rxWikiWord$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                           'href'=>&PurpleWiki::Page::getInterWikiLink($node),
                                                            'content'=>$node);
         }
         elsif ($node =~ /$rxWikiWord$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),
                                                            'content'=>$node);
         }
         elsif ($node =~ /$rxDoubleBracketed/s) {
             $node =~ s/^\[\[//;
             $node =~ s/\]\]$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
+                                                           'href'=>&PurpleWiki::Page::getFreeLink($node),
                                                            'content'=>$node);
         }
         else {
