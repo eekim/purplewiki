@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.9 2003/07/09 08:07:13 eekim Exp $
+# $Id: WikiText.pm,v 1.10 2003/07/19 07:36:33 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -369,7 +369,7 @@ sub _parseInlineNode {
     if ($params{wikiword}) {
         $rx .= qq{ |
         (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
-        [A-Z]\\w+:$rxWikiWord(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
+        [A-Z]\\w+:[^\\\]\\s"<>]+(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
         $rxWikiWord(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
     }
     if ($params{freelink}) {
@@ -449,13 +449,13 @@ sub _parseInlineNode {
             }
         }
         elsif ($params{wikiword} &&
-               ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s)) {
+               ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#[A-Z0-9]+)?$rxQuoteDelim$/s)) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
                                                            'content'=>$node);
         }
         elsif ($params{wikiword} &&
-               ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s)) {
+               ($node =~ /^([A-Z]\w+):([^\]\s"<>]+(?:\#[A-Z0-9]+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
             if (&PurpleWiki::Page::siteExists($site, $params{config})) {
@@ -474,13 +474,20 @@ sub _parseInlineNode {
                                                     'content'=>':');
                 }
                 else {
-                    push @inlineNodes,
-                        PurpleWiki::InlineNode->new('type'=>'text',
-                                                    'content'=>"$site:");
+                    if ($page =~ /^$rxWikiWord$/) {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>"$site:");
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                        'content'=>$page);
+                    }
+                    else {
+                        push @inlineNodes,
+                            PurpleWiki::InlineNode->new('type'=>'text',
+                                                        'content'=>"$site:$page");
+                    }
                 }
-                push @inlineNodes,
-                    PurpleWiki::InlineNode->new('type'=>'wikiword',
-                                                'content'=>$page);
             }
         }
         elsif ($params{wikiword} &&
