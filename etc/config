@@ -74,6 +74,7 @@ FreeUpper              # if set force upper case
 # Search Modules:
 SearchModule	=	Wiki
 #SearchModule	=	MovableType
+#SearchModule	=	Blosxom
 #SearchModule	=	Arts
 #SearchModule	=	IrcLogger
 
