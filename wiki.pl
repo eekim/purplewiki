@@ -994,6 +994,7 @@ sub DoLogin {
       $user = undef;
   }
   $wikiTemplate->vars(&globalTemplateVars,
+                      enteredName => $username,
                       loginSuccess => $success);
   print GetHttpHeader() . $wikiTemplate->process('loginResults');
 }
