@@ -23,13 +23,10 @@ $VERSION = 0.2;
 use strict;
 no warnings 'redefine';
 
-use PurpleWiki::Parser::WikiText;
-use PurpleWiki::Config;
 use MT;
 use MT::Blog;
 use MT::Entry;
 use MT::Comment;
-use MT::Template::Context;
 
 my $CONFIG_DIR = '/home/cdent/testwiki';
 my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords anywhere
@@ -64,6 +61,9 @@ sub parseForPurple {
     if (!defined($entry)) {
         return $str;
     }
+
+    require PurpleWiki::Config;
+    require PurpleWiki::Parser::WikiText;
 
     $url = $entry->permalink;
     $str = "\n$str\r\n";
@@ -111,6 +111,8 @@ my $commentSaveSub = sub {
 
     my $blog = MT::Blog->load($entry->blog_id);
     if (grep /^purpleIN$/, @{$blog->comment_text_filters}) {
+        require PurpleWiki::Config;
+        require PurpleWiki::Parser::WikiText;
 
         # process text
         $text =~ s/\r//g;
@@ -154,6 +156,8 @@ my $entrySaveSub = sub {
     # which is only created after a save.
     # Only do this if the entry is purpleIN text format
     if ($entry->convert_breaks =~ /purpleIN/) {
+        require PurpleWiki::Config;
+        require PurpleWiki::Parser::WikiText;
         my $text = $entry->text;
         $text =~ s/\r//g;
         my $config = new PurpleWiki::Config($CONFIG_DIR);
