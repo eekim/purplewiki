@@ -389,7 +389,8 @@ sub DoHistory {
     for my $pageinfo (@pageHistory) {
         my $rev = $pageinfo->{revision};
         if ($pageinfo->{userId}) {
-            $pageinfo->{userName} = $userDb->loadUser($pageinfo->{userId})->username;
+            my $pageUser = $userDb->loadUser($page->{userId});
+            $pageinfo->{userName} = $pageUser->username if ($pageUser);
         }
         if ($count < scalar @pageHistory) {
             if ($count == 1) {
