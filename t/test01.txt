@@ -83,6 +83,9 @@ How about not linking a <nowiki>WikiWikiWord</nowiki>. How about a
 UseMod:InterWiki link?  Finally, how about separating a
 WordFromNumbers""123 using double quotes?
 
+How about some funkier URLs like http://www.burningchrome.com:81/?  Or,
+http://www.eekim.com/cgi-bin/dkr?version=2&date=20021225?
+
 = Conclusion =
 This concludes this test.  We now return you to your regular
 programming.

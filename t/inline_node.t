@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 81 };
+BEGIN { plan tests => 101 };
 use PurpleWiki::InlineNode;
 
 #########################
@@ -151,14 +151,40 @@ ok(ref $inlineNode->data->[0]->data->[1] eq 'PurpleWiki::InlineNode');
 ok($inlineNode->data->[0]->data->[1]->type eq 'b');
 ok($inlineNode->data->[0]->data->[1]->data->[0] eq 'blind');
 
-# Links.  ( tests)
+# WikiWords.  (15 tests)
 
-my $text12 = 'This is a WikiWord.';
+my $text12 = 'This is a WikiWord.  Hello EugeneButNotKim""Kim.  How about a [[free link]]?';
 
 $inlineNode = PurpleWiki::InlineNode->new('data'=>$text12);
-ok(scalar @{$inlineNode->data} == 3);
+ok(scalar @{$inlineNode->data} == 7);
 ok($inlineNode->data->[0] eq 'This is a ');
 ok(ref $inlineNode->data->[1] eq 'PurpleWiki::InlineNode');
 ok($inlineNode->data->[1]->type eq 'link');
 ok(scalar @{$inlineNode->data->[1]->data} == 1);
 ok($inlineNode->data->[1]->data->[0] eq 'WikiWord');
+ok($inlineNode->data->[2] eq '.  Hello ');
+ok($inlineNode->data->[3]->type eq 'link');
+ok(scalar @{$inlineNode->data->[3]->data} == 1);
+ok($inlineNode->data->[3]->data->[0] eq 'EugeneButNotKim');
+ok($inlineNode->data->[4] eq 'Kim.  How about a ');
+ok($inlineNode->data->[5]->type eq 'link');
+ok(scalar @{$inlineNode->data->[5]->data} == 1);
+ok($inlineNode->data->[5]->data->[0] eq 'free link');
+ok($inlineNode->data->[6] eq '?');
+
+# URLs.  (11 tests)
+
+my $text13 = 'Try http://fakeurl.com/index.html.  How about http://fakeurl.com:2000/test.cgi?name=eugene&age=27?';
+
+$inlineNode = PurpleWiki::InlineNode->new('data'=>$text13);
+ok(scalar @{$inlineNode->data} == 5);
+ok($inlineNode->data->[0] eq 'Try ');
+ok(ref $inlineNode->data->[1] eq 'PurpleWiki::InlineNode');
+ok($inlineNode->data->[1]->type eq 'link');
+ok(scalar @{$inlineNode->data->[1]->data} == 1);
+ok($inlineNode->data->[1]->data->[0] eq 'http://fakeurl.com/index.html');
+ok($inlineNode->data->[2] eq '.  How about ');
+ok($inlineNode->data->[3]->type eq 'link');
+ok(scalar @{$inlineNode->data->[3]->data} == 1);
+ok($inlineNode->data->[3]->data->[0] eq 'http://fakeurl.com:2000/test.cgi?name=eugene&age=27');
+ok($inlineNode->data->[4] eq '?');
