@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikihtml.pm
 #
-# $Id: wikihtml.pm,v 1.1.6.2 2003/05/21 06:13:24 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.3 2003/05/21 06:55:43 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -153,7 +153,8 @@ sub registerHandlers {
 
     $PurpleWiki::View::EventHandler::structuralHandler{indent}->{pre} =
         sub { return "<div class=\"indent\">\n"; };
-    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{post} = \&closeTagWithNewline;
+    $PurpleWiki::View::EventHandler::structuralHandler{indent}->{post} = 
+        sub { return "</div>\n"; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{ul}->{pre} = \&openTag;
     $PurpleWiki::View::EventHandler::structuralHandler{ul}->{post} = \&closeTagWithNewline;

@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.7.6.3 2003/05/21 06:13:24 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.4 2003/05/21 06:55:43 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -365,9 +365,9 @@ sub _parseInlineNode {
         $rxProtocols$rxAddress};
     if ($params{wikiword}) {
         $rx .= qq{ |
-        (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#\\d+)?$rxQuoteDelim |
-        [A-Z]\\w+:$rxWikiWord(?:\\\#\\d+)?$rxQuoteDelim |
-        $rxWikiWord(?:\\\#\d+)?$rxQuoteDelim};
+        (?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
+        [A-Z]\\w+:$rxWikiWord(?:\\\#[A-Z0-9]+)?$rxQuoteDelim |
+        $rxWikiWord(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
     }
     if ($params{freelink}) {
         $rx .= qq{ |
