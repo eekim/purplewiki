@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Database.pm,v 1.2.2.1 2003/06/12 00:13:40 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Database.pm,v 1.2.2.1 2003/06/12 00:13:40 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -67,24 +67,15 @@ sub CreateDir {
     mkdir($newdir, 0775)  if (!(-d $newdir));
 }
 
+# Creates a diff using Text::Diff
+# We require it in here rather than at the top in
+# case we never need it in the current running
+# process.
 sub GetDiff {
+    require Text::Diff;
     my ($old, $new, $lock) = @_;
-    my ($diff_out, $oldName, $newName);
 
-    &CreateDir($TempDir);
-    $oldName = "$TempDir/old_diff";
-    $newName = "$TempDir/new_diff";
-    if ($lock) {
-        &RequestDiffLock() or return "";
-        $oldName .= "_locked";
-        $newName .= "_locked";
-    }
-    &WriteStringToFile($oldName, $old);
-    &WriteStringToFile($newName, $new);
-    $diff_out = `diff $oldName $newName`;
-    &ReleaseDiffLock()  if ($lock);
-    $diff_out =~ s/\\ No newline.*\n//g;   # Get rid of common complaint.
-    # No need to unlink temp files--next diff will just overwrite.
+    my $diff_out = Text::Diff::diff($old, $new, {STYLE => "OldStyle"});
     return $diff_out;
 }
 
