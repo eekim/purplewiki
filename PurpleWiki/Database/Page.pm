@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
+# $Id: Page.pm,v 1.2.2.2 2003/06/12 22:32:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
+# $Id: Page.pm,v 1.2.2.2 2003/06/12 22:32:42 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 use PurpleWiki::Database::Text;

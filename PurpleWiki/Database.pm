@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2.2.3 2003/06/12 10:22:17 cdent Exp $
+# $Id: Database.pm,v 1.2.2.4 2003/06/12 22:32:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2.2.3 2003/06/12 10:22:17 cdent Exp $
+# $Id: Database.pm,v 1.2.2.4 2003/06/12 22:32:42 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 
 sub ReadFileOrDie {
   my $fileName = shift;

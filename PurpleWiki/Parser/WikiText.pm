@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.7.6.6 2003/06/12 10:22:17 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.7 2003/06/12 22:32:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -36,7 +36,6 @@ use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;
 use PurpleWiki::Sequence;
-use PurpleWiki::Config;
 
 my $sequence;
 my $url;

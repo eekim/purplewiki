@@ -1,7 +1,7 @@
 # PurpleWiki::Database::User
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: User.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
+# $Id: User.pm,v 1.2.2.2 2003/06/12 22:32:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database::User;
 
 # PurpleWiki User Data Access
 
-# $Id: User.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
+# $Id: User.pm,v 1.2.2.2 2003/06/12 22:32:42 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 use PurpleWiki::Database;
 
 my @DataFields = (

@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.9.6.4 2003/06/12 21:24:35 cdent Exp $
+# $Id: Page.pm,v 1.9.6.5 2003/06/12 22:32:42 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,11 +31,10 @@
 package PurpleWiki::Page;
 
 use PurpleWiki::Database::Page;
-use PurpleWiki::Config;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.9.6.4 2003/06/12 21:24:35 cdent Exp $
+# $Id: Page.pm,v 1.9.6.5 2003/06/12 22:32:42 cdent Exp $
 
 sub exists {
     my $id = shift;

@@ -29,6 +29,7 @@ etc/purple.css
 etc/purplewiki.css
 extras/purple.pl
 purple
+t/config
 t/config.t
 t/inline_node.t
 t/parser01.t
