@@ -49,18 +49,12 @@ if ($split) {
             if ($diff) {
                 print ERR "Seq $seq differs:\n";
                 print ERR $diff;
-                if ($update) {
-                    print ERR "Update output (y/n)?";
-                    flush(ERR);
-                    $ans = <STDIN>;
-                    if ($ans =~ /^y/i) {
-                        system("mv $test_out $compare");
-                    }
-                }
+                unlink $test_out unless ($update);
+            } else {
+                unlink $test_out;
             }
             close IN;
         } else { print ERR "Couldn't open $test_in: $!\n"; }
-        unlink $test_out;
         last if $once;
         $seq++;
         $test_in = "out/request.$seq";
@@ -75,7 +69,7 @@ exit;
 
 sub diffOutput {
     my ($from, $to) = @_;
-    my @diff = split("\n", `diff $from $to`);
+    my @diff = split("\n", `diff $from $to 2>&1`);
 #print ERR "\nDiff $from $to\n";
 #my $diff= join("\n", @diff)."\n";
 #return $diff;
