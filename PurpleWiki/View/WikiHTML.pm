@@ -180,13 +180,14 @@ sub _traverseInline {
             print '</a>';
         }
         elsif ($inlineNode->type eq 'wikiword' || $inlineNode->type eq 'freelink') {
-            if (&PurpleWiki::Page::exists($inlineNode->content)) {
+            if ($inlineNode->content =~ /:/) {
+                print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
+                    '">';
+                print $inlineNode->content . '</a>';
+            }
+            elsif (&PurpleWiki::Page::exists($inlineNode->content)) {
                 if ($inlineNode->type eq 'freelink') {
                     print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
-                        '">';
-                }
-                elsif ($inlineNode->content =~ /:/) {
-                    print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
                         '">';
                 }
                 else {
@@ -199,10 +200,6 @@ sub _traverseInline {
                 print $inlineNode->content;
                 if ($inlineNode->type eq 'freelink') {
                     print '<a href="' . &PurpleWiki::Page::getFreeLink($inlineNode->content) .
-                        '">';
-                }
-                elsif ($inlineNode->content =~ /:/) {
-                    print '<a href="' . &PurpleWiki::Page::getInterWikiLink($inlineNode->content) .
                         '">';
                 }
                 else {
