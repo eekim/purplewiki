@@ -11,7 +11,7 @@
 [% title %]
 [% END %]
 </title>
-<link rel="stylesheet" href="purplewiki.css" />
+<link rel="stylesheet" href="/purplewiki.css" />
 </head>
 
 <body>
