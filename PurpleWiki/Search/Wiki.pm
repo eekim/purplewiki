@@ -1,7 +1,7 @@
 # PurpleWiki::Search::Wiki.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Wiki.pm,v 1.1 2003/12/31 08:02:51 cdent Exp $
+# $Id: Wiki.pm,v 1.2 2004/01/06 19:17:34 cdent Exp $
 #
 
 package PurpleWiki::Search::Wiki;
@@ -35,6 +35,7 @@ sub search {
             my $page = new PurpleWiki::Database::Page(id => $name,
                 now => time,
                 config => $self->{config});
+            $page->openPage();
             my $text = $page->getText();
             if ($text->getText() =~ /$query/i) {
                 push(@found, $name);
