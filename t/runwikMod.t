@@ -11,7 +11,7 @@ END {
 $ENV{PW_CONFIG_DIR} = 't';
 my $keep_errors = 0;
 my $testdir = 't/out';
-system('cp t/config.runDef t/config');
+system('cp t/config.runMod t/config');
 
 {
     require "wiki.pl";
@@ -151,3 +151,4 @@ my ($q, $out) = @_;
         print ERR $err;
     }
 }
+

@@ -10,7 +10,7 @@ use PurpleWiki::Config;
 my $configdir = 't';
 my $datadir = 't/tDB';
 
-system('cp t/config.tDef t/config') unless(-f 't/config');
+system('cp t/config.tDef t/config');
 (-d $datadir) || system("mkdir $datadir");
 
 my $config = new PurpleWiki::Config($configdir);

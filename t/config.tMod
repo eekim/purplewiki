@@ -14,7 +14,7 @@ HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
-DatabasePackage = PurpleWiki::Archive::PlainText
+DatabasePackage = PurpleWiki::Archive::UseMod
 DataDir     = t/tDB
 LocalSequenceDir = $DataDir
 

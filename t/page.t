@@ -123,4 +123,5 @@ ok($output, $second_expected_content);
 
 sub END {
     unlink('t/tDB/sequence');
+    system('rm -fr t/tDB');
 }
