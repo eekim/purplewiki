@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title>[% siteName %]: [% pageName %]</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+<h1><a href="[% backlinksUrl %]">[% pageName %]</a></h1>
+
+<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+<a href="[% preferencesUrl %]">Preferences</a></div>
+
+<hr />
+
+[% IF showRevision %]
+  [% IF revision %]
+  <p><b>Showing revision [% revision %]</b></p>
+  [% ELSE %]
+  <p><b>Revision [% showRevision %] not available (showing current
+  revision instead)</b></p>
+  [% END %]
+[% END %]
+
+[% body %]
+
+<hr />
+
+<div>
+[% IF revision %]
+<a href="[% pageUrl %]">View current revision</a>
+[% ELSE %]
+<a href="[% editUrl %]">Edit text of this page</a> |
+<a href="[% revisionsUrl %]">View other revisions</a>
+[% END %]
+</div>
+
+<div>
+[% IF revision %]
+Edited
+[% ELSE %]
+Last edited
+[% END %]
+[% lastEdited %]
+<a href="[% diffUrl %]">(diff)</a></div>
+
+<div>
+<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+Search:
+<input type="text" name="search"  size="20" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+
+</body>
+</html>

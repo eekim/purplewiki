@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<title>[% siteName %]: Editing [% pageName %]</title>
+[% IF siteBase %]
+  <base href="[% siteBase %]" />
+[% END %]
+[% IF cssFile %]
+<link rel="stylesheet" href="[% cssFile %]" />
+[% END %]
+</head>
+<body>
+[% IF revision %]
+<h1>Editing revision [% revision %] of [% pageName %]</h1>
+[% ELSE %]
+<h1>Editing [% pageName %]</h1>
+[% END %]
+
+<div><a href="[% baseUrl %]?[% homePage %]">[% homePage %]</a> |
+<a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
+<a href="[% baseUrl %]?action=index">Page Index</a> |
+<a href="[% preferencesUrl %]">Preferences</a></div>
+
+<hr />
+
+[% IF revision %]
+<p><b>Editing old revision [% revision %]. Saving this page will
+replace the latest revision with this text.</b></p>
+[% END %]
+
+<form method="post" action="[% baseUrl %]" enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="title" value="[% pageName %]" />
+<input type="hidden" name="oldtime" value="[% pageTime %]" />
+<input type="hidden" name="oldconflict" value="0" />
+[% IF revision %]
+  <input type="hidden" name="revision" value="[% revision %]" />
+[% END %]
+
+<textarea name="text" rows="20" cols="65" wrap="virtual" style="width:100%">
+[% oldText %]
+</textarea>
+
+<p>Summary:<input type="text" name="summary" value="*" size="60" maxlength="200" /><br />
+<input type="checkbox" name="recent_edit" value="on" />This change is a minor edit.<br />
+<input type="submit" name="Save" value="Save" />
+[% IF userName %]
+  (Your user name is <a href="[% baseUrl %]?[% userName %]">[% userName %]</a>.)
+[% ELSE %]
+  (Visit <a href="[% preferencesUrl %]">Preferences</a> to set your user name.)
+[% END %]
+<input type="submit" name="Preview" value="Preview" /></p>
+
+<div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
+
+<hr />
+
+<div><a href="[% revisionsUrl %]">View other revisions</a></div>
+</body>
+</html>

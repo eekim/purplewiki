@@ -283,5 +283,90 @@ sub _WriteDiff {
     close(OUT);
 }
 
+# Populates a hash reference with recent changes.
+# Data structure:
+#   $recentChanges = [
+#     { timeStamp => ,  # time stamp
+#       name => ,       # page name
+#       numChanges => , # number of times changed
+#       summary => ,    # change summary
+#       userName => ,   # username
+#       userId => ,     # user ID
+#       host => ,       # hostname
+#     },
+#     ...
+#   ]
+sub recentChanges {
+    my ($config, $timeStamp) = @_;
+    my @recentChanges;
+    my %pages;
+
+    # Default to showing all changes.
+    $timeStamp = 0 if not defined $timeStamp;
+
+    # Convert timeStamp to seconds since the epoch if it's not already in
+    # that form.
+    if (not $timeStamp =~ /^\d+$/) {
+        use Date::Manip;
+        $timeStamp = abs(UnixDate($timeStamp, "%o")) || 0;
+    }
+
+    ### FIXME: die is bad
+
+    ### FIXME: There's also an OldRcFile.  Should we read this also?
+    ### What is it for, anyway?
+    open(IN, $config->RcFile)
+        || die $config->RCName." log error: $!\n";
+    # parse logfile into pages hash
+    while (my $logEntry = <IN>) {
+        chomp $logEntry;
+        my $fsexp = $config->FS3;
+        my @entries = split /$fsexp/, $logEntry;
+        if (scalar @entries == 7 && $entries[0] >= $timeStamp) {  # Check timestamp
+            my $name = $entries[1];
+            if ( $pages{$name} &&
+                ($pages{$name}->{timeStamp} > $entries[0]) ) {
+                $pages{$name}->{numChanges}++;
+            }
+            else {
+                if ($pages{$name}) {
+                    $pages{$name}->{numChanges}++;
+                }
+                else {
+                    $pages{$name}->{numChanges} = 1;
+                }
+                $pages{$name}->{timeStamp} = $entries[0];
+                if ($entries[2] ne '' && $entries[2] ne '*') {
+                    $pages{$name}->{summary} = $entries[2];
+                }
+                $pages{$name}->{minorEdit} = $entries[3];
+                $pages{$name}->{host} = $entries[4];
+
+                # $entries[5] is garbage and so we ignore it...
+
+                # Get extra info
+                my $fsexp = $config->FS2;
+                my %userInfo = split /$fsexp/, $entries[6];
+                $pages{$name}->{userId} = $userInfo{id}
+                    if ($userInfo{id});
+                $pages{$name}->{userName} = $userInfo{name}
+                    if ($userInfo{name});
+            }
+        }
+    }
+    close(IN);
+
+    # now parse pages hash into final data structure and return
+    foreach my $name (sort { $pages{$b}->{timeStamp} <=> $pages{$a}->{timeStamp} } keys %pages) {
+        push @recentChanges, { timeStamp => $pages{$name}->{timeStamp},
+                               name => $name,
+                               numChanges => $pages{$name}->{numChanges},
+                               summary => $pages{$name}->{summary},
+                               userName => $pages{$name}->{userName},
+                               userId => $pages{$name}->{userId},
+                               host => $pages{$name}->{host} };
+    }
+    return \@recentChanges;
+}
 
 1;

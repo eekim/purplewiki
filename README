@@ -1,4 +1,4 @@
-PurpleWiki version 0.9.2
+PurpleWiki version 0.9.3
 ========================
 
 PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
@@ -65,7 +65,7 @@ To install the Wiki:
 
   3. Copy wiki.pl to your cgi-bin directory.
 
-  4. Copy etc/config and etc/intermap into wikidb/.
+  4. Copy wikidb/* into the new wikidb directory you created.
 
   5. Edit the config file:
 

@@ -31,6 +31,8 @@ PurpleWiki/Sequence.pm
 PurpleWiki/StructuralNode.pm
 PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
+PurpleWiki/Template/Base.pm
+PurpleWiki/Template/TT.pm
 PurpleWiki/View/Driver.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/Filter.pm
@@ -42,8 +44,6 @@ PurpleWiki/View/wikitext.pm
 PurpleWiki/View/xhtml.pm
 README
 UPGRADE
-etc/config
-etc/intermap
 etc/purple.css
 etc/purplewiki.css
 extras/blosxom/purple
@@ -121,4 +121,15 @@ t/txt/tree_test09.txt
 t/txt/tree_test10.txt
 t/txt/tree_test11.txt
 t/txt/tree_test12.txt
+wikidb/config
+wikidb/intermap
+wikidb/templates/error.tt
+wikidb/templates/editConflict.tt
+wikidb/templates/editPage.tt
+wikidb/templates/pageIndex.tt
+wikidb/templates/preferencesEdit.tt
+wikidb/templates/previewPage.tt
+wikidb/templates/viewDiff.tt
+wikidb/templates/viewPage.tt
+wikidb/templates/viewRecentChanges.tt
 wiki.pl
