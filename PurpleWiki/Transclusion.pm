@@ -34,6 +34,7 @@ use strict;
 use DB_File;
 use LWP::UserAgent;
 use PurpleWiki::Sequence;
+use PurpleWiki::Parser::WikiText;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -93,6 +94,23 @@ sub get {
         if ((($url =~ /$scriptName/) || ($url =~ /\.wiki$/)) &&
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
+        } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
+            my ($pageName) = ($url =~ /\?(\w+)\b/);
+            my $page = new PurpleWiki::Database::Page(id => $pageName,
+                config => $self->{config});
+            my $parser = new PurpleWiki::Parser::WikiText;
+            if ($page->pageExists()) {
+                $page->openPage();
+                my $tree = $parser->parse($page->getText()->getText(),
+                             'add_node_ids' => 0,
+                             'config' => $self->{config});
+                my $view = $tree->view('subtree', 'config' => $self->{config},
+                    'nid' => uc($nid));
+                my $subtree = $view->getSubTree();
+                # FIXME: bad mojo returning in the middle
+                return $subtree if (defined($subtree));
+            }
+            $content = "transclusion index out of sync";
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));

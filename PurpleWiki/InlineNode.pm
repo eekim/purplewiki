@@ -45,6 +45,7 @@ sub new {
     # TODO: Type checking.
     $self->{type} = $options{type} ? $options{type} : undef;
     $self->{href} = $options{href} ? $options{href} : undef;
+    $self->{class} = $options{class} ? $options{class} : undef;
     $self->{content} = $options{content} ? $options{content} : undef;
     $self->{children} = $options{children} ? $options{children} : undef;
     bless $self, $this;
@@ -65,6 +66,13 @@ sub href {
 
     $this->{href} = shift if @_;
     return $this->{href};
+}
+
+sub class {
+    my $this = shift;
+
+    $this->{class} = shift if @_;
+    return $this->{class};
 }
 
 sub content {

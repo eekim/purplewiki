@@ -54,8 +54,8 @@ sub new {
     $self->{sectionState} = [];
     $self->{url} = $self->{url} || "";
     $self->{transcluder} = new PurpleWiki::Transclusion(
-                                                  config => $self->{config},
-                                                  url => $self->{url});
+        config => $self->{config},
+        url => $self->{url});
 
     bless($self, $class);
     return $self;
@@ -146,7 +146,22 @@ sub imageMain { shift->{outputString} .= '<img src="' . shift->href . '" />' }
 
 sub transclusionMain { 
     my ($self, $nodeRef) = @_;
-    $self->{outputString} .= $self->{transcluder}->get($nodeRef->content);
+    my $transcluded = $self->{transcluder}->get($nodeRef->content);
+    if (ref($transcluded)) {
+        my $node = new PurpleWiki::InlineNode(
+            type => 'link',
+            class => 'nid',
+            href => $self->{transcluder}->getURL($nodeRef->content) .
+                '#nid' . $nodeRef->content,
+            content => 'T');
+        my $textNode = new PurpleWiki::InlineNode(
+            type => 'text',
+            content => '&nbsp;');
+        $transcluded->content([@{$transcluded->content}, $textNode, $node]);
+        $self->traverse($transcluded->content);
+    } else {
+        $self->{outputString} .= $transcluded;
+    }
 }
 
 sub linkPre { shift->_openLinkTag(@_) }
@@ -175,7 +190,8 @@ sub _closeTagWithNID {
 
 sub _openLinkTag { 
     my ($self, $nodeRef) = @_;
-    $self->{outputString} .= '<a class="extlink" href="';
+    my $class = $nodeRef->class || 'extlink';
+    $self->{outputString} .= '<a class="' . $class . '" href="';
     $self->{outputString} .= $_[1]->href . '">';
 }
 
@@ -197,11 +213,11 @@ sub _wikiLink {
     } elsif (&PurpleWiki::Page::exists($pageName, $self->{config})) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
-                &PurpleWiki::Page::getFreeLink($nodeRef->content, 
-                                               $self->{config}) .  '">';
+            &PurpleWiki::Page::getFreeLink($nodeRef->content, 
+                $self->{config}) .  '">';
         } else {
             $linkString .= '<a href="' . 
-                &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config});
+            &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config});
             $linkString .= "#nid$pageNid" if $pageNid;
             $linkString .= '">';
         }
@@ -211,12 +227,12 @@ sub _wikiLink {
             $linkString .= '[' . $nodeRef->content . ']';
             $linkString .= '<a href="' .
                 &PurpleWiki::Page::getFreeLink($nodeRef->content, 
-                                               $self->{config}) .  '">';
+                    $self->{config}) .  '">';
         } else {
             $linkString .= $nodeRef->content;
-            $linkString .= '<a href="' . 
+            $linkString .= '<a href="' .
                 &PurpleWiki::Page::getWikiWordLink($pageName, $self->{config}) .
-                '">';
+                    '">';
         }
         $linkString .= '?</a>';
     }
@@ -272,9 +288,9 @@ sub _nid {
 
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
-	                   'title="' . "$nid" . '" href="' .
-			   $self->{url} . '#nid' .
-			   $nid . '">' . $nidFace . '</a>';
+            'title="' . "$nid" . '" href="' .
+            $self->{url} . '#nid' .
+            $nid . '">' . $nidFace . '</a>';
     }
 
     return $string;
