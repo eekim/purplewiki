@@ -107,8 +107,13 @@ sub _traverseInline {
                 &_traverseInline($node->data, $indentLevel);
                 print '</tt>';
             }
+            elsif ($node->type eq 'link') {
+                print '<a href="' . $node->href . '">';
+                print &_quoteHtml($node->data->[0]);
+                print '</a>';
+            }
             elsif ($node->type eq 'nowiki') {
-                print &_quoteHtml(${$node->data}[0]);
+                print &_quoteHtml($node->data->[0]);
             }
         }
         else {
