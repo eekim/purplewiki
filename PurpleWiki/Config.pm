@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.2.2.3 2003/06/13 19:54:17 cdent Exp $
+# $Id: Config.pm,v 1.2.2.4 2003/06/13 20:19:34 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.2.2.3 2003/06/13 19:54:17 cdent Exp $
+# $Id: Config.pm,v 1.2.2.4 2003/06/13 20:19:34 cdent Exp $
 
 use strict;
 use AppConfig;
@@ -75,21 +75,7 @@ sub new {
 
     $self->_init($directory);
 
-    #$self->print(); # for debugging
-
     return $self;
-}
-
-sub print {
-    my $self = shift;
-    require Data::Dumper;
-
-    my %varlist = $self->{AppConfig}->varlist('.*');
-    no strict 'refs';
-    foreach my $varname (keys %varlist) {
-        #print "$varname: " . $self->${$varname};
-        print "$varname: " , Dumper $self->{AppConfig}->get($varname), "\n";
-    }
 }
 
 sub _init {

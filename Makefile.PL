@@ -10,7 +10,7 @@ WriteMakefile(
 	LWP::UserAgent => 0,
 	IO::File => 0,
 	DB_File => 0,
-	AppConfig => 0,
+	AppConfig => 1.55,
 	CGI => 0,
 	CGI::Carp => 0,
 	}, # e.g., Module::Name => 1.1
