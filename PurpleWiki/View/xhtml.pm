@@ -68,9 +68,9 @@ sub _htmlHeader {
        qq(<head>\n);
     $outputString .= '<title>' . $wikiTree->title . "</title>\n"
         if ($wikiTree->title);
-    if ($self->{params}->{css_file}) {
+    if ($self->{css_file}) {
         $outputString .= '<link rel="stylesheet" href="';
-        $outputString .= $self->{params}->{css_file};
+        $outputString .= $self->{css_file};
         $outputString .= '" type="text/css" />' . "\n";
     }
     $outputString .= "</head>\n<body>\n";
