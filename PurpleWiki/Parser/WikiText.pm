@@ -653,11 +653,11 @@ sub _parseInlineNode {
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
                 'children'=>&_parseInlineNode($node, %params));
         }
-        elsif ($node =~ /^\[($rxProtocols$rxAddress)(\s+(.*))?\]$/so) {
+        elsif ($node =~ /^\[($rxProtocols$rxAddress)\s*(.*?)\]$/s) {
             # bracketed link
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
                                                            'href'=>$1,
-                                                           'content'=>$3||'');
+                                                           'content'=>$2);
         }
         elsif ($node =~ /^$rxProtocols$rxAddress$/s) {
             # URL

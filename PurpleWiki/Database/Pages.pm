@@ -48,6 +48,7 @@ my $DATA_VERSION = 3;            # the data format version
 sub new {
   my $proto = shift;
   my $config = shift;
+  my %args = @_;
   die "No config\n" unless $config;
   my $class = ref($proto) || $proto;
   my $self = {};
@@ -57,7 +58,16 @@ sub new {
   $self->{fs2} = $config->FS2;
   $self->{fs3} = $config->FS3;
   $self->{fs} = $config->FS;
-  $self->{pagedir} = $config->PageDir;
+  my $loc = $config->DataDir;
+  if ($args{create} && !-d $loc) {
+      mkdir $loc;
+  }
+  if (!-d $loc) {
+      use Carp;
+      Carp::confess "No datadir $loc\n";
+  }
+
+  my $loc = $self->{pagedir} = $config->PageDir;
   $self->{rcfile} = $config->RcFile;
   $self->{keepdays} = $config->KeepDays;
   bless $self, $class;
@@ -225,9 +235,6 @@ sub _getPageFile {
     my $self = shift;
     my $id = shift;
     my $base = $self->{pagedir} . '/' . _getPageDirectory($id);
-    my $file = "$base/$id.db";
-    return $file if ($id !~ /\// ||-f $file);  # if it exists as a subpage
-    $id =~ s|/|+|g;   # handle 'subpages' by translating '/' to '+'
     return "$base/$id.db";
 }
 
@@ -277,9 +284,13 @@ sub _createPageDir {
     my $id = shift;
     my $dir = $self->{pagedir};
 
-    PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
+    PurpleWiki::Database::CreateDir($dir);
     $dir .= ('/' . _getPageDirectory($id));
     PurpleWiki::Database::CreateDir($dir);
+    if ($id =~ m|/|) {  # Make sure main page exists
+        $dir .= "/$`";
+        PurpleWiki::Database::CreateDir($dir);
+    }
 }
 
 sub _openPage {

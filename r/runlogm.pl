@@ -146,7 +146,7 @@ sub stripDate {
 my $line = shift;
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d?\d:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\b/DateTimeStamp/;
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\b/DateStamp/;
-    $line =~ s/\w\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
+    $line =~ s/\b\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
     substr($line,2);
 }
 

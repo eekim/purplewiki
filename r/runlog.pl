@@ -148,7 +148,7 @@ my $x = $line;
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d\d?:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\b/DateTimeStamp/;
 #October 6, 2004 8:01 pm
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\b/DateStamp/;
-    $line =~ s/\w\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
+    $line =~ s/\b\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
 #print ERR "Ch:$x >> $line:\n" if $x ne $line;
     substr($line,2);
 }

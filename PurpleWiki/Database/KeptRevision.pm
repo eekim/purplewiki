@@ -136,12 +136,9 @@ sub keptFileExists {
 # Determins the filename of the keep page with this id.
 sub getKeepFile {
     my $self = shift;
-    my $base = $self->{config}->KeepDir . '/' . $self->getKeepDirectory();
-    my $id = $self->getID();
-    my $file = "$base/$id.kp";
-    return $file if ($id !~ /\// || -f $file);
-    $id =~ s|/|+|g;
-    return "$base/$id.kp";
+
+    return $self->{config}->KeepDir . '/' . $self->getKeepDirectory() . '/' .
+        $self->getID() . '.kp';
 }
 
 # Starts the process of creating the list of Sections
@@ -204,6 +201,11 @@ sub _createKeepDir {
     PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
     $subdir = $dir . '/' . $self->getKeepDirectory();
     PurpleWiki::Database::CreateDir($subdir);
+
+    if ($id =~ m|([^/]+)/|) {
+        $subdir = $subdir . '/' . $1;
+        PurpleWiki::Database::CreateDir($subdir);
+    }
 }
 
 # Determines the directory where this KeptRevisions is

@@ -100,7 +100,7 @@ sub get {
         if ((($path =~ /$scriptName/) || ($path =~ /\.wiki$/)) &&
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
-        } elsif (($host eq 'localhost' || $host eq $ENV{HTTP_HOST})
+        } elsif ((!$host || $host eq 'localhost' || $host eq $ENV{HTTP_HOST})
                  && $path =~ /$scriptName/) {
             my ($id) = ($url =~ /\?([^&]+)\b/);
             #$content=($self->{pages}->getPageNode($id, uc($nid)))
@@ -114,7 +114,7 @@ sub get {
             my $ua = new LWP::UserAgent(agent => ref($self));
             my $request = new HTTP::Request('GET', $url);
 
-die "External transclusion $url\nSc:$scriptName\n";
+die "External transclusion $url\nSc:$scriptName ($path, $host)\n";
             # If we have the right config vars for authenticating
             # trying authenticating the request. 
             if ($self->{config}->HttpUser() && $self->{config}->HttpPass()) {

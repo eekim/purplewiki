@@ -67,6 +67,7 @@ sub getPage {
   my $self = shift;
   my $id = shift;
   my $rev = shift;
+  $id =~ s|/|\+|g;
 
   PurpleWiki::DefaultPage->new(id => $id, revision => $rev,
                                datadir => $self->{datadir});
@@ -158,7 +159,9 @@ sub allPages {
   _find_txt($self->{datadir}, $a_ref);
   for (@$a_ref) {
     if (m|/([^/]+)/[^/]+\.txt$|) {
-      $ids{$1} = 1 unless (defined($ids{$1}));
+      my $id = $1;
+      $id =~ s|\+|/|g;
+      $ids{$id}++;
     }
   }
   (sort keys %ids);

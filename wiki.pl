@@ -41,7 +41,7 @@ use PurpleWiki::Config;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'default/database/location';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
