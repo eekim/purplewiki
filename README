@@ -1,46 +1,94 @@
-PurpleWiki version 0.1
+PurpleWiki version 0.9
 ======================
 
 PurpleWiki is a WikiWikiWeb that adds purple numbers to paragraphs,
 headers, lists, and other fine-grained elements on a Wiki page.  These
-numbers can be used to create links to these specific elements.  More
-information about purple numbers are at:
+numbers can be used to create links to these specific elements.
+Features include:
 
-  http://www.eekim.com/software/purple/
+  * Fine-grained addressability via purple numbers.
 
-Currently, PurpleWiki consists of a rewritten parser that you drop
-into UseModWiki (http://www.usemod.com/cgi-bin/wiki.pl).  In addition
-to supporting purple numbers, the parser supports multiple output
-formats using drop-in modules.  With the proper output modules,
-PurpleWiki can be used as a document authoring system.
+  * Transclusions.
+
+  * Blog integration (MovableType and blosxom)
+
+  * Modular architecture for maximum customizability.
+
+DOWNLOAD AND DOCUMENTATION
 
 PurpleWiki is available at:
 
   http://www.blueoxen.org/tools/purplewiki/
 
-To play, try:
+More information and documentation is available at:
 
-  % ./wiki_trans.pl t/test01.txt
-  % ./wiki_trans.pl t/test02.txt
-
-  ...
+  http://purplewiki.blueoxen.net/
 
 INSTALLATION
 
-To install the modules, type the following:
+To install PurpleWiki, you must first install the modules, then
+install and configures the scripts you will use.
+
+PurpleWiki has several requirements:
+
+  * A web server that can run CGI programs.
+
+  * Perl version 5.6.0 or greater.
+
+  * The following CPAN modules:
+
+    + AppConfig
+
+    + Algorithm::Diff
+
+    + LWP::UserAgent
+
+    + Text::Diff
+
+To install the modules, first unpack the distribution.  This will
+create a PurpleWiki-0.9 directory.  Change directories, and execute
+the following commands:
 
   perl Makefile.PL
   make
   make test
   make install
 
-To install the Wiki, copy wiki.pl to your cgi-bin directory.  Create a
-wikidb directory, and copy config and intermap there.  Copy
-purplewiki.css somewhere in your htdocs directory.
+To install the Wiki:
 
-Edit $DataDir in wiki.pl to point to your wikidb directory.
+  1. Create a wikidb directory.  This directory must be writeable by
+     the web server when running CGI scripts.  It should not be in the
+     publically accessible htdocs directory.
 
-Finally, edit the config file.
+  2. Edit wiki.pl, changing $CONFIG_DIR to the directory you just
+     created.
+
+  3. Copy wiki.pl to your cgi-bin directory.
+
+  4. Copy etc/config and etc/intermap into wikidb/.
+
+  5. Edit the config file:
+
+    + Change ScriptName to the URL path of the Wiki CGI
+      (e.g. /cgi-bin/wiki.pl).
+
+    + Change CookieName to a unique single word name.  Cookies are
+      used for keeping track of users.
+
+    + Change SiteName to the name of the Wiki.
+
+    + Change LogoURL to point to an image that will be displayed on
+      each page.  If you don't want to use a logo, comment out this
+      item by placing a # at the start of the line.
+
+    + Change StyleSheet to point to the CSS stylesheet for us with
+      this Wiki.  You can use etc/purplewiki.css as a starting point.
+
+The Wiki should now be installed.  To test, point your web browser to
+the PurpleWiki URL.  You should see a page called FrontPage that says,
+"Describe the new page here."  Clicking "Edit text of this page" will
+allow you to edit this page.  Add some text, and click save.  If
+everything works, your installation is a success!
 
 COPYRIGHT AND LICENCE
 
@@ -85,4 +133,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.5 2003/01/09 06:26:17 eekim Exp $
+$Id: README,v 1.6 2003/08/14 07:27:53 eekim Exp $
