@@ -257,9 +257,9 @@ sub allPages {
   return () if ($root->check_path($rpath) != $SVN::Node::dir);
   my $h = ($root->dir_entries($rpath));
 #print STDERR "allPages:\n ",join("\n ", (keys %$h)),"\n::\n";
-  my @l = (sort keys %$h);
+  my @l = (keys %$h);
   grep(s|\+|/|g, @l);
-  @l;
+  (sort @l);
 }
 
 # pages->recentChanges($starttime)

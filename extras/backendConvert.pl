@@ -53,9 +53,9 @@ while (@ARGV) {
   $a = shift(@ARGV);
   if ($a =~ /^-v/) {
     $verb = 1;
-  } elsif ($a =~ /^-c/) {
+  } elsif ($a =~ /^-o/) {
     $fromDataDir = $' || shift(@ARGV);
-  } elsif ($a =~ /^-C/) {
+  } elsif ($a =~ /^-O/) {
     $fromBackend = $' || shift(@ARGV);
     if ($fromBackend !~ /:/) {
         $fromBackend = "PurpleWiki::Archive::$fromBackend";
@@ -65,7 +65,7 @@ while (@ARGV) {
   } elsif ($a =~ /^-N/) {
     $toBackend = $' || shift(@ARGV);
     if ($toBackend !~ /[:\.]/) {
-        $toBackend = "PurpleWiki::Archive::$toBackend.pm";
+        $toBackend = "PurpleWiki::Archive::$toBackend";
     }
   } elsif ($a =~ /^-u/) {
     $umask = $' || shift(@ARGV);

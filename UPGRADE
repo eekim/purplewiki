@@ -2,6 +2,10 @@ If you are upgrading from version 0.1 please see the 'UPGRADING FROM
 V0.1' information, further below. 0.1 users will need to perform all
 of the tasks listed in this document. 
 
+For all versions, the environment variable WIKIDB has been changed to
+PW_CONFIG_DIR.  Change your scripts and such and make any extensions
+compatible as well.
+
 UPGRADING FROM V0.94
 ====================
 
@@ -29,11 +33,13 @@ or:
   ReposPath   = /wiki
 
 Database conversion:
-backendConvert.pl [-c <current config dir>] [-n <new config dir>]
+backendConvert.pl -o <current data dir> [-O <original package>]
+                  -n <new data dir> [-N <new backend package>]
 
-Reads the database specified in the current config and writes as specified
-in the new directory.  Current defaults to 'r' or $ENV{PW_CONFIG_DIR} and
-the new one defaults to 'new'.
+Reads the database directory which is formatted for the -O option for the
+backend (default is UseMod) and writes to the new directory using -N option
+for the backend (default to PlainText).  No defaults for the directories.
+
 
 UPGRADING FROM V0.9.2
 =====================
