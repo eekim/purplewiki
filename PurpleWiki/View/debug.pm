@@ -29,7 +29,10 @@ sub new {
 sub view {
     my ($self, $wikiTree) = @_;
     $self->SUPER::view($wikiTree);
-    $self->{outputString} = 'title:' . $wikiTree->title . "\n" . 
+
+    my $title = $wikiTree->title || '';
+
+    $self->{outputString} = 'title:' . $title . "\n" . 
                              $self->{outputString};
     return $self->{outputString};
 }
