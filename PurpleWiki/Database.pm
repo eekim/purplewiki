@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.1 2003/01/24 12:18:22 cdent Exp $
+# $Id: Database.pm,v 1.1.2.2 2003/01/27 03:23:45 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,17 +32,12 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.1 2003/01/24 12:18:22 cdent Exp $
+# $Id: Database.pm,v 1.1.2.2 2003/01/27 03:23:45 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
 
 # these should be made available as parameters
-#my %KeptRevisions;
-#my %Section;
-#my %Text;
-#my $UserID;
-#my $Now; # definitely needs to be passed in as a parameter
 my $OpenPageName;
 
 sub OpenNewPage {
@@ -636,7 +631,7 @@ sub UpdateDiffs {
     if (!$isEdit) {
         &SetPageCache($pagehash, 'diff_default_major', "1");
     } else {
-        &SetPageCache($pagehash, 'diff_default_major', &GetKeptDiff($new, $oldMajor, 0));
+        &SetPageCache($pagehash, 'diff_default_major', &GetKeptDiff($new, $oldMajor, 0, $keptrevisionshash));
     }
     if ($newAuthor) {
         &SetPageCache($pagehash, 'diff_default_author', "1");
@@ -645,17 +640,201 @@ sub UpdateDiffs {
     } elsif ($oldMajor == $oldAuthor) {
         &SetPageCache($pagehash, 'diff_default_author', "2");
     } else {
-        &SetPageCache($pagehash, 'diff_default_author', &GetKeptDiff($new, $oldAuthor, 0));
+        &SetPageCache($pagehash, 'diff_default_author', &GetKeptDiff($new, $oldAuthor, 0, $keptrevisionshash));
     }
 }
 
 sub WriteDiff {
     my ($id, $editTime, $diffString) = @_;
 
-    open (OUT, ">>$DataDir/diff_log") or die(T('can not write diff_log'));
+    open (OUT, ">>$DataDir/diff_log") or die('can not write diff_log');
     print OUT  "------\n" . $id . "|" . $editTime . "\n";
     print OUT  $diffString;
     close(OUT);
+}
+
+# ==== Difference markup and HTML ====
+sub GetDiffHTML {
+  my $diffType = shift;
+  my $id = shift;
+  my $rev = shift;
+  my $newText = shift;
+  my $keptRevisionsHashRef = shift;
+  my ($html, $diffText, $diffTextTwo, $priorName, $links, $usecomma);
+  my ($major, $minor, $author, $useMajor, $useMinor, $useAuthor, $cacheName);
+
+  $links = "(";
+  $usecomma = 0;
+  $major  = &ScriptLinkDiff(1, $id, 'major diff', "");
+  $minor  = &ScriptLinkDiff(2, $id, 'minor diff', "");
+  $author = &ScriptLinkDiff(3, $id, 'author diff', "");
+  $useMajor  = 1;
+  $useMinor  = 1;
+  $useAuthor = 1;
+  if ($diffType == 1) {
+    $priorName = 'major';
+    $cacheName = 'major';
+    $useMajor  = 0;
+  } elsif ($diffType == 2) {
+    $priorName = 'minor';
+    $cacheName = 'minor';
+    $useMinor  = 0;
+  } elsif ($diffType == 3) {
+    $priorName = 'author';
+    $cacheName = 'author';
+    $useAuthor = 0;
+  }
+  if ($rev ne "") {
+    # Note: OpenKeptRevisions must have been done by caller.
+    # Later optimize if same as cached revision
+    $diffText = &GetKeptDiff($newText, $rev, 1, $keptRevisionsHashRef);  # 1 = get lock
+    if ($diffText eq "") {
+      $diffText = '(The revisions are identical or unavailable.)';
+    }
+  } else {
+    $diffText  = &GetCacheDiff($cacheName);
+  }
+  $useMajor  = 0  if ($useMajor  && ($diffText eq &GetCacheDiff("major")));
+  $useMinor  = 0  if ($useMinor  && ($diffText eq &GetCacheDiff("minor")));
+  $useAuthor = 0  if ($useAuthor && ($diffText eq &GetCacheDiff("author")));
+  $useMajor  = 0  if ((!defined(&GetPageCache('oldmajor'))) ||
+                      (&GetPageCache("oldmajor") < 1));
+  $useAuthor = 0  if ((!defined(&GetPageCache('oldauthor'))) ||
+                      (&GetPageCache("oldauthor") < 1));
+  if ($useMajor) {
+    $links .= $major;
+    $usecomma = 1;
+  }
+  if ($useMinor) {
+    $links .= ", "  if ($usecomma);
+    $links .= $minor;
+    $usecomma = 1;
+  }
+  if ($useAuthor) {
+    $links .= ", "  if ($usecomma);
+    $links .= $author;
+  }
+  if (!($useMajor || $useMinor || $useAuthor)) {
+    $links .= 'no other diffs';
+  }
+  $links .= ")";
+
+  if ((!defined($diffText)) || ($diffText eq "")) {
+    $diffText = 'No diff available.';
+  }
+  if ($rev ne "") {
+    $html = '<b>'
+            . "Difference (from revision $rev to current revision"
+            . "</b>\n" . "$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
+  } else {
+    if (($diffType != 2) &&
+        ((!defined(&GetPageCache("old$cacheName"))) ||
+         (&GetPageCache("old$cacheName") < 1))) {
+      $html = '<b>'
+              . "No diff available--this is the first $priorName revision."
+              . "</b>\n$links<hr>";
+    } else {
+      $html = '<b>'
+              . "Difference (from prior $priorName revision)"
+              . "</b>\n$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
+    }
+  }
+  return $html;
+}
+
+sub GetCacheDiff {
+  my ($type) = @_;
+  my ($diffText);
+
+  $diffText = &GetPageCache("diff_default_$type");
+  $diffText = &GetCacheDiff('minor')  if ($diffText eq "1");
+  $diffText = &GetCacheDiff('major')  if ($diffText eq "2");
+  return $diffText;
+}
+
+# Must be done after minor diff is set and OpenKeptRevisions called
+sub GetKeptDiff {
+  my ($newText, $oldRevision, $lock, $keptrevisionshash) = @_;
+  my (%sect, %data, $oldText);
+
+  $oldText = "";
+  if (defined($keptrevisionshash->{$oldRevision})) {
+    %sect = split(/$FS2/, $keptrevisionshash->{$oldRevision}, -1);
+    %data = split(/$FS3/, $sect{'data'}, -1);
+    $oldText = $data{'text'};
+  }
+  return ""  if ($oldText eq "");  # Old revision not found
+  return &GetDiff($oldText, $newText, $lock);
+}
+
+sub DiffToHTML {
+  my ($html) = @_;
+  my ($tChanged, $tRemoved, $tAdded);
+
+  $tChanged = 'Changed:';
+  $tRemoved = 'Removed:';
+  $tAdded   = 'Added:';
+  $html =~ s/\n--+//g;
+  # Note: Need spaces before <br> to be different from diff section.
+  $html =~ s/(^|\n)(\d+.*c.*)/$1 <br><strong>$tChanged $2<\/strong><br>/g;
+  $html =~ s/(^|\n)(\d+.*d.*)/$1 <br><strong>$tRemoved $2<\/strong><br>/g;
+  $html =~ s/(^|\n)(\d+.*a.*)/$1 <br><strong>$tAdded $2<\/strong><br>/g;
+  $html =~ s/\n((<.*\n)+)/&ColorDiff($1,"ffffaf")/ge;
+  $html =~ s/\n((>.*\n)+)/&ColorDiff($1,"cfffcf")/ge;
+  return $html;
+}
+
+# for the time being we use a Wiki Parser in here because
+# we need to do markup on the diff content. This suggests
+# that we need a way to not purple stuff that goes through
+# the parser
+sub ColorDiff {
+  my ($diff, $color) = @_;
+  my $wikiParser = PurpleWiki::Parser::WikiText->new();
+
+  $diff =~ s/(^|\n)[<>]/$1/g;
+  #$diff = &QuoteHtml($diff);
+  # Do some of the Wiki markup rules:
+  #%SaveUrl = ();
+  #%SaveNumUrl = ();
+  #$SaveUrlIndex = 0;
+  #$SaveNumUrlIndex = 0;
+  #$diff =~ s/$FS//g;
+  #$diff =  &CommonMarkup($diff, 0, 1);      # No images, all patterns
+  $diff =  $wikiParser->parse($diff)->view('wikihtml'); # No images, all patterns
+  #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore saved text
+  #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore nested saved text
+  $diff =~ s/\r?\n/<br>/g;
+  return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
+         . "</td></tr></table>\n";
+}
+
+sub QuoteHtml {
+    my ($html) = @_;
+
+    $html =~ s/&/&amp;/g;
+    $html =~ s/</&lt;/g;
+    $html =~ s/>/&gt;/g;
+    if (1) {   # Make an official option?
+        $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
+    }
+    return $html;
+}
+
+# dup from wiki.pl
+sub ScriptLinkDiff {
+    my ($diff, $id, $text, $rev) = @_;
+
+    $rev = "&revision=$rev"  if ($rev ne "");
+    $diff = &GetParam("defaultdiff", 1)  if ($diff == 4);
+    return &ScriptLink("action=browse&diff=$diff&id=$id$rev", $text);
+}
+
+# dup from wiki.pl
+sub ScriptLink {
+    my ($action, $text) = @_;
+
+    return "<a href=\"$UseModWiki::ScriptName?$action\">$text</a>";
 }
 
 

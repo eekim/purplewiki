@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.3 2003/01/24 12:18:22 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.4 2003/01/27 03:23:45 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -257,7 +257,7 @@ sub BrowsePage {
     $diffRevision = &GetParam('diffrevision', $diffRevision);
     # Later try to avoid the following keep-loading if possible?
     &PurpleWiki::Database::OpenKeptRevisions('text_default', \%KeptRevisions)  if (!$openKept);
-    $fullHtml .= &GetDiffHTML($showDiff, $id, $diffRevision, $newText);
+    $fullHtml .= &PurpleWiki::Database::GetDiffHTML($showDiff, $id, $diffRevision, $newText, \%KeptRevisions);
   }
   $fullHtml .= &WikiToHTML($Text{'text'});
   $fullHtml .= "<hr>\n"  if (!&GetParam('embed', $EmbedWiki));
@@ -947,65 +947,6 @@ sub WikiToHTML {
   return $wiki->view('wikihtml');
 }
 
-sub CommonMarkup {
-  my ($text, $useImage, $doLines) = @_;
-  local $_ = $text;
-
-  if ($doLines < 2) { # 2 = do line-oriented only
-    # The <nowiki> tag stores text with no markup (except quoting HTML)
-    s/\&lt;nowiki\&gt;((.|\n)*?)\&lt;\/nowiki\&gt;/&StoreRaw($1)/ige;
-    # The <pre> tag wraps the stored text with the HTML <pre> tag
-    s/\&lt;pre\&gt;((.|\n)*?)\&lt;\/pre\&gt;/&StorePre($1, "pre")/ige;
-    s/\&lt;code\&gt;((.|\n)*?)\&lt;\/code\&gt;/&StorePre($1, "code")/ige;
-
-    # Note that these tags are restricted to a single line
-    s/\&lt;b\&gt;(.*?)\&lt;\/b\&gt;/<b>$1<\/b>/gi;
-    s/\&lt;i\&gt;(.*?)\&lt;\/i\&gt;/<i>$1<\/i>/gi;
-    s/\&lt;strong\&gt;(.*?)\&lt;\/strong\&gt;/<strong>$1<\/strong>/gi;
-    s/\&lt;em\&gt;(.*?)\&lt;\/em\&gt;/<em>$1<\/em>/gi;
-
-    s/\&lt;tt\&gt;(.*?)\&lt;\/tt\&gt;/<tt>$1<\/tt>/gis;  # <tt> (MeatBall)
-    if ($FreeLinks) {
-      # Consider: should local free-link descriptions be conditional?
-      # Also, consider that one could write [[Bad Page|Good Page]]?
-      s/\[\[$FreeLinkPattern\|([^\]]+)\]\]/&StorePageOrEditLink($1, $2)/geo;
-      s/\[\[$FreeLinkPattern\]\]/&StorePageOrEditLink($1, "")/geo;
-    }
-    if ($BracketText) {  # Links like [URL text of link]
-      s/\[$UrlPattern\s+([^\]]+?)\]/&StoreBracketUrl($1, $2)/geos;
-      s/\[$InterLinkPattern\s+([^\]]+?)\]/&StoreBracketInterPage($1, $2)/geos;
-      if ($WikiLinks && $BracketWiki) {  # Local bracket-links
-        s/\[$LinkPattern\s+([^\]]+?)\]/&StoreBracketLink($1, $2)/geos;
-      }
-    }
-    s/\[$UrlPattern\]/&StoreBracketUrl($1, "")/geo;
-    s/\[$InterLinkPattern\]/&StoreBracketInterPage($1, "")/geo;
-    s/$UrlPattern/&StoreUrl($1, $useImage)/geo;
-    s/$InterLinkPattern/&StoreInterPage($1)/geo;
-    if ($WikiLinks) {
-      s/$LinkPattern/&GetPageOrEditLink($1, "")/geo;
-    }
-    s/$RFCPattern/&StoreRFC($1)/geo;
-    s/$ISBNPattern/&StoreISBN($1)/geo;
-    if ($ThinLine) {
-      s/----+/<hr noshade size=1>/g;
-      s/====+/<hr noshade size=2>/g;
-    } else {
-      s/----+/<hr>/g;
-    }
-  }
-  if ($doLines) { # 0 = no line-oriented, 1 or 2 = do line-oriented
-    # The quote markup patterns avoid overlapping tags (with 5 quotes)
-    # by matching the inner quotes for the strong pattern.
-    s/('*)'''(.*?)'''/$1<strong>$2<\/strong>/g;
-    s/''(.*?)''/<em>$1<\/em>/g;
-    if ($UseHeadings) {
-      s/(^|\n)\s*(\=+)\s+([^\n]+)\s+\=+/&WikiHeading($1, $2, $3)/geo;
-    }
-  }
-  return $_;
-}
-
 sub QuoteHtml {
   my ($html) = @_;
 
@@ -1016,16 +957,6 @@ sub QuoteHtml {
     $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
   }
   return $html;
-}
-
-sub StoreInterPage {
-  my ($id) = @_;
-  my ($link, $extra);
-
-  ($link, $extra) = &InterPageLink($id);
-  # Next line ensures no empty links are stored
-  $link = &StoreRaw($link)  if ($link ne "");
-  return $link . $extra;
 }
 
 sub InterPageLink {
@@ -1144,12 +1075,6 @@ sub StoreBracketUrl {
   return &StoreRaw("<a href=\"$url\">[$text]</a>");
 }
 
-sub StoreBracketLink {
-  my ($name, $text) = @_;
-
-  return &StoreRaw(&GetPageLinkText($name, "[$text]"));
-}
-
 sub StorePageOrEditLink {
   my ($page, $name) = @_;
 
@@ -1161,47 +1086,6 @@ sub StorePageOrEditLink {
   $name =~ s/^\s+//;
   $name =~ s/\s+$//;
   return &StoreRaw(&GetPageOrEditLink($page, $name));
-}
-
-sub StoreRFC {
-  my ($num) = @_;
-
-  return &StoreRaw(&RFCLink($num));
-}
-
-sub RFCLink {
-  my ($num) = @_;
-
-  return "<a href=\"http://www.faqs.org/rfcs/rfc${num}.html\">RFC $num</a>";
-}
-
-sub StoreISBN {
-  my ($num) = @_;
-
-  return &StoreRaw(&ISBNLink($num));
-}
-
-sub ISBNLink {
-  my ($rawnum) = @_;
-  my ($rawprint, $html, $num, $first, $second, $third); 
-
-  $num = $rawnum;
-  $rawprint = $rawnum;
-  $rawprint =~ s/ +$//;
-  $num =~ s/[- ]//g;
-  if (length($num) != 10) {
-    return "ISBN $rawnum";
-  }
-  $first  = "<a href=\"http://shop.barnesandnoble.com/bookSearch/"
-            . "isbnInquiry.asp?isbn=$num\">";
-  $second = "<a href=\"http://www.amazon.com/exec/obidos/"
-            . "ISBN=$num\">" . T('alternate') . "</a>";
-  $third  = "<a href=\"http://www.pricescan.com/books/"
-            . "BookDetail.asp?isbn=$num\">" . T('search') . "</a>";
-  $html  = $first . "ISBN " . $rawprint . "</a> ";
-  $html .= "($second, $third)";
-  $html .= " "  if ($rawnum =~ / $/);  # Add space if old ISBN had space.
-  return $html;
 }
 
 sub SplitUrlPunct {
@@ -1225,160 +1109,6 @@ sub StripUrlPunct {
   return $url;
 }
 
-sub WikiHeading {
-  my ($pre, $depth, $text) = @_;
-
-  $depth = length($depth);
-  $depth = 6  if ($depth > 6);
-  return $pre . "<H$depth>$text</H$depth>\n";
-}
-
-# ==== Difference markup and HTML ====
-sub GetDiffHTML {
-  my ($diffType, $id, $rev, $newText) = @_;
-  my ($html, $diffText, $diffTextTwo, $priorName, $links, $usecomma);
-  my ($major, $minor, $author, $useMajor, $useMinor, $useAuthor, $cacheName);
-
-  $links = "(";
-  $usecomma = 0;
-  $major  = &ScriptLinkDiff(1, $id, T('major diff'), "");
-  $minor  = &ScriptLinkDiff(2, $id, T('minor diff'), "");
-  $author = &ScriptLinkDiff(3, $id, T('author diff'), "");
-  $useMajor  = 1;
-  $useMinor  = 1;
-  $useAuthor = 1;
-  if ($diffType == 1) {
-    $priorName = T('major');
-    $cacheName = 'major';
-    $useMajor  = 0;
-  } elsif ($diffType == 2) {
-    $priorName = T('minor');
-    $cacheName = 'minor';
-    $useMinor  = 0;
-  } elsif ($diffType == 3) {
-    $priorName = T('author');
-    $cacheName = 'author';
-    $useAuthor = 0;
-  }
-  if ($rev ne "") {
-    # Note: OpenKeptRevisions must have been done by caller.
-    # Later optimize if same as cached revision
-    $diffText = &GetKeptDiff($newText, $rev, 1);  # 1 = get lock
-    if ($diffText eq "") {
-      $diffText = T('(The revisions are identical or unavailable.)');
-    }
-  } else {
-    $diffText  = &GetCacheDiff($cacheName);
-  }
-  $useMajor  = 0  if ($useMajor  && ($diffText eq &GetCacheDiff("major")));
-  $useMinor  = 0  if ($useMinor  && ($diffText eq &GetCacheDiff("minor")));
-  $useAuthor = 0  if ($useAuthor && ($diffText eq &GetCacheDiff("author")));
-  $useMajor  = 0  if ((!defined(&GetPageCache('oldmajor'))) ||
-                      (&GetPageCache("oldmajor") < 1));
-  $useAuthor = 0  if ((!defined(&GetPageCache('oldauthor'))) ||
-                      (&GetPageCache("oldauthor") < 1));
-  if ($useMajor) {
-    $links .= $major;
-    $usecomma = 1;
-  }
-  if ($useMinor) {
-    $links .= ", "  if ($usecomma);
-    $links .= $minor;
-    $usecomma = 1;
-  }
-  if ($useAuthor) {
-    $links .= ", "  if ($usecomma);
-    $links .= $author;
-  }
-  if (!($useMajor || $useMinor || $useAuthor)) {
-    $links .= T('no other diffs');
-  }
-  $links .= ")";
-
-  if ((!defined($diffText)) || ($diffText eq "")) {
-    $diffText = T('No diff available.');
-  }
-  if ($rev ne "") {
-    $html = '<b>'
-            . Ts('Difference (from revision %s to current revision)', $rev)
-            . "</b>\n" . "$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
-  } else {
-    if (($diffType != 2) &&
-        ((!defined(&GetPageCache("old$cacheName"))) ||
-         (&GetPageCache("old$cacheName") < 1))) {
-      $html = '<b>'
-              . Ts('No diff available--this is the first %s revision.',
-                   $priorName) . "</b>\n$links<hr>";
-    } else {
-      $html = '<b>'
-              . Ts('Difference (from prior %s revision)', $priorName)
-              . "</b>\n$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
-    }
-  }
-  return $html;
-}
-
-sub GetCacheDiff {
-  my ($type) = @_;
-  my ($diffText);
-
-  $diffText = &GetPageCache("diff_default_$type");
-  $diffText = &GetCacheDiff('minor')  if ($diffText eq "1");
-  $diffText = &GetCacheDiff('major')  if ($diffText eq "2");
-  return $diffText;
-}
-
-# Must be done after minor diff is set and OpenKeptRevisions called
-sub GetKeptDiff {
-  my ($newText, $oldRevision, $lock) = @_;
-  my (%sect, %data, $oldText);
-
-  $oldText = "";
-  if (defined($KeptRevisions{$oldRevision})) {
-    %sect = split(/$FS2/, $KeptRevisions{$oldRevision}, -1);
-    %data = split(/$FS3/, $sect{'data'}, -1);
-    $oldText = $data{'text'};
-  }
-  return ""  if ($oldText eq "");  # Old revision not found
-  return &GetDiff($oldText, $newText, $lock);
-}
-
-sub DiffToHTML {
-  my ($html) = @_;
-  my ($tChanged, $tRemoved, $tAdded);
-
-  $tChanged = T('Changed:');
-  $tRemoved = T('Removed:');
-  $tAdded   = T('Added:');
-  $html =~ s/\n--+//g;
-  # Note: Need spaces before <br> to be different from diff section.
-  $html =~ s/(^|\n)(\d+.*c.*)/$1 <br><strong>$tChanged $2<\/strong><br>/g;
-  $html =~ s/(^|\n)(\d+.*d.*)/$1 <br><strong>$tRemoved $2<\/strong><br>/g;
-  $html =~ s/(^|\n)(\d+.*a.*)/$1 <br><strong>$tAdded $2<\/strong><br>/g;
-  $html =~ s/\n((<.*\n)+)/&ColorDiff($1,"ffffaf")/ge;
-  $html =~ s/\n((>.*\n)+)/&ColorDiff($1,"cfffcf")/ge;
-  return $html;
-}
-
-sub ColorDiff {
-  my ($diff, $color) = @_;
-
-  $diff =~ s/(^|\n)[<>]/$1/g;
-  $diff = &QuoteHtml($diff);
-  # Do some of the Wiki markup rules:
-  %SaveUrl = ();
-  %SaveNumUrl = ();
-  $SaveUrlIndex = 0;
-  $SaveNumUrlIndex = 0;
-  $diff =~ s/$FS//g;
-  $diff =  &CommonMarkup($diff, 0, 1);      # No images, all patterns
-  $diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore saved text
-  $diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore nested saved text
-  $diff =~ s/\r?\n/<br>/g;
-  return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
-         . "</td></tr></table>\n";
-}
-
 # ==== Misc. functions ====
 sub ReportError {
   my ($errmsg) = @_;
@@ -1390,42 +1120,42 @@ sub ValidId {
   my ($id) = @_;
 
   if (length($id) > 120) {
-    return Ts('Page name is too long: %s', $id);
+    return "Page name is too long: $id";
   }
   if ($id =~ m| |) {
-    return Ts('Page name may not contain space characters: %s', $id);
+    return "Page name may not contain space characters: $id";
   }
   if ($UseSubpage) {
     if ($id =~ m|.*/.*/|) {
-      return Ts('Too many / characters in page %s', $id);
+      return "Too many / characters in page $id";
     }
     if ($id =~ /^\//) {
-      return Ts('Invalid Page %s (subpage without main page)', $id);
+      return "Invalid Page $id (subpage without main page)";
     }
     if ($id =~ /\/$/) {
-      return Ts('Invalid Page %s (missing subpage name)', $id);
+      return "Invalid Page $id (missing subpage name)";
     }
   }
   if ($FreeLinks) {
     $id =~ s/ /_/g;
     if (!$UseSubpage) {
       if ($id =~ /\//) {
-        return Ts('Invalid Page %s (/ not allowed)', $id);
+        return "Invalid Page $id (/ not allowed)";
       }
     }
     if (!($id =~ m|^$FreeLinkPattern$|)) {
-      return Ts('Invalid Page %s', $id);
+      return "Invalid Page $id";
     }
     if ($id =~ m|\.db$|) {
-      return Ts('Invalid Page %s (must not end with .db)', $id);
+      return "Invalid Page $id (must not end with .db)";
     }
     if ($id =~ m|\.lck$|) {
-      return Ts('Invalid Page %s (must not end with .lck)', $id);
+      return "Invalid Page $id (must not end with .lck)";
     }
     return "";
   } else {
     if (!($id =~ /^$LinkPattern$/)) {
-      return Ts('Invalid Page %s', $id);
+      return "Invalid Page $id";
     }
   }
   return "";
@@ -1635,8 +1365,6 @@ sub DoOtherRequest {
       &DoIndex();
     } elsif ($action eq "links") {
       &DoLinks();
-    } elsif ($action eq "maintain") {
-      &DoMaintain();
     } elsif ($action eq "pagelock") {
       &DoPageLock();
     } elsif ($action eq "editlock") {
@@ -1670,10 +1398,6 @@ sub DoOtherRequest {
   }
   if (&GetParam("enter_login", 0)) {
     &DoLogin();
-    return;
-  }
-  if (&GetParam("edit_links", 0)) {
-    &DoUpdateLinks();
     return;
   }
   $search = &GetParam("search", "");
@@ -2577,43 +2301,6 @@ sub WriteRcLog {
   close(OUT);
 }
 
-sub DoMaintain {
-  my ($name, $fname, $data);
-  print &GetHeader('', T('Maintenance on all pages'), '');
-  print "<br>";
-  $fname = "$DataDir/maintain";
-  if (!&UserIsAdmin()) {
-    if ((-f $fname) && ((-M $fname) < 0.5)) {
-      print T('Maintenance not done.'), ' ';
-      print T('(Maintenance can only be done once every 12 hours.)');
-      print ' ', T('Remove the "maintain" file or wait.');
-      print &GetCommonFooter();
-      return;
-    }
-  }
-  &RequestLock() or die(T('Could not get maintain-lock'));
-  foreach $name (&PurpleWiki::Database::AllPagesList()) {
-    &PurpleWiki::Database::OpenPage($name, \%Page, $Now);
-    &PurpleWiki::Database::OpenDefaultText($UserID, GetParam("username",""), \%Page, \%Text,\%Section, $Now);
-    &PurpleWiki::Database::ExpireKeepFile(\%Page, $Now);
-    print ".... "  if ($name =~ m|/|);
-    print &GetPageLink($name), "<br>\n";
-  }
-  &WriteStringToFile($fname, "Maintenance done at " . &TimeToText($Now));
-  &PurpleWiki::Database::ReleaseLock();
-  # Do any rename/deletion commands
-  # (Must be outside lock because it will grab its own lock)
-  $fname = "$DataDir/editlinks";
-  if (-f $fname) {
-    $data = &PurpleWiki::Database::ReadFileOrDie($fname);
-    print '<hr>', T('Processing rename/delete commands:'), "<br>\n";
-    &UpdateLinksList($data, 1, 1);  # Always update RC and links
-    unlink("$fname.old");
-    rename($fname, "$fname.old");
-  }
-  print &GetCommonFooter();
-}
-
 sub UserIsEditorOrError {
   if (!&UserIsEditor()) {
     print '<p>', T('This operation is restricted to site editors only...');
@@ -2754,28 +2441,6 @@ sub DoEditLinks {
   print &GetMinimumFooter();
 }
 
-sub UpdateLinksList {
-  my ($commandList, $doRC, $doText) = @_;
-
-  if ($doText) {
-    &BuildLinkIndex();
-  }
-  &RequestLock() or die "UpdateLinksList could not get main lock";
-  foreach (split(/\n/, $commandList)) {
-    s/\s+$//g;
-    next  if (!(/^[=!|]/));  # Only valid commands.
-    print "Processing $_<br>\n";
-    if (/^\!(.+)/) {
-      &DeletePage($1, $doRC, $doText);
-    } elsif (/^\=(?:\[\[)?([^]=]+)(?:\]\])?\=(?:\[\[)?([^]=]+)(?:\]\])?/) {
-      &RenamePage($1, $2, $doRC, $doText);
-    } elsif (/^\|(?:\[\[)?([^]|]+)(?:\]\])?\|(?:\[\[)?([^]|]+)(?:\]\])?/) {
-      &RenameTextLinks($1, $2);
-    }
-  }
-  &PurpleWiki::Database::ReleaseLock();
-}
-
 sub BuildLinkIndex {
   my (@pglist, $page, @links, $link, %seen);
 
@@ -2802,29 +2467,6 @@ sub BuildLinkIndexPage {
     }
     $seen{$link} = 1;
   }
-}
-
-sub DoUpdateLinks {
-  my ($commandList, $doRC, $doText);
-
-  print &GetHeader("", "Updating Links", "");
-  if ($AdminDelete) {
-    return  if (!&UserIsAdminOrError());
-  } else {
-    return  if (!&UserIsEditorOrError());
-  }
-  $commandList = &GetParam("commandlist", "");
-  $doRC   = &GetParam("p_changerc", "0");
-  $doRC   = 1  if ($doRC eq "on");
-  $doText = &GetParam("p_changetext", "0");
-  $doText = 1  if ($doText eq "on");
-  if ($commandList eq "") {
-    print "<p>Empty command list or error.";
-  } else {
-    &UpdateLinksList($commandList, $doRC, $doText);
-    print "<p>Finished command list.";
-  }
-  print &GetCommonFooter();
 }
 
 sub EditRecentChanges {
@@ -2889,37 +2531,6 @@ sub DeletePage {
   # Currently don't do anything with page text
 }
 
-# Given text, returns substituted text
-sub SubstituteTextLinks {
-  my ($old, $new, $text) = @_;
-
-  # Much of this is taken from the common markup
-  %SaveUrl = ();
-  $SaveUrlIndex = 0;
-  $text =~ s/$FS//g;              # Remove separators (paranoia)
-  $text =~ s/(<pre>((.|\n)*?)<\/pre>)/&StoreRaw($1)/ige;
-  $text =~ s/(<code>((.|\n)*?)<\/code>)/&StoreRaw($1)/ige;
-  $text =~ s/(<nowiki>((.|\n)*?)<\/nowiki>)/&StoreRaw($1)/ige;
-
-  if ($FreeLinks) {
-    $text =~
-     s/\[\[$FreeLinkPattern\|([^\]]+)\]\]/&SubFreeLink($1,$2,$old,$new)/geo;
-    $text =~ s/\[\[$FreeLinkPattern\]\]/&SubFreeLink($1,"",$old,$new)/geo;
-  }
-  if ($BracketText) {  # Links like [URL text of link]
-    $text =~ s/(\[$UrlPattern\s+([^\]]+?)\])/&StoreRaw($1)/geo;
-    $text =~ s/(\[$InterLinkPattern\s+([^\]]+?)\])/&StoreRaw($1)/geo;
-  }
-  $text =~ s/(\[?$UrlPattern\]?)/&StoreRaw($1)/geo;
-  $text =~ s/(\[?$InterLinkPattern\]?)/&StoreRaw($1)/geo;
-  if ($WikiLinks) {
-    $text =~ s/$LinkPattern/&SubWikiLink($1, $old, $new)/geo;
-  }
-
-  $text =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore saved text
-  return $text;
-}
-
 sub SubFreeLink {
   my ($link, $name, $old, $new) = @_;
   my ($oldlink);
@@ -2952,155 +2563,6 @@ sub SubWikiLink {
     }
   }
   return &StoreRaw($link);
-}
-
-# Rename is mostly copied from expire
-sub RenameKeepText {
-  my ($page, $old, $new) = @_;
-  my ($fname, $status, $data, @kplist, %tempSection, $changed);
-  my ($sectName, $newText);
-
-  $fname = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($page) .  "/$page.kp";
-  return  if (!(-f $fname));
-  ($status, $data) = &PurpleWiki::Database::ReadFile($fname);
-  return  if (!$status);
-  @kplist = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  return  if (length(@kplist) < 1);  # Also empty
-  shift(@kplist)  if ($kplist[0] eq "");  # First can be empty
-  return  if (length(@kplist) < 1);  # Also empty
-  %tempSection = split(/$FS2/, $kplist[0], -1);
-  if (!defined($tempSection{'keepts'})) {
-    return;
-  }
-
-  # First pass: optimize for nothing changed
-  $changed = 0;
-  foreach (@kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    if ($sectName =~ /^(text_)/) {
-      %Text = split(/$FS3/, $tempSection{'data'}, -1);
-      $newText = &SubstituteTextLinks($old, $new, $Text{'text'});
-      $changed = 1  if ($Text{'text'} ne $newText);
-    }
-    # Later add other section types? (maybe)
-  }
-
-  return  if (!$changed);  # No sections changed
-  open (OUT, ">$fname") or return;
-  foreach (@kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    if ($sectName =~ /^(text_)/) {
-      %Text = split(/$FS3/, $tempSection{'data'}, -1);
-      $newText = &SubstituteTextLinks($old, $new, $Text{'text'});
-      $Text{'text'} = $newText;
-      $tempSection{'data'} = join($FS3, %Text);
-      print OUT $FS1, join($FS2, %tempSection);
-    } else {
-      print OUT $FS1, $_;
-    }
-  }
-  close(OUT);
-}
-
-sub RenameTextLinks {
-  my ($old, $new) = @_;
-  my ($changed, $file, $page, $section, $oldText, $newText, $status);
-  my ($oldCanonical, @pageList);
-
-  $old =~ s/ /_/g;
-  $oldCanonical = &FreeToNormal($old);
-  $new =~ s/ /_/g;
-  $status = &ValidId($old);
-  if ($status ne "") {
-    print "Rename-Text: old page $old is invalid, error is: $status<br>\n";
-    return;
-  }
-  $status = &ValidId($new);
-  if ($status ne "") {
-    print "Rename-Text: new page $new is invalid, error is: $status<br>\n";
-    return;
-  }
-  $old =~ s/_/ /g;
-  $new =~ s/_/ /g;
-
-  # Note: the LinkIndex must be built prior to this routine
-  return  if (!defined($LinkIndex{$oldCanonical}));
-
-  @pageList = split(' ', $LinkIndex{$oldCanonical});
-  foreach $page (@pageList) {
-    $changed = 0;
-    &PurpleWiki::Database::OpenPage($page, \%Page, $Now);
-    foreach $section (keys %Page) {
-      if ($section =~ /^text_/) {
-        %Section = &OpenSection($section, GetParam("username", ""));
-        %Text = split(/$FS3/, $Section{'data'}, -1);
-        $oldText = $Text{'text'};
-        $newText = &SubstituteTextLinks($old, $new, $oldText);
-        if ($oldText ne $newText) {
-          $Text{'text'} = $newText;
-          $Section{'data'} = join($FS3, %Text);
-          $Page{$section} = join($FS2, %Section);
-          $changed = 1;
-        }
-      } elsif ($section =~ /^cache_diff/) {
-        $oldText = $Page{$section};
-        $newText = &SubstituteTextLinks($old, $new, $oldText);
-        if ($oldText ne $newText) {
-          $Page{$section} = $newText;
-          $changed = 1;
-        }
-      }
-      # Later: add other text-sections (categories) here
-    }
-    if ($changed) {
-      $file = &PurpleWiki::Database::GetPageFile($page);
-      &WriteStringToFile($file, join($FS1, %Page));
-    }
-    &RenameKeepText($page, $old, $new);
-  }
-}
-
-sub RenamePage {
-  my ($old, $new, $doRC, $doText) = @_;
-  my ($oldfname, $newfname, $oldkeep, $newkeep, $status);
-
-  $old =~ s/ /_/g;
-  $new = &FreeToNormal($new);
-  $status = &ValidId($old);
-  if ($status ne "") {
-    print "Rename: old page $old is invalid, error is: $status<br>\n";
-    return;
-  }
-  $status = &ValidId($new);
-  if ($status ne "") {
-    print "Rename: new page $new is invalid, error is: $status<br>\n";
-    return;
-  }
-  $newfname = &PurpleWiki::Database::GetPageFile($new);
-  if (-f $newfname) {
-    print "Rename: new page $new already exists--not renamed.<br>\n";
-    return;
-  }
-  $oldfname = &PurpleWiki::Database::GetPageFile($old);
-  if (!(-f $oldfname)) {
-    print "Rename: old page $old does not exist--nothing done.<br>\n";
-    return;
-  }
-
-  &CreatePageDir($PageDir, $new);  # It might not exist yet
-  rename($oldfname, $newfname);
-  &CreatePageDir($KeepDir, $new);
-  $oldkeep = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($old) .  "/$old.kp";
-  $newkeep = $KeepDir . "/" . &PurpleWiki::Database::GetPageDirectory($new) .  "/$new.kp";
-  unlink($newkeep)  if (-f $newkeep);  # Clean up if needed.
-  rename($oldkeep,  $newkeep);
-  &EditRecentChanges(2, $old, $new)  if ($doRC);
-  if ($doText) {
-    &BuildLinkIndexPage($new);  # Keep index up-to-date
-    &RenameTextLinks($old, $new);
-  }
 }
 
 sub DoShowVersion {
