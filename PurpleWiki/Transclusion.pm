@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.4 2003/08/13 04:28:06 cdent Exp $
+# $Id: Transclusion.pm,v 1.5 2003/08/14 06:05:41 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -34,14 +34,7 @@ use strict;
 use DB_File;
 use LWP::UserAgent;
 
-# A first stab at transclusions in PurpleWiki. This is an
-# extremely rudimentary prototype. It is not meant to be 
-# good by any stretch of the imagination. It is simply to
-# demonstrate the possibilities that these features allow.
-
-# $Id: Transclusion.pm,v 1.4 2003/08/13 04:28:06 cdent Exp $
-
-# The name of the index file. It's directory comes from Config.
+# The name of the index file. Its directory comes from Config.
 my $INDEX_FILE = 'sequence.index';
 
 # Creates a new Transclusion object associated with 
@@ -126,5 +119,58 @@ sub _tieHash {
         die "unable to tie $file: $!";
 }
 
+1;
+__END__
 
-# POD coming someday.
+=head1 NAME
+
+PurpleWiki::Transclusion - Transclusion object.
+
+=head1 SYNOPSIS
+
+  use PurpleWiki::Config;
+  use PurpleWiki::Transclusion;
+
+  my $config = PurpleWiki::Config->new('/var/www/wikidb');
+  my $transclusion = PurpleWiki::Transclusion->new(
+     config => $config,
+     url => 'http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?HomePage');
+
+  $transclusion->get('2H1');  # retrieves content of NID 2H1
+
+=head1 DESCRIPTION
+
+A first stab at transclusions in PurpleWiki. This is an extremely
+rudimentary prototype. It is not meant to be good by any stretch of
+the imagination. It is simply to demonstrate the possibilities that
+these features allow.
+
+=head1 METHODS
+
+=head2 new(%params)
+
+Creates a new Transclusion object associated with the sequence.index
+in the DataDir. The index is used to find the URL from which a
+particular NID originates. See get() for more.
+
+There are two parameters:
+
+  config -- PurpleWiki::Config object
+
+     url -- The URL requesting the transclusion
+
+=head2 get($nid)
+
+Takes $nid, looks it up in the sequence.index and then uses HTTP to
+retrieve the page on which that NID is found. The retrieved page is
+parsed to gather the content associated with the NID. A string
+containing the content or an error message if it could not be obtained
+is returned.
+
+=head1 AUTHORS
+
+Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut
