@@ -375,13 +375,13 @@ sub getRevisions {
     my $page = $self->_openPage($id);
 
     my $currentSection = $page->_getSection();
-    push @pageHistory, $self->_getRevisionHistory($id, $currentSection, 1);
+    push @pageHistory, $self->_getRevisionHistory($id, $currentSection);
     my $krev = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
     foreach my $section ( sort {($b->getRevision() <=> $a->getRevision())}
                                $krev->getSections() ) {
         # If KeptRevision == Current Revision don't print it. - matthew
         if ($section->getRevision() != $currentSection->getRevision()) {
-            push @pageHistory, $self->_getRevisionHistory($id, $section, 0);
+            push @pageHistory, $self->_getRevisionHistory($id, $section);
         }
         last if ($maxcount && ++$count >= $maxcount);
     }
@@ -389,7 +389,7 @@ sub getRevisions {
 }
 
 sub _getRevisionHistory {
-    my ($self, $id, $section, $isCurrent) = @_;
+    my ($self, $id, $section) = @_;
     my ($rev, $summary, $host, $user, $uid, $ts, $pageUrl, $diffUrl, $editUrl);
 
     my $text = $section->getText();
@@ -417,21 +417,6 @@ sub _getRevisionHistory {
              userId => $uid,
              summary => $summary };
 }
-
-# Retrieves the default text data by getting the
-# Section and then the text in that Section.
-# pages->getPageNode($Id, $nid)
-#
-# get just one node
-#
-#sub getPageNode {
-#  my ($self, $id, $nid) = @_;
-#  my $page = $self->getPage($id);
-#  my $tree = $page->getTree();
-#print STDERR "getPageNode:$pages Pg:$page Tr:$tree Id:$id Nid:$nid\n";
-#  return $tree->view('subtree', 'nid' => uc($nid)) if ($tree);
-#  ""
-#}
 
 package PurpleWiki::Archive::ModPage;
 
@@ -507,7 +492,9 @@ sub getSummary {
 sub _getText {
     my $self = shift;
     my $selectrevision = $self->{selectrevision};
-    if ($selectrevision && ($selectrevision != $self->{revision})) {
+    my $section = $self->_getSection();
+    my $crev = $section->getRevision();
+    if ($selectrevision && ($selectrevision != $crev)) {
         my $krev = new PurpleWiki::UseMod::KeptRevision($self->{pages},
                                                         id=>$self->{id});
         for my $section ($krev->getSections()) {
@@ -519,8 +506,8 @@ sub _getText {
         }
         return "";  # no revision found
     } else {
-        my $section = $self->_getSection();
         my $text = $section->getText();
+        $self->{revision} = $crev;
         return (ref($text)) ? $text->getText() : $text;
     }
 }
