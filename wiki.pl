@@ -110,9 +110,9 @@ sub InitCookie {
   $UserID =~ s/\D//g;  # Numeric only
   if ($UserID < 200) {
     $UserID = 111;
-    $user = new PurpleWiki::Database::User('id' => $UserID, config => $config);
+    $user = new PurpleWiki::Database::User('id' => $UserID);
   } else {
-    $user = new PurpleWiki::Database::User('id' => $UserID, config => $config);
+    $user = new PurpleWiki::Database::User('id' => $UserID);
     if ($user->userExists()) {
       if (($user->getID() != $UserCookie{'id'}) ||
           ($user->getField('randkey') != $UserCookie{'randkey'})) {
@@ -134,7 +134,7 @@ sub DoBrowseRequest {
     return 1;
   }
   $id = &GetParam('keywords', '');
-  $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
+  $page = new PurpleWiki::Database::Page('id' => $id);
   if ($id) {                    # Just script?PageName
     if ($config->FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
@@ -144,7 +144,7 @@ sub DoBrowseRequest {
   }
   $action = lc(&GetParam('action', ''));
   $id = &GetParam('id', '');
-  $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
+  $page = new PurpleWiki::Database::Page('id' => $id);
   if ($action eq 'browse') {
     if ($config->FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
@@ -173,14 +173,12 @@ sub BrowsePage {
 
   $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
                                     'userID' => $UserID, 
-                                    'username' => GetParam("username", ""),
-                                    'config' => $config);
+                                    'username' => GetParam("username", ""));
   $page->openPage();
   $section = $page->getSection();
   $text = $page->getText();
   $newText = $text->getText();
-  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id,
-      config => $config);
+  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
 
   $revision = &GetParam('revision', '');
   $revision =~ s/\D//g;           # Remove non-numeric chars
@@ -488,7 +486,7 @@ sub GetRcHtml {
 sub DoRandom {
   my ($id, @pageList);
 
-  @pageList = &PurpleWiki::Database::AllPagesList($config);  # Optimize?
+  @pageList = &PurpleWiki::Database::AllPagesList();  # Optimize?
   $id = $pageList[int(rand($#pageList + 1))];
   &ReBrowsePage($id, "", 0);
 }
@@ -501,15 +499,13 @@ sub DoHistory {
   my $keptRevision;
 
   print &GetHeader("",&QuoteHtml("History of $id"), "") . "<br>";
-  $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
-    config => $config);
+  $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
   $page->openPage();
 
   $canEdit = &UserCanEdit($id);
   $canEdit = 0;  # Turn off direct "Edit" links
   $html = &GetHistoryLine($id, $page->getSection(), $canEdit, 1);
-  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id,
-    config => $config);
+  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
   foreach my $section (reverse sort {$a->getRevision() <=> $b->getRevision()}
                     $keptRevision->getSections()) {
     # If KeptRevision == Current Revision don't print it. - matthew
@@ -921,10 +917,9 @@ sub WikiToHTML {
   my $id = shift;
   my $pageText = shift;
 
-  my $wiki = $wikiParser->parse($pageText, config => $config, 'freelink' => $config->FreeLinks);
+  my $wiki = $wikiParser->parse($pageText, 'freelink' => $config->FreeLinks);
   my $url = $q->url(-full => 1) . '?' . $id;
-  return $wiki->view('wikihtml', config => $config, url => $url,
-                     pageName => $id);
+  return $wiki->view('wikihtml', url => $url, pageName => $id);
 }
 
 sub QuoteHtml {
@@ -1012,7 +1007,7 @@ sub UserCanEdit {
 
   # Optimized for the "everyone can edit" case (don't check passwords)
   if ($id ne "") {
-    my $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
+    my $page = new PurpleWiki::Database::Page('id' => $id);
     if (-f $page->getLockedPageFile()) {
       return 1  if (&UserIsAdmin());  # Requires more privledges
       # Later option for editor-level to edit these pages?
@@ -1267,11 +1262,10 @@ sub DoEdit {
     return;
   }
   # Consider sending a new user-ID cookie if user does not have one
-  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id,
-    config => $config);
+  $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
   $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
                                  'username' => &GetParam("username", ""),
-                                 'userID' => $UserID, config => $config);
+                                 'userID' => $UserID);
   $page->openPage();
   # FIXME: ordering is import in these next two, it shouldn't be
   $text = $page->getText();
@@ -1637,16 +1631,16 @@ sub UpdateEmailList {
     }
     my $already_in_list = grep /$new_email/, @old_emails;
     if ($notify and (not $already_in_list)) {
-      PurpleWiki::Database::RequestLock($config) or die('Could not get mail lock');
+      PurpleWiki::Database::RequestLock() or die('Could not get mail lock');
       my $notifyfile = $config->DataDir . '/emails';
       open(NOTIFY, ">>$notifyfile")
         or die("Could not append to $notifyfile: $!\n");
       print NOTIFY $new_email, "\n";
       close(NOTIFY);
-      PurpleWiki::Database::ReleaseLock($config);
+      PurpleWiki::Database::ReleaseLock();
     }
     elsif ((not $notify) and $already_in_list) {
-      &PurpleWiki::Database::RequestLock($config) or die('Could not get mail lock');
+      &PurpleWiki::Database::RequestLock() or die('Could not get mail lock');
       my $notifyfile = $config->DataDir . '/emails';
       open(NOTIFY, ">$notifyfile")
         or die("Could not overwrite $notifyfile: $!\n");
@@ -1654,7 +1648,7 @@ sub UpdateEmailList {
         print NOTIFY "$_" unless /$new_email/;
       }
       close(NOTIFY);
-      &PurpleWiki::Database::ReleaseLock($config);
+      &PurpleWiki::Database::ReleaseLock();
     }
   }
 }
@@ -1684,7 +1678,7 @@ sub UpdatePrefNumber {
 sub DoIndex {
   print &GetHeader('', 'Index of all pages', '');
   print '<br>';
-  &PrintPageList(&PurpleWiki::Database::AllPagesList($config));
+  &PrintPageList(&PurpleWiki::Database::AllPagesList());
   print &GetCommonFooter();
 }
 
@@ -1692,7 +1686,7 @@ sub DoIndex {
 sub DoNewLogin {
   # Later consider warning if cookie already exists
   # (maybe use "replace=1" parameter)
-  $user = new PurpleWiki::Database::User(config => $config);
+  $user = new PurpleWiki::Database::User();
   my $randkey = int(rand(1000000000));
   $SetCookie{'id'} = $user->getID();
   $SetCookie{'randkey'} = $randkey;
@@ -1733,7 +1727,7 @@ sub DoLogin {
   $password = &GetParam("p_password",  "");
   if (($uid > 199) && ($password ne "") && ($password ne "*")) {
     $UserID = $uid;
-    $user = new PurpleWiki::Database::User('id' => $UserID, config => $config);
+    $user = new PurpleWiki::Database::User('id' => $UserID);
     if ($user->userExists()) {
       if (defined($user->getField('password')) &&
           ($user->getField('password') eq $password)) {
@@ -1768,7 +1762,7 @@ sub DoSearch {
   print '<br>';
 
   # do the new pluggable search
-  my $search = new PurpleWiki::Search::Engine(config => $config);
+  my $search = new PurpleWiki::Search::Engine();
   $search->search($string);
   print $search->asHTML();
 
@@ -1808,9 +1802,8 @@ sub DoPost {
   my $wiki = $wikiParser->parse($string,
                                 'add_node_ids'=>1,
                                 'url'=>$url,
-                                'config' => $config,
                                 'freelink' => $config->FreeLinks);
-  my $output = $wiki->view('wikitext', config => $config);
+  my $output = $wiki->view('wikitext');
 
   $string = $output;
 
@@ -1839,13 +1832,11 @@ sub DoPost {
   $string .= "\n"  if (!($string =~ /\n$/));
 
   # Lock before getting old page to prevent races
-  &PurpleWiki::Database::RequestLock($config) or die('Could not get editing lock');
+  &PurpleWiki::Database::RequestLock() or die('Could not get editing lock');
   # Consider extracting lock section into sub, and eval-wrap it?
   # (A few called routines can die, leaving locks.)
-  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id,
-    config => $config);
-  my $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now,
-    config => $config);
+  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
+  my $page = new PurpleWiki::Database::Page('id' => $id, 'now' => $Now);
   $page->openPage();
   my $text = $page->getText();
   my $section = $page->getSection();
@@ -1856,7 +1847,7 @@ sub DoPost {
   $preview = 0;
   $preview = 1  if (&GetParam("Preview", "") ne "");
   if (!$preview && ($old eq $string)) {  # No changes (ok for preview)
-    &PurpleWiki::Database::ReleaseLock($config);
+    &PurpleWiki::Database::ReleaseLock();
     &ReBrowsePage($id, "", 1);
     return;
   }
@@ -1870,7 +1861,7 @@ sub DoPost {
   $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
   # Detect editing conflicts and resubmit edit
   if (($oldrev > 0) && ($newAuthor && ($oldtime != $pgtime))) {
-    PurpleWiki::Database::ReleaseLock($config);
+    PurpleWiki::Database::ReleaseLock();
     if ($oldconflict>0) {  # Conflict again...
       &DoEdit($id, 2, $pgtime, $string, $preview);
     } else {
@@ -1879,7 +1870,7 @@ sub DoPost {
     return;
   }
   if ($preview) {
-    PurpleWiki::Database::ReleaseLock($config);
+    PurpleWiki::Database::ReleaseLock();
     &DoEdit($id, 0, $pgtime, $string, 1);
     return;
   }
@@ -1911,7 +1902,7 @@ sub DoPost {
 
   if ($config->UseDiff) {
     # FIXME: how many args does it take to screw a pooch?
-    &PurpleWiki::Database::UpdateDiffs($page, $keptRevision, $id, $editTime, $old, $string, $isEdit, $newAuthor, $config);
+    &PurpleWiki::Database::UpdateDiffs($page, $keptRevision, $id, $editTime, $old, $string, $isEdit, $newAuthor);
   }
   $text->setText($string);
   $text->setMinor($isEdit);
@@ -1928,7 +1919,7 @@ sub DoPost {
   $page->setTS($Now);
   $page->save();
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
-  &PurpleWiki::Database::ReleaseLock($config);
+  &PurpleWiki::Database::ReleaseLock();
   &ReBrowsePage($id, "", 1);
 }
 
@@ -2008,13 +1999,13 @@ sub DoUnlock {
 
   print &GetHeader('', 'Removing edit lock', '');
   print '<p>', 'This operation may take several seconds...', "\n";
-  if (&PurpleWiki::Database::ForceReleaseLock('main', $config)) {
+  if (&PurpleWiki::Database::ForceReleaseLock('main')) {
     $LockMessage = 'Forced Unlock.';
   }
   # Later display status of other locks?
-  &PurpleWiki::Database::ForceReleaseLock('cache', $config);
-  &PurpleWiki::Database::ForceReleaseLock('diff', $config);
-  &PurpleWiki::Database::ForceReleaseLock('index', $config);
+  &PurpleWiki::Database::ForceReleaseLock('cache');
+  &PurpleWiki::Database::ForceReleaseLock('diff');
+  &PurpleWiki::Database::ForceReleaseLock('index');
   print "<br><h2>$LockMessage</h2>";
   print &GetCommonFooter();
 }
@@ -2079,7 +2070,7 @@ sub DoPageLock {
     return;
   }
   return  if (!&ValidIdOrDie($id));       # Later consider nicer error?
-  my $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
+  my $page = new PurpleWiki::Database::Page('id' => $id);
   $fname = $page->getLockedPageFile();
   if (&GetParam("set", 1)) {
     PurpleWiki::Database::WriteStringToFile($fname, "editing locked.");
@@ -2258,9 +2249,7 @@ sub ColorDiff {
   $diff =~ s/(^|\n)[<>]/$1/g;
   $diff =  $wikiParser->parse($diff,
                               'freelink' => $config->FreeLinks,
-                              'config' => $config,
-                              'add_node_ids' => 0)->view('wikitext',
-                                                         config => $config);
+                              'add_node_ids' => 0)->view('wikitext');
   $diff =~ s/\r?\n/<br>/g;
   return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
          . "</td></tr></table>\n";

@@ -51,7 +51,7 @@ sub new {
     my $self = { @_ };
     my $class = ref($proto) || $proto;
     $self->{config} = PurpleWiki::Config->instance();
-    die "No config object found" if not exists $self->{config};
+    die "No config object found" if not defined $self->{config};
     bless($self, $class);
     return $self;
 }
