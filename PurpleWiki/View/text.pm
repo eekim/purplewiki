@@ -1,6 +1,6 @@
 # PurpleWiki::View::text.pm
 #
-# $Id: text.pm,v 1.3.6.1 2003/05/21 06:13:24 cdent Exp $
+# $Id: text.pm,v 1.3.6.2 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -196,6 +196,12 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContent;
 
     $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContent;
+
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} = 
+    	sub { print "transclude: "; };
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContent;
+
+    $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
 
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{post} =

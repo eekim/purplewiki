@@ -1,6 +1,6 @@
 # PurpleWiki::View::EventHandler.pm
 #
-# $Id: EventHandler.pm,v 1.1.4.1 2003/05/21 07:36:29 cdent Exp $
+# $Id: EventHandler.pm,v 1.1.4.2 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -136,6 +136,10 @@ sub registerHandlers {
     $inlineHandler{nowiki}->{pre} = \&emptyString;
     $inlineHandler{nowiki}->{main} = \&emptyString;
     $inlineHandler{nowiki}->{post} = \&emptyString;
+
+    $inlineHandler{transclusion}->{pre} = \&emptyString;
+    $inlineHandler{transclusion}->{main} = \&emptyString;
+    $inlineHandler{transclusion}->{post} = \&emptyString;
 
     $inlineHandler{link}->{pre} = \&emptyString;
     $inlineHandler{link}->{main} = \&emptyString;

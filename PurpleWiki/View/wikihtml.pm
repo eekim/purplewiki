@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.4 2003/05/21 07:36:29 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.5 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,6 +35,7 @@ use strict;
 use PurpleWiki::Page;
 use PurpleWiki::Tree;
 use PurpleWiki::View::EventHandler;
+use PurpleWiki::Transclusion;
 
 # globals
 
@@ -73,6 +74,14 @@ sub closeTagWithNid {
 }
 
 # inline node event handlers
+
+sub transcludeContent {
+    my $node = shift;
+
+    my $space = new PurpleWiki::Transclusion();
+
+    return $space->get($node->content);
+}
 
 sub inlineContent {
     my $node = shift;
@@ -204,6 +213,8 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} =
         sub { my $node = shift;
               return '<img src="' . $node->href . '" />'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&transcludeContent;
 
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} = \&openLinkTag;
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContent;

@@ -1,6 +1,6 @@
 # PurpleWiki::View::wikitext.pm
 #
-# $Id: wikitext.pm,v 1.2.6.2 2003/05/21 06:13:24 cdent Exp $
+# $Id: wikitext.pm,v 1.2.6.3 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -172,6 +172,12 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContent;
     $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{post} =
         sub { $lastInlineProcessed = 'nowiki'; return '</nowiki>'; };
+
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} =
+        sub { my $inlineNode = shift; return '[t'; };
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContent;
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{post} =
+        sub { $lastInlineProcessed = 'transclusion'; return ']'; };
 
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} =
         sub { my $inlineNode = shift; return '[' . $inlineNode->href . ' '; };

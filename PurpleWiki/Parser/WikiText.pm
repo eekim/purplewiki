@@ -1,6 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
+# vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.7.6.4 2003/05/21 06:55:43 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.5 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -352,8 +353,10 @@ sub _parseInlineNode {
     my $rxSubpage = '[A-Z]+[a-z]+\w*';
     my $rxQuoteDelim = '(?:"")?';
     my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
+    my $rxTransclusion = '\[t[A-Z0-9]+\]';
 
     my $rx = qq{
+        $rxTransclusion |
         $rxNowiki |
         $rxTt |
         $rxFippleQuotes |
@@ -416,6 +419,13 @@ sub _parseInlineNode {
             $node =~ s/''$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
                 'children'=>&_parseInlineNode($node, %params));
+        }
+        elsif ($node =~ /^$rxTransclusion$/s) {
+            # transclusion
+            my ($content) = ($node =~ /([A-Z0-9]+)/);
+            push @inlineNodes, PurpleWiki::InlineNode->new(
+                'type' => 'transclusion',
+                'content' => $content);
         }
         elsif ($node =~ /^\[($rxProtocols$rxAddress)\s*(.*?)\]$/s) {
             # bracketed link

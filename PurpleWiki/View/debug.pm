@@ -1,6 +1,6 @@
 # PurpleWiki::View::debug.pm
 #
-# $Id: debug.pm,v 1.1.6.1 2003/05/21 06:13:24 cdent Exp $
+# $Id: debug.pm,v 1.1.6.2 2003/05/21 08:47:27 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -82,6 +82,7 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{tt}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{pre} = \&inlinePre;
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{url}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{pre} = \&inlinePre;
@@ -90,6 +91,7 @@ sub registerHandlers {
 
     $PurpleWiki::View::EventHandler::inlineHandler{text}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{nowiki}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{transclusion}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&inlineContentMain;
