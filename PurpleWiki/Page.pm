@@ -2,12 +2,18 @@ package PurpleWiki::Page;
 
 # mappings between PurpleWiki code and code withing useMod
 
-# $Id: Page.pm,v 1.3 2002/10/23 08:23:11 cdent Exp $
+# $Id: Page.pm,v 1.4 2002/10/25 18:15:15 eekim Exp $
 
 sub exists {
     my $id = shift;
 
     return &UseModWiki::pageExists($id);
+}
+
+sub siteExists {
+    my $site = shift;
+
+    (defined &UseModWiki::GetSiteUrl($site)) ? return 1 : return undef;
 }
 
 sub getWikiWordLink {

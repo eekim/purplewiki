@@ -385,41 +385,55 @@ sub _parseInlineNode {
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'i',
                 'children'=>&_parseInlineNode($node));
         }
-        elsif ($node =~ /\[($rxProtocols$rxAddress)\s*(.*?)\]/s) {
+        elsif ($node =~ /^\[($rxProtocols$rxAddress)\s*(.*?)\]$/s) {
             # bracketed link
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'link',
                                                            'href'=>$1,
                                                            'content'=>$2);
         }
-        elsif ($node =~ /^$rxProtocols$rxAddress$/) {
+        elsif ($node =~ /^$rxProtocols$rxAddress$/s) {
             # URL
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'url',
                                                            'href'=>$node,
                                                            'content'=>$node);
         }
-        elsif ($node =~ /(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim/s) {
+        elsif ($node =~ /^(?:$rxWikiWord)?\/$rxSubpage(?:\#\d+)?$rxQuoteDelim$/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
-#                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),
                                                            'content'=>$node);
         }
-        elsif ($node =~ /[A-Z]\w+:$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
-            $node =~ s/""$//;
-            push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
-#                                                           'href'=>&PurpleWiki::Page::getInterWikiLink($node),
-                                                           'content'=>$node);
+        elsif ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s) {
+            my $site = $1;
+            my $page = $2;
+            if (&PurpleWiki::Page::siteExists($site)) {
+                $node =~ s/""$//;
+                push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                               'content'=>$node);
+            }
+            else {
+                if ($site =~ /^$rxWikiWord$/) {
+                    push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                                   'content'=>$site);
+                    push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'text',
+                                                                   'content'=>':');
+                }
+                else {
+                    push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'text',
+                                                                   'content'=>"$site:");
+                }
+                push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
+                                                               'content'=>$page);
+            }
         }
         elsif ($node =~ /$rxWikiWord(?:\#\d+)?$rxQuoteDelim/s) {
             $node =~ s/""$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'wikiword',
-#                                                           'href'=>&PurpleWiki::Page::getWikiWordLink($node),
                                                            'content'=>$node);
         }
         elsif ($node =~ /$rxDoubleBracketed/s) {
             $node =~ s/^\[\[//;
             $node =~ s/\]\]$//;
             push @inlineNodes, PurpleWiki::InlineNode->new('type'=>'freelink',
-#                                                           'href'=>&PurpleWiki::Page::getFreeLink($node),
                                                            'content'=>$node);
         }
         else {
