@@ -154,7 +154,7 @@ sub ScriptLink {
   my ($action, $text) = @_;
   my $config = PurpleWiki::Config->instance();
 
-  my $scriptName = $config->ScriptName;
+  my $scriptName = $config->BaseURL;
   return "<a href=\"$scriptName?$action\">$text</a>";
 }
 

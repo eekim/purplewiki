@@ -88,7 +88,7 @@ sub get {
         # is fine.
         # FIXME: assumes that anything not the wiki
         # is static content
-        my $scriptName = $self->{config}->ScriptName;
+        my $scriptName = $self->{config}->BaseURL;
         $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
         my ($host, $path);
         if ($url =~ m'^http://([^/]+)/') {

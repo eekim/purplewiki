@@ -258,15 +258,15 @@ sub BrowsePage {
                         revision => $diffRevision || $revision,
                         diffs => getDiffs($diffText),
                         lastEdited => TimeToText($page->getTime),
-                        pageUrl => $config->ScriptName . "?$id",
-                        backlinksUrl => $config->ScriptName . "?search=$id",
-                        revisionsUrl => $config->ScriptName
+                        pageUrl => $config->BaseURL . "?$id",
+                        backlinksUrl => $config->BaseURL . "?search=$id",
+                        revisionsUrl => $config->BaseURL
                                         . "?action=history&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewDiff');
     return;
   }
     
-  my $url = $config->ScriptName . '?' . $id;
+  my $url = $config->BaseURL . '?' . $id;
   $body = WikiHTML($id, $page->getTree(), $url);
 
   &updateVisitedPagesCache($id);
@@ -289,15 +289,15 @@ sub BrowsePage {
                       revision => $revision,
                       body => $body,
                       lastEdited => TimeToText($page->getTime),
-                      pageUrl => $config->ScriptName . "?$id",
-                      backlinksUrl => $config->ScriptName . "?search=$keywords",
+                      pageUrl => $config->BaseURL . "?$id",
+                      backlinksUrl => $config->BaseURL . "?search=$keywords",
                       editUrl => $acl->canEdit($user, $id)
-                          ?   $config->ScriptName . "?action=edit&amp;id=$id" .
+                          ?   $config->BaseURL . "?action=edit&amp;id=$id" .
                               $editRevisionString
                           : undef,
                       revisionsUrl =>
-                          $config->ScriptName . "?action=history&amp;id=$id",
-                      diffUrl => $config->ScriptName
+                          $config->BaseURL . "?action=history&amp;id=$id",
+                      diffUrl => $config->BaseURL
                           . "?action=browse&amp;diff=1&amp;id=$id");
   print GetHttpHeader() . $wikiTemplate->process('viewPage');
 }
@@ -309,7 +309,7 @@ sub DoRc {
     my @rcDays;
     foreach my $days (@{$config->RcDays}) {
         push @rcDays, { num => $days,
-                        url => $config->ScriptName .
+                        url => $config->BaseURL .
                             "?action=rc&amp;days=$days" };
     }
     if (GetParam("from", 0)) {
@@ -345,9 +345,9 @@ sub DoRc {
               userName => $userName,
               userId => $page->{userId},
               host => $page->{host},
-              diffUrl => $config->ScriptName .
+              diffUrl => $config->BaseURL .
                   '?action=browse&amp;diff=1&amp;id=' . $page->{pageId},
-              changeUrl => $config->ScriptName .
+              changeUrl => $config->BaseURL .
                   '?action=history&amp;id=' . $page->{pageId} };
     }
     my @vPages = &visitedPages;
@@ -362,12 +362,12 @@ sub DoRc {
                         rcDays => \@rcDays,
                         changesFrom => TimeToText($starttime),
                         recentChanges => \@recentChanges,
-                        pageUrl => $config->ScriptName . "?$id",
-                        backlinksUrl => $config->ScriptName . "?search=$id",
+                        pageUrl => $config->BaseURL . "?$id",
+                        backlinksUrl => $config->BaseURL . "?search=$id",
                         editUrl => $acl->canEdit($user, $id) ?
-                            $config->ScriptName . "?action=edit&amp;id=$id" : undef,
-                        revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id",
-                        diffUrl => $config->ScriptName . "?action=browse&amp;diff=1&amp;id=$id");
+                            $config->BaseURL . "?action=edit&amp;id=$id" : undef,
+                        revisionsUrl => $config->BaseURL . "?action=history&amp;id=$id",
+                        diffUrl => $config->BaseURL . "?action=browse&amp;diff=1&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewRecentChanges');
 }
 
@@ -383,7 +383,7 @@ sub DoHistory {
     my ($id) = @_;
     my $text;
 
-    my $base = $config->ScriptName;
+    my $base = $config->BaseURL;
     my @vPages = &visitedPages;
     my @pageHistory = $pages->getRevisions($id);
     my $count = 1;
@@ -429,7 +429,7 @@ sub GetHttpHeader {
         $config->SiteName;
     my $cookie = $q->cookie(-name => $cookieName,
                             -value => $session->id,
-                            -path => $config->ScriptDir,
+                            -path => $config->CookieDir,
                             -expires => '+7d');
     if ($config->HttpCharset ne '') {
         return $q->header(-cookie=>$cookie,
@@ -441,9 +441,7 @@ sub GetHttpHeader {
 sub ReBrowsePage {
   my $id = shift;
 
-  print $q->redirect(-uri => ( ($config->FullUrl ne "")
-                               ? $config->FullUrl
-                               : $q->url(-full=>1) ) . "?" . $id);
+  print $q->redirect(-uri => $q->url(-full=>1) . "?$id");
 }
 
 # ==== Common wiki markup ====
@@ -770,7 +768,7 @@ sub DoEdit {
                           oldrev => $oldrev,
                           oldText => &QuoteHtml($page->getTree()->view('wikihtml')),
                           newText => &QuoteHtml($newText),
-                          revisionsUrl => $config->ScriptName
+                          revisionsUrl => $config->BaseURL
                                           . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editConflict');
   }
@@ -788,7 +786,7 @@ sub DoEdit {
                           oldrev => $oldrev,
                           oldText => &QuoteHtml($newText),
                           body => $body,
-                          revisionsUrl => $config->ScriptName
+                          revisionsUrl => $config->BaseURL
                                           . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('previewPage');
   }
@@ -801,7 +799,7 @@ sub DoEdit {
                           pageTime => $pageTime,
                           oldText => &QuoteHtml($newText),
                           oldrev => $oldrev,
-                          revisionsUrl => $config->ScriptName . "?action=history&amp;id=$id");
+                          revisionsUrl => $config->BaseURL . "?action=history&amp;id=$id");
       print GetHttpHeader() . $wikiTemplate->process('editPage');
   }
 
@@ -1027,7 +1025,7 @@ sub DoLogin {
       $user = undef;
   }
   if ($success && $fromPage) {
-      print 'Location: ' . $config->ScriptName . "?$fromPage\n\n";
+      print 'Location: ' . $config->BaseURL . "?$fromPage\n\n";
   }
   else {
       $wikiTemplate->vars(&globalTemplateVars,
@@ -1225,7 +1223,7 @@ sub DoPost {
 
   if ($pages->putPage(pageId => $id,
                       tree => $wiki,
-                      url=> $config->ScriptName . "?$id",
+                      url=> $config->BaseURL . "?$id",
                       oldrev => GetParam("oldrev", ""),
                       changeSummary => $summary,
                       host => GetRemoteHost(1),
@@ -1379,11 +1377,11 @@ sub expandPageName {
 
 sub globalTemplateVars {
     return (siteName => $config->SiteName,
-            baseUrl => $config->ScriptName,
+            baseUrl => $config->BaseURL,
             homePage => $config->HomePage,
             userName => $user ? $user->username : undef,
             userId => $user ? $user->id : undef,
-            preferencesUrl => $config->ScriptName . '?action=editprefs',
+            preferencesUrl => $config->BaseURL . '?action=editprefs',
             sessionId => $session ? $session->id : undef);
 }
 

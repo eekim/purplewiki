@@ -57,12 +57,12 @@ my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     UseAmPm FreeUpper ShowEdits NonEnglish 
     SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
 my @SCALAR_CONFIGS = qw( ArchiveDriver
-    DataDir ReposPath ScriptName SiteName HomePage RCName SessionDir
-    FullUrl ScriptTZ RcDefault KeepDays CookieName
+    DataDir ReposPath BaseURL SiteName HomePage RCName SessionDir
+    ScriptTZ RcDefault KeepDays CookieName
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask
-    LocalSequenceDir RemoteSequenceURL ScriptDir TemplateDriver
+    LocalSequenceDir RemoteSequenceURL CookieDir TemplateDriver
     ParserDriver UserDatabaseDriver ACLDriver LocaleFile
     ServiceProviderName ServiceProviderKey ReturnUrl DefaultLanguage
     LoginRedirect CaptchaDataDir CaptchaOutputDir CaptchaWebDir

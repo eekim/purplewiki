@@ -7,12 +7,11 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
-ScriptDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
+BaseURL  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
+CookieDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
 SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
 RCName      = RecentChanges     # Name of changes page (change space to _)
-#FullUrl     = ""                # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""                # Local time zone
 #Umask       = 0002	             # the umask used when writing files
 LocalSequenceDir = $DataDir     # The directory where purple number sequences live

@@ -57,7 +57,7 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my $urlbase = $self->{config}->ScriptName . '?';
+    my $urlbase = $self->{config}->BaseURL . '?';
     my $pages = $self->{config}->{pages};
     my $rcRef = $pages-> recentChanges();
     my @recentChanges = @{$rcRef};
@@ -66,8 +66,7 @@ sub getRSS {
     $rss->channel (
         title => $self->{config}->SiteName,
         # FIXME: this isn't good enough as it might not be set
-        # to a full URL. FullURL is optional though, so?
-        link  => $self->{config}->ScriptName,
+        link  => $self->{config}->BaseURL,
     );
 
     # FIXME: depending on the wrong variable here, probably better 
@@ -81,7 +80,7 @@ sub getRSS {
 
         $rss->add_item(
             title => $id,
-            link  => $self->{config}->ScriptName . '?' .$id,
+            link  => $self->{config}->BaseURL . '?' .$id,
             dc => {
                 creator => $recentChange->{userId},
             },

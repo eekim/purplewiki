@@ -54,7 +54,7 @@ The following variables are available to all templates:
 ;siteName:Name of the site.  Corresponds to <nowiki>SiteName</nowiki>
           in wikidb/config.
 ;baseUrl:Base URL used for constructing URLs for accessing Wiki pages,
-         actions, etc.  Corresponds to <nowiki>ScriptName</nowiki> in
+         actions, etc.  Corresponds to <nowiki>BaseURL</nowiki> in
          wikidb/config.
 ;homePage:Name of the Wiki home page.  Corresponds to
           <nowiki>HomePage</nowiki> in wikidb/config.
