@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.25 2003/06/20 23:54:02 cdent Exp $
+# $Id: Tree.pm,v 1.26 2003/07/09 00:28:47 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -47,7 +47,7 @@ sub new {
     $self->{date} = $options{date} ? $options{date} : undef;
     $self->{version} = $options{version} ? $options{version} : undef;
     $self->{authors} = &_validateAuthors($options{authors})
-	? $options{authors} : undef;
+        ? $options{authors} : undef;
 
     $self->{rootNode} = PurpleWiki::StructuralNode->new(type=>'document');
 
@@ -103,7 +103,7 @@ sub authors {
     my $authors = shift;
 
     if (&_validateAuthors($authors)) {
-	$this->{authors} = $authors;
+        $this->{authors} = $authors;
     }
     return $this->{authors};
 }
@@ -114,25 +114,14 @@ sub view {
     my $this = shift;
     my ($driver, %params) = @_;
 
-    if (lc($driver) eq 'debug') {
-	require PurpleWiki::View::debug;
-        return &PurpleWiki::View::debug::view($this, %params);
-    } 
-    elsif (lc($driver) eq 'wikihtml') {
-	require PurpleWiki::View::wikihtml;
-        return &PurpleWiki::View::wikihtml::view($this, %params);
+    $driver = lc($driver);
+    eval "require PurpleWiki::View::$driver";
+    if ($@) { # driver not found
+        # FIXME: Need better exception handling.
+        return "Error: $driver View driver not found.";
     }
-    elsif (lc($driver) eq 'wikitext') {
-	require PurpleWiki::View::wikitext;
-        return &PurpleWiki::View::wikitext::view($this, %params);
-    }
-    elsif (lc($driver) eq 'text') {
-	require PurpleWiki::View::text;
-        return &PurpleWiki::View::text::view($this, %params);
-    }
-    elsif (lc($driver) eq 'xhtml') {
-	require PurpleWiki::View::xhtml;
-        return &PurpleWiki::View::xhtml::view($this, %params);
+    else {
+        eval "return \&PurpleWiki::View::$driver\::view(\$this, \%params)";
     }
 }
 
@@ -142,17 +131,17 @@ sub _validateAuthors {
     my $authors = shift;
 
     if ($authors && ref($authors) eq 'ARRAY') {
-	foreach my $author (@{$authors}) {
-	    if ( (ref($author) ne 'ARRAY') ||
-		 (scalar @{$author} > 2) ||
-		 (scalar @{$author} < 1) ) {
-		return 0;
-	    }
-	}
-	return 1;
+        foreach my $author (@{$authors}) {
+            if ( (ref($author) ne 'ARRAY') ||
+                 (scalar @{$author} > 2) ||
+                 (scalar @{$author} < 1) ) {
+                return 0;
+            }
+        }
+        return 1;
     }
     else {
-	return 0;
+        return 0;
     }
 }
 
@@ -176,7 +165,7 @@ PurpleWiki::Tree - Basic PurpleWiki data structure
 
   $wiki->root;               # returns the root StructuralNode
 
-  $wiki->view('WikiHTML');   # serializes tree as XHTML
+  $wiki->view('wikihtml');   # serializes tree as XHTML
 
 =head1 DESCRIPTION
 
@@ -204,12 +193,12 @@ the view driver.
 
 Currently, there are three view drivers:
 
-  Debug    -- Text debugging output
-  WikiHTML -- XHTML w/ no header tags
-  WikiText -- Wiki text markup
+  debug    -- Text debugging output
+  wikihtml -- XHTML w/ no header tags
+  wikitext -- Wiki text markup
 
-You can create your own view drivers, although you will have to modify
-the view() method so that it is aware of the new driver.
+You can create your own view drivers.  Install them by dropping them
+in the PurpleWiki/View directory.
 
 =head1 METHODS
 
@@ -251,13 +240,13 @@ becomes one, we should add a clearAuthors() method.
 
 $driver is the name of the view driver, %params contains parameters
 that are passed to the driver.  See "VIEW DRIVERS" above for more
-details.  This implementation is rudimentary at the moment.  All
-existing drivers must be hardcoded into this method.  This method
-currently knows about the following drivers:
+details.  Drivers are stored in PurpleWiki/View and are dynamically
+loaded.  To install new drivers, just drop it into the appropriate
+directory.
 
-  Debug
-  WikiHTML
-  WikiText
+  debug
+  wikihtml
+  wikitext
 
 =head1 AUTHORS
 
