@@ -4,6 +4,7 @@ LICENSE
 MANIFEST
 MANIFEST.SKIP
 Makefile.PL
+PurpleWiki/ACL.pm
 PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
 PurpleWiki/Apache2NidHandler.pm
@@ -180,10 +181,11 @@ wikidb/templates/viewRecentChanges.tt
 wikidb/templates/common/footer.tt
 wikidb/templates/common/header.tt
 wikidb/templates/common/navbar.tt
-wikidb/templates/common/navbarInames.tt
-wikidb/templates/common/navbarInamesRegister.tt
 wikidb/templates/common/pagebar.tt
 wikidb/templates/common/searchbar.tt
+wikidb/templates/common/userbar.tt
+wikidb/templates/common/userbarInames.tt
+wikidb/templates/common/userbarInamesRegister.tt
 wikidb/templates/errors/actionInvalid.tt
 wikidb/templates/errors/badInameRegistration.tt
 wikidb/templates/errors/dataDirCannotCreate.tt

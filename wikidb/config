@@ -27,11 +27,6 @@ RcDays      = 30
 RcDays      = 90
 KeepDays    = 30               # Days to keep old revisions
 
-# Password for administration and editing
-# FIXME: need better understanding of how these things are used
-#AdminPass   = ""              # Set to non-blank to enable password(s)
-#EditPass    = ""              # Like AdminPass, but for editing only
-
 # HttpAuth username and password
 #HttpUser    = ""
 #HttpPass    = ""
@@ -43,6 +38,7 @@ KeepDays    = 30               # Days to keep old revisions
 MaxPost     = 215040           # Maximum 210K posts (about 200K for pages)
 
 # Major options:
+#LoginToEdit            # require logged in user to edit pages
 #UseINames              # if set use i-names
 UseSubpage             # if set allow subpages
 EditAllowed            # if set editing allowed
@@ -61,7 +57,6 @@ KeepMajor              # if set keep major rev
 KeepAuthor             # if set keep author rev
 BracketText            # if set allow [URL text]
 UseAmPm                # if set use am/pm in times
-UseLookup              # if set lookup host names
 FreeUpper              # if set force upper case
 #ShowEdits             # if set show minor edits
 

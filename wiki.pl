@@ -36,6 +36,7 @@ use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use CGI::Session;
 use Digest::MD5;
+use PurpleWiki::ACL;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Page;
@@ -51,13 +52,8 @@ $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
-my $ScriptName;         # the name by which this script is called
-my $wikiParser;         # the reference to the PurpleWiki Parser
-my $wikiTemplate;       # the reference to the PurpleWiki template driver
-my $config;             # our PurpleWiki::Config reference
 my $InterSiteInit = 0;
 my %InterSite;
-my $userDb;
 my $user;               # our reference to the logged in user
 my $session;            # CGI::Session object
 my $visitedPagesCache;
@@ -71,17 +67,18 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
                         # worth it.
 
 # we only need one of each these per run
-$config = new PurpleWiki::Config($CONFIG_DIR);
-$wikiParser = PurpleWiki::Parser::WikiText->new;
+my $config = new PurpleWiki::Config($CONFIG_DIR);
+my $wikiParser = PurpleWiki::Parser::WikiText->new;
 # FIXME: would be cool if there were a way to factory these based off a
 #        config value.
-$userDb = PurpleWiki::Database::User::UseMod->new;
+my $userDb = PurpleWiki::Database::User::UseMod->new;
+my $acl = PurpleWiki::ACL->new;
 
 # Select and load a  template driver
 my $templateDriver = $config->TemplateDriver();
 my $templateClass = "PurpleWiki::Template::$templateDriver";
 eval "require $templateClass";
-$wikiTemplate = $templateClass->new;
+my $wikiTemplate = $templateClass->new;
 
 # check for i-names support
 if ($config->UseINames) {
@@ -111,7 +108,6 @@ sub InitRequest {
   $q = new CGI;
 
   $Now = time;                     # Reset in case script is persistent
-  $ScriptName = $q->url('relative' => 1);  # Name used in links
   $PurpleWiki::Page::MainPage = ".";  # For subpages only, the name of the top-level page
   PurpleWiki::Database::CreateDir($config->DataDir);  # Create directory if it doesn't exist
   if (!-d $config->DataDir) {
@@ -576,75 +572,6 @@ sub ValidIdOrDie {
     return 1;
 }
 
-sub UserCanEdit {
-  my ($id, $deepCheck) = @_;
-
-  # Optimized for the "everyone can edit" case (don't check passwords)
-  if ($id ne "") {
-    my $page = new PurpleWiki::Database::Page('id' => $id);
-    if (-f $page->getLockedPageFile()) {
-      return 1  if (UserIsAdmin());  # Requires more privledges
-      # Later option for editor-level to edit these pages?
-      return 0;
-    }
-  }
-  if (!$config->EditAllowed) {
-    return 1  if (UserIsEditor());
-    return 0;
-  }
-  if (-f $config->DataDir . "/noedit") {
-    return 1  if (UserIsEditor());
-    return 0;
-  }
-  if ($deepCheck) {   # Deeper but slower checks (not every page)
-    return 1  if (UserIsEditor());
-    return 0  if (UserIsBanned());
-  }
-  return 1;
-}
-
-sub UserIsBanned {
-  my ($host, $ip, $data, $status);
-
-  ($status, $data) = PurpleWiki::Database::ReadFile($config->DataDir . "/banlist");
-  return 0  if (!$status);  # No file exists, so no ban
-  $ip = $ENV{'REMOTE_ADDR'};
-  $host = GetRemoteHost(0);
-  foreach (split(/\n/, $data)) {
-    next  if ((/^\s*$/) || (/^#/));  # Skip empty, spaces, or comments
-    return 1  if ($ip   =~ /$_/i);
-    return 1  if ($host =~ /$_/i);
-  }
-  return 0;
-}
-
-sub UserIsAdmin {
-  my (@pwlist, $userPassword);
-
-  return 0  if ($config->AdminPass eq "");
-  $userPassword = GetParam("adminpw", "");
-  return 0  if ($userPassword eq "");
-  foreach (split(/\s+/, $config->AdminPass)) {
-    next  if ($_ eq "");
-    return 1  if ($userPassword eq $_);
-  }
-  return 0;
-}
-
-sub UserIsEditor {
-  my (@pwlist, $userPassword);
-
-  return 1  if (UserIsAdmin());             # Admin includes editor
-  return 0  if ($config->EditPass eq "");
-  $userPassword = GetParam("adminpw", "");  # Used for both
-  return 0  if ($userPassword eq "");
-  foreach (split(/\s+/, $config->EditPass)) {
-    next  if ($_ eq "");
-    return 1  if ($userPassword eq $_);
-  }
-  return 0;
-}
-
 sub CalcDay {
   my ($ts) = @_;
 
@@ -706,7 +633,7 @@ sub GetRemoteHost {
   my ($rhost, $iaddr);
 
   $rhost = $ENV{REMOTE_HOST};
-  if ($config->UseLookup && ($rhost eq "")) {
+  if ($rhost eq "") {
     # Catch errors (including bad input) without aborting the script
     eval 'use Socket; $iaddr = inet_aton($ENV{REMOTE_ADDR});'
          . '$rhost = gethostbyaddr($iaddr, AF_INET)';
@@ -839,14 +766,20 @@ sub DoEdit {
       $pageName =~ s/_/ /g;
   }
 
-  if (!&UserCanEdit($id, 1)) {
+  if (!$acl->canEdit($user, $id)) {
       $wikiTemplate->vars(&globalTemplateVars);
-      if (UserIsBanned()) {
-          print GetHttpHeader() . $wikiTemplate->process('errors/editBlocked');
-      }
-      else {
-          print GetHttpHeader() . $wikiTemplate->process('errors/editSiteReadOnly');
-      }
+      print GetHttpHeader() . $wikiTemplate->process('errors/editBlocked');
+      return;
+  }
+  elsif (!$config->EditAllowed || -f $config->DataDir . "/noedit") {
+      $wikiTemplate->vars(&globalTemplateVars);
+      print GetHttpHeader() . $wikiTemplate->process('errors/editSiteReadOnly');
+      return;
+  }
+  my $page = new PurpleWiki::Database::Page('id' => $id);
+  if (-f $page->getLockedPageFile()) {
+      $wikiTemplate->vars(&globalTemplateVars);
+      print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
       return;
   }
 
@@ -1267,10 +1200,10 @@ sub DoPost {
 
   $wikiTemplate->vars(&globalTemplateVars,
                       pageName => $id);
-  if (!UserCanEdit($id, 1)) {
-    # This is an internal interface--we don't need to explain
-    print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
-    return;
+  if (!$acl->canEdit($user, $id)) {
+      # This is an internal interface--we don't need to explain
+      print GetHttpHeader() . $wikiTemplate->process('errors/editNotAllowed');
+      return;
   }
 
   if (($id eq 'SampleUndefinedPage') || ($id eq 'SampleUndefinedPage')) {

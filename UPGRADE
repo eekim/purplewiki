@@ -26,6 +26,7 @@ Next, add the following variables:
   TemplateDriver
   TemplateDir
 
+  LoginToEdit
   UseINames
   ServiceProviderName
   ServiceProviderKey
@@ -44,6 +45,8 @@ no longer used:
   SiteBase
   EmailFrom
   SendMail
+  AdminPass
+  EditPass
   FooterNote
   EditNote
   UserGotoBar
