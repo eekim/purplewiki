@@ -96,7 +96,7 @@ sub _init {
     });
 
     # set the types of config variables
-    $self->_initConfig($directory);
+    $self->_initConfig();
 
     # set the DataDir variable, it needs to come first
     # because it is expanded in the file
@@ -110,6 +110,13 @@ sub _init {
     $self->{AppConfig}->set('FS1', $FS1);
     $self->{AppConfig}->set('FS2', $FS2);
     $self->{AppConfig}->set('FS3', $FS3);
+
+    # make sure LocalSequenceDir is set to DataDir if it
+    # wasn't already set
+    if (!defined($self->{AppConfig}->get('LocalSequenceDir'))) {
+        $self->{AppConfig}->set('LocalSequenceDir',
+            $self->{AppConfig}->get('DataDir'));
+    }
 
     return $self;
 }
