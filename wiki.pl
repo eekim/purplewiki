@@ -2,7 +2,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.3 2002/12/11 03:07:54 cdent Exp $
+# $Id: wiki.pl,v 1.4 2003/01/09 06:26:18 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -30,7 +30,6 @@
 #    Boston, MA 02111-1307 USA
 
 package UseModWiki;
-use lib '/home/eekim/devel/PurpleWiki';
 use strict;
 use PurpleWiki::Parser::WikiText;
 

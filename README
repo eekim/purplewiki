@@ -22,9 +22,8 @@ To play, try:
 
   % ./wiki_trans.pl t/test01.txt
   % ./wiki_trans.pl t/test02.txt
-  % ./wiki_trans.pl t/test03.txt
-  % ./wiki_trans.pl t/test04.txt
-  % ./wiki_trans.pl t/test05.txt
+
+  ...
 
 INSTALLATION
 
@@ -39,15 +38,7 @@ To install the Wiki, copy wiki.pl to your cgi-bin directory.  Create a
 wikidb directory, and copy config and intermap there.  Copy
 purplewiki.css somewhere in your htdocs directory.
 
-You'll need to edit lines in wiki.pl.  First, if you have installed
-PurpleWiki in the default directories, you can remove the line:
-
-  use lib '/home/eekim/devel/PurpleWiki';
-
-Otherwise, change the value to point to the directory where the
-modules are installed.
-
-Second, change $DataDir to point to your wikidb directory.
+Edit $DataDir in wiki.pl to point to your wikidb directory.
 
 Finally, edit the config file.
 
@@ -94,4 +85,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.4 2003/01/02 06:04:25 eekim Exp $
+$Id: README,v 1.5 2003/01/09 06:26:17 eekim Exp $
