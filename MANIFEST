@@ -17,6 +17,7 @@ PurpleWiki/Database/Text.pm
 PurpleWiki/Database/User.pm
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
+PurpleWiki/Parser/MoinMoin.pm
 PurpleWiki/Parser/WikiText.pm
 PurpleWiki/Search/Arts.pm
 PurpleWiki/Search/Blosxom.pm
