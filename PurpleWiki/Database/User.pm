@@ -178,6 +178,19 @@ sub setField {
     $self->{$field} = $value;
 }
 
+sub idFromUsername {
+    my $self = shift;
+    my $userName = shift;
+    my %users;
+
+    my $userDir = $self->{config}->UserDir;
+    tie %users, "DB_File", "$userDir/usernames.db",
+        O_RDONLY, 0444, $DB_HASH;
+    my $id = $users{$userName};
+    untie %users;
+    return $id;
+}
+
 sub save {
     my $self = shift;
 

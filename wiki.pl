@@ -32,6 +32,9 @@
 
 package UseModWiki;
 use strict;
+use CGI;
+use CGI::Carp qw(fatalsToBrowser);
+use CGI::Session;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
@@ -41,14 +44,14 @@ use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Syndication::Rss;
 use PurpleWiki::Template::TT;
-use CGI;
-use CGI::Carp qw(fatalsToBrowser);
-use CGI::Session;
+use XDI::SPIT;
 
 my $CONFIG_DIR='/var/www/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
+
+my $RTNURL = 'http://planetwork.blueoxen.net/cgi-bin/wiki.pl?';
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
@@ -281,6 +284,7 @@ sub BrowsePage {
                       showRevision => $revision,
                       revision => $goodRevision,
                       body => $body,
+                      userName => $user->getUsername,
                       lastEdited => $lastEdited,
                       pageUrl => $config->ScriptName . "?$id",
                       backlinksUrl => $config->ScriptName . "?search=$id",
@@ -358,6 +362,7 @@ sub DoRc {
                         showRevision => $revision,
                         revision => $goodRevision,
                         body => $body,
+                        userName => $user->getUsername,
                         daysAgo => $daysago,
                         rcDays => \@rcDays,
                         changesFrom => &TimeToText($starttime),
@@ -407,6 +412,7 @@ sub DoHistory {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
+                        userName => $user->getUsername,
                         pageHistory => \@pageHistory,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print &GetHttpHeader . $wikiTemplate->process('viewPageHistory');
@@ -750,6 +756,7 @@ sub DoOtherRequest {
 
   $action = &GetParam("action", "");
   $id = &GetParam("id", "");
+  my $ename = &GetParam("xri_ename", "");
   if ($action ne "") {
     $action = lc($action);
     if ($action eq "edit") {
@@ -778,12 +785,18 @@ sub DoOtherRequest {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           action => $action,
                           preferencesUrl => $config->ScriptName . '?action=editprefs');
       print &GetHttpHeader . $wikiTemplate->process('errors/actionInvalid');
     }
     return;
   }
+  elsif ($ename) {
+    my $xsid = &GetParam('xri_xsid', '');
+    &DoEname($ename, $xsid);
+  }
+  
   if (&GetParam("edit_prefs", 0)) {
     &DoUpdatePrefs();
     return;
@@ -809,6 +822,7 @@ sub DoOtherRequest {
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
                       homePage => $config->HomePage,
+                      userName => $user->getUsername,
                       preferencesUrl => $config->ScriptName . '?action=editprefs');
   print &GetHttpHeader . $wikiTemplate->process('errors/urlInvalid');
 }
@@ -829,6 +843,7 @@ sub DoEdit {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           preferencesUrl => $config->ScriptName . '?action=editprefs');
       if (&UserIsBanned()) {
           print &GetHttpHeader . $wikiTemplate->process('errors/editBlocked');
@@ -875,6 +890,7 @@ sub DoEdit {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           pageName => $id,
                           revision => $revision,
                           isConflict => $isConflict,
@@ -894,6 +910,7 @@ sub DoEdit {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           pageName => $id,
                           revision => $revision,
                           isConflict => $isConflict,
@@ -911,6 +928,7 @@ sub DoEdit {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           pageName => $id,
                           revision => $revision,
                           pageTime => $pageTime,
@@ -949,7 +967,7 @@ sub DoEditPrefs {
                       baseUrl => $config->ScriptName,
                       homePage => $config->HomePage,
                       userId => $UserID,
-                      userName => &GetParam('username', ""),
+                      userName => $user->getUsername,
                       rcDefault => $config->RcDefault,
                       recentTop => $config->RecentTop,
                       showEdits => &GetParam("rcshowedit", $config->ShowEdits),
@@ -989,6 +1007,7 @@ sub DoUpdatePrefs {
                           siteBase => $config->SiteBase,
                           baseUrl => $config->ScriptName,
                           homePage => $config->HomePage,
+                          userName => $user->getUsername,
                           userId => $UserID,
                           preferencesUrl => $config->ScriptName . '?action=editprefs');
       print &GetHttpHeader . $wikiTemplate->process('errors/prefsInvalidUserId');
@@ -1102,6 +1121,7 @@ sub DoIndex {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
+                        userName => $user->getUsername,
                         pages => \@pages,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print &GetHttpHeader . $wikiTemplate->process('pageIndex');
@@ -1111,7 +1131,7 @@ sub DoIndex {
 sub DoNewLogin {
   # Later consider warning if cookie already exists
   # (maybe use "replace=1" parameter)
-  $user = new PurpleWiki::Database::User(config => $config);
+  $user = new PurpleWiki::Database::User;
   $user->_openNewUser;
   $session->param('userId', $user->getID);
   $user->setField('rev', 1);
@@ -1119,7 +1139,7 @@ sub DoNewLogin {
   # The cookie will be transmitted in the next header
   $user->setField('createtime', $Now);
   $user->setField('createip', $ENV{REMOTE_ADDR});
-  $user->save();
+  $user->save;
 }
 
 sub DoEnterLogin {
@@ -1155,7 +1175,7 @@ sub DoLogin {
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
                       homePage => $config->HomePage,
-                      userId => $uid,
+                      userName => $user->getUsername,
                       loginSuccess => $success,
                       preferencesUrl => $config->ScriptName . '?action=editprefs');
   print &GetHttpHeader . $wikiTemplate->process('loginResults');
@@ -1163,7 +1183,6 @@ sub DoLogin {
 
 sub DoLogout {
     $session->delete;
-    my $userName = $user->getField('username');
     my $cookie = $q->cookie(-name => $config->SiteName,
                             -value => '',
                             -path => '/cgi-bin/',
@@ -1179,9 +1198,65 @@ sub DoLogout {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
-                        userName => $userName,
+                        prevUserName => $user->getUsername,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print $header . $wikiTemplate->process('logout');
+}
+
+sub DoEname {
+    my ($ename, $xsid) = @_;
+
+    my $spit = XDI::SPIT->new;
+    my ($idBroker, $enumber) = $spit->resolveBroker($ename);
+    if ($idBroker) {
+        if ($xsid) {
+            if ($spit->validateSession($idBroker, $ename, $xsid)) {
+                my $userId = $user->idFromUsername($ename);
+                if ($userId) {
+                    $user = new PurpleWiki::Database::User('id' => $userId);
+                }
+                else { # create new account
+                    &DoNewLogin;
+                    $user->setField('username', $ename);
+                    $user->save;
+                }
+                # successful login message
+                $wikiTemplate->vars(siteName => $config->SiteName,
+                                    cssFile => $config->StyleSheet,
+                                    siteBase => $config->SiteBase,
+                                    baseUrl => $config->ScriptName,
+                                    homePage => $config->HomePage,
+                                    userName => $user->getUsername,
+                                    loginSuccess => 1,
+                                    preferencesUrl => $config->ScriptName . '?action=editprefs');
+                print &GetHttpHeader . $wikiTemplate->process('loginResults');
+            }
+            else { # invalid xsid
+                $wikiTemplate->vars(siteName => $config->SiteName,
+                                    cssFile => $config->StyleSheet,
+                                    siteBase => $config->SiteBase,
+                                    baseUrl => $config->ScriptName,
+                                    homePage => $config->HomePage,
+                                    userName => $user->getUsername,
+                                    preferencesUrl => $config->ScriptName . '?action=editprefs');
+                print &GetHttpHeader . $wikiTemplate->process('errors/xsidInvalid');
+            }
+        }
+        else {
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $ename, $RTNURL);
+            print "Location: $redirectUrl\n\n";
+        }
+    }
+    else { # ename didn't resolve
+        $wikiTemplate->vars(siteName => $config->SiteName,
+                            cssFile => $config->StyleSheet,
+                            siteBase => $config->SiteBase,
+                            baseUrl => $config->ScriptName,
+                            homePage => $config->HomePage,
+                            userName => $user->getUsername,
+                            preferencesUrl => $config->ScriptName . '?action=editprefs');
+        print &GetHttpHeader . $wikiTemplate->process('errors/enameInvalid');
+    }
 }
 
 sub DoSearch {
@@ -1200,6 +1275,7 @@ sub DoSearch {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
+                        userName => $user->getUsername,
                         keywords => $string,
                         modules => $search->modules,
                         results => $search->results,
@@ -1243,6 +1319,7 @@ sub DoPost {
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
                       homePage => $config->HomePage,
+                      userName => $user->getUsername,
                       pageName => $id,
                       preferencesUrl => $config->ScriptName . '?action=editprefs');
   if (!&UserCanEdit($id, 1)) {
@@ -1371,6 +1448,7 @@ sub DoUnlock {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
+                        userName => $user->getUsername,
                         forcedUnlock => $forcedUnlock,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print &GetHttpHeader . $wikiTemplate->process('removeEditLock');
@@ -1464,6 +1542,7 @@ sub DoDiff {
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
                         homePage => $config->HomePage,
+                        userName => $user->getUsername,
                         revision => $rev,
                         diffType => $diffTypeString,
                         diffLinks => \@diffLinks,

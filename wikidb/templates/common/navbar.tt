@@ -3,4 +3,14 @@
 <a href="[% baseUrl %]?RecentChanges">RecentChanges</a> |
 <a href="[% baseUrl %]?action=index">Page Index</a> |
 <a href="[% preferencesUrl %]">Preferences</a>
+[% IF userName %]
+([% userName %]) |
+<a href="[% baseUrl %]?action=logout">Logout</a>
 </div>
+[% ELSE %]
+</div>
+<form method="GET" action="[% baseUrl %]">
+e-name:
+<input type="text" name="xri_ename" size="20" />
+</form>
+[% END %]

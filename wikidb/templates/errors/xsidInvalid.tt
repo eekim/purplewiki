@@ -1,10 +1,12 @@
 [% INCLUDE common/header.tt
-           title = "Logged Out"
+           title = "Error!"
 %]
+
+[% INCLUDE common/navbar.tt %]
 
 <hr />
 
-<p>[% prevUserName %] logged out.</p>
+<h2>Invalid XSID</h2>
 
 <hr />
 
