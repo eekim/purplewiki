@@ -33,7 +33,7 @@ package PurpleWiki::Search::Wiki;
 use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
-use PurpleWiki::Misc 'getWikiWordLink';
+use PurpleWiki::Misc;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -45,16 +45,18 @@ sub search {
     my @results;
 
     my $nameHash;
+    my $pages = $self->{config}->{pages};
 
-    foreach my $page ($self->pages->allPages()) {
-	  my $name = $page->pageName;
+    foreach my $id ($pages->allPages()) {
+        my $page = $pages->getPage($id);
+	    my $name = $pages->getName($id);
+        my $text;
         if ($name =~ /$query/i) {
-            push(@results, _searchResult($page));
-        } else {
-            my $text = $page->getText();
-            if ($text->getText() =~ /$query/i) {
-                push(@results, _searchResult($page));
-            }
+print STDERR "Search Match name $name \n";
+            push(@results, _searchResult($page, $name));
+        } elsif (($text = $page->getTree->view('wikitext')) =~ /$query/i) {
+print STDERR "Search Match body $name \n";
+            push(@results, _searchResult($page, $name, $text));
         }
     }
 
@@ -64,19 +66,19 @@ sub search {
     return @results;
 }
 
-PurpleWiki::Search::Result->new(page => $page));
-_searchResult {
-    my $page = shift;
+sub _searchResult {
+    my ($page, $name, $text) = @_;
     my $result = PurpleWiki::Search::Result->new();
     if ($page) {
-        my $name = $page->getID;
+        my $id = $page->getID();
         $result->title($name);
-        $result->{mtime} = ($page->getModTime());
-        $result->url(getWikiWordLink($name));
-        my $text = $page->getText();
+        $result->modifiedTime($page->getTime());
+        $result->url(PurpleWiki::Misc::getWikiWordLink($id));
+        $text = $page->getTree->view('wikitext') unless $text;
         $text =  (substr($text, 0, 99).'...') if (length($text) > 100);
         $result->summary($text);
     }
+    $result;
 }
 
 1;

@@ -33,7 +33,8 @@
 package UseModWiki;
 use lib '/home/gerry/purple/blueoxen/branches/database-api-1';
 use strict;
-use Authen::Captcha;
+my $useCap=0;
+eval "use Authen::Captcha; $useCap=1;";
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 use Digest::MD5;
@@ -41,7 +42,7 @@ use PurpleWiki::Config;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'some/default/db/path';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -235,10 +236,7 @@ sub BrowsePage {
 
   my $pageName = $pages->getName($id);
   $revision = GetParam('revision', '');
-  if ($revision =~ /\D/) {
-    # error bad revision
-    $revision = '';
-  }
+  $revision = '' if ($revision =~ /\D/);
 
   my $page = $pages->getPage($id, $revision);
   $allDiff  = GetParam('alldiff', 0);
@@ -689,7 +687,11 @@ sub DoEdit {
   my ($header, $editRows, $editCols, $revision, $oldText);
   my ($summary, $pageTime);
   my $newText;
-  $newTree = $pages->getPage($id)->getTree() unless (defined($newTree));
+  unless (defined($newTree)) {
+    my $revision = GetParam('revision','');
+    $revision = '' if ($revision =~ /\D/);
+    $newTree = $pages->getPage($id, $revision)->getTree();
+  }
   if ($newTree) {
     $newText = $newTree->view('wikitext');
     $newText .= "\n"  unless (substr($newText, -1, "\n"));
@@ -790,7 +792,7 @@ sub WikiHTML {
 
 sub DoEditPrefs {
   my $captchaCode;
-  if (!$user) {  # set up Authen::Captcha
+  if (!$user && $useCap) {  # set up Authen::Captcha
       my $captcha = Authen::Captcha->new(data_folder => $config->CaptchaDataDir,
                                          output_folder => $config->CaptchaOutputDir);
       $captchaCode = $captcha->generate_code(7);
@@ -823,7 +825,8 @@ sub GetFormCheck {
 sub DoUpdatePrefs {
   my $captchaCode = &GetParam("captcha", "");
   if ($captchaCode) {  # human confirmation
-      my $humanCode = &GetParam("human_code", "");
+    my $humanCode = &GetParam("human_code", "");
+    if ($useCap) {
       my $captcha = Authen::Captcha->new(data_folder => $config->CaptchaDataDir,
                                          output_folder => $config->CaptchaOutputDir);
       my $result = $captcha->check_code($humanCode, $captchaCode);
@@ -842,6 +845,7 @@ sub DoUpdatePrefs {
           print &GetHttpHeader . $wikiTemplate->process('errors/captchaInvalid');
           return;
       }
+    }
   }
   my $username = &GetParam("p_username",  "");
   if ($username) {
@@ -1113,6 +1117,7 @@ sub DoSearch {
     # do the new pluggable search
     my $search = new PurpleWiki::Search::Engine;
     $search->search($string);
+print STDERR "Search res:",scalar($search->results),"\n";
 
     $wikiTemplate->vars(&globalTemplateVars,
                         keywords => $string,
