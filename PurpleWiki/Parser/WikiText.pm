@@ -96,7 +96,6 @@ sub parse {
     my ($currentNode, @sectionState, $nodeContent);
     my ($listLength, $sectionLength, $indentLength);
     my ($line, $listType, $currentNid);
-    my (@authors);
 
     my %listMap = ('ul' => '(\*+)\s*(.*)',
                    'ol' => '(\#+)\s*(.*)',
