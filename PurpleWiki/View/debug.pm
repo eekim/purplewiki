@@ -1,6 +1,6 @@
 # PurpleWiki::View::debug.pm
 #
-# $Id: debug.pm,v 1.1.2.1 2003/01/20 21:06:46 eekim Exp $
+# $Id: debug.pm,v 1.1.2.2 2003/01/22 22:10:02 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -93,6 +93,7 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::inlineHandler{link}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{url}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{wikiword}->{main} = \&inlineContentMain;
+    $PurpleWiki::View::EventHandler::inlineHandler{freelink}->{main} = \&inlineContentMain;
     $PurpleWiki::View::EventHandler::inlineHandler{image}->{main} = \&inlineContentMain;
 }
 
