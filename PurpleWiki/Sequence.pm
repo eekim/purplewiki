@@ -1,7 +1,7 @@
 # PurpleWiki::Sequence.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Sequence.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id: Sequence.pm,v 1.5.2.1 2004/02/05 07:20:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,7 +33,7 @@ package PurpleWiki::Sequence;
 # Tool for generating PurpleWiki::Sequence numbers for use
 # in Nids
 
-# $Id: Sequence.pm,v 1.5 2004/01/21 23:24:08 cdent Exp $
+# $Id: Sequence.pm,v 1.5.2.1 2004/02/05 07:20:22 cdent Exp $
 
 use strict;
 use IO::File;
@@ -49,17 +49,48 @@ my $LOCK_TRIES = 5;
 sub new {
     my $proto = shift;
     my $datadir = shift;
+    my $remote = shift;
     my $class = ref($proto) || $proto;
     my $self = {};
 
+    $self->{remote} = $remote;
     $self->{datafile} = $datadir . '/sequence';
     $self->{indexfile} = $datadir . '/sequence.index';
     bless ($self, $class);
     return $self;
 }
 
+# Returns the URL associated with a nid
+sub getURL {
+    my $self = shift;
+    my $nid = shift;
+    my $url; 
+
+    if ($self->{remote}) {
+        $url = $self->_getURLByRemote($nid);
+    } else {
+        $url = $self->_getURLByLocal($nid);
+    }
+
+    return $url;
+}
+
 # Returns the next ID in the sequence
 sub getNext {
+    my $self = shift;
+    my $url = shift;
+    my $nid;
+
+    if ($self->{remote}) {
+        $nid = $self->_getNidByRemote($url);
+    } else {
+        $nid = $self->_getNidByLocal($url);
+    }
+
+    return $nid;
+}
+
+sub _getNidByLocal {
     my $self = shift;
     my $url = shift;
     $self->_lockFile();
@@ -72,6 +103,41 @@ sub getNext {
     return $value;
 }
 
+sub _getNidByRemote {
+    my $self = shift;
+    my $url = shift;
+    # FIXME: think about count?
+    my $urlRequest = $self->{remote} . "/1/$url";
+    my $nid;
+
+    use LWP::UserAgent;
+    use HTTP::Request;
+
+    my $ua = new LWP::UserAgent(agent => ref($self));
+    my $request = new HTTP::Request('GET', $urlRequest);
+    my $result = $ua->request($request);
+
+    if ($result->is_success()) {
+        $nid = $result->content();
+        $nid =~ s/\s+//g;
+    } else {
+        # FIXME: need something better than a die here?
+        die "unable to retrieve nid for $url ", $result->code;
+    }
+
+    return $nid;
+}
+
+
+sub _tieIndex {
+    my $self = shift;
+    my $index = shift;
+
+    tie %$index, 'DB_File', $self->{indexfile}, 
+        O_RDWR|O_CREAT, 0444, $DB_HASH or
+        die "unable to tie " . $self->{indexfile} . ' ' . $!;
+}
+
 # I suspect this is expensive
 sub _updateIndex {
     my $self = shift;
@@ -79,12 +145,49 @@ sub _updateIndex {
     my $url = shift;
     my %index;
 
-    tie %index, 'DB_File', $self->{indexfile}, 
-        O_RDWR|O_CREAT, 0644, $DB_HASH ||
-        die "unable to tie " . $self->{indexfile} . '.index' . $!;
-
+    $self->_tieIndex(\%index);
     $index{$value} = $url;
     untie %index;
+}
+
+# look in the index for the url associated with a nid
+sub _getURLByLocal {
+    my $self = shift;
+    my $nid = shift;
+    my %index;
+    my $url;
+
+    $self->_tieIndex(\%index);
+    $url = $index{$nid};
+
+    untie %index;
+
+    return $url;
+}
+
+# use LWP to search a remote index
+sub _getURLByRemote {
+    my $self = shift;
+    my $nid = shift;
+    my $urlRequest = $self->{remote} . "/$nid";
+    my $url;
+
+    use LWP::UserAgent;
+    use HTTP::Request;
+
+    my $ua = new LWP::UserAgent(agent => ref($self));
+    my $request = new HTTP::Request('GET', $urlRequest);
+    my $result = $ua->request($request);
+
+    if ($result->is_success()) {
+        $url = $result->content();
+        $url =~ s/\s+//g;
+    } else {
+        # FIXME: need something better than a die here?
+        die "unable to retrieve url for $nid: ", $result->code;
+    }
+
+    return $url;
 }
 
 sub _retrieveNextValue {
@@ -222,6 +325,11 @@ index of node IDs to fully qualified URLs (used by Transclusion.pm).
 
 Returns the next ID, increments and updates the last used ID
 appropriately.  If $url is passed, also updates the NID to URL index.
+
+=head2 getURL($nid)
+
+Returns the URL in the index associated with the given NID, or undef
+if there isn't one.
 
 =head1 AUTHORS
 

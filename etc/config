@@ -17,6 +17,7 @@ StyleSheet  = /~cdent/usemod.css  # URL for CSS stylesheet (like "/wiki.css")
 #SiteBase    = ""              # Full URL for <BASE> header
 #FullUrl     = ""              # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""              # Local time zone
+RemoteSequence = http://www.burningchrome.com:8000/~cdent/nid
 
 # Recent Changes
 RcDefault   = 30               # Default number of RecentChanges days

@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.9 2004/01/24 02:30:22 cdent Exp $
+# $Id: Transclusion.pm,v 1.9.2.1 2004/02/05 07:20:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,6 +33,7 @@ package PurpleWiki::Transclusion;
 use strict;
 use DB_File;
 use LWP::UserAgent;
+use PurpleWiki::Sequence;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -59,8 +60,6 @@ sub new {
     $self->{url} = $params{url};
     $self->{outputType} = $params{outputType};
 
-    $self->_tieHash($self->{config}->DataDir() . '/' . $INDEX_FILE);
-
     return $self;
 }
 
@@ -79,7 +78,9 @@ sub get {
     my $content;
 
     # get the URL that hosts this nid out of the the db
-    my $url = $self->{db}->{$nid}; 
+    my $sequence = new PurpleWiki::Sequence($self->{config}->DataDir(),
+        $self->{config}->RemoteSequence());
+    my $url = $sequence->getURL($nid);
 
     $content = "no URL for $nid" unless $url;
 

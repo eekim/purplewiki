@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.20 2004/01/21 23:24:08 cdent Exp $
+# $Id: WikiText.pm,v 1.20.2.1 2004/02/05 07:20:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -80,7 +80,8 @@ sub parse {
     my %params = @_;
 
     $url = $params{url};
-    $sequence = new PurpleWiki::Sequence($params{config}->DataDir);
+    $sequence = new PurpleWiki::Sequence($params{config}->DataDir,
+        $params{config}->RemoteSequence);
 
     # set default parameters
     $params{wikiword} = $params{config}->WikiLinks
