@@ -1,7 +1,7 @@
-# PurpleWiki::SVNDatabase::Pages
+# PurpleWiki::SVNArchive
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $
+# $Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -29,18 +29,19 @@
 #    Boston, MA 02111-1307 USA
 
 our $VERSION;
-$VERSION = sprintf("%d", q$Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
+$VERSION = sprintf("%d", q$Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
 
 package PurpleWiki::SVNArchive;
 
 use PurpleWiki::Config;
-use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
 
 use SVN::Fs;
 use SVN::Delta;
 use SVN::Repos;
 use SVN::Core;
+
+require "timelocal.pl";
 
 sub new {
   my $proto = shift;
@@ -51,12 +52,14 @@ sub new {
   my $self = {};
 
   $self->{script} = $config->ScriptName;
-  my $reposPath = $self->{reposPath} = $config->ReposPath;
+  my $reposPath =  $config->ReposPath || '';
   substr($reposPath,-1) = '' if (substr($reposPath,-1) eq '/');
+  $self->{reposPath} = $reposPath;
+#print STDERR "P:$reposPath\n";
   my $reposdir = $config->DataDir;
   $self->{repository} = $reposdir;
-  return undef unless $self->_init($reposdir, $args{create});
   bless $self, $class;
+  return undef unless ($self->_init($reposdir, $args{create}));
   $self;
 }
 
@@ -65,22 +68,21 @@ sub _init {
   my $path = shift;
   my $create = shift;
 
-  if ($create && !-d $path) {
-      mkdir $path || die "Can't create $path $!\n";
-  } elsif (!-d $path) {
-      die "No repository $path\n";
-  }
   if ($create && !-d "$path/db") {
-      my $repos = $self->{repos_ptr} = SVN::Repos::create($path);
-                  || die "Can't create repository";
-  } elsif (!-d "$path/db") {
+    if (!-d $path) {
+      mkdir $path || die "Can't create $path $!\n";
+    }
+    my $repos = $self->{repos_ptr}
+              = SVN::Repos::create($path, undef, undef, undef, undef)
+                || die "Can't create repository";
+  }
+  if (!-d "$path/db") {
       die "No repository $path\n";
   }
       
-  my $repos = $self->{repos_ptr} = SVN::Repos::open($path)
+  my $repos = $self->{repos_ptr} = SVN::Repos::open($path);
   return undef unless $repos;
-  my $fs_ptr = $self->{fs_ptr} = $repos->fs()
-  $self->{youngest} = $fs_ptr->youngest_rev()
+  $self->{fs_ptr} = $repos->fs();
   1;
 }
 
@@ -89,7 +91,32 @@ sub getPage {
   my $id = shift;
   my $rev = shift;
 
-  $self->_get_page($self->_repos_path($id), $rev);
+  my $path = $self->_repos_path($id);
+  my $root = $self->_get_root($rev);
+  my $check = $root->check_path($path);
+  if ($check == $SVN::Node::none) {
+    return PurpleWiki::SVNPage->new(id=>$id, revision=>$self->_currentRev,
+                                    time=>time,
+                                    wikitext=>'Describe the new page here.');
+  } elsif ($check != $SVN::Node::file) {
+    return '';
+  }
+  my $file = $root->file_contents($path);
+
+  $rev = $root->node_created_rev($path);
+  my $lastmod = _svn_time($fs = $self->{fs_ptr}->revision_prop($rev, "svn:date"));
+  local $/ = '';
+  my $contents = '';
+  do {
+    my $chunk = '';
+    $file->read($chunk, 1024);
+    $contents .= $chunk;
+  } while (length($chunk) == 1024);
+#print STDERR "Root:",ref($root),":$path:$check:Rv:$rev:Lm:$lastmod:",length($contents),"\n";
+  $file->close();
+#print STDERR "Cont:$contents=\n";
+  return PurpleWiki::SVNPage->new(id=>$id, wikitext=>$contents,
+                                  time=>$lastmod, revision=>$self->_currentRev);
 }
 
 sub _repos_path {
@@ -98,30 +125,18 @@ sub _repos_path {
   "$self->{reposPath}/$id";
 }
 
-sub _get_page {
-  my $self = shift;
-  my $path = shift;
-  my $rev = shift;
-
-  my $root = $self->_get_root($rev);
-  my $fs = $self->{fs_ptr};
-  my $file =  $fs->file_contents($root, $path);
-
-  $rev = $fs->node_created_rev($root, $path)
-  my $lastmod = $fs->revision_prop($self->{fs_ptr}, $rev,
-                                   SVN::Core::REVISION_DATE);
-  my $contents = $file->read();
-  $file->close();
-  return PurpleWiki::SVNPage->new(wikitext=>$contents, time=>$lastmod, rev=>$rev);
-}
-
 sub _get_root {
   my $self = shift;
   my $rev = shift;
 
-  $rev = $self->{youngest} unless $rev;
+#print STDERR "rev:$rev:";
+  $rev = $self->_currentRev unless $rev;
+#print STDERR "$rev\n";
+  return $self->{fs_ptr}->revision_root($rev);
+}
 
-  return $self->{fs_ptr}->revision_root(rev);
+sub _currentRev {
+  shift->{fs_ptr}->youngest_rev()
 }
 
 # $pages->putPage(<named args>)
@@ -138,20 +153,20 @@ sub _get_root {
 sub putPage {
   my $self = shift;
   my %args = @_;
+#print STDERR "putPage(";for (keys %args) { print STDERR "$_ => $args{$_}, "; }
+#print STDERR ")\n";
   my $tree = $args{tree};
   return "No data" unless (defined($tree));
   my $contents = $tree->view('wikitext');
   $contents .= "\n"  unless (substr($contents, -1, "\n"));
 
-  my $id = $args{id};
+  my $id = $args{pageId};
   my $repos_path = $self->_repos_path($id);
   my $now = $args{timestamp};
-  my $root = $self->_get_root()
   my $user = $args{userId};
-  my $check = $self->{fs_ptr}->check_path($root, $repos_path)
-# constant: svn.util.svn_node_none
-#           svn.util.svn_node_file:
-  my $page = $repos->_get_page($repos_path, $rev)
+  my $root = $self->_get_root();
+  my $check = $root->check_path($repos_path);
+  my $page = $self->getPage($id, $rev);
   my $old_contents = $page->_getText();
 
   return "" if ($contents eq $old_contents);
@@ -159,67 +174,132 @@ sub putPage {
   # this rev is created from oldrev if supplied, so apply change to that rev
   # in theory if this one isn't current it will flag the conflict so we will
   # need to deal with that later.
-  my $rev = $args{oldrev} || $repos->youngest;
-  my $txn = $repos->fs_begin_txn_for_commit($rev, $user, $log_msg);
-  my $fs = $self->{fs_ptr};
-  my $root = $fs->txn_root($txn);
-
-  if ($check != SVN::Node::File) {
-      $fs->make_file($root, $repos_path)
-      $fs->change_node_prop($root, $repos_path, 'svn:eol-style', 'native')
-  }
-
-  ($tx_handler, $tx_baton) = $root->apply_textdelta($repos_path, undef, undef)
-
-  $root->send_string($wikitext, $tx_handler, $tx_baton);
-
+  my $rev = $args{oldrev} || $self->_currentRev;
+  my $repos = $self->{repos_ptr};
   $args{host} =  $ENV{REMOTE_ADDR} unless ($args{host});
-  for my $pname ('userId', 'host', 'changeSummary' ) {
-      my $pval = $args{$pname};
-      $props{$pname} = (defined($pval)) ? $pval : $page->{$pname};
-  }
-  for my $pname (keys %props) {
-      $root->change_node_prop($repos_path, 'purple:'.$pname, $props{$pname})
-          if (defined($props{$pname}));
+  my $log_msg = $args{changeSummary};
+  my $cur = $self->_currentRev;
+print STDERR "Txn[$id]$rev:$cur\n";
+print STDERR "Conflict\n" if ($rev < $cur);
+  return "Conflict\n" if ($rev < $cur);
+  my $txn = $repos->fs_begin_txn_for_commit($rev, "$user:$host", $log_msg);
+  my $root = SVN::Fs::txn_root($txn);
+
+  if ($check != $SVN::Node::file) {
+      if ($check == $SVN::Node::none) {
+        my @path = split("/", $self->{reposPath});
+        my $d;
+        while (@path > 1
+               && $root->check_path($d=join("/", @path)) == $SVN::Node::none) {
+#print STDERR "make_dir $d\n";
+          $root->make_dir($d);
+        }
+#print STDERR "make_file $repos_path\n";
+        $root->make_file($repos_path);
+        $root->change_node_prop($repos_path, 'svn:eol-style', 'native');
+      } else {
+        $root->abort_txn();
+        return "Collision, non-file at $repos_path ($check)";
+      }
   }
 
-  $root->commit_txn($repos, $txn);
+  my ($tx_handler, $tx_baton) = $root->apply_textdelta($repos_path, undef, undef);
+  SVN::TxDelta::send_string($contents, $tx_handler, $tx_baton);
 
+  #for my $pname ('userId', 'host', 'changeSummary' ) {
+  #    my $pval = $args{$pname};
+  #    $props{$pname} = (defined($pval)) ? $pval : $page->{$pname};
+  #}
+  #for my $pname (keys %props) {
+  #    $root->change_node_prop($repos_path, 'purple:'.$pname, $props{$pname})
+  #        if (defined($props{$pname}));
+  #}
+#print STDERR "Sent props\n";
+
+  $repos->fs_commit_txn($txn);
+#print STDERR "Committed $id ",$self->_currentRev,"\n";
   return "";
 }
 
 sub allPages {
   my $self = shift;
-  my $root = $self->_get_root(rev);
-  ($self->{fs_ptr}->dir_entries($self->_repos_path("")).keys());
+  my $root = $self->_get_root();
+  my $rpath = $self->{reposPath};
+  return () if ($root->check_path($rpath) != $SVN::Node::dir);
+  my $h = ($root->dir_entries($rpath));
+#print STDERR "allPages:\n ",join("\n ", (keys %$h)),"\n::\n";
+  (keys %$h);
 }
 
 # pages->recentChanges($starttime)
 sub recentChanges {
   my $self = shift;
   my $starttime = shift;
-  my $config = $self->{config} || PurpleWiki::Config->instance();
-  my %params = @_;
+  my %pages = ();
+  my @rc = ();
+  my $done = 0;
+  my $rpath = $self->{reposPath};
+  sub receiver1 {
+    #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
+    return if ($done);
+    my $h = $_[0];
+    my $t = _svn_time($_[3]);
+    if ($t < $starttime) {
+      $done = 1;
+      return;
+    }
+#print STDERR "Log:",join(":",@_),"\n";
+    for my $p (keys %$h) {
+      next unless ($p =~ /^$rpath\//);
+      $id = $';
+      if (defined($pages{$p})) {
+        $pages{$p}->{numChanges}++;
+      } else {
+        push(@rc, $p);
+        $pages{$p} = { numChanges => 1, pageName => $id };
+#print STDERR "Got $id ",$$h{$p}->action,"\n";
+        $pages{$p}->{timeStamp} = $t;
+        $pages{$p}->{summary} = $_[4];
+        $pages{$p}->{userId} = $_[2];
+        ($pages{$p}->{userId}, $pages{$p}->{host}) = ($`, $')
+            if ($pages{$p}->{userId} =~ /:/);
+      }
+    }
+  }
+
   $starttime = 0 unless $starttime;
-  #PurpleWiki::Database::recentChanges($config, $starttime);
+  #$repos->get_logs([paths],start,end,disc,strict,&receiver);
+  $self->{repos_ptr}->get_logs("", $self->_currentRev, 1, 1, 1, \&receiver1);
+  my $r = [ map($pages{$_}, @rc) ];
+#print STDERR "Rc:",join(":", @rc),"\n::\nPP:",join(":", @$r),"\n";
+  $r;
+}
+
+sub _svn_time {
+  my $t = shift;
+  if ($t =~ /^(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)\.\d+Z/) {
+    $t = timegm($6,$5,$4,$3,$2-1,$1,0);
+  } else { print SDTERR "Bad date:$t\n"; }
+  $t;
 }
 
 # $pages->diff($id, $from_revision, $to_revision)
 # if $from_revision is not supplied, try to use the previous version
 sub diff {
   my ($self, $id, $diffRevision, $goodRevision) = @_;
-  my $page = $self->getPage($id, $goodRevision);
-  my $to = $page->_getText();
+  my $to = $self->getPage($id, $goodRevision)->_getText();
 
-  $page->{selectrevision} = $diffRevision || $goodRevision - 1;
-  my $from = $page->_getText();
+  my $fromrev = $diffRevision || $goodRevision - 1;
+  my $from = $self->getPage($id, $fromrev)->_getText();
 
   require Text::Diff;
   Text::Diff::diff(\$from, \$to, {STYLE => "OldStyle"});
 }
 
 sub pageExists {
-    my ($self, $id) = @_;
+  my ($self, $id) = @_;
+  my $root = $self->_get_root();
+  ($root->check_path($self->_repos_path($id)) == $SVN::Node::file);
 }
 
 sub getName {
@@ -231,52 +311,42 @@ sub getName {
 
 # $pages->getRevisions($id)
 sub getRevisions {
-    my $self = shift;
-    my $id = shift;
-    my $maxcount = shift || 0;
-    my $count = 1;
-    my @pageHistory = ();
+  my $self = shift;
+  my $id = shift;
+  my $maxcount = shift || 0;
+  my $count = 1;
+
+  my @response = ();
+  sub receiver2 {
+    #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
+    return if ($maxcount && $maxcount < $count++);
+    my $t = _svn_time($_[3]);
+    my $userId = $_[2];
+    $userId =~ s/:.*$//;
+    push(@response, {revision=>$rev, user=>$userId,
+                     dateTime=>UseModWiki::TimeToText($t), summary=>$_[4]});
+  }
+
+  my $repos = $self->{repos_ptr};
+  my $path = $self->_repos_path($id);
+#print STDERR "get_logs($path, ",$self->_currentRev,")\n";
+  $repos->get_logs($path, $self->_currentRev, 1, 0, 1, \&receiver2);
+
+  return @response;
 }
-
-#sub _getRevisionHistory {
-#    my ($self, $id, $section, $isCurrent) = @_;
-#    return { revision => $rev,
-#             dateTime => UseModWiki::TimeToText($ts),
-#             host => $host,
-#             user => $user,
-#             summary => $summary,
-#             pageUrl => $pageUrl,
-#             diffUrl => $diffUrl,
-#             editUrl => $editUrl };
-#}
-
-# Retrieves the default text data by getting the
-# Section and then the text in that Section.
-# pages->getPageNode($Id, $nid)
-#
-# get just one node
-#
-#sub getPageNode {
-#  my ($self, $id, $nid) = @_;
-#  my $page = $self->getPage($id);
-#  my $tree = $page->getTree();
-##print STDERR "getPageNode:$pages Pg:$page Tr:$tree Id:$id Nid:$nid\n";
-#  return $tree->view('subtree', 'nid' => uc($nid)) if ($tree);
-#  ""
-#}
 
 package PurpleWiki::SVNPage;
 
 # PurpleWiki Page Data Access
 
-# $Id: Pages.pm 506 2004-09-22 07:31:44Z gerry $
+# $Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $
 
 use strict;
 
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
-    my $self = { @_, version => $DATA_VERSION };
+    my $self = { @_ };
     bless ($self, $class);
     return $self;
 }
@@ -295,36 +365,20 @@ sub getUserID {
 
 # Returns the revision of this Page.
 sub getRevision {
-    my $self = shift;
+    shift->{revision};
 }
 
 # Gets the timestamp of this Page. 
 sub getTime {
-    my $self = shift;
+    shift->{time};
 }
 
 #
 # page->_getText([revision])
 #
 sub _getText {
-    my $self = shift;
+    shift->{wikitext};
 }
-
-# page->getWikiHTML()
-#
-# format the page for HTML output
-#
-#sub getWikiHTML {
-#    my $self = shift;
-#
-#    my $url = $self->{pages}->{script} . '?' . $self->{id};
-#    my $parser = PurpleWiki::Parser::WikiText->new();
-#    my $wiki = $parser->parse($self->_getText(),
-#                   add_node_ids => 0,
-#                   url => $url,
-#               );
-#    return $wiki->view('wikihtml', url => $url);
-#}
 
 sub getTree {
   my $self = shift;
@@ -332,8 +386,11 @@ sub getTree {
   return $tree if $tree;
   my $parser = new PurpleWiki::Parser::WikiText;
   my $text = $self->_getText();
+#print STDERR "Tree:$text=\n";
   return "" unless $text;
-  return $parser->parse($text, 'add_node_ids' => 0);
+  $self->{tree} = $parser->parse($text, 'add_node_ids' => 0);
+#print STDERR "After:",$self->{tree}->view('wikitext'),"\n";
+  $self->{tree};
 }
 
 # Retrieves the page id.

@@ -3,10 +3,13 @@
 my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
 $configdir = "r";
+$dodiff=1;
 while (@ARGV) {
     $a = shift(@ARGV);
     if ($a =~ /^-1/) {
         $once = 1;
+    } elsif ($a eq '-nd') {
+        $dodiff = 0;
     } elsif ($a =~ /^-c/) {
         $configdir = $' || shift(@ARGV);
     } elsif ($a =~ /^-s/) {
@@ -49,13 +52,15 @@ if ($split) {
             chomp($url = <IN>);
             my $q = new CGI(IN);
             runTest($q, $test_out);
+            if ($dodiff) {
             my $diff = diffOutput($compare, $test_out);
-            if ($diff) {
-                print ERR "Seq $seq differs:\n";
-                print ERR $diff;
-                unlink $test_out unless ($update);
-            } else {
-                unlink $test_out;
+                if ($diff) {
+                    print ERR "Seq $seq differs:\n";
+                    print ERR $diff;
+                    unlink $test_out unless ($update);
+                } else {
+                    unlink $test_out;
+                }
             }
             close IN;
         } else { print ERR "Couldn't open $test_in: $!\n"; }

@@ -124,7 +124,7 @@ sub InitRequest {
   my $database_package = $config->DatabasePackage;
   print STDERR "Database Package $database_package\nError: $@\n"
       unless (defined(eval "require $database_package"));
-  $pages = $database_package->new ($config);
+  $pages = $database_package->new ($config, create => 1);
            # Object representing a page database
 
   if (!$pages) {

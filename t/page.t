@@ -65,7 +65,7 @@ my $config = new PurpleWiki::Config($configdir);
 my $database_package = $config->DatabasePackage;
 print STDERR "Error in Package: $database_package\nError:$@"
     unless (eval "require $database_package");
-my $pages = $database_package->new ($config);
+my $pages = $database_package->new ($config, create => 1);
 $config->{pages} = $pages;
 
 my $parser = PurpleWiki::Parser::WikiText->new();

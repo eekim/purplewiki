@@ -15,9 +15,11 @@ RCName      = RecentChanges   # Name of changes page (change space to _)
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
 #DatabasePackage = PurpleWiki::DefaultArchive
-DatabasePackage = PurpleWiki::Database::Pages
-DataDir     = "rDB"
-#DataDir     = "newDB"
+#DatabasePackage = PurpleWiki::Database::Pages
+DatabasePackage = PurpleWiki::SVNArchive
+DataDir     = rDB
+#DataDir     = newDB
+ReposPath   = /wiki
 LocalSequenceDir = $DataDir
 
 # Recent Changes
