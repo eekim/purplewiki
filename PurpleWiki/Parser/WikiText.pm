@@ -523,7 +523,7 @@ sub _parseInlineNode {
     $rx .= qq{\\\[$rxProtocols$rxAddress\\s*.*?\\\]|$rxProtocols$rxAddress};
     if ($params{wikiword}) {
         $rx .= qq{|(?:$rxWikiWord)?\\\/$rxSubpage(?:\\\#[A-Z0-9]+)?};
-        $rx .= qq{$rxQuoteDelim|[A-Z]\\w+:[^\\\]\\\#\\s"<>]+};
+        $rx .= qq{$rxQuoteDelim|[A-Z]\\w+:[^\\\]\\\#\\s"<>\:]+};
         $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim|$rxWikiWord};
         $rx .= qq{(?:\\\#[A-Z0-9]+)?$rxQuoteDelim};
     }
