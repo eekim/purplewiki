@@ -16,6 +16,8 @@ Features include:
 
   * Modular architecture for maximum customizability.
 
+  * Template based presentation.
+
 DOWNLOAD AND DOCUMENTATION
 
 PurpleWiki is available at:
@@ -63,7 +65,8 @@ the following commands:
 To install the Wiki:
 
   1. Copy the wikidb directory included in the distribution wherever
-     you want it.  This directory must be writeable by the web server
+     you want it.  Copy the directory and all its contents, including
+     subdirectories. This directory must be writeable by the web server
      when running CGI scripts.  It should not be in the publically
      accessible htdocs directory.
 
@@ -96,7 +99,11 @@ Search directory of your PurpleWiki installation in site_perl or
 elsewhere in @INC. Those files include additional configuration
 requirements.
 
-COPYRIGHT AND LICENCE
+For more information see:
+
+  http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?InstallationTips
+
+COPYRIGHT AND LICENSE
 
 Copyright (C) 2002-2004 Blue Oxen Associates.
 
