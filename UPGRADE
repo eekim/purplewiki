@@ -89,10 +89,11 @@ Perform the following required steps:
       LogoLeft
       UseLookup
 
-   d. Change KeepDays from the original default of 14 days to 30
-      or 90. This is the expiration time for old versions of pages. 
+   d. Change KeepDays from the original default of 14 days to 30, 90
+      or even 365. This is the expiration time for old versions of pages. 
       The old low number proved unhelpful in the battle against
-      spam.
+      spam. We recommend 365. By the end of that time, there will be a 
+      more robust data storage system for PurpleWiki.
 
 5. If you use PurpleWiki::Apache1Handler or PurpleWiki::Apache2Handler
    to present wiki formatted text files, see the documentation included in
