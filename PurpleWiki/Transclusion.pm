@@ -96,7 +96,7 @@ sub get {
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
         } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
-            my ($pageName) = ($url =~ /\?(\w+)\b/);
+            my ($pageName) = ($url =~ /\?([^&]+)\b/);
             my $page = new PurpleWiki::Database::Page(id => $pageName);
             my $parser = new PurpleWiki::Parser::WikiText;
             if ($page->pageExists()) {
