@@ -1,0 +1,9 @@
+http://opus/cgi-bin/wiki.pl
+title=AnotherLink
+oldrev=1
+oldconflict=0
+text=%3D%3D%3D%20A%20base%20page%20%7Bnid%20C%7D%20%3D%3D%3D%0D%0A%0D%0A%0D%0A%2A%20This%20is%20another%20update
+summary=Post%207%20should%20be%20a%20conflict
+Save=Save
+.cgifields=recent_edit
+=

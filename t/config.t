@@ -7,9 +7,13 @@ use Test;
 BEGIN { plan tests => 4 };
 
 use PurpleWiki::Config;
-my $configfile = 't';
+my $configdir = 't';
+my $datadir = 't/tDB';
 
-my $config = new PurpleWiki::Config($configfile);
+system('cp t/config.tDef t/config');
+(-d $datadir) || system("mkdir $datadir");
+
+my $config = new PurpleWiki::Config($configdir);
 
 ok(ref $config eq 'PurpleWiki::Config');
 

@@ -37,8 +37,6 @@ package PurpleWiki::Syndication::Rss;
 
 use strict;
 use XML::RSS;
-use PurpleWiki::Database;
-use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 
 our $VERSION;
@@ -48,7 +46,7 @@ sub new {
     my $proto = shift;
     my $self = { @_ };
     my $class = ref($proto) || $proto;
-    $self->{config} = PurpleWiki::Config->instance();
+    $self->{config} = PurpleWiki::Config->instance() unless $self->{config};
     die "No config object found" if not defined $self->{config};
     bless($self, $class);
     return $self;
@@ -59,7 +57,9 @@ sub getRSS {
     my $count = shift || 15;
     my $string;
 
-    my $rcRef = PurpleWiki::Database::recentChanges($self->{config});
+    my $urlbase = $self->{config}->ScriptName . '?';
+    my $pages = $self->{config}->{pages};
+    my $rcRef = $pages-> recentChanges();
     my @recentChanges = @{$rcRef};
 
     my $rss = new XML::RSS;
@@ -75,34 +75,21 @@ sub getRSS {
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
 
-        my $bodyText = $self->_getWikiHTML($recentChange->{id});
+        my $id = $recentChange->{pageId};
+        my $bodyText = $pages->getPage($id)
+                       ->getTree()->view('wikihtml', url => $urlbase.$id);
 
         $rss->add_item(
-            title => $recentChange->{pageName},
-            link  => $self->{config}->ScriptName . '?' .$recentChange->{id},
+            title => $id,
+            link  => $self->{config}->ScriptName . '?' .$id,
             dc => {
-                creator => $recentChange->{userName},
+                creator => $recentChange->{userId},
             },
             description => "<![CDATA[$bodyText]]>\n",
         );
     }
 
     return $rss->as_string;
-}
-
-sub _getWikiHTML {
-    my $self = shift;
-    my $id = shift;
-
-    my $url = $self->{config}->ScriptName . '?' . $id;
-    my $page = new PurpleWiki::Database::Page(id => $id);
-    $page->openPage();
-    my $parser = PurpleWiki::Parser::WikiText->new();
-    my $wiki = $parser->parse($page->getText()->getText(),
-        add_node_ids => 0,
-        url => $url,
-    );
-    return $wiki->view('wikihtml', url => $url);
 }
 
 1;
@@ -138,9 +125,5 @@ Returns RSS string of RecentChanges.
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
-
-=head1 SEE ALSO
-
-L<PurpleWiki::Database>.
 
 =cut

@@ -1,0 +1,9 @@
+http://opus/cgi-bin/wiki.pl
+title=FrontPage
+oldrev=4
+oldconflict=0
+text=%3D%20A%20Title%20%7Bnid%201%7D%20%3D%0D%0A%0D%0A%2A%20and%20some%20aditional%20%7Bnid%202%7D%0D%0A%0D%0A%3A%3A%20Now%20for%20%5B%5Bsome%20link%20or%20another%5D%5D%20%7Bnid%205%7D%0D%0A%0D%0A%2A%20data%20just%20to%20test%20%7Bnid%203%7D%0D%0A%2A%2A%20Now%20is%20the%20time%20%7Bnid%206%7D%0D%0A%2A%2A%20for%20some%20more%20tests%20%7Bnid%207%7D%0D%0A%2A%20something%20%7Bnid%204%7D%0D%0A%2A%20AnotherLink%0D%0A%2A%20AMissingLink%0D%0A
+summary=Post%205
+Save=Save
+.cgifields=recent_edit
+=

@@ -13,8 +13,8 @@
     Edit
   [% END %]
   . . [% page.dateTime %] by
-  [% IF page.user %]
-    [% page.user %]
+  [% IF page.userName %]
+    [% page.userName %]
   [% ELSE %]
     [% page.host %]
   [% END %]

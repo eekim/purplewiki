@@ -11,7 +11,6 @@ use Test;
 BEGIN { plan tests => 5};
 
 #use lib '.'; # makes this test runnable alone from the base of the dist
-use PurpleWiki::Database::Page;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::View::Filter;
@@ -55,5 +54,5 @@ foreach (@nids) {
 }
 
 sub END {
-    unlink('t/sequence');
+    unlink('t/tDB/sequence');
 }

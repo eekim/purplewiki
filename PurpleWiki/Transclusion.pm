@@ -54,13 +54,11 @@ my $INDEX_FILE = 'sequence.index';
 # aware of new writes? Presumably not?
 sub new {
     my $class = shift;
-    my $self = {};
+    my $self = { @_ };
+    $self->{config} = PurpleWiki::Config->instance()
+        unless (defined($self->{config}));
+    $self->{pages} = $self->{config}->{pages} unless (defined($self->{pages}));
     bless ($self, $class);
-    my %params = @_; 
-
-    $self->{config} = PurpleWiki::Config->instance();
-    $self->{url} = $params{url};
-    $self->{outputType} = $params{outputType};
 
     return $self;
 }
@@ -78,7 +76,6 @@ sub get {
     my $nidLong = "nid$nid";
     my $outputType = $self->{outputType} || '';
     my $content;
-
     # get the URL that hosts this nid out of the the db
     my $url = $self->getURL($nid);
 
@@ -92,22 +89,25 @@ sub get {
         # FIXME: assumes that anything not the wiki
         # is static content
         my $scriptName = $self->{config}->ScriptName;
-        if ((($url =~ /$scriptName/) || ($url =~ /\.wiki$/)) &&
+        $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
+        my ($host, $path);
+        if ($url =~ m'^http://([^/]+)/') {
+            ($host, $path) = ($1, "/$'");
+        } else {  # what other URL patterns do we need?
+            ($host, $path) = ('', $url);
+        }
+        if ((($path =~ /$scriptName/) || ($path =~ /\.wiki$/)) &&
             ($url eq $self->{url})) {
             $content = q(Transclusion loop, please remove.);
-        } elsif ($url =~ $ENV{HTTP_HOST}  && $url =~ /$scriptName/) {
-            my ($pageName) = ($url =~ /\?([^&]+)\b/);
-            my $page = new PurpleWiki::Database::Page(id => $pageName);
-            my $parser = new PurpleWiki::Parser::WikiText;
-            if ($page->pageExists()) {
-                $page->openPage();
-                my $tree = $parser->parse($page->getText()->getText(),
-                             'add_node_ids' => 0);
-                $content = $tree->view('subtree', 
-                                       'nid' => uc($nid));
-            } 
-            
-            $content = "transclusion index out of sync" if not $content;
+        } elsif ((!$host || $host eq 'localhost' || $host eq $ENV{HTTP_HOST})
+                 && $path =~ /$scriptName/) {
+            my ($id) = ($url =~ /\?([^&]+)\b/);
+            #$content=($self->{pages}->getPageNode($id, uc($nid)))
+            #         || "transclusion index out of sync";
+            my $page = $self->{pages}->getPage($id);
+            my $tree = $page->getTree();
+            $content = $tree ? $tree->view('subtree', 'nid' => uc($nid))
+                             : "transclusion index out of sync";
         } else {
             # request the content of the URL 
             my $ua = new LWP::UserAgent(agent => ref($self));

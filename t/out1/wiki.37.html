@@ -1,0 +1,105 @@
+Set-Cookie: TestWiki=093db630e1a44f3a21889604d0b0069d; path=/cgi-bin/; expires=Wed, 17-Nov-2004 18:23:58 GMT
+Date: Wed, 10 Nov 2004 18:23:58 GMT
+Content-Type: text/html; charset=ISO-8859-1
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1 Strict//EN"
+                      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>TestWiki: 
+FrontPage</title>
+<link rel="stylesheet" href="/purplewiki.css" />
+</head>
+
+<body>
+
+<div id="header">
+<div class='left'>
+<h1>Editing FrontPage</h1>
+</div>
+<div class='right'>
+<!-- img tag would go here if you have a logo -->
+</div>
+</div>
+
+<div id="menubar">
+<div class='left'>
+<a href="/example/testwiki.cgi?FrontPage">FrontPage</a> |
+<a href="/example/testwiki.cgi?RecentChanges">RecentChanges</a> |
+<a href="/example/testwiki.cgi?action=index">Page Index</a>
+</div>
+<div class='right'>
+<a href="/example/testwiki.cgi?action=login">Login</a>
+(<a href="/example/testwiki.cgi?action=editprefs">create account</a>)
+</div>
+</div>
+
+<div id="main">
+<div id="body">
+
+
+<form method="post" action="/example/testwiki.cgi" enctype="application/x-www-form-urlencoded">
+<input type="hidden" name="title" value="FrontPage" />
+<input type="hidden" name="oldrev" value="9" />
+<input type="hidden" name="oldconflict" value="0" />
+
+<textarea name="text" rows="20" cols="80" style="width:100%">
+= A Title {nid 1} =
+
+* and some aditional {nid 2}
+
+:: Now for [[some link or another]] {nid 5}
+
+* data just to test {nid 3}
+** Now is the time {nid 6}
+** for some more tests {nid 7}
+* something {nid 4}
+* AnotherLink {nid A}
+* AMissingLink {nid B}
+
+</textarea>
+
+<p class='editsubmit'>Summarize changes: <input type="text" name="summary" size="60" maxlength="200" /><br />
+<input type="submit" name="Save" value="Save" />
+  (<a href="/example/testwiki.cgi?action=login">Login</a> if you already have an
+  account, or visit <a href="/example/testwiki.cgi?action=editprefs">Preferences</a> to
+  create one.)
+<input type="submit" name="Preview" value="Preview" /></p>
+
+<div><input type="hidden" name=".cgifields" value="recent_edit" /></div></form>
+
+</div>
+
+<div id="sidebar">
+
+
+<div class='box'>
+<div class="searchbar">
+<form method="get" action="/example/testwiki.cgi"
+      enctype="application/x-www-form-urlencoded">
+<h3>Search</h3>
+<input type="text" name="search"  size="20" style="width:95%" />
+<input type="hidden" name="dosearch" value="1" />
+</form>
+</div>
+</div>
+</div>
+</div>
+
+<div id="footer">
+<div class='left'>
+<div class="pagebar">
+<a href="/example/testwiki.cgi?action=history&amp;id=FrontPage">View other revisions</a>
+</div>
+
+</div>
+<div class='right'>
+<a href="http://www.blueoxen.org/tools/purplewiki/">
+<span class="poweredby">PurpleWiki</span></a><br />
+<a href="/example/testwiki.cgi?action=rss">
+<span class="syndicate">RSS</span></a>
+</div>
+</div>
+
+</body>
+</html>

@@ -66,7 +66,7 @@ sub new {
 
     # Make sure we have a PurpleWiki::Config object.
     $self->{config} = PurpleWiki::Config->instance();
-    croak "PurpleWiki::Config object not found" unless $self->{config};
+    #croak "PurpleWiki::Config object not found" unless $self->{config};
 
     # Object state.
     $self->{depth} = 0;

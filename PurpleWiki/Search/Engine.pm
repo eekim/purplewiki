@@ -58,6 +58,7 @@ sub search {
     foreach my $module (@{$self->{modules}}) {
         my $class = "PurpleWiki::Search::$module";
         eval "require $class";
+print STDERR "Error loading Search $class\n$@" if $@;
 
         my $searcher = $class->new();
 

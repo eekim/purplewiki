@@ -13,7 +13,7 @@ use DB_File;
 use File::Copy;
 use File::Find;
 use PurpleWiki::Config;
-use PurpleWiki::Database::User::UseMod;
+use PurpleWiki::UserDB::UseMod;
 
 my $CONFIG;
 if (scalar @ARGV) {
@@ -34,7 +34,7 @@ find(sub {-f && /^(\d+)\.db/ && push @userIds, $1}, ( $userDir ) );
 
 my @toDelete;
 
-my $userDb = new PurpleWiki::Database::User::UseMod;
+my $userDb = new PurpleWiki::UseMod::User::UseMod;
 foreach my $userId (sort @userIds) {
     my $user = $userDb->loadUser($userId);
     if ($user) {

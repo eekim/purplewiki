@@ -1,9 +1,8 @@
 # PurpleWiki::Page.pm
-# vi:ai:sw=4:ts=4:et:sm
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -30,184 +29,115 @@
 
 package PurpleWiki::Page;
 
-use PurpleWiki::Config;
-use PurpleWiki::Database::Page;
+use 5.005;
+use strict;
 
-# mappings between PurpleWiki code and code within useMod
-
-# $Id$
-
-our $MainPage;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-sub exists {
-    my $id = shift;
-    my $config = PurpleWiki::Config->instance();
+### constructor
 
-    $id =~ s|^/|$MainPage/| if defined($MainPage);
-    if ($config->FreeLinks) {
-        $id = FreeToNormal($id, $config);
+sub new {
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $self = { @_ };
+    if (!$self->{id}) {
+       use Carp;
+       Carp::confess;
+#for (keys %$self) { print STDERR "newP:$_ = $$self{$_}\n"; }
     }
-    my $page = new PurpleWiki::Database::Page('id' => $id);
-    return $page->pageExists();
+    bless ($self, $class);
+    return $self;
 }
 
-sub siteExists {
-    my $site = shift;
-    my $config = PurpleWiki::Config->instance();
-    my $status;
-    my $data;
+### accessors/mutators
 
-    ($status, $data) = PurpleWiki::Database::ReadFile($config->InterFile);
-    return undef if (!$status);
-    my %interSite = split(/\s+/, $data); 
-    return $interSite{$site};
+sub getId {
+    return shift->{id};
 }
 
-sub getWikiWordLink {
-    my $id = shift;
-
-    my $results;
-    $results = GetPageOrEditLink($id, '');
-    return _makeURL($results);
+sub getUserId {
+    return shift->{userId};
 }
 
-sub getInterWikiLink {
-    my $id = shift;
-    
-    my $results;
-    $results = (InterPageLink($id, $config))[0];
-    return $results ? _makeURL($results) : '';
+sub getRevision {
+    return shift->{revision};
 }
 
-sub getFreeLink {
-    my $id = shift;
-
-    my $results;
-    $results = (GetPageOrEditLink($id, ''))[0];
-    return _makeURL($results);
+sub getTime {
+    return shift->{timestamp};
 }
 
-sub _makeURL {
-    my $string = shift;
-    return ($string =~ /\"([^\"]+)\"/)[0];
+sub getHost {
+    return shift->{host};
 }
 
-# FIXME: this is hackery 
-sub GetPageOrEditLink {
-  my ($id, $name) = @_;
-  my (@temp);
-  my $config = PurpleWiki::Config->instance();
-
-  if ($name eq "") {
-    $name = $id;
-    if ($config->FreeLinks) {
-      $name =~ s/_/ /g;
-    }
-  }
-  # FIXME: this is not right. There are times when 
-  # the / is there but MainPage is not set.
-  $id =~ s|^/|$MainPage/| if defined($MainPage);
-  if ($config->FreeLinks) {
-    $id = FreeToNormal($id);
-  }
-  my $page = new PurpleWiki::Database::Page('id' => $id);
-  if ($page->pageExists()) {      # Page file exists
-    return GetPageLinkText($id, $name);
-  }
-  if ($config->FreeLinks) {
-    if ($name =~ m| |) {  # Not a single word
-      $name = "[$name]";  # Add brackets so boundaries are obvious
-    }
-  }
-  return $name . GetEditLink($id, "?");
+sub getSummary {
+    return shift->{changeSummary};
 }
 
-sub FreeToNormal {
-  my $id = shift;
-  my $config = PurpleWiki::Config->instance();
-
-  $id =~ s/ /_/g;
-  $id =~ s/[\r\n]/_/g;
-  $id = ucfirst($id);
-  if (index($id, '_') > -1) {  # Quick check for any space/underscores
-    $id =~ s/__+/_/g;
-    $id =~ s/^_//;
-    $id =~ s/_$//;
-    if ($config->UseSubpage) {
-      $id =~ s|_/|/|g;
-      $id =~ s|/_|/|g;
-    }
-  }
-  if ($config->FreeUpper) {
-    # Note that letters after ' are *not* capitalized
-    if ($id =~ m|[-_.,\(\)/][a-z]|) {    # Quick check for non-canonical case
-      $id =~ s|([-_.,\(\)/])([a-z])|$1 . uc($2)|ge;
-    }
-  }
-  return $id;
-}
-
-sub GetPageLinkText {
-  my ($id, $name) = @_;
-  my $config = PurpleWiki::Config->instance();
-
-  # FIXME: this is not right. There are times when 
-  # the / is there but MainPage is not set.
-  $id =~ s|^/|$MainPage/| if defined($MainPage);
-  if ($config->FreeLinks) {
-    $id = FreeToNormal($id);
-    $name =~ s/_/ /g;
-  }
-  return ScriptLink($id, $name);
-}
-
-sub ScriptLink {
-  my ($action, $text) = @_;
-  my $config = PurpleWiki::Config->instance();
-
-  my $scriptName = $config->ScriptName;
-  return "<a href=\"$scriptName?$action\">$text</a>";
-}
-
-sub GetEditLink {
-  my ($id, $name) = @_;
-  my $config = PurpleWiki::Config->instance();
-
-  if ($config->FreeLinks) {
-    $id = FreeToNormal($id);
-    $name =~ s/_/ /g;
-  }
-  return ScriptLink("action=edit&amp;id=$id", $name);
-}
-
-sub InterPageLink {
-    my ($id) = @_;
-    my ($name, $site, $remotePage, $url, $punct);
-
-    ($id, $punct) = SplitUrlPunct($id);
-
-    $name = $id;
-    ($site, $remotePage) = split(/:/, $id, 2);
-    $url = siteExists($site);
-    return ("", $id . $punct)  if ($url eq "");
-    $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
-    $url .= $remotePage;
-    return ("<a href=\"$url\">$name</a>", $punct);
-}
-
-sub SplitUrlPunct {
-    my ($url) = @_;
-    my ($punct);
-
-    if ($url =~ s/\"\"$//) {
-      return ($url, "");   # Delete double-quote delimiters here
-    }
-    $punct = "";
-    ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
-    $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
-    return ($url, $punct);
+sub getTree {
+    return shift->{tree};
 }
 
 1;
+__END__
+
+=head1 NAME
+
+PurpleWiki::Page - Simplest Page class possible
+
+=head1 SYNOPSIS
+
+  use PurpleWiki::Archive::PlainText;  # backends return Page objects
+
+  my $pages = PurpleWiki::Archive::PlainText->new;
+  my $page = $pages->getPage('FrontPage');
+
+  print $page->getId . "\n";
+  print $page->getRevision . "\n";
+  print $page->getTime . "\n";
+  print $page->getUserId . "\n";
+  print $page->getHost . "\n";
+  print $page->getSummary . "\n";
+  print $page->getTree->view('wikihtml') . "\n";
+
+=head1 DESCRIPTION
+
+PurpleWiki::Page is the simplest page class possible, suitable for any
+Archive backend.  Also defines the interface for all Page classes.
+The default Archive backends that come with PurpleWiki use
+PurpleWiki::Page as a base class, overloading the methods in order to
+achieve some performance trickery.  However, this is not necessary.
+You can write an Archive backend that uses this Page class.
+
+=head1 METHODS
+
+=head2 new({ id => $id, revision => $revision, userId => $userId, host => $host, timeStamp => $timeStamp, tree => $tree})
+
+Constructor.  We did not define any mutators for the Page class, so
+all parameters must be passed via the constructor.
+
+=head2 Accessors
+
+ getId()
+ getUserId()
+ getRevision()
+ getHost()
+ getTime()
+ getSummary()
+ getTree()
+
+Accessors for all the various fields.
+
+=head1 AUTHORS
+
+Gerry Gleason, E<lt>gerry@geraldgleason.comE<gt>
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Archive::Base>.
+
+=cut

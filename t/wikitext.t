@@ -45,5 +45,5 @@ foreach my $filename (@files) {
     $shouldBe = &readFile("t/output/$filename.txt");
     $wiki = $wikiParser->parse($input);
     $output = $wiki->view('wikitext');
-    ok($output eq $shouldBe);
+    ok($output, $shouldBe);
 }

@@ -32,6 +32,7 @@ package PurpleWiki::ACL;
 use 5.005;
 use strict;
 use PurpleWiki::Config;
+use PurpleWiki::Misc;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -63,12 +64,9 @@ sub canEdit {
     my $self = shift;
     my ($user, $pageId) = @_;
 
-    if ($self->{config}->LoginToEdit) {
-        (defined $user) ? return 1 : return 0;
-    }
-
+    return 0 if ($self->{config}->LoginToEdit && !defined $user);
     # check ban list
-    my ($status, $data) = PurpleWiki::Database::ReadFile($self->{config}->DataDir . "/banlist");
+    my ($status, $data) = PurpleWiki::Misc::ReadFile($self->{config}->DataDir . "/banlist");
     return 1 if (!$status);  # No file exists, so no ban
     my $ip = $ENV{'REMOTE_ADDR'};
     my $host = $ENV{REMOTE_HOST};

@@ -1,0 +1,9 @@
+http://opus/cgi-bin/wiki.pl
+title=AnotherLink
+oldrev=6
+oldconflict=0
+text=%3D%3D%3D%20A%20base%20page%20%7Bnid%20C%7D%20%3D%3D%3D%0D%0A%0D%0A%2A%20but%20this%20one%20gets%20there%20first%0D%0A
+summary=Post%206%20create%20the%20conflict%20%28should%20be%20ok%29
+Save=Save
+.cgifields=recent_edit
+=
