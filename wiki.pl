@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.11 2003/01/30 09:30:20 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.12 2003/01/30 09:43:05 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -1156,10 +1156,6 @@ sub CalcDay {
           "December")[$mon]. " " . $mday . ", " . ($year+1900);
 }
 
-sub CalcDayNow {
-  return CalcDay($Now);
-}
-
 sub CalcTime {
   my ($ts) = @_;
   my ($ampm, $mytz);
@@ -2068,23 +2064,6 @@ sub SearchTitleAndBody {
   return @found;
 }
 
-sub SearchBody {
-  my ($string) = @_;
-  my ($name, @found);
-  my $page;
-  my $text;
-
-  foreach $name (&PurpleWiki::Database::AllPagesList()) {
-    $page = new PurpleWiki::Database::Page('id' => $name, 'now' => $Now);
-    $page->openPage();
-    $text = $page->getText();
-    if ($text->getText() =~ /$string/i) {
-      push(@found, $name);
-    }
-  }
-  return @found;
-}
-
 # Note: all diff and recent-list operations should be done within locks.
 sub DoUnlock {
   my $LockMessage = 'Normal Unlock.';
@@ -2119,15 +2098,6 @@ sub WriteRcLog {
   }
   print OUT  $rc_line . "\n";
   close(OUT);
-}
-
-sub UserIsEditorOrError {
-  if (!&UserIsEditor()) {
-    print '<p>', 'This operation is restricted to site editors only...';
-    print &GetCommonFooter();
-    return 0;
-  }
-  return 1;
 }
 
 sub UserIsAdminOrError {
