@@ -81,7 +81,7 @@ To install the Wiki:
       each page.  If you don't want to use a logo, comment out this
       item by placing a # at the start of the line.
 
-    + Change StyleSheet to point to the CSS stylesheet for us with
+    + Change StyleSheet to point to the CSS stylesheet for use with
       this Wiki.  You can use etc/purplewiki.css as a starting point.
 
 The Wiki should now be installed.  To test, point your web browser to
@@ -133,4 +133,4 @@ AUTHORS
 Chris Dent <cdent@blueoxen.org>
 Eugene Eric Kim <eekim@blueoxen.org>
 
-$Id: README,v 1.6 2003/08/14 07:27:53 eekim Exp $
+$Id: README,v 1.7 2003/08/17 19:16:24 cdent Exp $

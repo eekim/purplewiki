@@ -3,7 +3,7 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'		=> 'PurpleWiki',
-    'VERSION'	=> '0.2',
+    'VERSION'	=> '0.9',
     'PREREQ_PM'		=> {
     	Text::Wrap => 0,
 	Text::Diff => 0,
