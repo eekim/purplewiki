@@ -55,7 +55,7 @@ extras/mt/purple.pl
 extras/rss/README
 extras/rss/rssCreate
 extras/rss/wikirss
-extras/createUsername.pl
+extras/createUsernameIndex.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
