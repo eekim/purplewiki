@@ -1,7 +1,7 @@
 # PurpleWiki::Apache1Handler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache1Handler.pm,v 1.2 2004/01/26 01:00:57 cdent Exp $
+# $Id: Apache1Handler.pm,v 1.3 2004/02/12 18:58:35 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -38,6 +38,8 @@ use PurpleWiki::Parser::WikiText;
 use Apache;
 use Apache::Constants;
 use Apache::URI;
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 my $CONFIG = '/home/kb-dev/wikidata';
 my $CSS = '/css/purple.css';

@@ -1,7 +1,7 @@
 # PurpleWiki::Apache2Handler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Apache2Handler.pm,v 1.2 2004/01/26 01:00:57 cdent Exp $
+# $Id: Apache2Handler.pm,v 1.3 2004/02/12 18:58:35 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,6 +39,8 @@ use Apache::RequestRec ();
 use Apache::RequestIO ();
 use Apache::URI;
 use Apache::Const -compile => qw(OK);
+use vars qw($VERSION);
+$VERSION = '0.9.1';
 
 my $CONFIG = '/home/cdent/testpurple';
 my $CSS = '/~cdent/purple.css';
