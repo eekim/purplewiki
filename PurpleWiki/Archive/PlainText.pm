@@ -129,6 +129,28 @@ sub putPage {
   return "";
 }
 
+sub deletePage {
+  my $self = shift;
+  my $id = shift;
+  $id =~ s|/|\+|;
+  my $datadir = $self->{datadir};
+  my $idSub = ($id =~ /^[A-Z]/i) ? uc($&) : 'misc';
+  for my $revSub (1..9) {
+    if (-d "$datadir/$revSub") {
+      my $path = "$datadir/$revSub/$idSub/$id";
+      my %dir;
+      if (tie(%dir, IO::Dir, $path)) {
+        for my $rev (keys %dir) {
+          unlink "$path/$rev";
+        }
+        untie %dir;
+        rmdir $path;
+      }
+    }
+  }
+  unlink "$datadir/$idSub/$id.txt";
+}
+
 sub _find_txt {
   my $dir = shift;
   my $array_ref = shift;

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 11};
+BEGIN { plan tests => 16};
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
@@ -14,6 +14,11 @@ system('cp t/config.tSVN t/config');
 
 my $configdir = 't';
 my $id = 'WikiPage';
+my $id2 = 'AnotherPage';
+
+my $index1 = "$id2,$id";
+my $index2 = "$id";
+
 my $newcontent = "Describe the new page here.\n";
 my $content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord.
@@ -97,8 +102,8 @@ my $timestamp = time;
 
 my $result = $pages->putPage(pageId => $id,
                              tree => $wiki);
-ok($pages->pageExists($id));
 ok($result, "");
+ok($pages->pageExists($id));
 
 undef($page);
 
@@ -117,13 +122,25 @@ ok($newPage->getTree()->view('wikitext'), $expected_content);
 
 # parse second content
 $wiki = $parser->parse($second_content, add_node_ids => 1);
+$result = $pages->putPage(pageId => $id2, tree => $wiki);
+ok($result, "");
+ok($pages->pageExists($id2));
+
+my @id_list = $pages->allPages();
+ok(join(",", sort @id_list), $index1);
+
+$wiki = $pages->getPage($id2)->getTree();
 $output = $wiki->view('wikitext');
 $output =~ s/\r//g;
-
-# is what we parsed what we expected
 ok($output, $second_expected_content);
+
+$pages->deletePage($id2);
+ok(!$pages->pageExists($id2));
+@id_list = $pages->allPages();
+ok(join(",", @id_list), $index2);
 
 sub END {
     unlink('t/tDB/sequence');
     system('cp t/config.tDef t/config');
 }
+

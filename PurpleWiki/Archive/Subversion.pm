@@ -164,7 +164,6 @@ sub putPage {
 
   my $id = $args{pageId};
   my $repos_path = $self->_repos_path($id);
-  my $now = $args{timestamp};
   my $user = $args{userId};
   my $root = $self->_get_root();
   my $check = $root->check_path($repos_path);
@@ -218,6 +217,26 @@ sub putPage {
   #}
 #print STDERR "Sent props\n";
 
+  $repos->fs_commit_txn($txn);
+#print STDERR "Committed $id ",$self->_currentRev,"\n";
+  return "";
+}
+
+sub deletePage {
+  my $self = shift;
+  my $id = shift;
+
+  my $repos_path = $self->_repos_path($id);
+  my $root = $self->_get_root();
+  my $check = $root->check_path($repos_path);
+
+  return "" if ($check != $SVN::Node::file);
+
+  my $repos = $self->{repos_ptr};
+  my $txn = $repos->fs_begin_txn_for_commit($self->_currentRev, "", "Delete page");
+  my $root = SVN::Fs::txn_root($txn);
+
+  $root->delete($repos_path);
   $repos->fs_commit_txn($txn);
 #print STDERR "Committed $id ",$self->_currentRev,"\n";
   return "";

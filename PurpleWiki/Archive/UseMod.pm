@@ -69,6 +69,7 @@ sub new {
   my $loc = $self->{pagedir} = $config->PageDir;
   $self->{rcfile} = $config->RcFile;
   $self->{keepdays} = $config->KeepDays;
+  $self->{keepdir} = $config->KeepDir;
   bless $self, $class;
   $self;
 }
@@ -157,6 +158,14 @@ sub putPage {
   $self->_save($page);
   $self->_releaseLock();
   return "";
+}
+
+sub deletePage {
+  my $self = shift;
+  my $id = shift;
+  my $filename = $self->_getPageFile($id);
+  my $keepfile = $self->{keepdir}.'/'._getPageDirectory($id)."/$id.kp";
+  unlink($filename, $keepfile);
 }
 
 sub allPages {
