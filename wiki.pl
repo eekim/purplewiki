@@ -32,7 +32,6 @@
 
 package UseModWiki;
 use strict;
-use lib '/home/cdent/src/PurpleWiki';
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
@@ -40,11 +39,10 @@ use PurpleWiki::Database::Page;
 use PurpleWiki::Database::User;
 use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Search::Engine;
-use PurpleWiki::Syndication::Rss;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 
-my $CONFIG_DIR='/home/cdent/wikidb';
+my $CONFIG_DIR='/var/www/wikidb';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -780,6 +778,7 @@ sub DoOtherRequest {
       $UserID = 0;
       DoEditPrefs();  # Also creates new ID
     } elsif ($action eq 'rss') {
+      require PurpleWiki::Syndication::Rss;
       my $rss = new PurpleWiki::Syndication::Rss;
       print $q->header(-type => 'text/xml') .
           $rss->getRSS;
