@@ -43,7 +43,7 @@ my ($input, $output, $shouldBe, $wiki, $diff);
 #               hr1 hr2 hr3 hr4 hr5 hr6 hr7);
 my @files = qw(hr1 hr2 hr3 hr4 hr5 hr6 hr7
                tree_hr tree_freelinks tree_lists tree_pre
-	       tree_test01);
+	       tree_test01 mixed_list);
 
 foreach my $filename (@files) {
     print $filename, "\n";

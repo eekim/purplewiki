@@ -1,5 +1,22 @@
 body {
+    padding-top: 2em;
+    padding-left: 2em;
+    padding-right: 2em;
     padding-bottom: 50em;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
+    sans-serif;
+    color: #000000;
+    background-color: #ffffff;
+}
+
+a { text-decoration: none; }
+a:hover { text-decoration: underline; }
+a:link {
+    color: #0000ff;
+}
+
+a:visited {
+    color: #ff0000;
 }
 
 div.indent {
@@ -7,7 +24,7 @@ div.indent {
 }
 
 a.nid {
-    font-family: "Helvetica", "Arial", sans-serif;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
     font-style: normal;
     font-weight: bold;
     font-size: x-small;
@@ -15,19 +32,15 @@ a.nid {
     color: #C8A8FF;  /* light purple */
 }
 
-/* Places NIDs in parentheses.  Internet Explorer currently does not
-   support these CSS elements, hence this functionality is built into
-   the wikihtml.pm View driver for now and is commented out here.
-
-a.nid:before {
-    content: "(";
-}
-
-a.nid:after {
-    content: ")";
-}
-*/
-
 .extlink {
-    background: #F3F3F3;
+        border-width: thin;
+        border-style: none none dotted none;
+        text-decoration: none;
 }
+
+h6 { font-size: 90%; }
+h5 { font-size: 100%; }
+h4 { font-size: 115%; }
+h3 { font-size: 135%; }
+h2 { font-size: 165%; }
+h1 { font-size: 205%; }
