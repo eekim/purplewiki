@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.13 2003/07/19 18:07:43 eekim Exp $
+# $Id: WikiText.pm,v 1.14 2003/07/19 21:52:46 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -40,6 +40,24 @@ use PurpleWiki::Page;
 
 my $sequence;
 my $url;
+
+### markup regular expressions
+my $rxNowiki = '<nowiki>.*?<\/nowiki>';
+my $rxTt = '<tt>.*?<\/tt>';
+my $rxFippleQuotes = "'''''.*?'''''";
+my $rxB = '<b>.*?<\/b>';
+my $rxTripleQuotes = "'''.*?'''";
+my $rxI = '<i>.*?<\/i>';
+my $rxDoubleQuotes = "''.*?''";
+
+### link regular expressions
+my $rxAddress = '[^]\s]*[\w/]';
+my $rxProtocols = '(?i:http|https|ftp|afs|news|mid|cid|nntp|mailto|wais):';
+my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
+my $rxSubpage = '[A-Z]+[a-z]+\w*';
+my $rxQuoteDelim = '(?:"")?';
+my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
+my $rxTransclusion = '\[t[A-Z0-9]+\]';
 
 ### constructor
 
@@ -126,6 +144,45 @@ sub parse {
             }
         }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
+            #
+            # Okay.  It gets funky here.
+            #
+            # Definition lists have to be handled in a special manner
+            # here, in order to enable the desired behavior in certain
+            # situations: external links and InterWiki links in the
+            # definition title.  For more detailed info, check out the
+            # test cases in t/parser07.t and t/tree_test11.txt.
+            #
+            # UseModWiki didn't have these problems because of the way
+            # the parser worked.  UseMod did a regexp substitution of
+            # inline formatting and links before parsing for structure.
+            # We don't do things that way.  Parsing and output is
+            # decoupled.  We parse for structure first, then for inline
+            # content.
+            #
+            # Probably the "right" way to handle these situations is to
+            # write a more sophisticated parser, one that does partial
+            # inline processing first, then does structural parsing, then
+            # completes the inline processing.  But I don't want to do
+            # that for this one exceptional situation.  Instead, I'm going
+            # to do some UseMod-like analysis on inline content in order
+            # to determine how the structure of the list will break down.
+            #
+            # I'm also going to take one shortcut.  I'm going to assume
+            # that the original regexp for determining whether or not a
+            # line is part of a definition list still holds.  If I wanted
+            # to be super anal, then something like:
+            #
+            #   ;http://www.blueoxen.org/
+            #
+            # would not be a definition list; it would be part of a
+            # paragraph.  By keeping the original regexp, the above will
+            # be considered a title without a definition, even though
+            # there is no concluding colon.  It bugs the super anal side
+            # of me, but the reality is, it should be harmless.  Plus,
+            # this documentation is longer than the code needed to make
+            # this work, so people who poke around shouldn't be surprised.
+            #
             foreach $listType (keys(%listMap)) {
                 if ($line =~ /^$listMap{$listType}$/x) {
                     $currentNode = &_terminateParagraph($currentNode,
@@ -135,10 +192,32 @@ sub parse {
                         $currentNode = $currentNode->parent;
                         $indentDepth--;
                     }
+                    my @listContents = ($2, $3);
+                    if ($listType eq 'dl') {
+                        # rejoin @listContents, and parse it again
+                        my $listContentString = join(':', @listContents);
+                        if ($listContentString =~
+                            /^([^\:]*\[$rxProtocols$rxAddress\s*.*?\][^\:]*)\:(.*)$/) {
+                            @listContents = ($1, $2);
+                        }
+                        elsif ($listContentString =~
+                               /^([^\:]*$rxProtocols$rxAddress[^\:]*)\:(.*)$/) {
+                            @listContents = ($1, $2);
+                        }
+                        elsif ($listContentString =~
+                               /^([^\:]*)([A-Z]\w+)\:([^\]\#\s"<>]+(?:\#[A-Z0-9]+)?$rxQuoteDelim[^\:]*)\:(.*)$/) {
+                            my $start = $1;
+                            my $site = $2;
+                            my $page = $3;
+                            my $rest = $4;
+                            if (&PurpleWiki::Page::siteExists($site, $params{config})) {
+                                @listContents = ("$start$site:$page", $rest);
+                            }
+                        }
+                    }
                     $currentNode = &_parseList($listType, length $1,
                                                \$listDepth, $currentNode,
-                                               \%params,
-                                               $2, $3);
+                                               \%params, @listContents);
                     $isStart = 0 if ($isStart);
                 }
             }
@@ -337,23 +416,6 @@ sub _parseList {
 sub _parseInlineNode {
     my ($text, %params) = @_;
     my (@inlineNodes);
-
-    # markup regular expressions
-    my $rxNowiki = '<nowiki>.*?<\/nowiki>';
-    my $rxTt = '<tt>.*?<\/tt>';
-    my $rxFippleQuotes = "'''''.*?'''''";
-    my $rxB = '<b>.*?<\/b>';
-    my $rxTripleQuotes = "'''.*?'''";
-    my $rxI = '<i>.*?<\/i>';
-    my $rxDoubleQuotes = "''.*?''";
-    # link regular expressions
-    my $rxAddress = '[^]\s]*[\w/]';
-    my $rxProtocols = '(?i:http|https|ftp|afs|news|mid|cid|nntp|mailto|wais):';
-    my $rxWikiWord = '[A-Z]+[a-z]+[A-Z]\w*';
-    my $rxSubpage = '[A-Z]+[a-z]+\w*';
-    my $rxQuoteDelim = '(?:"")?';
-    my $rxDoubleBracketed = '\[\[[\w\/][\w\/\s]+\]\]';
-    my $rxTransclusion = '\[t[A-Z0-9]+\]';
 
     my $rx = qq{
         $rxTransclusion |
