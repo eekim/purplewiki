@@ -34,7 +34,6 @@ use strict;
 use IO::File;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
-use PurpleWiki::Template::TT;
 use Apache::RequestRec ();
 use Apache::RequestIO ();
 use Apache::URI;
@@ -59,14 +58,20 @@ sub handler {
         wikiword => 1,
         url => $url,
     );
-    my $wikiTemplate = new PurpleWiki::Template::TT(
-        templateDir => "$CONFIG/templates");
+
+    # select and load a template driver
+    my $templateDriver = $purpleConfig->TemplateDriver();
+    my $templateClass = "PurpleWiki::Template::$templateDriver";
+    eval "require $templateClass";
+    my $wikiTemplate = $templateClass->new;
+
     $wikiTemplate->vars( body => $wiki->view('wikihtml', 
                                              wikiword => 1,
                                              url => $url),
                          title => $wiki->title,
                          date => $wiki->date );
-    print $wikiTemplate->process('handler');
+    $r->print($wikiTemplate->process('handler'));
+
     # FIXME: sometimes okay is not the desired return code
     return Apache::OK;
 

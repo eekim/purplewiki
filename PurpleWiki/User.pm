@@ -90,7 +90,7 @@ sub getField {
     my $self = shift;
     my $field = shift;
 
-    return $self->{$field};
+    return ($self->{$field} || '');
 }
 
 sub setField {

@@ -7,7 +7,7 @@ Makefile.PL
 PurpleWiki/ACL.pm
 PurpleWiki/Apache1Handler.pm
 PurpleWiki/Apache2Handler.pm
-PurpleWiki/Apache2NidHandler.pm
+PurpleWiki/NidHandler.pm
 PurpleWiki/Config.pm
 PurpleWiki/Singleton.pm
 PurpleWiki/Database.pm

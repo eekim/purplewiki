@@ -41,9 +41,6 @@ use Apache::URI;
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $CONFIG = '/home/kb-dev/wikidata';
-my $CSS = '/css/purple.css';
-
 sub handler {
     my $r = shift;
 
@@ -53,6 +50,7 @@ sub handler {
     my $url = Apache::URI->parse($r)->unparse();
 
     my $content = readFile($file);
+    my $CONFIG = $ENV{WIKIDB};
     my $purpleConfig = new PurpleWiki::Config($CONFIG);
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
@@ -61,11 +59,17 @@ sub handler {
         url => $url,
     );
 
-    $r->print($wiki->view('xhtml', 
-        wikiword => 1,
-        css_file => $CSS,
-        url => $url,
-    ));
+    # select and load a template driver
+    my $templateDriver = $config->TemplateDriver();
+    my $templateClass = "PurpleWiki::Template::$templateDriver";
+    eval "require $templateClass";
+    my $wikiTemplate = $templateClass->new;
+    $wikiTemplate->vars( body => $wiki->view('wikihtml', 
+                                              wikiword => 1,
+                                              url => $url),
+                         title => $wiki->title,
+                         date => $wiki->date );
+    $r->print($wikiTemplate->process('handler'));
 
     return OK;
 
@@ -97,6 +101,7 @@ PurpleWiki::Apache1Handler - Wiki text display handler for mod_perl 1
   # OR PerlSetEnv PERL5LIB /path/to/PurpleWiki
   <FilesMatch *\.wiki>
       SetHandler perl-script
+      PerlSetEnv WIKIDB /path/to/wikidb
       PerlResponseHandler  PurpleWiki::Apache1Handler
   </FilesMatch>
 
@@ -104,7 +109,8 @@ PurpleWiki::Apache1Handler - Wiki text display handler for mod_perl 1
 
 A simple display handler for web content files that are formatted
 as PurpleWiki wikitext. The handler reads in the *.wiki file, parses
-it to a PurpleWiki::Tree and presents it as PurpleWiki::View::xhtml.
+it to a PurpleWiki::Tree and presents it using the template defined
+in wikidb/template/handler.tt.
 
 =head1 METHODS
 

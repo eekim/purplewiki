@@ -1,4 +1,4 @@
-# PurpleWiki::Apache2NidHandler.pm
+# PurpleWiki::NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
 # $Id$
@@ -28,20 +28,17 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Apache2NidHandler;
+package PurpleWiki::NidHandler;
 
 use strict;
 use PurpleWiki::Config;
 use PurpleWiki::Sequence;
-use Apache::RequestRec ();
-use Apache::RequestIO ();
-use Apache::URI;
-use Apache::Const -compile => qw(OK);
+use CGI;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $CONFIG = '/home/cdent/testpurple';
+my $purpleConfig = new PurpleWiki::Config($ENV{WIKIDB});
 
 sub handler {
     my $r = shift;
@@ -51,12 +48,13 @@ sub handler {
     my $url;
     my $nid;
 
-    my $purpleConfig = new PurpleWiki::Config($CONFIG);
+    my $cgi = new CGI;
 
-    $r->content_type('text/plain');
 
-    $queryString = $r->args();
-    $pathInfo = $r->path_info();
+    print $cgi->header(-type => 'text/plain');
+
+    $queryString = $cgi->query_string();
+    $pathInfo = $cgi->path_info();
     $pathInfo =~ s/^\///;
     ($count, $url) = split('/', $pathInfo, 2);
 
@@ -74,8 +72,8 @@ sub handler {
         _getNIDs($purpleConfig, $count, "$url$queryString");
     }
 
-    # FIXME: sometimes okay is not the desired return code
-    return Apache::OK;
+    # FIXME: need to be better disciplined in returning
+    return;
 
 }
 
@@ -101,8 +99,6 @@ sub _getNIDs {
     }
 }
 
-
-
 1;
 
 
@@ -110,15 +106,46 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::Apache2NidHandler - Remote NID handling for mod_perl 2
+PurpleWiki::NidHandler - Remote NID handling for mod_perl (1 or 2)
 
 =head1 SYNOPSIS
 
   in httpd.conf:
 
+   <Location /desired/arbitrary/url/nid>
+         SetHandler perl-script
+         PerlSetEnv WIKIDB /path/to/wikidb
+         PerlResponseHandler  PurpleWiki::NidHandler
+   </Location>
 
 =head1 DESCRIPTION
 
+This module provides a simple, straightforward, but kinda slow
+system for providing and resolving NIDs to several PurpleWiki-
+library-using sources (such as wikis, PerpLog, or blogs using
+plugins.
+
+It is designed to be run as a mod_perl handler in either
+mod_perl 1 or 2. It has been extensively tested on mod_perl 2
+but not mod_perl 1.
+
+Assuming the Location (see above) is set to /nid, when the handler
+receives a GET url of the form:
+
+   /nid/1/http://purplewiki.blueoxen.net/cgi-bin/wiki.pl?PurpleWiki
+
+it will respond with one NID for that page. Change 1 to some other
+number, and get that many NIDs.
+
+For each NID given out, an entry will be recorded pairing that NID
+with the provided URL.
+
+When the handler receives a GET URL of the form:
+
+  /nid/ABC
+
+where ABC is an existing NID, the URL at which that NID is located 
+is returned.
 
 =head1 METHODS
 
@@ -127,6 +154,10 @@ PurpleWiki::Apache2NidHandler - Remote NID handling for mod_perl 2
 The default method for a mod_perl handler.
 
 =head1 BUGS
+
+There is no security at this time.
+
+No update mechanism is provided (yet).
 
 =head1 AUTHORS
 
