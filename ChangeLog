@@ -4,6 +4,8 @@ Revision history for PurpleWiki.
 	- Customizable look-and-feel via templates.  Improved default
 	  look-and-feel.
 	- Fixed major bug with retrieving old versions of a page.
+	- Basic access control, including a new configuration
+	  (LoginToEdit) that requires login in order to edit a page.
 	- MoinMoin triple braces preformatting syntax.
 	- Refactored session management using CGI::Session.  Also
 	  generates session log.
