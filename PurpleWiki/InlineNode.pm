@@ -54,10 +54,10 @@ sub populate {
 
     # TODO: type checking
     if (scalar @{$contentRef} > 1) {
-        $this->children = $contentRef;
+        $this->{'children'} = $contentRef;
     }
     else {
-        $this->content = $contentRef->[0];
+        $this->{'content'} = $contentRef->[0];
     }
 }
 
