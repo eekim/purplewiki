@@ -128,7 +128,6 @@ sub _ReleaseLockDir {
 # Requests a general editing lock for the system.
 # Public
 sub RequestLock {
-    my $config = PurpleWiki::Config->instance();
     # 10 tries, 3 second wait, die on error
     return &_RequestLockDir("main", 10, 3, 1);
 }
@@ -136,7 +135,6 @@ sub RequestLock {
 # Releases the general editing lock
 # Public
 sub ReleaseLock {
-    my $config = PurpleWiki::Config->instance();
     &_ReleaseLockDir('main');
 }
 
@@ -144,7 +142,6 @@ sub ReleaseLock {
 # Public
 sub ForceReleaseLock {
     my ($name) = @_;
-    my $config = PurpleWiki::Config->instance();
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
