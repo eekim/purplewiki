@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Section.pm,v 1.1.2.4 2003/01/30 09:30:20 cdent Exp $
+# $Id: Section.pm,v 1.1.2.5 2003/01/31 06:07:50 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,18 +32,22 @@ package PurpleWiki::Database::Section;
 
 # PurpleWiki Section Data Access
 
-# $Id: Section.pm,v 1.1.2.4 2003/01/30 09:30:20 cdent Exp $
+# $Id: Section.pm,v 1.1.2.5 2003/01/31 06:07:50 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Text;
 
-# defaults for Text Based data structure
-my $DATA_VERSION = 1;            # the data format version
-
-# Creates a new page reference, may be a
-# a new one or an existing one.
+# Creates a new Section reference, may be a
+# a new one or an existing one. Arguments
+# are passed directly to _init() for use
+# in filling data fields.
+#
+# Sections are used in both PageS and KeptRevisionS
+# to represent a single version of a WikiPage. They
+# contain metadata about the wiki page, and a pointer
+# to the text itself.
 sub new {
     my $proto = shift;
     my $class = ref($proto) || $proto;
@@ -63,69 +67,86 @@ sub getText {
     return $self->{data};
 }
 
+# Gets the host that last editied this Section.
 sub getHost {
     my $self = shift;
     return $self->{host};
 }
 
+# Sets the host that last editied this Section.
 sub setHost {
     my $self = shift;
     my $host = shift;
     $self->{host} = $host;
 }
 
-
+# Gets the IP that last editied this Section.
 sub getIP {
     my $self = shift;
     return $self->{ip};
 }
 
+# Gets the user ID that last editied this Section.
 sub getID {
     my $self = shift;
     return $self->{id};
 }
 
+# Gets the username that last edited this Section.
+# FIXME: Discussion on UseModWiki points out that keeping
+# both ID and username is problematic from a clean
+# data standpoint.
 sub getUsername {
     my $self = shift;
     return $self->{username};
 }
 
+# Gets the revision of this section. If this Section
+# is the current revision then the containing Page 
+# will have the same revision.
 sub getRevision {
     my $self = shift;
     return $self->{revision};
 }
 
+# Sets the revision of this section.
 sub setRevision {
     my $self = shift;
     my $revision = shift;
     $self->{revision} = $revision;
 }
 
+# Gets the timestamp of the last edit.
 sub getTS {
     my $self = shift;
     return $self->{ts};
 }
 
+# Sets the timestamp of the last edit.
 sub setTS {
     my $self = shift;
     my $ts = shift;
     $self->{ts} = $ts;
 }
 
+# Gets the timestamp of when this section
+# was stored as a revision (became a KeptRevision)
+sub getKeepTS {
+    my $self = shift;
+    return $self->{keepts};
+}
+
+# Sets the timestamp of when this section
+# was stored as a revision (became a KeptRevision)
 sub setKeepTS {
     my $self = shift;
     my $time = shift;
     $self->{keepts} = $time;
 }
 
-sub getKeepTS {
-    my $self = shift;
-    return $self->{keepts};
-}
-
-
 # Initializes the Section datastructure by pulling fields from
-# the page. Or creates a new one
+# the page. Or creates a new one with default fields.
+# FIXME: default fields should be constants.
 sub _init {
     my $self = shift;
     my %args = @_;
@@ -152,6 +173,8 @@ sub _init {
     }
 }
 
+# Serializes the Section data to a string and calls 
+# serialize() on the contained Text object.
 sub serialize {
     my $self = shift;
 
