@@ -167,18 +167,8 @@ sub ScriptLink {
   my ($action, $text) = @_;
   my $config = PurpleWiki::Config->instance();
 
-  my $baseUrl;
   my $scriptName = $config->ScriptName;
-  my $siteBase = $config->SiteBase;
-  if ($siteBase) {
-      $scriptName =~ s/^\///;
-      $siteBase =~ s/\/$//;
-      $baseUrl = "$siteBase/$scriptName";
-  }
-  else {
-      $baseUrl = $scriptName;
-  }
-  return "<a href=\"$baseUrl?$action\">$text</a>";
+  return "<a href=\"$scriptName?$action\">$text</a>";
 }
 
 sub GetEditLink {

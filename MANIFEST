@@ -181,7 +181,8 @@ wikidb/templates/viewRecentChanges.tt
 wikidb/templates/common/footer.tt
 wikidb/templates/common/header.tt
 wikidb/templates/common/navbar.tt
-wikidb/templates/common/navbar-inames.tt
+wikidb/templates/common/navbarInames.tt
+wikidb/templates/common/navbarInamesRegister.tt
 wikidb/templates/common/pagebar.tt
 wikidb/templates/common/searchbar.tt
 wikidb/templates/errors/actionInvalid.tt

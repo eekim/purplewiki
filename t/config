@@ -8,11 +8,10 @@
 # commented out.
 
 ScriptName  = /example/testwiki.cgi # The name of the wiki script, for use in urls
+ScriptDir = /cgi-bin/
 SiteName    = TestWiki          # Name of site (used for titles)
 HomePage    = FrontPage       # Home page (change space to _)
 RCName      = RecentChanges   # Name of changes page (change space to _)
-#StyleSheet  = ""             # URL for CSS stylesheet (like "/wiki.css")
-#SiteBase    = ""             # Full URL for <BASE> header
 #FullUrl     = ""             # Set if the auto-detected URL is wrong
 #ScriptTZ    = ""             # Local time zone
 LocalSequenceDir = "t"

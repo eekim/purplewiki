@@ -5,8 +5,10 @@
 <title>[% siteName %]: 
 [% IF expandedPageName %]
 [% expandedPageName %]
-[% ELSE %]
+[% ELSIF pageName %]
 [% pageName %]
+[% ELSE %]
+[% title %]
 [% END %]
 </title>
 <link rel="stylesheet" href="/purplewiki.css" />

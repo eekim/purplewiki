@@ -116,16 +116,16 @@ sub dtPre { shift->_heading(@_) }
 sub prePre { shift->_heading(@_) }
 sub sketchPre { shift->_heading(@_) }
 
-sub bPre { &_showType(shift) }
-sub iPre { &_showType(shift) }
-sub ttPre { &_showType(shift) }
-sub nowikiPre { &_showType(shift) }
-sub transclusionPre { &_showType(shift) }
-sub linkPre { &_showType(shift) }
-sub urlPre { &_showType(shift) }
-sub wikiwordPre { &_showType(shift) }
-sub freelinkPre { &_showType(shift) }
-sub imagePre { &_showType(shift) }
+sub bPre { &_showType(@_) }
+sub iPre { &_showType(@_) }
+sub ttPre { &_showType(@_) }
+sub nowikiPre { &_showType(@_) }
+sub transclusionPre { &_showType(@_) }
+sub linkPre { &_showType(@_) }
+sub urlPre { &_showType(@_) }
+sub wikiwordPre { &_showType(@_) }
+sub freelinkPre { &_showType(@_) }
+sub imagePre { &_showType(@_) }
 
 sub textMain { shift->{outputString} .= shift->content . "\n" }
 sub nowikiMain { shift->{outputString} .= shift->content . "\n" }
@@ -140,8 +140,8 @@ sub imageMain { shift->{outputString} .= shift->content . "\n" }
 ############### Private Methods ###############
 
 sub _showType {
-    my $nodeRef = shift;
-    return uc($nodeRef->type) . ':';
+    my ($self, $nodeRef) = @_;
+    $self->{outputString} .= uc($nodeRef->type) . ':';
 }
 
 sub _heading {

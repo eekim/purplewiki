@@ -105,11 +105,14 @@ sub loadUser {
             foreach my $key (keys(%tempHash)) {
                 $user->setField($key, $tempHash{$key});
             }
+            return $user;
         }
-        return $user;
+        else {
+            return undef;
+        }
     }
     else {
-        return 0;
+        return undef;
     }
 }
 
@@ -188,13 +191,36 @@ PurpleWiki::Database::User::UseMod - UseMod backend for user database.
 
 =head1 DESCRIPTION
 
-
+Accesses UseMod user database (along with corresponding username
+index, created by this class or by createUsernameIndex.pl).
 
 =head1 METHODS
 
 =head2 new
 
+Constructor.  Creates user directory and subdirectories if it doesn't
+already exist.
 
+=head2 createUser
+
+Creates a new user and reserves the user ID.  Returns a
+PurpleWiki::User object.
+
+=head2 loadUser($userId)
+
+Loads user with $userId and returns PurpleWiki::User object.
+
+=head2 saveUser($user)
+
+Saves a PurpleWiki::User object and updates the index.
+
+=head2 deleteUser($userId);
+
+Deletes user with $userId from database.
+
+=head2 idFromUsername($userName)
+
+Returns user ID corresponding to $userName.
 
 =head1 AUTHORS
 

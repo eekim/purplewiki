@@ -13,7 +13,7 @@ use DB_File;
 use File::Copy;
 use File::Find;
 use PurpleWiki::Config;
-use PurpleWiki::Database::User;
+use PurpleWiki::Database::User::UseMod;
 
 my $CONFIG;
 if (scalar @ARGV) {
@@ -30,14 +30,15 @@ my $userDir = $config->UserDir;
 my %users;  # $users{name} = id
 my %ids;    # $ids{id} = name
 my @userIds;
-find(sub {-f && !/^200\.db/ && /^(\d\d\d\d)\.db/ && push @userIds, $1}, ( $userDir ) );
+find(sub {-f && !/^200\.db/ && /^(\d+)\.db/ && push @userIds, $1}, ( $userDir ) );
 
 my @toDelete;
 
+my $userDb = new PurpleWiki::Database::User::UseMod;
 foreach my $userId (sort @userIds) {
-    my $user = PurpleWiki::Database::User->new(id => $userId);
-    my $userName = $user->getUsername;
-    if ($userName) {
+    my $user = $userDb->loadUser($userId);
+    if ($user) {
+        my $userName = $user->username;
         if ($users{$userName}) { # duplicate
             push @toDelete, $users{$userName};
             delete $ids{$users{$userName}};
@@ -62,9 +63,10 @@ foreach my $oldUserId (sort keys %ids) {
     if ($oldUserId > $currentId) {
         $persistentUsers{$ids{$oldUserId}} = $currentId;
         move(&fullPath($oldUserId), &fullPath($currentId));
-        my $user = PurpleWiki::Database::User->new(id => $currentId);
-        $user->setField('id', $currentId);
-        $user->save;
+        my $user = $userDb->loadUser($currentId);
+        $user->id($currentId);
+        $userDb->saveUser($user);
+        $currentId++;
     }
 }
 untie %persistentUsers;
@@ -75,3 +77,31 @@ sub fullPath {
     my $id = shift;
     $config->UserDir . '/' . ($id % 10) . "/$id.db";
 }
+
+
+=head1 NAME
+
+createUsernameIndex.pl - Cleans and indexes UseMod username database
+
+=head1 SYNOPSIS
+
+  createUsernameIndex.pl /path/to/wikidb
+
+=head1 DESCRIPTION
+
+UseModWiki has two problems with its user database (wikidb/user).
+First, it uses it as both a user database and also a session
+management database.  As a result, the database becomes unnecessarily
+enormous with spurious "users" that do nothing but lock a user ID.
+Second, it does not keep a mapping of usernames to user IDs.  As a
+result, users have to remember their user IDs in order to log in.
+
+This script cleans up the user database and creates an index.  You
+must run this script in order to convert UseModWiki or PurpleWiki (<
+0.93) installations.
+
+=head1 AUTHORS
+
+Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=cut
