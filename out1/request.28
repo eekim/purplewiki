@@ -1,0 +1,10 @@
+http://opus/cgi-bin/wiki.pl
+title=AnotherLink
+oldrev=2
+oldconflict=1
+text=%3D%3D%3D%20A%20base%20page%20%7Bnid%20C%7D%20%3D%3D%3D%0D%0A%0D%0A%2A%20but%20this%20one%20gets%20there%20first%20%7Bnid%20D%7D%0D%0A%0D%0A%2A%20This%20is%20another%20update%20%7Bnid%20E%7D
+summary=Post%208%20resolve%20the%20conflict
+Save=Save
+newtext=%3D%3D%3D%20A%20base%20page%20%7Bnid%20C%7D%20%3D%3D%3D%0D%0A%0D%0A%2A%20This%20is%20another%20update%20%7Bnid%20E%7D%0D%0A
+.cgifields=recent_edit
+=

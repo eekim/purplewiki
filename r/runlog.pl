@@ -4,12 +4,15 @@ my ($split, $once, $update) = (0, 0, 0);
 $seq=0;
 $configdir = "r";
 $dodiff=1;
+$testdir="out";
 while (@ARGV) {
     $a = shift(@ARGV);
     if ($a =~ /^-1/) {
         $once = 1;
     } elsif ($a eq '-nd') {
         $dodiff = 0;
+    } elsif ($a =~ /^-t/) {
+        $testdir = $' || shift(@ARGV);
     } elsif ($a =~ /^-c/) {
         $configdir = $' || shift(@ARGV);
     } elsif ($a =~ /^-s/) {
@@ -34,8 +37,8 @@ close STDOUT;
 
 if ($split) {
     while(!eof(STDIN)) {
-        my $test_in = "out/request.$seq";
-        my $test_out = "out/wiki.$seq.html";
+        my $test_in = "$testdir/request.$seq";
+        my $test_out = "$testdir/wiki.$seq.html";
         chomp($url = <STDIN>);
         my $q = new CGI(STDIN);
         writeTest($test_in, $url, $q);
@@ -44,9 +47,9 @@ if ($split) {
         $seq++;
     }
 } else {
-    my $test_in = "out/request.$seq";
-    my $test_out = "out/test.$seq.html";
-    my $compare = "out/wiki.$seq.html";
+    my $test_in = "$testdir/request.$seq";
+    my $test_out = "$testdir/test.$seq.html";
+    my $compare = "$testdir/wiki.$seq.html";
     while (-f $test_in) {
         if (open(IN, $test_in)) {
             chomp($url = <IN>);
@@ -66,9 +69,9 @@ if ($split) {
         } else { print ERR "Couldn't open $test_in: $!\n"; }
         last if $once;
         $seq++;
-        $test_in = "out/request.$seq";
-        $test_out = "out/test.$seq.html";
-        $compare = "out/wiki.$seq.html";
+        $test_in = "$testdir/request.$seq";
+        $test_out = "$testdir/test.$seq.html";
+        $compare = "$testdir/wiki.$seq.html";
     }
 }
 
@@ -156,7 +159,7 @@ my $x = $line;
 sub writeTest {
     my ($out, $url, $q) = @_;
     if (!open(OUT, ">$out")) {
-        print ERR "Error: out/wiki.$seq: $!\n";
+        print ERR "Error: $out: $!\n";
         return;
     }
     print OUT "$url\n";

@@ -1,0 +1,9 @@
+http://opus/cgi-bin/wiki.pl
+title=SecondPage%2FSubPage1
+oldrev=13
+oldconflict=0
+text=This%20is%20a%20subpage%0D%0A%0D%0ATry%20a%20reletive%20link%20%2FSubPage2
+summary=A%20subpage
+Save=Save
+.cgifields=recent_edit
+=

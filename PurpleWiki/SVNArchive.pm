@@ -103,6 +103,7 @@ sub getPage {
   }
   my $file = $root->file_contents($path);
 
+  my $curRev = $rev || $self->_currentRev;
   $rev = $root->node_created_rev($path);
   my $lastmod = _svn_time($fs = $self->{fs_ptr}->revision_prop($rev, "svn:date"));
   local $/ = '';
@@ -116,12 +117,13 @@ sub getPage {
   $file->close();
 #print STDERR "Cont:$contents=\n";
   return PurpleWiki::SVNPage->new(id=>$id, wikitext=>$contents,
-                                  time=>$lastmod, revision=>$self->_currentRev);
+                                  time=>$lastmod, revision=>$curRev);
 }
 
 sub _repos_path {
   my $self = shift;
   my $id = shift;
+  $id =~ s|/|\+|g;
   "$self->{reposPath}/$id";
 }
 
@@ -179,8 +181,8 @@ sub putPage {
   $args{host} =  $ENV{REMOTE_ADDR} unless ($args{host});
   my $log_msg = $args{changeSummary};
   my $cur = $self->_currentRev;
-print STDERR "Txn[$id]$rev:$cur\n";
-print STDERR "Conflict\n" if ($rev < $cur);
+#print STDERR "Txn[$id]$rev:$cur\n";
+#print STDERR "Conflict $rev, $cur\n" if ($rev < $cur);
   return "Conflict\n" if ($rev < $cur);
   my $txn = $repos->fs_begin_txn_for_commit($rev, "$user:$host", $log_msg);
   my $root = SVN::Fs::txn_root($txn);
@@ -228,17 +230,19 @@ sub allPages {
   return () if ($root->check_path($rpath) != $SVN::Node::dir);
   my $h = ($root->dir_entries($rpath));
 #print STDERR "allPages:\n ",join("\n ", (keys %$h)),"\n::\n";
-  (keys %$h);
+  my @l = (sort keys %$h);
+  grep(s|\+|/|g, @l);
+  @l;
 }
 
 # pages->recentChanges($starttime)
 sub recentChanges {
   my $self = shift;
   my $starttime = shift;
-  my %pages = ();
-  my @rc = ();
+  local @rc = ();
   my $done = 0;
   my $rpath = $self->{reposPath};
+  local $pages = {};
   sub receiver1 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
     return if ($done);
@@ -252,17 +256,17 @@ sub recentChanges {
     for my $p (keys %$h) {
       next unless ($p =~ /^$rpath\//);
       $id = $';
-      if (defined($pages{$p})) {
-        $pages{$p}->{numChanges}++;
+      if (defined($pages->{$p})) {
+        $pages->{$p}->{numChanges}++;
       } else {
         push(@rc, $p);
-        $pages{$p} = { numChanges => 1, pageName => $id };
+        $pages->{$p} = { numChanges => 1, pageId => $id };
 #print STDERR "Got $id ",$$h{$p}->action,"\n";
-        $pages{$p}->{timeStamp} = $t;
-        $pages{$p}->{summary} = $_[4];
-        $pages{$p}->{userId} = $_[2];
-        ($pages{$p}->{userId}, $pages{$p}->{host}) = ($`, $')
-            if ($pages{$p}->{userId} =~ /:/);
+        $pages->{$p}->{timeStamp} = $t;
+        $pages->{$p}->{summary} = $_[4];
+        $pages->{$p}->{userId} = $_[2];
+        ($pages->{$p}->{userId}, $pages->{$p}->{host}) = ($`, $')
+            if ($pages->{$p}->{userId} =~ /:/);
       }
     }
   }
@@ -270,7 +274,7 @@ sub recentChanges {
   $starttime = 0 unless $starttime;
   #$repos->get_logs([paths],start,end,disc,strict,&receiver);
   $self->{repos_ptr}->get_logs("", $self->_currentRev, 1, 1, 1, \&receiver1);
-  my $r = [ map($pages{$_}, @rc) ];
+  my $r = [ map($pages->{$_}, @rc) ];
 #print STDERR "Rc:",join(":", @rc),"\n::\nPP:",join(":", @$r),"\n";
   $r;
 }
@@ -316,22 +320,39 @@ sub getRevisions {
   my $maxcount = shift || 0;
   my $count = 1;
 
-  my @response = ();
+  local @response = ();
   sub receiver2 {
     #Log:Paths:rev:user:time-2004-10-03T18:55:34.237081Z:log:_p_apr_pool_t=SCALAR(0x8a37064)
+    my ($p, $r, $u, $t, $l) = @_;
     return if ($maxcount && $maxcount < $count++);
-    my $t = _svn_time($_[3]);
-    my $userId = $_[2];
-    $userId =~ s/:.*$//;
-    push(@response, {revision=>$rev, user=>$userId,
-                     dateTime=>UseModWiki::TimeToText($t), summary=>$_[4]});
+    $t = _svn_time($t);
+    $u =~ s/:.*$//;
+#print STDERR "log (r=>$r, u=>$u, t=>$t, s=>$l) $#response\n";
+    push( @response, {revision=>$r, user=>$u, dateTime=>$t, summary=>$l} );
   }
 
   my $repos = $self->{repos_ptr};
   my $path = $self->_repos_path($id);
-#print STDERR "get_logs($path, ",$self->_currentRev,")\n";
-  $repos->get_logs($path, $self->_currentRev, 1, 0, 1, \&receiver2);
+  my $curRev = $self->_currentRev;
+  $repos->get_logs($path, $curRev, 1, 0, 1, \&receiver2);
 
+#print STDERR "get_logs($path, ",$self->_currentRev,") = $#response\n";
+  my $changeRev = $self->_get_root($curRev)->node_created_rev($path);
+  for my $h (@response) {
+    $h->{dateTime} = UseModWiki::TimeToText($h->{dateTime});
+    my $rev = $h->{revision};
+#print STDERR "Revs Ch:$changeRev Cr:$curRev R:$rev\n";
+    if ($changeRev == $rev) {
+        $h->{pageUrl} = $self->{script} . "?$id";
+    } else {
+        $h->{pageUrl} = $self->{script}
+            . "?action=browse&amp;id=$id&amp;revision=$rev";
+        $h->{diffUrl} = $self->{script}
+            . "?action=browse&amp;diff=1&amp;id=$id&amp;diffrevision=$rev";
+        $h->{editUrl} = $self->{script}
+            . "?action=edit&amp;id=$id&amp;revision=$rev";
+    }
+  }
   return @response;
 }
 
