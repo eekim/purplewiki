@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.3 2003/07/03 07:08:21 eekim Exp $
+# $Id: wikihtml.pm,v 1.4 2003/07/19 09:08:41 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -120,7 +120,7 @@ sub wikiLink {
     my $pageNid;
 
     my $pageName = $node->content;
-    if ($pageName =~ s/\#(\d+)$//) {
+    if ($pageName =~ s/\#([A-Z0-9]+)$//) {
         $pageNid = $1;
     }
 

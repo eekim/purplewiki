@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.9 2003/07/19 08:56:47 eekim Exp $
+# $Id: wiki.pl,v 1.10 2003/07/19 09:08:41 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -75,25 +75,6 @@ sub DoWikiRequest {
   if (!&DoBrowseRequest()) {
     &DoOtherRequest();
   }
-
-}
-
-# == Refactored functions for PurpleWiki ===============================
-# FIXME: we should be able to now use the call in the Database
-# module instead of this. In the meantime this just relays.
-sub pageExists {
-    my $id = shift;
-    my (@temp);
-
-    my $MainPage = $PurpleWiki::Page::MainPage;
-    $id =~ s|^/|$MainPage/|;
-    if ($config->FreeLinks) {
-        $id = &FreeToNormal($id);
-    }
-
-    my $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
-
-    return $page->pageExists();
 
 }
 
