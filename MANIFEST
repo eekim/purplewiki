@@ -61,6 +61,7 @@ extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
 extras/createUsernameIndex.pl
+extras/deleteUser.pl
 extras/moinConvert.pl
 extras/purple
 extras/purpleConvert.pl
