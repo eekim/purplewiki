@@ -27,8 +27,13 @@ etc/config
 etc/intermap
 etc/purple.css
 etc/purplewiki.css
-extras/mt_purple.pl
-purple
+extras/purple
+extras/purpleConvert.pl
+extras/wikirss
+extras/wiki_trans.pl
+extras/blosxom/purple
+extras/mt/purple.pl
+extras/mt/README
 t/config
 t/config.t
 t/database.t
@@ -59,4 +64,3 @@ t/tree_test10.txt
 t/tree_test11.txt
 t/tree_test12.txt
 wiki.pl
-wiki_trans.pl
