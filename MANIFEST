@@ -26,6 +26,7 @@ PurpleWiki/StructuralNode.pm
 PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Apache1Handler.pm
+PurpleWiki/Apache2Handler.pm
 PurpleWiki/View/EventHandler.pm
 PurpleWiki/View/debug.pm
 PurpleWiki/View/text.pm
