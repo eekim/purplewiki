@@ -1,7 +1,7 @@
 # PurpleWiki::Config.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: Config.pm,v 1.7 2003/12/31 23:48:05 cdent Exp $
+# $Id: Config.pm,v 1.8 2003/12/31 23:59:25 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.7 2003/12/31 23:48:05 cdent Exp $
+# $Id: Config.pm,v 1.8 2003/12/31 23:59:25 cdent Exp $
 
 use strict;
 use AppConfig;
@@ -59,7 +59,8 @@ my @SCALAR_CONFIGS = qw( DataDir ScriptName CookieName SiteName
     StyleSheet SiteBase FullUrl ScriptTZ RcDefault KeepDays AdminPass
     EditPass EmailFrom SendMail FooterNote EditNote UserGotoBar
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
-    InterFile RcFile RcOldFile MovableTypeDirectory ArtsDirectory);
+    InterFile RcFile RcOldFile MovableTypeDirectory ArtsDirectory
+    ShowNid);
 my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 
 # Sets up the strings and regular expressions for matching

@@ -74,10 +74,16 @@ FreeUpper              # if set force upper case
 # Search Modules:
 SearchModule	=	Wiki
 #SearchModule	=	MovableType
+#SearchModule	=	Arts
+#SearchModule	=	IrcLogger
+
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
 #MovableTypeBlogID	=	1
+#ArtsDirectory		=	/usr/local/etc/
+#IrcLogConfig		=	/home/kb-dev/ircquotes/kbdev.config
+#IrcLogConfig		=	/home/kb-dev/ircquotes/kbeditors.config
 
 # == You should not have to change anything below this line. =============
 PageDir     = $DataDir/page      # Stores page data
