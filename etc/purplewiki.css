@@ -134,6 +134,11 @@ a.extlink {
     border-style: none none dotted none;
 }
 
+a.create {
+    border-width: thin;
+    border-style: none none dashed none;
+}
+
 .poweredby {
     font-family: verdana, sans-serif;
     font-size: 80%;

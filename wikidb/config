@@ -50,6 +50,13 @@ ShowNid                # if set value of Nid is shown
 #NonEnglish             # non english characters in links?
 #SimpleLink
 
+# Create Link Options
+#CreateLinkBefore       # if set, puts create link (?) before the text
+                       # (PHPWiki-style)
+CreateLinkText = "?"   # text displayed in create link.  If not set,
+                       # displays the link using the "create" CSS style (
+                       # (MoinMoin and SocialText-style)
+
 # Minor options:
 RecentTop              # if set recent on top
 UseDiffLog             # if set save diffs to log

@@ -2,7 +2,9 @@ Revision history for PurpleWiki.
 
 0.93 -- August 9, 2004
 	- Customizable look-and-feel via templates.  Improved default
-	  look-and-feel.
+	  look-and-feel.  You can also customize the create new pages
+	  look-and-feel via the new CreateLinkBefore and CreateLinkText
+	  config variables.
 	- Fixed major bug with retrieving old versions of a page.
 	- Basic access control, including a new configuration
 	  (LoginToEdit) that requires login in order to edit a page.

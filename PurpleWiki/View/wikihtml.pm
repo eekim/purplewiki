@@ -328,7 +328,8 @@ sub _wikiLink {
             PurpleWiki::Page::getInterWikiLink($pageName);
         $linkString .= "#nid$pageNid" if $pageNid;
         $linkString .= '" class="interwiki">' . $nodeRef->content . '</a>';
-    } elsif (&PurpleWiki::Page::exists($pageName)) {
+    }
+    elsif (&PurpleWiki::Page::exists($pageName)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '<a href="' .  
                 PurpleWiki::Page::getFreeLink($nodeRef->content) . 
@@ -340,19 +341,50 @@ sub _wikiLink {
             $linkString .= '" class="wikiword">';
         }
         $linkString .= $nodeRef->content . '</a>';
-    } else {
+    }
+    else {
+        my $createLinkText = $self->{config}->CreateLinkText;
         if ($nodeRef->type eq 'freelink') {
-            $linkString .= '[' . $nodeRef->content . ']';
-            $linkString .= '<a href="' .
-                PurpleWiki::Page::getFreeLink($nodeRef->content) .
-                '" class="freelink">';
-        } else {
-            $linkString .= $nodeRef->content;
-            $linkString .= '<a href="' .
-                &PurpleWiki::Page::getWikiWordLink($pageName) .
-                    '" class="wikiword">';
+            if ($createLinkText) {
+                my $linkText .= '[' . $nodeRef->content . ']';
+                my $createLink = '<a href="' .
+                    PurpleWiki::Page::getFreeLink($nodeRef->content) .
+                    '" class="freelink">' . "$createLinkText</a>";
+                if ($self->{config}->CreateLinkBefore) {
+                    $linkString .= $createLink . $linkText;
+                }
+                else {
+                    $linkString .= $linkText . $createLink;
+                }
+            }
+            else {
+                # the bracket syntax isn't necessary, because the
+                # entire text is linked
+                $linkString .= '<a href="' .
+                    PurpleWiki::Page::getFreeLink($nodeRef->content) .
+                    '" class="create">' . $nodeRef->content .
+                    '</a>';
+            }
         }
-        $linkString .= '?</a>';
+        else {
+            if ($createLinkText) {
+                my $linkText .= $nodeRef->content;
+                my $createLink .= '<a href="' .
+                    &PurpleWiki::Page::getWikiWordLink($pageName) .
+                    '" class="wikiword">' . "$createLinkText</a>";
+                if ($self->{config}->CreateLinkBefore) {
+                    $linkString .= $createLink . $linkText;
+                }
+                else {
+                    $linkString .= $linkText . $createLink;
+                }
+            }
+            else {
+                $linkString .= '<a href="' .
+                    &PurpleWiki::Page::getWikiWordLink($pageName) .
+                    '" class="create">' . $nodeRef->content . '</a>';
+            }
+        }
     }
 
     $self->{outputString} .= $linkString;

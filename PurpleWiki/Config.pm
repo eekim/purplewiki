@@ -55,9 +55,9 @@ my $FS3 = $FS . "3";   # The FS character is not allowed in user data.
 my @BOOLEAN_CONFIGS = qw( UseSubpage EditAllowed UseDiff FreeLinks
     WikiLinks RunCGI RecentTop UseDiffLog KeepMajor KeepAuthor
     BracketText UseAmPm FreeUpper ShowEdits NonEnglish
-    SimpleLinks ShowNid UseINames LoginToEdit);
+    SimpleLinks ShowNid UseINames LoginToEdit CreateLinkBefore);
 my @SCALAR_CONFIGS = qw( DataDir ScriptName SiteName HomePage RCName 
-    FullUrl ScriptTZ RcDefault KeepDays 
+    FullUrl ScriptTZ RcDefault KeepDays CreateLinkText
     HttpCharset MaxPost PageDir UserDir KeepDir TempDir LockDir
     InterFile RcFile RcOldFile TemplateDir MovableTypeDirectory
     ArtsDirectory GoogleWSDL GoogleKey HttpUser HttpPass Umask

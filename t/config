@@ -37,6 +37,8 @@ KeepDays    = 14               # Days to keep old revisions
 MaxPost     = 215040           # Maximum 210K posts (about 200K for pages)
 
 # Major options:
+#LoginToEdit            # require logged in user to edit pages
+#UseINames              # if set use i-names
 UseSubpage             # if set allow subpages
 EditAllowed            # if set editing allowed
 UseDiff                # if set use diff features
@@ -47,6 +49,13 @@ RunCGI                 # if set Run script as CGI
 #NonEnglish             # non english characters in links?
 #SimpleLink
 
+# Create Link Options
+#CreateLinkBefore       # if set, puts create link (?) before the text
+                       # (PHPWiki-style)
+CreateLinkText = "?"   # text displayed in create link.  If not set,
+                       # displays the link using the "create" CSS style (
+                       # (MoinMoin and SocialText-style)
+
 # Minor options:
 RecentTop              # if set recent on top
 UseDiffLog             # if set save diffs to log
@@ -54,7 +63,6 @@ KeepMajor              # if set keep major rev
 KeepAuthor             # if set keep author rev
 BracketText            # if set allow [URL text]
 UseAmPm                # if set use am/pm in times
-UseLookup              # if set lookup host names
 FreeUpper              # if set force upper case
 #ShowEdits             # if set show minor edits
 

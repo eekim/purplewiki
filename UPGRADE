@@ -18,7 +18,8 @@ Perform the following required steps:
     createUsernameIndex.pl /path/to/wikidb
 
    This will clean up your user database, consolidating duplicate
-   usernames and removing user ID locks.
+   usernames and removing user ID locks.  Make sure all of the files
+   in this directory is readable and writeable by your web server.
    
 2. Create a sessions directory in wikidb. Make sure this directory
    is writeable by your web server.
@@ -58,6 +59,8 @@ Perform the following required steps:
     
       LoginToEdit
       UseINames
+      CreateLinkBefore
+      CreateLinkText
       ServiceProviderName
       ServiceProviderKey
       ReturnUrl
