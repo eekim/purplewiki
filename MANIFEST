@@ -1,0 +1,13 @@
+Changes
+Makefile.PL
+MANIFEST
+purplewiki.pl
+PurpleWiki.pm
+README
+PurpleWiki/InlineNode.pm
+PurpleWiki/StructuralNode.pm
+PurpleWiki/Tree.pm
+PurpleWiki/View/XHTML.pm
+t/inline_node.t
+t/test01.txt
+t/test02.txt
