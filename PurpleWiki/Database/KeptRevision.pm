@@ -109,9 +109,9 @@ sub addSection {
 # less than $KeepDays old
 sub trimKepts {
     my $self = shift;
-    my $now = shift;
+    my $expirets = shift;
 
-    my $expirets = $now - ($self->{config}->KeepDays * 24 * 60 * 60);
+    #my $expirets = $now - ($self->{config}->KeepDays * 24 * 60 * 60);
 
     # was using undef here but that doesn't work,
     # must use splice

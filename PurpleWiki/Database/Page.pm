@@ -45,6 +45,7 @@ sub new {
   $self->{pagedir} = $config->PageDir;
   $self->{usediff} = $config->UseDiff;
   $self->{rcfile} = $config->RcFile;
+  $self->{keepdays}->KeepDays;
   bless $self, $class;
   $self;
 }
@@ -100,11 +101,12 @@ my ($self, $page) = @_;
   $section->setUsername($self->{username});
   $section->setUserID($self->{userid});
   $keptRevision->addSection($section, $now);
-  $keptRevision->trimKepts($now);
+  $keptRevision->trimKepts($now - ($self->{keepdays} * 24 * 60 * 60))
+      if ($self->{keepdays});
   $keptRevision->save();
   $page->setRevision($section->getRevision());
   $page->{ts} = $now;
-  $self->WriteRcLog($page->{id}, $page->{summary}, $now,
+  $self->_WriteRcLog($page->{id}, $page->{summary}, $now,
                     $self->{username}, $page->{host} || $page->{ip});
 }
 
@@ -136,7 +138,7 @@ sub forceReleaseLock {
 }
 
 # Note: all diff and recent-list operations should be done within locks.
-sub WriteRcLog {
+sub _WriteRcLog {
   my ($self, $id, $summary, $editTime, $name, $rhost) = @_;
   my ($extraTemp, %extra);
 
@@ -405,23 +407,25 @@ sub getPageNode {
   ""
 }
 
-# page->searchResult([text])
+# page->searchResult([string])
 sub searchResult {
     my $self = shift;
-    my $text = shift || $self->getText();
+    my $string = shift || $self->getText();
     my $name = $self->getID();
 
     my $result = new PurpleWiki::Search::Result();
     $result->title($name);
     $result->modifiedTime($self->getTS());
     $result->url($self->getWikiWordLink($name));
-    $result->summary(substr($text->getText(), 0, 99) . '...');
+    $result->summary(substr($string, 0, 99) . '...');
 
     return $result;
 }
 
 sub getRevisions {
     my $self = shift;
+    my $maxcount = shift || 0;
+    my $count = 1;
     my @pageHistory = ();
     $self->_openPage() unless ($self->{open});
     my $id = $self->{id};
@@ -434,6 +438,7 @@ sub getRevisions {
         if ($section->getRevision() != $self->getSection()->getRevision()) {
             push @pageHistory, $self->_getRevisionHistory($id, $section, 0);
         }
+        last if ($maxcount && ++$count >= $maxcount);
     }
     (@pageHistory);
 }
@@ -576,14 +581,14 @@ sub save {
 # this page.
 sub getLockedPageFile {
     my $self = shift;
-    my $id = $self->getID();
+    my $id = $self->{id};
     return $self->{pages}->{pagedir} . '/' . $self->getPageDirectory() . "/$id.lck";
 }
 
 # Creates the directory where this Page is stored.
 sub _createPageDir {
     my $self = shift;
-    my $id = $self->getID();
+    my $id = $self->{id};
     my $dir = $self->{pages}->{pagedir};
     my $subdir;
 
