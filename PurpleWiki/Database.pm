@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.2 2003/01/27 03:23:45 cdent Exp $
+# $Id: Database.pm,v 1.1.2.3 2003/01/27 10:11:23 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.2 2003/01/27 03:23:45 cdent Exp $
+# $Id: Database.pm,v 1.1.2.3 2003/01/27 10:11:23 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -659,7 +659,7 @@ sub GetDiffHTML {
   my $id = shift;
   my $rev = shift;
   my $newText = shift;
-  my $keptRevisionsHashRef = shift;
+  my $oldText = shift;
   my ($html, $diffText, $diffTextTwo, $priorName, $links, $usecomma);
   my ($major, $minor, $author, $useMajor, $useMinor, $useAuthor, $cacheName);
 
@@ -685,9 +685,7 @@ sub GetDiffHTML {
     $useAuthor = 0;
   }
   if ($rev ne "") {
-    # Note: OpenKeptRevisions must have been done by caller.
-    # Later optimize if same as cached revision
-    $diffText = &GetKeptDiff($newText, $rev, 1, $keptRevisionsHashRef);  # 1 = get lock
+    $diffText = &GetKeptDiff($newText, $rev, 1, $oldText);  # 1 = get lock
     if ($diffText eq "") {
       $diffText = '(The revisions are identical or unavailable.)';
     }
@@ -754,15 +752,9 @@ sub GetCacheDiff {
 
 # Must be done after minor diff is set and OpenKeptRevisions called
 sub GetKeptDiff {
-  my ($newText, $oldRevision, $lock, $keptrevisionshash) = @_;
-  my (%sect, %data, $oldText);
+  my ($newText, $oldRevision, $lock, $oldText) = @_;
+  my (%sect, %data);
 
-  $oldText = "";
-  if (defined($keptrevisionshash->{$oldRevision})) {
-    %sect = split(/$FS2/, $keptrevisionshash->{$oldRevision}, -1);
-    %data = split(/$FS3/, $sect{'data'}, -1);
-    $oldText = $data{'text'};
-  }
   return ""  if ($oldText eq "");  # Old revision not found
   return &GetDiff($oldText, $newText, $lock);
 }
@@ -801,7 +793,7 @@ sub ColorDiff {
   #$SaveNumUrlIndex = 0;
   #$diff =~ s/$FS//g;
   #$diff =  &CommonMarkup($diff, 0, 1);      # No images, all patterns
-  $diff =  $wikiParser->parse($diff)->view('wikihtml'); # No images, all patterns
+  $diff =  $wikiParser->parse($diff, 'add_node_ids' => 0)->view('wikihtml'); # No images, all patterns
   #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore saved text
   #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore nested saved text
   $diff =~ s/\r?\n/<br>/g;
