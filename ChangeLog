@@ -1,5 +1,10 @@
 Revision history for PurpleWiki.
 
+0.94 -- August 11, 2004
+	- A bug fix release.  Re-added a feature that allows you to easily
+	  recover vandalized/spammed pages.  Included some documentation in
+	  docs/FightingSpam.wiki.
+
 0.93 -- August 9, 2004
 	- Customizable look-and-feel via templates.  Improved default
 	  look-and-feel.  You can also customize the create new pages
