@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.4 2002/12/29 22:48:09 eekim Exp $
+# $Id: WikiText.pm,v 1.5 2002/12/30 10:13:52 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -39,7 +39,6 @@ use PurpleWiki::Tree;
 
 sub new {
     my $this = shift;
-    my (%options) = @_;
     my $self = {};
 
     bless($self, $this);
@@ -58,6 +57,7 @@ sub parse {
     my ($listLength, $listDepth, $sectionLength, $sectionDepth);
     my ($indentLength, $indentDepth);
     my ($line, $listType, $biggestNidSeen, $currentNid);
+    my (@authors);
 
     my %listMap = ('ul' => '(\*+)\s*(.*)',
                    'ol' => '(\#+)\s*(.*)',
@@ -73,13 +73,48 @@ sub parse {
     $indentDepth = 0;
     $sectionDepth = 1;
     $biggestNidSeen = 0;
+    @authors = ();
 
     $currentNode = $tree->root->insertChild('type' => 'section');
 
     foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
         chomp $line;
         if ($isStart && $line =~ /^\[lastnid (\d+)\]$/) {
-            $tree->lastNid($1);
+	    $tree->lastNid($1);
+	}
+	elsif ($isStart && $line =~ /^\[title (.+)\]$/) {
+            # The metadata below is not (currently) used by the
+            # Wiki.  It's here to so that this parser can be used
+            # as a general documentation formatting system.
+	    $tree->title($1);
+	}
+	elsif ($isStart && $line =~ /^\[subtitle (.+)\]$/) {
+            # See above.
+	    $tree->subtitle($1);
+	}
+	elsif ($isStart && $line =~ /^\[docid (.+)\]$/) {
+            # See above.
+	    $tree->id($1);
+	}
+	elsif ($isStart && $line =~ /^\[date (.+)\]$/) {
+            # See above.
+	    $tree->date($1);
+	}
+	elsif ($isStart && $line =~ /^\[version (.+)\]$/) {
+            # See above.
+	    $tree->version($1);
+	}
+	elsif ($isStart && $line =~ /^\[author (.+)\]$/) {
+            # See above.
+	    my $authorString = $1;
+	    $authorString =~ s/\s+(\S+\@\S+)$//;
+	    my $authorEmail = $1;
+	    if ($authorEmail) {
+		push @authors, [$authorString, $authorEmail];
+	    }
+	    else {
+		push @authors, [$authorString];
+	    }
         }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
             foreach $listType (keys(%listMap)) {
@@ -223,6 +258,9 @@ sub parse {
     }
     $currentNode = &_terminateParagraph($currentNode, \$nodeContent,
                                         \$biggestNidSeen);
+    if (scalar @authors > 0) {
+        $tree->authors(\@authors);
+    }
     if ($params{'add_node_ids'}) {
         if ($biggestNidSeen > $tree->lastNid) {
             $tree->lastNid($biggestNidSeen);
@@ -231,6 +269,8 @@ sub parse {
     }
     return $tree;
 }
+
+### private
 
 sub _terminateParagraph {
     my ($currentNode, $nodeContentRef, $biggestNidSeenRef) = @_;
@@ -490,18 +530,247 @@ PurpleWiki::Parser::WikiText - Default PurpleWiki parser.
 
   use PurpleWiki::Parser::WikiText;
 
+  my $parser = PurpleWiki::Parser::WikiText->new;
+  my $wikiTree = $parser->parse($wikiText);
+
 =head1 DESCRIPTION
 
-blah blah blah
+Parses a Wiki text file, and returns a PurpleWiki::Tree.
+
+This parser can be replaced by another module that reimplements the
+parse() method, which returns a PurpleWiki::Tree.  This way, we can
+support multiple parsers, ranging from the default Wiki text to XML.
+
+This parser supports metadata parsing that is not currently used by
+PurpleWiki.  This additional metadata support enables this parser to
+be used as a general document authoring system.
+
+=head1 MOTIVATION
+
+PurpleWiki's parser and modular architecture are what separate it from
+other Wikis.  Most Wikis, including UseModWiki, transform Wiki text
+into HTML by applying a series of regular expressions.  The emphasis
+is on simplicity of implementation, not correctness.  As a result, the
+the HTML is often incorrect, and the parsers are difficult to modify.
+
+Incorrect HTML prevents many Wikis from working correctly with CSS
+stylesheets.  It also makes the resulting pages unparseable, although
+that is an attribute shared by many web sites and applications.
+
+More impairing is the simplistic parsing strategy and the tight
+coupling of the code, which makes it difficult to modify the parser or
+the parser's output.  We found this untenable, because we needed to
+modify the parser to support purple numbers.  We also wanted to
+support multiple view specifications and output formats, including
+collapsible outline views of text, XML output, etc.  Finally, we
+wanted to support multipe parsers, so that our Wikis could be used to
+view and manipulate documents formatted all kinds of ways.
+PurpleWiki::Parser::WikiText was designed to meet all of these
+requirements.
+
+=head1 ALGORITHM
+
+This parser analyzes text line-by-line, parsing textual elements into
+structural nodes (PurpleWiki::StructuralNode).  Structural nodes are
+delimited by blank lines or by syntax indicating new structural nodes.
+For example, several lines of text followed by a line that starts with
+an asterisk indicates the termination of a paragraph structural node
+followed by a list structural node.  In other words:
+
+  This is a sample paragraph.
+  * This is a list item.
+
+parses to:
+
+  P: This is a sample paragraph.
+  UL:
+   LI: This is a list item.
+
+As soon as a structural node is terminated, the contents of that node
+are parsed into inline nodes (PurpleWiki::InlineNode).
+
+=head2 SECTIONS
+
+HTML has the notion of numbered headers -- h1, h2, etc.  This is poor
+design from the point of view of structural markup.  Header tags
+typically are used to indicate the size of the displayed header, and
+are not consistently used in a semantically consistent way.  Because
+Wikis are designed to convert markup into HTML, header markup ("="
+in our case) correspond exactly to the equivalent HTML header tags.
+
+Proper document markup languages (like DocBook, Purple, and XHTML 2)
+have the notion of sections.  Instead of:
+
+  <h1>Headline News</h1>
+
+  <p>These are today's top stories.</p>
+
+  <h2>PurpleWiki Released, World Celebrates</h2>
+
+  <p>PurpleWiki was released today.</p>
+
+you have something like:
+
+  <section>
+    <h>Headline News</h>
+
+    <p>These are today's top stories.</p>
+
+    <section>
+      <h>PurpleWiki Released, World Celebrates</h>
+
+      <p>PurpleWiki was released today.</p>
+    </section>
+  </section>
+
+In the first case, the structural delineation between sections is
+implied; in the latter case, it is explicit.
+
+PurpleWiki's data model uses sections rather than numerical headers.
+It determines the nestedness of a section by the number of equal signs
+in a header.  For example:
+
+  == Introduction ==
+
+  This is an introduction.
+
+is parsed as:
+
+  SECTION:
+    SECTION:
+      H: Introduction
+
+      P: This is an introduction.
+
+If there is no starting header, then the initial content is assumed to
+be in the top-level section.  For example:
+
+  This document starts with a paragraph, not a header.
+
+is parsed as:
+
+  SECTION:
+    P: This document starts with a paragraph, not a header.
+
+=head2 PURPLE NUMBERS
+
+PurpleWiki's most obvious unique feature is its support of purple
+numbers.  Every structural node gets a node ID that is unique and
+immutable, and which is displayed as a purple number.  PurpleWiki uses
+new markup -- [lastnid], [nid] -- to indicate purple numbers and
+related metadata.  The reason these tags exist and are displayed,
+rather than generating purple numbers dynamically, is to enable
+persistent, immutable IDs.  That is, if this paragraph had the purple
+number "023", and I moved this paragraph to a new location, this
+paragraph should retain the same purple number.  Because Wiki editing
+is essentially equivalent as replacing the current document with
+something entirely new, PurpleWiki includes the node IDs as markup, so
+when the modified text is submitted, nodes retain their old IDs.
+
+PurpleWiki does not expect nor desire users to add these IDs
+themselves.  This is the job of the parser.  If the add_node_ids
+parameter is set, when the parser is finished parsing the text, it
+traverses the tree and adds IDs to nodes that do not already have
+them.  The reason the parser does a second pass rather than adds the
+IDs as it parses the text is that it cannot assume that all of the IDs
+are unique, even though they are supposed to be, or that the last node
+ID (lastNid) value is correct for that document.  (This implementation
+does not currently check for unique IDs, although it does check to
+make sure the lastNid value is correct.)
+
+Suppose you had the document:
+
+  = Hello, World! =
+
+  This is an example.
+
+This would be parsed into:
+
+  SECTION:
+    H: Hello, World!
+
+    P: This is an example.
+
+Because there are no purple numbers in this markup, the parser assigns
+them.  Now the document looks like:
+
+  [lastnid 2]
+  = Hello, World! [nid 1] =
+
+  This is an example. [nid 2]
+
+Suppose you insert a paragraph before the existing one:
+
+  [lastnid 2]
+  = Hello, World! [nid 1] =
+
+  New paragraph.
+
+  This is an example. [nid 2]
+
+When this gets parsed, the new paragraph is assigned an ID;
+
+  [lastnid 3]
+  = Hello, World! [nid 1] =
+
+  New paragraph. [nid 3]
+
+  This is an example. [nid 2]
+
+Note two things.  First, the IDs have stayed with the nodes to which
+they were originally assigned.  Second, the lastnid value has been
+updated.  Suppose we delete the new paragraph, and add a list item
+after the remaining paragraph.  Parsing and adding new IDs will result
+in:
+
+  [lastnid 4]
+  = Hello, World! [nid 1] =
+
+  This is an example. [nid 2]
+
+  * List item. [nid 4]
+
+Note that the list item has a node ID of 4, not 3.  The lastnid value
+prevents node IDs from being reused.
+
+Users are supposed to ignore the purple number tags, but of course,
+there is no way to guarantee this.  Suppose a user changed the list
+item's node ID from 4 to 5, then adds a second list item:
+
+  [lastnid 4]
+  = Hello, World! [nid 1] =
+
+  This is an example. [nid 2]
+
+  * List item. [nid 5]
+  * Second list item.
+
+The lastnid is no longer correct.  However, PurpleWiki realizes that
+the lastnid must be at least 5, corrects the value, and gives the new
+list item a node ID of 6.
 
 =head1 METHODS
 
-blah blah blah
+=head2 new()
+
+Constructor.
+
+=head2 parse($wikiContent, %params)
+
+Parses $wikiContent into a PurpleWiki::Tree.  The following parameters
+are supported:
+
+  add_node_ids -- Add IDs to structural nodes that do not already
+                  have them.
 
 =head1 AUTHORS
 
 Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
+
+=head1 SEE ALSO
+
+L<PurpleWiki::Tree>.
 
 =cut
