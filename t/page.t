@@ -5,7 +5,9 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 17};
+BEGIN { plan tests => 17; };
+
+system('rm -fr t/tDB');
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;

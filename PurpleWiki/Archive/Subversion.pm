@@ -283,6 +283,7 @@ sub recentChanges {
     for my $p (keys %$h) {
       next unless ($p =~ /^$rpath\//);
       $id = $';
+      $id =~ s|\+|/|g;
       if (defined($pages->{$p})) {
         $pages->{$p}->{numChanges}++;
       } else {

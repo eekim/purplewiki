@@ -31,7 +31,7 @@
 our $VERSION;
 $VERSION = sprintf("%d", q$Id: DefaultArchive.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
 
-package PurpleWiki::Archive::PlainText;
+package PurpleWiki::Archive::PlainText2;
 
 use Fcntl ':mode';
 use IO::Dir;
@@ -75,7 +75,7 @@ sub getPage {
   my $rev = shift;
   $id =~ s|/|\+|g;
 
-  PurpleWiki::Archive::PlainTextPage->new(id => $id, revision => $rev,
+  PurpleWiki::Archive::PlainText2Page->new(id => $id, revision => $rev,
                                           datadir => $self->{datadir});
 }
 
@@ -102,9 +102,9 @@ sub putPage {
   my $id = $args{pageId};
 #for (keys %args) { print STDERR "PP:$_ = $args{$_}\n"; }
   $id =~ s|/|\+|g;
-  my $page = PurpleWiki::Archive::PlainTextPage->new(id => $id,
+  my $now = time;
+  my $page = PurpleWiki::Archive::PlainText2Page->new(id => $id,
                                                  datadir => $self->{datadir});
-  $page->{timeStamp} = $args{timeStamp} || time;
   return "Lock Failed" unless ($page->_requestLock());
   my $old_contents = $page->_getText();
 
@@ -124,7 +124,7 @@ sub putPage {
   $page->_writePage($contents);
 
   $args{host} = $ENV{REMOTE_ADDR} unless ($args{host});
-  for my $pname ('userId', 'host', 'changeSummary', 'timeStamp') {
+  for my $pname ('userId', 'host', 'changeSummary' ) {
       my $pval = $args{$pname};
       $props{$pname} = (defined($pval)) ? $pval : $page->{$pname};
   }
@@ -141,42 +141,20 @@ sub deletePage {
   $id =~ s|/|\+|;
   my $datadir = $self->{datadir};
   my $idSub = ($id =~ /^[A-Z]/i) ? uc($&) : 'misc';
-  my $path = "$datadir/$idSub/$id";
-  my %dir;
-  if (tie(%dir, IO::Dir, $path)) {
-    for my $rev (keys %dir) {
-      unlink "$path/$rev";
-    }
-    untie %dir;
-    rmdir $path;
-  }
-}
-
-sub _find_dir {
-  my $dir = shift;
-  my $array_ref = shift;
-  my $oldest = shift;
-  my %dir;
-#print STDERR "_find_dir($dir, $#{$array_ref}, $oldest)\n";
-  if (tie %dir, IO::Dir, $dir) {
-    for my $entry (keys %dir) {
-      next if (substr($entry,0,1) eq '.');
-      my $a = $dir{$entry};
-      next unless ref($a);
-      my ($mode, $mtime) = ($a->mode, $a->mtime);
-      if (S_ISDIR($mode)) {
-        _find_dir("$dir/$entry", $array_ref);
-      } elsif (S_ISREG($mode)) {
-#print STDERR "$oldest :: $mtime ($entry)\n" if (!$oldest && $entry =~ /\.txt$/);
-        if ((!$oldest || $mtime > $oldest) && $entry =~ /\.txt$/) {
-          push @$array_ref, $dir;
-          untie %dir;
-          return;
+  for my $revSub (1..9) {
+    if (-d "$datadir/$revSub") {
+      my $path = "$datadir/$revSub/$idSub/$id";
+      my %dir;
+      if (tie(%dir, IO::Dir, $path)) {
+        for my $rev (keys %dir) {
+          unlink "$path/$rev";
         }
+        untie %dir;
+        rmdir $path;
       }
     }
-    untie %dir;
-  } else { print STDERR "Error reading dir $dir\nError: $!\n"; }
+  }
+  unlink "$datadir/$idSub/$id.txt";
 }
 
 sub _find_txt {
@@ -207,9 +185,9 @@ sub allPages {
   my $self = shift;
   my $a_ref = [];
   my %ids = ();
-  _find_dir($self->{datadir}, $a_ref);
+  _find_txt($self->{datadir}, $a_ref);
   for (@$a_ref) {
-    if (m|/([^/]+)$|) {
+    if (m|/([^/]+)/[^/]+\.txt$|) {
       my $id = $1;
       $id =~ s|\+|/|g;
       $ids{$id}++;
@@ -229,7 +207,7 @@ sub recentChanges {
   for (@$a_ref) {
     if (m|/([^/]+)/[^/]+\.txt$|) {
       my $id = $1;
-      $id =~ s|\+|/|g;
+      $id =~ s|+|/|g;
       my $page = $self->getPage($id);
       my $pageTime = $page->getTime;
       if ($pages{$id} && $pages{$id}->{timeStamp} > $pageTime) {
@@ -269,7 +247,7 @@ sub diff {
 
 sub pageExists {
     my ($self, $id) = @_;
-    my $file = $self->getPage($id)->_idPath() . '/current';
+    my $file = $self->getPage($id)->_revPath(). '.txt';
     (-e $file);
 }
 
@@ -291,13 +269,17 @@ sub getRevisions {
     my $datadir = $self->{datadir};
     my @revs = ();
     my $idSub = ($id =~ /^[A-Z]/i) ? uc($&) : 'misc';
-    my $path = "$datadir/$idSub/$id";
-    my %dir;
-    if (tie(%dir, IO::Dir, $path)) {
-      for my $rev (keys %dir) {
-        push(@revs, $`+0) if ($rev =~ /\.txt$/);
+    for my $revSub (1..9) {
+      if (-d "$datadir/$revSub") {
+        my $path = "$datadir/$revSub/$idSub/$id";
+        my %dir;
+        if (tie(%dir, IO::Dir, $path)) {
+          for my $rev (keys %dir) {
+            push(@revs, $`+0) if ($rev =~ /\.txt$/);
+          }
+          untie %dir;
+        }
       }
-      untie %dir;
     }
     @revs = (sort { $b <=> $a } @revs);
     $maxcount = $#revs if (!$maxcount || $#revs < $maxcount);
@@ -322,7 +304,7 @@ sub getRevisions {
     @revisions;
 }
 
-package PurpleWiki::Archive::PlainTextPage;
+package PurpleWiki::Archive::PlainText2Page;
 
 # PurpleWiki Page Data Access
 
@@ -352,27 +334,17 @@ sub getUserID {
 # Returns the revision of this Page.
 sub getRevision {
     my $self = shift;
+    $self->_readMeta();
     my $rev = $self->{revision};
-    $rev || $self->_currentRev;
-}
-
-sub _currentRev {
-    my $self = shift;
-    my $file = $self->_idPath . '/current';
-    my $fh = IO::File->new($file);
-    if ($fh) {
-        my $v = <$fh>;
-        undef $fh;
-        return $& if ($v =~ /\d+/);
-    }
-    0;
+    $rev || 0;
 }
 
 # Gets the timestamp of this Page. 
 sub getTime {
     my $self = shift;
     $self->_readMeta();
-    $self->{timeStamp};
+    my $file = $self->_revPath() . '.txt';
+    (stat($file))[9];
 }
 
 #
@@ -404,9 +376,8 @@ sub _readPage {
   my $self = shift;
   return "" if (defined($self->{text}));
  
-  my $rev = $self->getRevision();
-  my $file = $self->_idPath() . "/$rev.txt";
-#print STDERR "_readPage($file, $rev)\n";
+  my $file = $self->_revPath() . '.txt';
+#print STDERR "_readPage($file)\n";
   my $fh = IO::File->new($file);
   return undef unless (defined($fh));
   $self->{text} = join("", (<$fh>));
@@ -417,9 +388,10 @@ sub _readPage {
 sub _readMeta {
   my $self = shift;
   return if (defined($self->{changeSummary}));
+  my $rev = $self->{revision};
+  $self->{revision} = $rev = $self->_getCurrentRev unless $rev;
  
-  my $rev = $self->getRevision();
-  my $file = $self->_idPath() . "/$rev.meta";
+  my $file = $self->_revPath() . '.meta';
 #print STDERR "_readMeta($file)\n";
   my $fh = IO::File->new($file);
   if ($fh) {
@@ -435,8 +407,7 @@ sub _readMeta {
 
 sub _writePage {
   my $self = shift;
-  my $rev = $self->getRevision();
-  my $file = $self->_idPath() . "/$rev.txt";
+  my $file = $self->_revPath() . '.txt';
   my $dir = $file;
   $dir =~ s|/[^/]*$||;
   File::Path::mkpath($dir);
@@ -448,27 +419,35 @@ sub _writePage {
   } else {
     print STDERR "_writePage:$file\nError:$!\n";
   }
-  $self->_writeCurrent($rev);
+  $self->_linkCurrent();
 }
 
-sub _writeCurrent {
+sub _linkCurrent {
   my $self = shift;
-  my $rev = shift;
-  my $file = $self->_idPath() . '/current';
-  my $fh = IO::File->new(">$file");
-  if ($fh) {
-    print $fh $rev,"\n";
-    undef $fh
-  } else {
-    print STDERR "_writeCurrent:$file\nError:$!\n";
+  my $revfile = $self->_revPath() . '.txt';
+  my $curfile = $self->_curPath() . '.txt';
+  if ($revfile ne $curfile) {
+      my $relpath = $revfile;
+      my $datadir = $self->{datadir};
+      $relpath =~ s/$datadir/../;
+      unlink $curfile if (-e $curfile);
+      symlink($relpath, $curfile);
   }
+}
+
+sub _getCurrentRev {
+  my $self = shift;
+  my $link = $self->_curPath() . '.txt';
+  return '' unless (-l $link);
+  my $dest = readlink($link);
+#print STDERR "_getCurrentRev($dest)\n";
+  ($dest =~ m|/([^/\.]+)\.txt$|) ? $1 : '';
 }
 
 sub _writeMeta {
   my $self = shift;
   my $hashref = shift;
-  my $rev = $self->_currentRev;
-  my $file = $self->_idPath() . "/$rev.meta";
+  my $file = $self->_revPath() . '.meta';
   my $text = "";
   my $fh = IO::File->new(">$file");
   if ($fh) {
@@ -481,7 +460,7 @@ sub _writeMeta {
 
 sub _requestLock {
   my $self = shift;
-  my $lock = $self->_idPath() . '/lock';
+  my $lock = $self->_curPath() . '.lck';
   my $lockdir = $lock;
   $lockdir =~ s|/[^/]*$||;
 #print STDERR "No dir: " unless ($self->{datadir});
@@ -514,13 +493,30 @@ sub _requestLock {
 
 sub _releaseLock {
   my $self = shift;
-  my $lock = $self->_idPath() . '/lock';
+  my $lock = $self->_curPath() . '.lck';
   rmdir($lock);
 }
 
-sub _idPath {
+sub _revPath {
   my $self = shift;
   my $id = $self->{id};
+  unless ($self->{id}) {
+    for (keys %$self) { print STDERR "rP:$_ = $$self{$_}\n"; }
+  }
+  my $idSub = ($id =~ /^[A-Za-z]/) ? uc($&) : 'misc';
+  my $rev = $self->{revision};
+  my $datadir = $self->{datadir};
+  return "$datadir/$idSub/$id" unless $rev;
+  my $revSub = substr($rev, 0, 1);
+  "$datadir/$revSub/$idSub/$id/$rev";
+}
+
+sub _curPath {
+  my $self = shift;
+  my $id = $self->{id};
+  unless ($self->{id}) {
+    for (keys %$self) { print STDERR "rP:$_ = $$self{$_}\n"; }
+  }
   my $idSub = ($id =~ /^[A-Za-z]/) ? uc($&) : 'misc';
   my $datadir = $self->{datadir};
   "$datadir/$idSub/$id";
@@ -528,10 +524,10 @@ sub _idPath {
 
 #
 # Filesystem structure:
-# /[A-Z]/<id+>/<rev>.txt   Wikitext revisions
-# /[A-Z]/<id+>/<rev>.meta  MetaData revisions
-# /[A-Z]/<id+>/current     Wikitext Current (contains \d+ revision value)
-# /[A-Z]/<id+>/lock        Individual page lock
+# /[1-9]/[A-Z]/<id+>/<rev>.txt   Wikitext revisions
+# /[1-9]/[A-Z]/<id+>/<rev>.meta  MetaData revisions
+# /[A-Z]/<id+>.txt               Wikitext Current (symlink to revision)
+# /[A-Z]/<id+>.lck               Individual page lock
 #
 
 1;

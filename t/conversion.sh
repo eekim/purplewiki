@@ -9,5 +9,5 @@ cp t/config.convDef t/config
 
 ./extras/backendConvert.pl -o t/useModDB -n t/svnDB -N Subversion
 cp t/config.convSVN t/config
-./r/runlogm.pl -t t/conv.out
+./r/runlogm.pl -t t/conv.out -m
 

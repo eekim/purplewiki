@@ -89,11 +89,10 @@ sub get {
         # FIXME: assumes that anything not the wiki
         # is static content
         my $scriptName = $self->{config}->ScriptName;
-        $scriptName = $' if (m'^http://[^/]+/');
+        $scriptName = $' if ($scriptName =~ m'^http://[^/]+/');
         my ($host, $path);
         if ($url =~ m'^http://([^/]+)/') {
             ($host, $path) = ($1, "/$'");
-#print STDERR "H:$host P:$path\n";
         } else {  # what other URL patterns do we need?
             ($host, $path) = ('', $url);
         }
@@ -114,7 +113,6 @@ sub get {
             my $ua = new LWP::UserAgent(agent => ref($self));
             my $request = new HTTP::Request('GET', $url);
 
-die "External transclusion $url\nSc:$scriptName ($path, $host)\n";
             # If we have the right config vars for authenticating
             # trying authenticating the request. 
             if ($self->{config}->HttpUser() && $self->{config}->HttpPass()) {

@@ -5,11 +5,12 @@ use strict;
 use warnings;
 use Test;
 
-BEGIN { plan tests => 17};
+BEGIN { plan tests => 17; };
 
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
+system('rm -fr t/tDB');
 system('cp t/config.tMod t/config');
 
 my $configdir = 't';

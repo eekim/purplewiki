@@ -114,14 +114,15 @@ my $err;
 my $goodCount = 0;
 my $badCount = 0;
 
-for (sort { $a <=> $b } (keys %all)) {
-  my ($id, $rev, $host, $summary, $user) = @{$all{$_}};
+for my $pageTime (sort { $a <=> $b } (keys %all)) {
+  my ($id, $rev, $host, $summary, $user) = @{$all{$pageTime}};
   my $page = $pages->getPage($id, $rev);
   print "$id, $rev\n" if $verb;
   if ($err = $newpages->putPage( pageId => $id,
                                  tree => $page->getTree(),
                                  changeSummary => $summary,
                                  host => $host,
+                                 timeStamp => $pageTime,
                                  userId => $user )) {
     print STDERR "$id :: $rev -> $err\n";
     $badCount++;
