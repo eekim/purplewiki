@@ -36,7 +36,7 @@ use PurpleWiki::Config;
 
 # $Id$
 
-our $MainPage;
+our $MainPage = '';
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
@@ -93,9 +93,7 @@ sub GetPageOrEditLink {
       $name =~ s/_/ /g;
     }
   }
-  # FIXME: this is not right. There are times when 
-  # the / is there but MainPage is not set.
-  $id =~ s|^/|$MainPage/| if defined($MainPage);
+  $id =~ s|^/|$MainPage|;
   if ($config->FreeLinks) {
     $id = FreeToNormal($id);
   }
@@ -141,9 +139,7 @@ sub GetPageLinkText {
   my ($id, $name) = @_;
   my $config = PurpleWiki::Config->instance();
 
-  # FIXME: this is not right. There are times when 
-  # the / is there but MainPage is not set.
-  $id =~ s|^/|$MainPage/| if defined($MainPage);
+  $id =~ s|^/|$MainPage|;
   if ($config->FreeLinks) {
     $id = FreeToNormal($id);
     $name =~ s/_/ /g;

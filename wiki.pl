@@ -97,7 +97,7 @@ umask(oct($config->Umask)) if defined $config->Umask;
 sub DoWikiRequest {
   InitRequest(@_) or return;
 
-  # Instantiate PurpleWiki parser.
+  $PurpleWiki::Misc::MainPage = '';
 
   if (not DoBrowseRequest()) {
     DoOtherRequest();
@@ -242,6 +242,9 @@ sub BrowsePage {
   if (($id eq $config->RCName) && GetParam('norcdiff', 1)) {
     $allDiff = 0;  # Only show if specifically requested
   }
+
+  $id =~ m!^[^/]*!;
+  $PurpleWiki::Misc::MainPage = $& ? $&.'/' : '';
 
   $showDiff = GetParam('diff', $allDiff);
 
