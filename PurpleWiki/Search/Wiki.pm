@@ -47,7 +47,7 @@ sub search {
 
     my $name;
 
-    foreach $name (PurpleWiki::Database::AllPagesList($self->config())) {
+    foreach $name (PurpleWiki::Database::AllPagesList()) {
         if ($name =~ /$query/i) {
             my $page = $self->_getAndOpenPage($name);
             push(@results, $self->_getResult($page));
@@ -78,9 +78,7 @@ sub _getAndOpenPage {
     my $self = shift;
     my $name = shift;
 
-    my $page = new PurpleWiki::Database::Page(id => $name,
-         now => time,
-         config => $self->config());
+    my $page = new PurpleWiki::Database::Page(id => $name, now => time);
     $page->openPage();
 
     return $page;
@@ -95,7 +93,7 @@ sub _getResult {
     my $result = new PurpleWiki::Search::Result();
     $result->setTitle($name);
     $result->setModifiedTime($page->getTS());
-    $result->setURL(PurpleWiki::Page::getWikiWordLink($name, $self->config()));
+    $result->setURL(PurpleWiki::Page::getWikiWordLink($name));
     $result->setSummary(substr($text->getText(), 0, 99) . '...');
 
     return $result;

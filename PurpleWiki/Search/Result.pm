@@ -31,6 +31,7 @@
 package PurpleWiki::Search::Result;
 
 use strict;
+use PurpleWiki::Config;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -40,6 +41,8 @@ sub new {
     my $self = {};
 
     my %params = @_;
+
+    $self->{config} = PurpleWiki::Config->instance();
 
     bless ($self, $class);
 
