@@ -35,7 +35,9 @@ package PurpleWiki::Config;
 # $Id: Config.pm,v 1.13 2004/02/12 18:22:42 cdent Exp $
 
 use strict;
+use Carp;
 use AppConfig;
+use base qw(Apache::Singleton);
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -73,14 +75,18 @@ my @LIST_CONFIGS = qw( RcDays SearchModule MovableTypeBlogID IrcLogConfig);
 # of access control or other intercessionary methods
 # between the PurpleWiki and the AppConfig stuff.
 sub new {
-    my $class = shift;
-    my $directory = shift || die "you must provide a config directory";
-    my $self = {};
-    bless ($self, $class);
+    my $proto = shift;
+    my $class = ref($proto) || $proto;
+    my $self = bless({}, $class);
+    my $directory = shift || croak "you must provide a config directory";
 
     $self->_init($directory);
-
+    $class->_set_instance($self);
     return $self;
+}
+
+sub instance {
+    return shift->_get_instance();
 }
 
 sub _init {
@@ -102,7 +108,7 @@ sub _init {
     # because it is expanded in the file
     $self->{AppConfig}->set('DataDir', $directory);
 
-    $self->{AppConfig}->file($file) || die "unable to parse config file";
+    $self->{AppConfig}->file($file) || croak "unable to parse config file";
     $self->_initLinkPatterns();
 
     # set the File Separators
