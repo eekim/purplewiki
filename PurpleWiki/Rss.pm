@@ -69,8 +69,19 @@ sub getRSS {
         link  => $self->{config}->ScriptName,
     );
 
+    my %seen;
+    # FIXME: depending on the wrong variable here, probably better 
+    # to loop on the array
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
+
+        # have only the most recent change show up
+        if (exists($seen{$recentChange->{name}})) {
+            $count ++;
+            next;
+        }
+        
+
         my $bodyText = $self->_getWikiHTML($recentChange->{name});
 
         $rss->add_item(
@@ -81,6 +92,7 @@ sub getRSS {
             },
             description => "<![CDATA[$bodyText]]>\n",
         );
+        $seen{$recentChange->{name}}++;
     }
 
     return $rss->as_string;
