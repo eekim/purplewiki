@@ -13,7 +13,7 @@ use DB_File;
 use File::Copy;
 use File::Find;
 use PurpleWiki::Config;
-use PurpleWiki::UseMod::User::UseMod;
+use PurpleWiki::UserDB::UseMod;
 
 my $CONFIG;
 my $userName;

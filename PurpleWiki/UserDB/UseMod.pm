@@ -1,4 +1,4 @@
-# PurpleWiki::UseMod::User::UseMod.pm
+# PurpleWiki::UserDB::UseMod.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -189,11 +189,11 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::UseMod::User::UseMod - UseMod backend for user database.
+PurpleWiki::UserDB::UseMod - UseMod backend for user database.
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::UseMod::User::UseMod;
+  use PurpleWiki::UserDB::UseMod;
 
 =head1 DESCRIPTION
 
@@ -234,6 +234,6 @@ Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
 
 =head1 SEE ALSO
 
-L<PurpleWiki::UseMod::User::Base>
+L<PurpleWiki::UserDB::Base>
 
 =cut

@@ -31,7 +31,7 @@
 #    Boston, MA 02111-1307 USA
 
 package UseModWiki;
-use lib '/home/eekim/devel/PurpleWiki/branches/database-api-1';
+use lib '/home/gerry/purple/blueoxen/branches/database-api-1';
 use strict;
 use Authen::Captcha;
 use CGI;
@@ -41,7 +41,7 @@ use PurpleWiki::Config;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Session;
 
-my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || '/home/gerry/purple/testdb';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'some/default/db/path';
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -71,13 +71,13 @@ my $userDbDriver = $config->UserDatabaseDriver;
 my $aclDriver = $config->ACLDriver;
 
 eval "require $parserDriver";
-die "$@" if ($@);
+die "Parser Driver Error ($parserDriver) $@" if ($@);
 eval "require $templateDriver";
-die "$@" if ($@);
+die "Template Driver Error ($templateDriver) $@" if ($@);
 eval "require $userDbDriver";
-die "$@" if ($@);
+die "User DB Driver Error ($userDbDriver) $@" if ($@);
 eval "require $aclDriver";
-die "$@" if ($@);
+die "ACL Driver Error ($aclDriver) $@" if ($@);
 
 my $wikiParser = $parserDriver->new;
 my $wikiTemplate = $templateDriver->new;

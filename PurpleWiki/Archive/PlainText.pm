@@ -232,7 +232,10 @@ sub recentChanges {
   my %pages = ();
   # find $self->{datadir} -type f -name \*.txt -newer $starttime
   my $a_ref = [];
-  _find_txt($self->{datadir}, $a_ref, $starttime);
+  for my $subdir ('A'..'Z', 'misc') {
+    my $dir = $dir = $self->{datadir} . '/' . $subdir;
+    _find_txt($dir, $a_ref, $starttime) if (-d $dir);
+  }
   for (@$a_ref) {
     if (m|/([^/]+)/[^/]+\.txt$|) {
       my $id = $1;
