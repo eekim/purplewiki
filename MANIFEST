@@ -83,6 +83,7 @@ t/sequence.t
 t/structural_node.t
 t/tree.t
 t/wikitext.t
+t/wikihtml.t
 t/output/hr1.txt
 t/output/hr2.txt
 t/output/hr3.txt
@@ -106,6 +107,18 @@ t/output/tree_test08.txt
 t/output/tree_test09.txt
 t/output/tree_test11.txt
 t/output/tree_test12.txt
+t/output/hr1.html
+t/output/hr2.html
+t/output/hr3.html
+t/output/hr4.html
+t/output/hr5.html
+t/output/hr6.html
+t/output/hr7.html
+t/output/tree_freelinks.html
+t/output/tree_hr.html
+t/output/tree_lists.html
+t/output/tree_pre.html
+t/output/tree_test01.html
 t/txt/hr1.txt
 t/txt/hr2.txt
 t/txt/hr3.txt
@@ -194,3 +207,4 @@ wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
 wikidb/templates/lib/searchResults.tt
 wiki.pl
+META.yml                                 Module meta-data (added by MakeMaker)
