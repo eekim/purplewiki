@@ -35,7 +35,7 @@ system('cp t/config.runMod t/config');
             close STDOUT;
             runTest($q, $test_out);
             MapRevisions($test_out);
-            my $diff = diffOutput($compare, $test_out);
+            my $diff = diffOutput($compare, $test_out, 1);
             open(STDOUT, ">&OUT");
             ok($diff, '');
             if ($diff) {

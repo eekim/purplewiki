@@ -55,12 +55,15 @@ sub new {
   if ($config) {
     $reposdir = $config->DataDir;
     $reposPath =  $config->ReposPath || '';
+    $self->{sequrl} = $config->RemoteSequenceURL;
+    $self->{seqdir} = $config->LocalSequenceDir;
   } else {
     my $x;
     $reposdir = $x if (defined($x=$args{DataDir}));
     $reposPath = $x if (defined($x=$args{ReposPath}));
   }
   die "No config or data dir defined\n" unless $reposdir;
+  $self->{seqdir} = $datadir unless ($self->{seqdir});
 
   substr($reposPath,-1) = '' if (substr($reposPath,-1) eq '/');
   $self->{reposPath} = $reposPath;
@@ -227,7 +230,42 @@ sub putPage {
 
   $repos->fs_commit_txn($txn);
 #print STDERR "Committed $id ",$self->_currentRev,"\n";
+
+  my $url;
+  $self->_updateNIDs($url, $tree) if ($url = $args{url});
+
   return "";
+}
+
+sub _updateNIDs {
+  my ($self, $url, $tree) = @_;
+  my $seq = $self->_getSequencer;
+  my @nids;
+  my $filter = PurpleWiki::View::Filter->new(
+    useOO => 1,
+    start => sub {
+      shift->{nids} = \@nids;
+    }
+  );
+  $filter->setFilters(Main =>
+    sub {
+      my $self = shift;
+      my $node = shift;
+      my $nid = $node->id();
+      push (@{$self->{nids}}, $nid) if $nid;
+    }
+  );
+  $filter->process($tree);
+
+  $seq->updateURL($url, \@nids);
+}
+
+sub _getSequencer {
+  my $self = shift;
+  my $ret;
+  return $ret if (defined($ret = $self->{sequence}));
+
+  $self->{sequence} = new PurpleWiki::Sequence($self->{seqdir}, $self->{sequrl});
 }
 
 sub deletePage {

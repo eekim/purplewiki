@@ -41,7 +41,7 @@ system('cp t/config.runSVN t/config');
             close IN;
             close STDOUT;
             runTest($q, $test_out);
-            my $diff = diffOutput($compare, $test_out);
+            my $diff = diffOutput($compare, $test_out, 0);
             open(STDOUT, ">&OUT");
             ok($diff, '');
             if ($diff) {

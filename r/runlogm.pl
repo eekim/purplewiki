@@ -34,7 +34,7 @@ while (@ARGV) {
 }
 $ENV{PW_CONFIG_DIR} = $configdir;
 
-require "wiki.pl";
+require "./wiki.pl";
 use CGI;
 
 open(ERR, ">&STDERR") || die "Error open $!\n";
@@ -64,12 +64,13 @@ if ($split) {
             runTest($q, $test_out);
             if ($dodiff) {
                 MapRevisions($test_out) if ($map);
-                my $diff = diffOutput($compare, $test_out);
+                my $diff = diffOutput($compare, $test_out, $map);
                 if ($diff) {
                     print ERR "Seq $seq differs:\n";
                     print ERR $diff,"\n";
                     unlink $test_out unless ($update);
                 } else {
+                    print ERR "Ok $seq\n";
                     unlink $test_out;
                 }
             }

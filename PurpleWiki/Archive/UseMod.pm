@@ -66,6 +66,8 @@ sub new {
     $self->{keepdir} = $config->KeepDir;
     $self->{tempdir} = $config->TempDir;
     $self->{lockdir} = $config->LockDir;
+    $self->{sequrl} = $config->RemoteSequenceURL;
+    $self->{seqdir} = $config->LocalSequenceDir;
   } else {
     my $x;
     $datadir = $args{DataDir};
@@ -84,6 +86,7 @@ sub new {
       unless defined($self->{tempdir});
   $self->{lockdir} = $args{LockDir} || "$self->{tempdir}/lock"
       unless defined($self->{lockdir});
+  $self->{seqdir} = $datadir unless ($self->{seqdir});
 
   if ($args{create} && !-d $datadir) {
       mkdir $datadir;
@@ -178,9 +181,44 @@ sub putPage {
   $page->{revision} = $newRev;
   $self->_WriteRcLog($args{pageId}, $args{changeSummary}, $now,
                      $userName, $host);
+
+  my $url;
+  $self->_updateNIDs($url, $tree) if ($url = $args{url});
+
   $self->_save($page);
   $self->_releaseLock();
   return "";
+}
+
+sub _updateNIDs {
+  my ($self, $url, $tree) = @_;
+  my $seq = $self->_getSequencer;
+  my @nids;
+  my $filter = PurpleWiki::View::Filter->new(
+    useOO => 1,
+    start => sub {
+      shift->{nids} = \@nids;
+    }
+  );
+  $filter->setFilters(Main =>
+    sub {
+      my $self = shift;
+      my $node = shift;
+      my $nid = $node->id();
+      push (@{$self->{nids}}, $nid) if $nid;
+    }
+  );
+  $filter->process($tree);
+
+  $seq->updateURL($url, \@nids);
+}
+
+sub _getSequencer {
+  my $self = shift;
+  my $ret;
+  return $ret if (defined($ret = $self->{sequence}));
+
+  $self->{sequence} = new PurpleWiki::Sequence($self->{sequrl}, $self->{seqdir});
 }
 
 sub deletePage {

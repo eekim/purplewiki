@@ -56,38 +56,23 @@ sub new {
     $self->{remote} = $remote;
     $self->{datafile} = $datadir . '/sequence';
     $self->{indexfile} = $datadir . '/sequence.index';
+    $self->{revindexfile} = $datadir . '/sequence.rindex';
     bless ($self, $class);
     return $self;
 }
 
 # Returns the URL associated with a nid
 sub getURL {
-    my $self = shift;
-    my $nid = shift;
-    my $url; 
-
-    if ($self->{remote}) {
-        $url = $self->_getURLByRemote($nid);
-    } else {
-        $url = $self->_getURLByLocal($nid);
-    }
-
-    return $url;
+    ($_[0]->{remote}) ? &_getURLByRemote : &_getURLByLocal;
 }
 
 # Returns the next ID in the sequence
 sub getNext {
-    my $self = shift;
-    my $url = shift;
-    my $nid;
+    ($_[0]->{remote}) ? &_getNidByRemote : &_getNidByLocal;
+}
 
-    if ($self->{remote}) {
-        $nid = $self->_getNidByRemote($url);
-    } else {
-        $nid = $self->_getNidByLocal($url);
-    }
-
-    return $nid;
+sub updateURL {
+    ($_[0]->{remote}) ? &_updateURLByRemote : &_updateURLByLocal;
 }
 
 sub _getNidByLocal {
@@ -128,7 +113,6 @@ sub _getNidByRemote {
     return $nid;
 }
 
-
 sub _tieIndex {
     my $self = shift;
     my $index = shift;
@@ -136,6 +120,15 @@ sub _tieIndex {
     tie %$index, 'DB_File', $self->{indexfile}, 
         O_RDWR|O_CREAT, 0666, $DB_HASH or
         die "unable to tie " . $self->{indexfile} . ' ' . $!;
+}
+
+sub _tieRevIndex {
+    my $self = shift;
+    my $index = shift;
+
+    tie %$index, 'DB_File', $self->{revindexfile}, 
+        O_RDWR|O_CREAT, 0666, $DB_HASH or
+        die "unable to tie " . $self->{revindexfile} . ' ' . $!;
 }
 
 # I suspect this is expensive
@@ -289,6 +282,55 @@ sub _unlockFile {
     my $self = shift;
     my $dir = $self->{datafile} . '.lck';
     rmdir($dir) or die "Unable to remove locking directory $dir: $!";
+}
+
+#
+# update the URL associated with a list of NIDs
+#
+# read the old list of NIDs from the reverse index,
+# set the URL for all NIDs in the new list, removing them from the oldlist hash
+# as we go.  Now delete the entries for any left in the old list
+# finally, write the new NIDs to the reverse index
+#
+sub _updateURLByLocal {
+    my $self = shift;
+    my $url = shift;
+    my $nids = shift;
+
+    my (%index, %revidx, %oldnids);
+
+    $self->_tieIndex(\%index);
+    $self->_tieRevIndex(\%revidx);
+    grep($oldnids{$_}=1, (split(" ", $revidx{$url})));
+    for my $nid (@$nids) {
+        $index{$nid} = $url;
+        delete $oldnids{$nid};
+    }
+    for my $nid (keys %oldnids) {
+        delete $index{$nid};
+    }
+    $revidx{$url} = join(" ", @$nids);
+}
+
+sub _updateURLByRemote {
+    my $self = shift;
+    my $url = shift;
+    my $nids = shift;
+    $nids = join('+', @$nids);
+    $url =~ s|/|%2F|g;
+    my $urlRequest = $self->{remote} . "/$url/$nids";
+
+    use LWP::UserAgent;
+    use HTTP::Request;
+
+    my $ua = new LWP::UserAgent(agent => ref($self));
+    my $request = new HTTP::Request('GET', $urlRequest);
+    my $result = $ua->request($request);
+
+    if (!$result->is_success()) {
+        # FIXME: need something better than a die here?
+        die "unable to update url for $nids: ", $result->code;
+    }
 }
 
 1;

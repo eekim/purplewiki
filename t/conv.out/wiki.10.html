@@ -1,0 +1,114 @@
+Content-Type: text/xml; charset=ISO-8859-1
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<rdf:RDF
+ xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+ xmlns="http://purl.org/rss/1.0/"
+ xmlns:taxo="http://purl.org/rss/1.0/modules/taxonomy/"
+ xmlns:dc="http://purl.org/dc/elements/1.1/"
+ xmlns:syn="http://purl.org/rss/1.0/modules/syndication/"
+ xmlns:admin="http://webns.net/mvcb/"
+>
+
+<channel rdf:about="/example/testwiki.cgi">
+<title>TestWiki</title>
+<link>/example/testwiki.cgi</link>
+<description></description>
+<items>
+ <rdf:Seq>
+  <rdf:li rdf:resource="/example/testwiki.cgi?SecondPage/SubPage2" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?SecondPage/SubPage1" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?SecondPage" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?And_A_Special_Page" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?FrontPage" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?AnotherLink" />
+  <rdf:li rdf:resource="/example/testwiki.cgi?Some_Link_Or_Another" />
+ </rdf:Seq>
+</items>
+</channel>
+
+<item rdf:about="/example/testwiki.cgi?SecondPage/SubPage2">
+<title>SecondPage/SubPage2</title>
+<link>/example/testwiki.cgi?SecondPage/SubPage2</link>
+<description><![CDATA[<p><a name="nidU" id="nidU"></a>Another subpage &nbsp;&nbsp; <a class="nid" title="U" href="/example/testwiki.cgi?SecondPage/SubPage2#nidU">#</a></p>
+<p><a name="nidT" id="nidT"></a>An update to a subpage &nbsp;&nbsp; <a class="nid" title="T" href="/example/testwiki.cgi?SecondPage/SubPage2#nidT">#</a></p>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?SecondPage/SubPage1">
+<title>SecondPage/SubPage1</title>
+<link>/example/testwiki.cgi?SecondPage/SubPage1</link>
+<description><![CDATA[<p><a name="nidQ" id="nidQ"></a>This is a subpage &nbsp;&nbsp; <a class="nid" title="Q" href="/example/testwiki.cgi?SecondPage/SubPage1#nidQ">#</a></p>
+<p><a name="nidR" id="nidR"></a>Try a reletive link /SubPage2<a href="/example/testwiki.cgi?action=edit&amp;id=/SubPage2" class="wikiword">?</a> &nbsp;&nbsp; <a class="nid" title="R" href="/example/testwiki.cgi?SecondPage/SubPage1#nidR">#</a></p>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?SecondPage">
+<title>SecondPage</title>
+<link>/example/testwiki.cgi?SecondPage</link>
+<description><![CDATA[<ul>
+<li><a name="nidN" id="nidN"></a><a href="/example/testwiki.cgi?SecondPage/SubPage1" class="wikiword">SecondPage/SubPage1</a> &nbsp;&nbsp; <a class="nid" title="N" href="/example/testwiki.cgi?SecondPage#nidN">#</a></li>
+<li><a name="nidO" id="nidO"></a><a href="/example/testwiki.cgi?SecondPage/SubPage2" class="wikiword">SecondPage/SubPage2</a> &nbsp;&nbsp; <a class="nid" title="O" href="/example/testwiki.cgi?SecondPage#nidO">#</a></li>
+<li><a name="nidP" id="nidP"></a>/SubPage3<a href="/example/testwiki.cgi?action=edit&amp;id=/SubPage3" class="wikiword">?</a> &nbsp;&nbsp; <a class="nid" title="P" href="/example/testwiki.cgi?SecondPage#nidP">#</a></li>
+</ul>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?And_A_Special_Page">
+<title>And_A_Special_Page</title>
+<link>/example/testwiki.cgi?And_A_Special_Page</link>
+<description><![CDATA[<p><a name="nid7" id="nid7"></a>now is the time&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid1" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="7" href="/example/testwiki.cgi?And_A_Special_Page#nid7">#</a></p>
+<p><a name="nid8" id="nid8"></a>for all tests to work&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid2" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="8" href="/example/testwiki.cgi?And_A_Special_Page#nid8">#</a></p>
+<p><a name="nid9" id="nid9"></a>Something to grab&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid3" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="9" href="/example/testwiki.cgi?And_A_Special_Page#nid9">#</a></p>
+<p><a name="nidA" id="nidA"></a>another thing to grab&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid4" class="nid">T</a><a href="/example/testwiki.cgi?SecondPage" class="wikiword">SecondPage</a>&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid5" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="A" href="/example/testwiki.cgi?And_A_Special_Page#nidA">#</a></p>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?FrontPage">
+<title>FrontPage</title>
+<link>/example/testwiki.cgi?FrontPage</link>
+<description><![CDATA[<p><a name="nid1" id="nid1"></a>now is the time &nbsp;&nbsp; <a class="nid" title="1" href="/example/testwiki.cgi?FrontPage#nid1">#</a></p>
+<p><a name="nid2" id="nid2"></a>for all tests to work &nbsp;&nbsp; <a class="nid" title="2" href="/example/testwiki.cgi?FrontPage#nid2">#</a></p>
+<p><a name="nid3" id="nid3"></a>Something to grab &nbsp;&nbsp; <a class="nid" title="3" href="/example/testwiki.cgi?FrontPage#nid3">#</a></p>
+<p><a name="nid4" id="nid4"></a>another thing to grab &nbsp;&nbsp; <a class="nid" title="4" href="/example/testwiki.cgi?FrontPage#nid4">#</a></p>
+<p><a name="nid5" id="nid5"></a><a href="/example/testwiki.cgi?SecondPage" class="wikiword">SecondPage</a> &nbsp;&nbsp; <a class="nid" title="5" href="/example/testwiki.cgi?FrontPage#nid5">#</a></p>
+<p><a name="nid6" id="nid6"></a><a href="/example/testwiki.cgi?And_A_Special_Page" class="freelink">and a special page</a> &nbsp;&nbsp; <a class="nid" title="6" href="/example/testwiki.cgi?FrontPage#nid6">#</a></p>
+<p><a name="nidB" id="nidB"></a><span id="nid7" class="transclusion">Transclusion loop, please remove.&nbsp;<a class="nid" title="7" href="/example/testwiki.cgi?FrontPage#nid7">T</a></span> &nbsp;&nbsp; <a class="nid" title="B" href="/example/testwiki.cgi?FrontPage#nidB">#</a></p>
+<p><a name="nidC" id="nidC"></a>another page to play with&nbsp;<a href="/example/testwiki.cgi?Some_Link_Or_Another#nid8" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="C" href="/example/testwiki.cgi?FrontPage#nidC">#</a></p>
+<p><a name="nidD" id="nidD"></a>how about a transclusion <span id="nid2" class="transclusion">Transclusion loop, please remove.&nbsp;<a class="nid" title="2" href="/example/testwiki.cgi?FrontPage#nid2">T</a></span>&nbsp;<a href="/example/testwiki.cgi?Some_Link_Or_Another#nid9" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="D" href="/example/testwiki.cgi?FrontPage#nidD">#</a></p>
+<p><a name="nidE" id="nidE"></a><span id="nidA" class="transclusion">Transclusion loop, please remove.&nbsp;<a class="nid" title="A" href="/example/testwiki.cgi?FrontPage#nidA">T</a></span> &nbsp;&nbsp; <a class="nid" title="E" href="/example/testwiki.cgi?FrontPage#nidE">#</a></p>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?AnotherLink">
+<title>AnotherLink</title>
+<link>/example/testwiki.cgi?AnotherLink</link>
+<description><![CDATA[<h4><a name="nidC" id="nidC"></a>A base page &nbsp;&nbsp; <a class="nid" title="C" href="/example/testwiki.cgi?AnotherLink#nidC">#</a></h4>
+<ul>
+<li><a name="nidD" id="nidD"></a>but this one gets there first &nbsp;&nbsp; <a class="nid" title="D" href="/example/testwiki.cgi?AnotherLink#nidD">#</a></li>
+</ul>
+<ul>
+<li><a name="nidE" id="nidE"></a>This is another update &nbsp;&nbsp; <a class="nid" title="E" href="/example/testwiki.cgi?AnotherLink#nidE">#</a></li>
+</ul>
+]]>
+</description>
+</item>
+
+<item rdf:about="/example/testwiki.cgi?Some_Link_Or_Another">
+<title>Some_Link_Or_Another</title>
+<link>/example/testwiki.cgi?Some_Link_Or_Another</link>
+<description><![CDATA[<h3><a name="nid8" id="nid8"></a>another page to play with &nbsp;&nbsp; <a class="nid" title="8" href="/example/testwiki.cgi?Some_Link_Or_Another#nid8">#</a></h3>
+<ul>
+<li><a name="nid9" id="nid9"></a>how about a transclusion for all tests to work&nbsp;<a href="/example/testwiki.cgi?FrontPage#nid2" class="nid">T</a> &nbsp;&nbsp; <a class="nid" title="9" href="/example/testwiki.cgi?Some_Link_Or_Another#nid9">#</a></li>
+</ul>
+]]>
+</description>
+</item>
+
+</rdf:RDF>

@@ -3,7 +3,7 @@
 # differences
 
 sub diffOutput {
-    my ($from, $to) = @_;
+    my ($from, $to, $map) = @_;
     my @diff = split("\n", `diff $from $to 2>&1`);
 #print ERR "\nDiff $from $to\n";
 #my $diff= join("\n", @diff)."\n";
@@ -20,7 +20,7 @@ sub diffOutput {
                 next;
             }
             if (@from || @to) {
-                my $realdiff = check(\@from, \@to);
+                my $realdiff = check(\@from, \@to, $map);
                 push @out, $pre, $realdiff if $realdiff;
             }
             $pre = $_;
@@ -80,13 +80,13 @@ my @file;
 }
 
 sub check {
-my ($from, $to) = @_;
+my ($from, $to, $map) = @_;
 my $last = $#$from;
 #print ERR "check $#$from $#$to\n";
     if ($#$to == $last) {
         for my $i (0..$last) {
-           my $f = stripDate($$from[$i]);
-           my $t = stripDate($$to[$i]);
+           my $f = stripDate($$from[$i], $map);
+           my $t = stripDate($$to[$i], $map);
 #print ERR "Diff:\n-$from\n+$to\n" if ($t ne $f);
            return join("\n", @$from, '---', @$to) if ($t ne $f);
         }
@@ -98,10 +98,11 @@ my $last = $#$from;
 
 sub stripDate {
 my $line = shift;
+my $map = shift;
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\s+\d?\d:\d\d(:\d\d)?\s*([ap]m|[A-Z][A-Z]T)\b/DateTimeStamp/;
     $line =~ s/(January|February|March|April|May|June|July|August|September|October|November|December)\s+\d+,\s+\d+\b/DateStamp/;
     $line =~ s/\b\d?\d:\d\d\s*([ap]m|[A-Z][A-Z]T)\b/TimeStamp/;
-    $line =~ s/("oldrev"\s+value=)"\d+"/$1"YourRev"/;
+    $line =~ s/("oldrev"\s+value=)"\d+"/$1"YourRev"/ if ($map);
     substr($line,2);
 }
 
