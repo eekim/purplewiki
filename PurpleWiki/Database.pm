@@ -35,6 +35,7 @@ package PurpleWiki::Database;
 # $Id: Database.pm,v 1.6 2004/01/21 23:24:08 cdent Exp $
 
 use strict;
+use PurpleWiki::Config;
 
 use vars qw($VERSION);
 $VERSION = '0.9.1';
@@ -98,8 +99,9 @@ sub _GetDiff {
 # to mortals.
 # Private.
 sub _RequestLockDir {
-    my ($name, $tries, $wait, $errorDie, $config) = @_;
+    my ($name, $tries, $wait, $errorDie) = @_;
     my ($lockName, $n);
+    my $config = PurpleWiki::Config->instance();
 
     &CreateDir($config->TempDir);
     $lockName = $config->LockDir . $name;
@@ -118,35 +120,37 @@ sub _RequestLockDir {
 # Removes the locking directory, destroying the lock
 # Private
 sub _ReleaseLockDir {
-    my ($name, $config) = @_;
+    my ($name) = @_;
+    my $config = PurpleWiki::Config->instance();
     rmdir($config->LockDir . $name);
 }
 
 # Requests a general editing lock for the system.
 # Public
 sub RequestLock {
-    my $config = shift;
+    my $config = PurpleWiki::Config->instance();
     # 10 tries, 3 second wait, die on error
-    return &_RequestLockDir("main", 10, 3, 1, $config);
+    return &_RequestLockDir("main", 10, 3, 1);
 }
 
 # Releases the general editing lock
 # Public
 sub ReleaseLock {
-    my $config = shift;
-    &_ReleaseLockDir('main', $config);
+    my $config = PurpleWiki::Config->instance();
+    &_ReleaseLockDir('main');
 }
 
 # Forces the lock to be released
 # Public
 sub ForceReleaseLock {
-    my ($name, $config) = @_;
+    my ($name) = @_;
+    my $config = PurpleWiki::Config->instance();
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !&_RequestLockDir($name, 5, 3, 0, $config);
-    &_ReleaseLockDir($name, $config);  # Release the lock, even if we didn't get it.
+    $forced = !&_RequestLockDir($name, 5, 3, 0);
+    &_ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
     return $forced;
 }
 
@@ -175,7 +179,7 @@ sub AppendStringToFile {
 # wiki pages in the database.
 # Public
 sub AllPagesList {
-    my $config = shift;
+    my $config = PurpleWiki::Config->instance();
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
     @pages = ();
@@ -215,14 +219,15 @@ sub AllPagesList {
 sub UpdateDiffs {
     my $page = shift;
     my $keptRevision = shift;
-    my ($id, $editTime, $old, $new, $isEdit, $newAuthor, $config) = @_;
+    my ($id, $editTime, $old, $new, $isEdit, $newAuthor) = @_;
     my ($editDiff, $oldMajor, $oldAuthor);
+    my $config = PurpleWiki::Config->instance();
 
     $editDiff  = &_GetDiff($old, $new, 0);     # 0 = already in lock
     $oldMajor  = $page->getPageCache('oldmajor');
     $oldAuthor = $page->getPageCache('oldauthor');
     if ($config->UseDiffLog) {
-        &_WriteDiff($id, $editTime, $editDiff, $config);
+        &_WriteDiff($id, $editTime, $editDiff);
     }
     $page->setPageCache('diff_default_minor', $editDiff);
 
@@ -274,7 +279,8 @@ sub GetKeptDiff {
 # Writes out a diff to the diff log.
 # Private
 sub _WriteDiff {
-    my ($id, $editTime, $diffString, $config) = @_;
+    my ($id, $editTime, $diffString) = @_;
+    my $config = PurpleWiki::Config->instance();
 
     my $directory = $config->DataDir;
     open (OUT, ">>$directory/diff_log") or die('can not write diff_log');

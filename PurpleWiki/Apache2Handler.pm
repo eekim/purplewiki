@@ -57,14 +57,12 @@ sub handler {
     my $purpleConfig = new PurpleWiki::Config($CONFIG);
     my $wikiParser = new PurpleWiki::Parser::WikiText();
     my $wiki = $wikiParser->parse($content, 
-        config => $purpleConfig,
         wikiword => 1,
         css_file => $CSS,
         url => $url,
     );
 
     print $wiki->view('xhtml', 
-        config => $purpleConfig,
         wikiword => 1,
         css_file => $CSS,
         url => $url,
