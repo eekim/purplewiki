@@ -330,7 +330,11 @@ sub _showNID {
 
 sub _nid {
     my ($self, $nid) = @_;
-    return " {nid $nid}" if ($nid);
+    my $string = ''; # avoid a unitialized value warning
+    if ($nid) {
+        $string = " {nid $nid}";
+    }
+    return $string;
 }
 
 sub _header {
