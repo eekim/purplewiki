@@ -46,6 +46,7 @@ my ($q, $out) = @_;
         return;
     }
     &UseModWiki::DoWikiRequest($q);
+    sleep 1;
     close STDOUT;
     close STDERR;
     if (!-z "error") {

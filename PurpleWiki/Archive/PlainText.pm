@@ -127,11 +127,14 @@ sub putPage {
       return "Conflict";
   }
 
+  my $url = $args{url};
+  if ($url) {
+      &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree)
+      && ($contents = $tree->view('wikitext'));
+  }
+
   $page->{revision} = $rev+1;
   $page->_writePage($contents, $args{timeStamp});
-
-  my $url = $args{url};
-  &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
 
   $args{host} = $ENV{REMOTE_ADDR} unless ($args{host});
   for my $pname ('userId', 'host', 'changeSummary', 'timeStamp') {

@@ -199,6 +199,13 @@ sub putPage {
 #print STDERR "Txn[$id]$rev:$cur\n";
 #print STDERR "Conflict $rev, $cur\n" if ($rev < $cur);
   return "Conflict\n" if ($rev < $cur);
+
+  my $url = $args{url};
+  if ($url) {
+      &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree)
+      && ($contents = $tree->view('wikitext'));
+  }
+
   my $txn = $repos->fs_begin_txn_for_commit($rev, "$user:$host", $log_msg);
   my $root = SVN::Fs::txn_root($txn);
 
@@ -235,9 +242,6 @@ sub putPage {
 
   $repos->fs_commit_txn($txn);
 #print STDERR "Committed $id ",$self->_currentRev,"\n";
-
-  my $url = $args{url};
-  &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
 
   return "";
 }

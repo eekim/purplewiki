@@ -9,7 +9,7 @@ WriteMakefile(
     'EXE_FILES' => [
         'wiki.pl',
         ],
-    'INSTALLSCRIPT' => $cgiDir,
+#    'INSTALLSCRIPT' => $cgiDir,
     'PREREQ_PM'		=> {
         Authen::Captcha => 1.023,
         Template => 0,

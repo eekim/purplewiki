@@ -88,7 +88,7 @@ my $err;
 my $goodCount = 0;
 my $badCount = 0;
 
-for my $pageTime (sort { $a <=> $b } (keys %all)) {
+for my $pageTime (sort { $b <=> $a } (keys %all)) {
     my ($id, $rev, $host, $summary, $userId) = @{$all{$pageTime}};
     my $page = $pages->getPage($id, $rev);
     print "$id, $rev\n" if $verbose;

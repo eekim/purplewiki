@@ -331,24 +331,48 @@ sub _updateURLByLocal {
     my $self = shift;
     my $url = shift;
     my $nids = shift;
+    my $changenids = shift;
 
     my (%index, %revidx, %oldnids);
 
     $self->_tieIndex(\%index);
     $self->_tieRevIndex(\%revidx);
     grep($oldnids{$_}=1, (split(" ", $revidx{$url})));
+    my @newnids = ();
     for my $nid (@$nids) {
-        $index{$nid} = $url;
+        my $oldurl = $index{$nid};
         delete $oldnids{$nid};
+        if (defined($oldurl)) {
+            if ($oldurl eq $url) {
+#print STDERR "Stay put($url) $nid\n";
+            } elsif (defined($changenids)) {
+#print STDERR "Generate new ($url, $oldurl) $nid";
+                $nid = $changenids->{$nid} = $self->_getNidByLocal();
+#print STDERR " $nid\n";
+            } else { next; }
+        } else {
+#print STDERR "Index new($url) $nid\n";
+            $index{$nid} = $url;
+        }
+        push @newnids, $nid;
     }
     for my $nid (keys %oldnids) {
         delete $index{$nid};
+#print STDERR "Delete($url) $nid\n";
     }
-    $revidx{$url} = join(" ", @$nids);
+    $revidx{$url} = join(" ", @newnids);
     untie %index;
     untie %revidx;
 }
 
+#
+# Formats a web request: (FIXME: need to implement in NID Handler)
+#   $RemoteURL/$url/$nids
+#
+# $RemoteURL is the base URL for the NID service
+# $url is a the URL that references this NID set ('/' characters URL encoded)
+# $nids is a list of NIDs (join with '+'
+#
 sub _updateURLByRemote {
     my $self = shift;
     my $url = shift;

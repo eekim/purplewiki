@@ -206,6 +206,9 @@ t/out/request.78
 t/out/request.79
 t/out/request.80
 t/out/request.81
+t/out/request.82
+t/out/request.83
+t/out/request.84
 t/out/wiki.0.html
 t/out/wiki.1.html
 t/out/wiki.2.html
@@ -370,6 +373,9 @@ t/out1/request.78
 t/out1/request.79
 t/out1/request.80
 t/out1/request.81
+t/out1/request.82
+t/out1/request.83
+t/out1/request.84
 t/out1/wiki.0.html
 t/out1/wiki.1.html
 t/out1/wiki.2.html

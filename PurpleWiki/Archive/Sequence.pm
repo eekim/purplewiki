@@ -60,15 +60,40 @@ sub updateNIDs {
   );
   $filter->setFilters(Main =>
     sub {
-      my $pages = shift;
+      my $self = shift;
       my $node = shift;
       my $nid = $node->id();
-      push (@{$pages->{nids}}, $nid) if $nid;
+      push (@{$self->{nids}}, $nid) if $nid;
     }
   );
   $filter->process($tree);
 
-  $seq->updateURL($url, \@nids);
+  my %change = ();
+  $seq->updateURL($url, \@nids, \%change);
+  if (%change) {
+    @nids = ();
+    $filter = PurpleWiki::View::Filter->new(
+      useOO => 1,
+      start => sub {
+        shift->{change} = \%change;
+        shift->{nids} = \@nids;
+      }
+    );
+    $filter->setFilters(Main =>
+      sub {
+        my $self = shift;
+        my $node = shift;
+        my $nid = $node->id();
+        if ($nid) {
+          my $newnid = ${$self->{change}}{$nid};
+#print STDERR "Update tree $nid $newnid\n" if $newnid;
+          $node->id($newnid) if $newnid;
+          push (@{$self->{nids}}, $nid || $newnid);
+        }
+      }
+    );
+  $filter->process($tree);
+  }
   if ($maxRef) {
     my $max = $$maxRef;
     for my $nid (@nids) {
@@ -76,6 +101,7 @@ sub updateNIDs {
     }
     $$maxRef = $max;
   }
+  return (%change) ? 1 : 0;
 }
 
 sub _getSequencer {

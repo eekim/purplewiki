@@ -127,8 +127,8 @@ sub putPage {
   my %args = @_;
   my $tree = $args{tree};
   return "No Data" unless (defined($tree));
-  my $wikitext = $tree->view('wikitext');
-  $wikitext .= "\n"  unless (substr($wikitext, -1) eq "\n");
+  my $contents = $tree->view('wikitext');
+  $contents .= "\n"  unless (substr($contents, -1) eq "\n");
   my $host = $args{host} || $ENV{REMOTE_ADDR};
 
   my $id = $args{pageId};
@@ -138,7 +138,7 @@ sub putPage {
   # Success, but don't do anything if no change
   my $page = $self->_openPage($id);
   my $old = $page->_getText();
-  return "" if ($old eq $wikitext);
+  return "" if ($old eq $contents);
 
   # Fail on detecting edit conflicts
   if (($page->getRevision > 0) && ($args{oldrev} != $page->getRevision())) {
@@ -160,10 +160,16 @@ sub putPage {
   my $keptRevision = new PurpleWiki::UseMod::KeptRevision($self, id => $id);
   my $text = $section->getText();
 
-  $wikitext =~ s/$fs//g;
+  my $url = $args{url};
+  if ($url) {
+      &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree)
+      && ($contents = $tree->view('wikitext'));
+  }
+
+  $contents =~ s/$fs//g;
   $args{changeSummary} ||= '';
   $args{changeSummary} =~ s/$fs//g;
-  $text->setText($wikitext);
+  $text->setText($contents);
   $text->setNewAuthor(1);
   $text->setSummary($args{changeSummary});
   $section->setHost($host);
@@ -179,9 +185,6 @@ sub putPage {
   $page->{revision} = $newRev;
   $self->_WriteRcLog($args{pageId}, $args{changeSummary}, $now, $userId,
                      $host);
-
-  my $url = $args{url};
-  &PurpleWiki::Archive::Sequence::updateNIDs($self, $url, $tree) if $url;
 
   $self->_save($page);
   $self->_releaseLock();
