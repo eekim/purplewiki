@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.2.2.2 2003/06/12 01:01:23 cdent Exp $
+# $Id: Database.pm,v 1.2.2.3 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.2.2.2 2003/06/12 01:01:23 cdent Exp $
+# $Id: Database.pm,v 1.2.2.3 2003/06/12 10:22:17 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -80,15 +80,15 @@ sub GetDiff {
 }
 
 sub RequestLockDir {
-    my ($name, $tries, $wait, $errorDie) = @_;
+    my ($name, $tries, $wait, $errorDie, $config) = @_;
     my ($lockName, $n);
 
-    &CreateDir($TempDir);
-    $lockName = $LockDir . $name;
+    &CreateDir($config->TempDir);
+    $lockName = $config->LockDir . $name;
     $n = 0;
     while (mkdir($lockName, 0555) == 0) {
         if ($! != 17) {
-            die("can not make $LockDir: $!\n")  if $errorDie;
+            die("can not make $lockName: $!\n")  if $errorDie;
             return 0;
         }
         return 0  if ($n++ >= $tries);
@@ -98,37 +98,30 @@ sub RequestLockDir {
 }
 
 sub ReleaseLockDir {
-    my ($name) = @_;
-    rmdir($LockDir . $name);
+    my ($name, $config) = @_;
+    rmdir($config->LockDir . $name);
 }
 
 sub RequestLock {
+    my $config = shift;
     # 10 tries, 3 second wait, die on error
-    return &RequestLockDir("main", 10, 3, 1);
+    return &RequestLockDir("main", 10, 3, 1, $config);
 }
 
 sub ReleaseLock {
-    &ReleaseLockDir('main');
+    my $config = shift;
+    &ReleaseLockDir('main', $config);
 }
 
 sub ForceReleaseLock {
-    my ($name) = @_;
+    my ($name, $config) = @_;
     my $forced;
 
     # First try to obtain lock (in case of normal edit lock)
     # 5 tries, 3 second wait, do not die on error
-    $forced = !&RequestLockDir($name, 5, 3, 0);
-    &ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
+    $forced = !&RequestLockDir($name, 5, 3, 0, $config);
+    &ReleaseLockDir($name, $config);  # Release the lock, even if we didn't get it.
     return $forced;
-}
-
-sub RequestDiffLock {
-    # 4 tries, 2 second wait, do not die on error
-    return &RequestLockDir('diff', 4, 2, 0);
-}
-
-sub ReleaseDiffLock {
-    &ReleaseLockDir('diff');
 }
 
 sub WriteStringToFile {
@@ -149,18 +142,20 @@ sub AppendStringToFile {
 }
 
 sub AllPagesList {
+    my $config = shift;
     my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
     @pages = ();
     # The following was inspired by the FastGlob code by Marc W. Mengel.
     # Thanks to Bob Showalter for pointing out the improvement.
-    opendir(PAGELIST, $PageDir);
+    opendir(PAGELIST, $config->PageDir);
     @dirs = readdir(PAGELIST);
     closedir(PAGELIST);
     @dirs = sort(@dirs);
     foreach $dir (@dirs) {
         next  if (($dir eq '.') || ($dir eq '..'));
-        opendir(PAGELIST, "$PageDir/$dir");
+        my $directory = $config->PageDir . "/$dir";
+        opendir(PAGELIST, $directory);
         @pageFiles = readdir(PAGELIST);
         closedir(PAGELIST);
         foreach $id (@pageFiles) {
@@ -168,7 +163,7 @@ sub AllPagesList {
             if (substr($id, -3) eq '.db') {
                 push(@pages, substr($id, 0, -3));
             } elsif (substr($id, -4) ne '.lck') {
-                opendir(PAGELIST, "$PageDir/$dir/$id");
+                opendir(PAGELIST, "$directory/$id");
                 @subpageFiles = readdir(PAGELIST);
                 closedir(PAGELIST);
                 foreach $subId (@subpageFiles) {
@@ -185,14 +180,14 @@ sub AllPagesList {
 sub UpdateDiffs {
     my $page = shift;
     my $keptRevision = shift;
-    my ($id, $editTime, $old, $new, $isEdit, $newAuthor) = @_;
+    my ($id, $editTime, $old, $new, $isEdit, $newAuthor, $config) = @_;
     my ($editDiff, $oldMajor, $oldAuthor);
 
     $editDiff  = &GetDiff($old, $new, 0);     # 0 = already in lock
     $oldMajor  = $page->getPageCache('oldmajor');
     $oldAuthor = $page->getPageCache('oldauthor');
-    if ($UseDiffLog) {
-        &WriteDiff($id, $editTime, $editDiff);
+    if ($config->UseDiffLog) {
+        &WriteDiff($id, $editTime, $editDiff, $config);
     }
     $page->setPageCache('diff_default_minor', $editDiff);
 
@@ -237,9 +232,10 @@ sub GetKeptDiff {
 }
 
 sub WriteDiff {
-    my ($id, $editTime, $diffString) = @_;
+    my ($id, $editTime, $diffString, $config) = @_;
 
-    open (OUT, ">>$DataDir/diff_log") or die('can not write diff_log');
+    my $directory = $config->DataDir;
+    open (OUT, ">>$directory/diff_log") or die('can not write diff_log');
     print OUT  "------\n" . $id . "|" . $editTime . "\n";
     print OUT  $diffString;
     close(OUT);

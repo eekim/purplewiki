@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.7.6.5 2003/05/21 08:47:27 cdent Exp $
+# $Id: WikiText.pm,v 1.7.6.6 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -48,7 +48,6 @@ sub new {
     my $self = {};
 
     bless($self, $this);
-    $sequence = new PurpleWiki::Sequence("$DataDir/sequence");
     return $self;
 }
 
@@ -60,6 +59,7 @@ sub parse {
     my %params = @_;
 
     $url = $params{url};
+    $sequence = new PurpleWiki::Sequence($params{config}->DataDir);
 
     # set default parameters
     $params{wikiword} = 1 if (!defined $params{wikiword});
@@ -458,7 +458,7 @@ sub _parseInlineNode {
                ($node =~ /^([A-Z]\w+):($rxWikiWord(?:\#\d+)?)$rxQuoteDelim$/s)) {
             my $site = $1;
             my $page = $2;
-            if (&PurpleWiki::Page::siteExists($site)) {
+            if (&PurpleWiki::Page::siteExists($site, $params{config})) {
                 $node =~ s/""$//;
                 push @inlineNodes,
                     PurpleWiki::InlineNode->new('type'=>'wikiword',

@@ -1,7 +1,7 @@
 # PurpleWiki::Sequence.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Sequence.pm,v 1.1.2.2 2003/05/21 05:19:00 cdent Exp $
+# $Id: Sequence.pm,v 1.1.2.3 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -33,7 +33,7 @@ package PurpleWiki::Sequence;
 # Tool for generating PurpleWiki::Sequence numbers for use
 # in Nids
 
-# $Id: Sequence.pm,v 1.1.2.2 2003/05/21 05:19:00 cdent Exp $
+# $Id: Sequence.pm,v 1.1.2.3 2003/06/12 10:22:17 cdent Exp $
 
 use strict;
 use IO::File;
@@ -45,12 +45,13 @@ my $LOCK_TRIES = 5;
 
 sub new {
     my $proto = shift;
-    my $datafile = shift;
+    my $datadir = shift;
     my $origin = shift || $ORIGIN;
     my $class = ref($proto) || $proto;
     my $self = {};
 
-    $self->{datafile} = $datafile;
+    $self->{datafile} = $datadir . '/sequence';
+    $self->{indexfile} = $datadir . '/sequence.index';
     $self->{origin} = $origin;
     bless ($self, $class);
     return $self;
@@ -77,9 +78,9 @@ sub _updateIndex {
     my $url = shift;
     my %index;
 
-    tie %index, 'DB_File', $self->{datafile} . '.index', 
+    tie %index, 'DB_File', $self->{indexfile}, 
         O_RDWR|O_CREAT, 0644, $DB_HASH ||
-        die "unable to tie " . $self->{datafile} . '.index' . $!;
+        die "unable to tie " . $self->{indexfile} . '.index' . $!;
 
     $index{$value} = $url;
     untie %index;

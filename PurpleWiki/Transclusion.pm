@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.1.2.2 2003/05/30 08:15:19 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.3 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -40,7 +40,7 @@ use LWP::UserAgent;
 # good by any stretch of the imagination. It is simply to
 # demonstrate the possibilities that these features allow.
 
-# $Id: Transclusion.pm,v 1.1.2.2 2003/05/30 08:15:19 cdent Exp $
+# $Id: Transclusion.pm,v 1.1.2.3 2003/06/12 10:22:17 cdent Exp $
 
 # The name of the index file. It's directory comes from Config.
 my $INDEX_FILE = 'sequence.index';
@@ -58,9 +58,9 @@ sub new {
     my $class = shift;
     my $self = {};
     bless ($self, $class);
-    my %params = @_; # FIXME: not yet used will include a config object eventually
+    my %params = @_; 
 
-    my $config = new PurpleWiki::Config;
+    my $config = $params{config};
 
     $self->_tieHash($config->DataDir() . '/' . $INDEX_FILE);
 

@@ -1,7 +1,7 @@
 # PurpleWiki::Page.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Page.pm,v 1.9.6.2 2003/05/21 07:36:29 cdent Exp $
+# $Id: Page.pm,v 1.9.6.3 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -35,22 +35,24 @@ use PurpleWiki::Config;
 
 # mappings between PurpleWiki code and code within useMod
 
-# $Id: Page.pm,v 1.9.6.2 2003/05/21 07:36:29 cdent Exp $
+# $Id: Page.pm,v 1.9.6.3 2003/06/12 10:22:17 cdent Exp $
 
 sub exists {
     my $id = shift;
+    my $config = shift;
 
-    my $page = new PurpleWiki::Database::Page('id' => $id);
+    my $page = new PurpleWiki::Database::Page('id' => $id, config => $config);
     return $page->pageExists();
 
 }
 
 sub siteExists {
     my $site = shift;
+    my $config = shift;
     my $status;
     my $data;
 
-    ($status, $data) = PurpleWiki::Database::ReadFile($InterFile);
+    ($status, $data) = PurpleWiki::Database::ReadFile($config->InterFile);
     return undef if (!$status);
     my %interSite = split(/\s+/, $data); 
     return $interSite{$site};
@@ -58,9 +60,10 @@ sub siteExists {
 
 sub getWikiWordLink {
     my $id = shift;
+    my $config = shift;
 
     my $results;
-    $results = &GetPageOrEditLink($id, '');
+    $results = &GetPageOrEditLink($id, '', $config);
     return _makeURL($results);
 }
 
@@ -74,9 +77,10 @@ sub getInterWikiLink {
 
 sub getFreeLink {
     my $id = shift;
+    my $config = shift;
 
     my $results;
-    $results = (&GetPageOrEditLink($id, ''))[0];
+    $results = (&GetPageOrEditLink($id, '', $config))[0];
     return _makeURL($results);
 }
 
@@ -87,35 +91,36 @@ sub _makeURL {
 
 # FIXME: this is hackery 
 sub GetPageOrEditLink {
-  my ($id, $name) = @_;
+  my ($id, $name, $config) = @_;
   my (@temp);
 
   if ($name eq "") {
     $name = $id;
-    if ($FreeLinks) {
+    if ($config->FreeLinks) {
       $name =~ s/_/ /g;
     }
   }
   # FIXME: this is not right. There are times when 
   # the / is there but MainPage is not set.
   $id =~ s|^/|$MainPage/| if defined($MainPage);
-  if ($FreeLinks) {
-    $id = &FreeToNormal($id);
+  if ($config->FreeLinks) {
+    $id = &FreeToNormal($id, $config);
   }
-  my $page = new PurpleWiki::Database::Page('id' => $id);
+  my $page = new PurpleWiki::Database::Page('id' => $id, 'config' => $config);
   if ($page->pageExists()) {      # Page file exists
-    return &GetPageLinkText($id, $name);
+    return &GetPageLinkText($id, $name, $config);
   }
-  if ($FreeLinks) {
+  if ($config->FreeLinks) {
     if ($name =~ m| |) {  # Not a single word
       $name = "[$name]";  # Add brackets so boundaries are obvious
     }
   }
-  return $name . &GetEditLink($id,"?");
+  return $name . &GetEditLink($id, "?", $config);
 }
 
 sub FreeToNormal {
-  my ($id) = @_;
+  my $id = shift;
+  my $config = shift;
 
   $id =~ s/ /_/g;
   $id = ucfirst($id);
@@ -123,12 +128,12 @@ sub FreeToNormal {
     $id =~ s/__+/_/g;
     $id =~ s/^_//;
     $id =~ s/_$//;
-    if ($UseSubpage) {
+    if ($config->UseSubpage) {
       $id =~ s|_/|/|g;
       $id =~ s|/_|/|g;
     }
   }
-  if ($FreeUpper) {
+  if ($config->FreeUpper) {
     # Note that letters after ' are *not* capitalized
     if ($id =~ m|[-_.,\(\)/][a-z]|) {    # Quick check for non-canonical case
       $id =~ s|([-_.,\(\)/])([a-z])|$1 . uc($2)|ge;
@@ -138,42 +143,36 @@ sub FreeToNormal {
 }
 
 sub GetPageLinkText {
-  my ($id, $name) = @_;
+  my ($id, $name, $config) = @_;
 
   # FIXME: this is not right. There are times when 
   # the / is there but MainPage is not set.
   $id =~ s|^/|$MainPage/| if defined($MainPage);
-  if ($FreeLinks) {
-    $id = &FreeToNormal($id);
+  if ($config->FreeLinks) {
+    $id = &FreeToNormal($id, $config);
     $name =~ s/_/ /g;
   }
-  return &ScriptLink($id, $name);
+  return &ScriptLink($id, $name, $config);
 }
 
 
 sub ScriptLink {
-  my ($action, $text) = @_;
+  my ($action, $text, $config) = @_;
 
-  my $scriptName; 
-
-  if (defined $UseModWiki::ScriptName) {
-	  $scriptName = $UseModWiki::ScriptName;
-  } else {
-	  $scriptName = '/~cdent/wiki.cgi';
-  }
+  my $scriptName = $config->ScriptName;
 
   return "<a href=\"$scriptName?$action\">$text</a>";
 }
 
 
 sub GetEditLink {
-  my ($id, $name) = @_;
+  my ($id, $name, $config) = @_;
 
-  if ($FreeLinks) {
-    $id = &FreeToNormal($id);
+  if ($config->FreeLinks) {
+    $id = &FreeToNormal($id, $config);
     $name =~ s/_/ /g;
   }
-  return &ScriptLink("action=edit&id=$id", $name);
+  return &ScriptLink("action=edit&id=$id", $name, $config);
 }
 
 sub InterPageLink {

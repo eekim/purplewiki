@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Text
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Text.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Text.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Text;
 
 # PurpleWiki Text Data Access
 
-# $Id: Text.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Text.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -42,11 +42,14 @@ use PurpleWiki::Config;
 # can be created empty or by being passed a string.
 sub new {
     my $proto = shift;
-    my $data = shift;
+    my %params = @_;
     my $class = ref($proto) || $proto;
     my $self = {};
+    $self->{data} = $params{data};
+    $self->{config} = $params{config};
     bless ($self, $class);
-    $self->_init($data);
+
+    $self->_init();
     return $self;
 }
 
@@ -123,21 +126,16 @@ sub isMinor {
 # empty page.
 sub _init {
     my $self = shift;
-    my $data = shift;
 
-    if (defined($data)) {
-        my %tempHash = split(/$FS3/, $data, -1);
+    if (defined($self->{data})) {
+        my $regexp = $self->{config}->FS3;
+        my %tempHash = split(/$regexp/, $self->{data}, -1);
 
         foreach my $key (keys(%tempHash)) {
             $self->{$key} = $tempHash{$key};
         }
     } else {
-        if ($NewText ne '') {
-            $self->{text} = $NewText;
-        } else {
-            $self->{text} = 'Describe the new page here.' . "\n";
-        }
-        $self->{text} .= "\n"  if (substr($self->getText(), -1, 1) ne "\n");
+        $self->{text} = 'Describe the new page here.' . "\n";
         $self->{minor} = 0;      # Default as major edit
         $self->{newauthor} = 1;  # Default as new author
         $self->{summary} = '';
@@ -148,8 +146,8 @@ sub _init {
 sub serialize {
     my $self = shift;
 
-    my $data = join($FS3, map {$_ . $FS3 . $self->{$_}}
-        ('text', 'minor', 'newauthor', 'summary'));
+    my $data = join($self->{config}->FS3, map {$_ . $self->{config}->FS3 .
+            $self->{$_}} ('text', 'minor', 'newauthor', 'summary'));
 
     return $data;
 

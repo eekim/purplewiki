@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.7 2003/06/10 06:46:12 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.8 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -77,8 +77,9 @@ sub closeTagWithNid {
 
 sub transcludeContent {
     my $node = shift;
+    my %params = @_;
 
-    my $space = new PurpleWiki::Transclusion();
+    my $space = new PurpleWiki::Transclusion(config => $params{config});
 
     return $space->get($node->content);
 }
@@ -111,6 +112,7 @@ sub closeLinkTag {
 
 sub wikiLink {
     my $node = shift;
+    my %params = @_;
     my $outputString;
     my $pageNid;
 
@@ -121,18 +123,18 @@ sub wikiLink {
 
     if ($node->content =~ /:/) {
         $outputString .= '<a href="' .
-            &PurpleWiki::Page::getInterWikiLink($pageName);
+            &PurpleWiki::Page::getInterWikiLink($pageName, $params{config});
         $outputString .= "#nid$pageNid" if ($pageNid);
         $outputString .= '">' . $node->content . '</a>';
     }
-    elsif (&PurpleWiki::Page::exists($pageName)) {
+    elsif (&PurpleWiki::Page::exists($pageName, $params{config})) {
         if ($node->type eq 'freelink') {
             $outputString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($node->content) .
+                &PurpleWiki::Page::getFreeLink($node->content, $params{config}) .
                 '">';
         }
         else {
-            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName);
+            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName, $params{config});
             $outputString .= "#nid$pageNid" if ($pageNid);
             $outputString .= '">';
         }
@@ -142,12 +144,12 @@ sub wikiLink {
         if ($node->type eq 'freelink') {
             $outputString .= '[' . $node->content . ']';
             $outputString .= '<a href="' .
-                &PurpleWiki::Page::getFreeLink($node->content) .
+                &PurpleWiki::Page::getFreeLink($node->content, $params{config}) .
                 '">';
         }
         else {
             $outputString .= $node->content;
-            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName) .
+            $outputString .= '<a href="' . &PurpleWiki::Page::getWikiWordLink($pageName, $params{config}) .
                 '">';
         }
         $outputString .= '?</a>';

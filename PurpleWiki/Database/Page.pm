@@ -1,7 +1,7 @@
 # PurpleWiki::Database::Page
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Page.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Page.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,7 +32,7 @@ package PurpleWiki::Database::Page;
 
 # PurpleWiki Page Data Access
 
-# $Id: Page.pm,v 1.2 2003/02/03 18:31:53 cdent Exp $
+# $Id: Page.pm,v 1.2.2.1 2003/06/12 10:22:17 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
@@ -163,7 +163,8 @@ sub getSection {
             new PurpleWiki::Database::Section('data' => $self->{text_default},
                                               'now' => $self->getNow(),
                                               'userID' => $self->{userID},
-                                              'username' => $self->{username});
+                                              'username' => $self->{username},
+                                              'config' => $self->{config});
         return $self->{text_default};
     }
 }
@@ -197,7 +198,7 @@ sub getNow {
 sub getPageFile {
     my $self = shift;
 
-    return $PageDir . '/' . $self->getPageDirectory() . '/' .
+    return $self->{config}->PageDir . '/' . $self->getPageDirectory() . '/' .
         $self->getID() . '.db';
 }
 
@@ -231,7 +232,8 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    my %tempHash = split(/$FS1/, $data, -1);
+    my $regexp = $self->{config}->FS1;
+    my %tempHash = split(/$regexp/, $data, -1);
     
     foreach my $key (keys(%tempHash)) {
         $self->{$key} = $tempHash{$key};
@@ -266,14 +268,14 @@ sub save {
 sub getLockedPageFile {
     my $self = shift;
     my $id = $self->getID();
-    return $PageDir . '/' . $self->getPageDirectory() . "/$id.lck";
+    return $self->{config}->PageDir . '/' . $self->getPageDirectory() . "/$id.lck";
 }
 
 # Creates the directory where this Page is stored.
 sub _createPageDir {
     my $self = shift;
     my $id = $self->getID();
-    my $dir = $PageDir;
+    my $dir = $self->{config}->PageDir;
     my $subdir;
 
     PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
@@ -293,12 +295,14 @@ sub serialize {
 
     my $sectionData = $self->getSection()->serialize();
 
-    my $data = join($FS1, map {$_ . $FS1 . $self->{$_}} 
+    my $separator = $self->{config}->FS1;
+
+    my $data = join($separator, map {$_ . $separator . $self->{$_}} 
         ('version', 'revision', 'cache_oldmajor', 'cache_oldauthor',
          'cache_diff_default_major', 'cache_diff_default_minor',
          'ts_create', 'ts'));
 
-    $data .= $FS1 . 'text_default' . $FS1 . $sectionData;
+    $data .= $separator . 'text_default' . $separator . $sectionData;
 
     return $data;
 }

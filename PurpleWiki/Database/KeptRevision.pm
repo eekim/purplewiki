@@ -1,7 +1,7 @@
 # PurpleWiki::Database::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: KeptRevision.pm,v 1.2.2.1 2003/05/21 05:19:00 cdent Exp $
+# $Id: KeptRevision.pm,v 1.2.2.2 2003/06/12 10:22:17 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,10 +32,9 @@ package PurpleWiki::Database::KeptRevision;
 
 # PurpleWiki Page Data Access
 
-# $Id: KeptRevision.pm,v 1.2.2.1 2003/05/21 05:19:00 cdent Exp $
+# $Id: KeptRevision.pm,v 1.2.2.2 2003/06/12 10:22:17 cdent Exp $
 
 use strict;
-use PurpleWiki::Config;
 use PurpleWiki::Database;
 use PurpleWiki::Database::Section;
 
@@ -43,12 +42,13 @@ use PurpleWiki::Database::Section;
 # Really just a collection of Sections
 sub new {
     my $proto = shift;
-    my $id = shift;
+    my %params = @_;
     my $class = ref($proto) || $proto;
     my $self = {};
     bless ($self, $class);
 
-    $self->{id} = $id;
+    $self->{id} = $params{id};
+    $self->{config} = $params{config};
     $self->{sections} = ();
     $self->_makeKeptList();
 
@@ -94,7 +94,7 @@ sub trimKepts {
     my $self = shift;
     my $now = shift;
 
-    my $expirets = $now - ($KeepDays * 24 * 60 * 60);
+    my $expirets = $now - ($self->{config}->KeepDays * 24 * 60 * 60);
 
     # was using undef here but that doesn't work,
     # must use splice
@@ -120,7 +120,7 @@ sub keptFileExists {
 sub getKeepFile {
     my $self = shift;
 
-    return $KeepDir . '/' . $self->getKeepDirectory() . '/' .
+    return $self->{config}->KeepDir . '/' . $self->getKeepDirectory() . '/' .
         $self->getID() . '.kp';
 }
 
@@ -144,12 +144,14 @@ sub _parseData {
     my $self = shift;
     my $data = shift;
 
-    foreach my $section (split(/$FS1/, $data, -1)) {
+    my $regexp = $self->{config}->FS1;
+    foreach my $section (split(/$regexp/, $data, -1)) {
         # because of the usemod way of saving data, the first
         # field is empty
         if (length($section)) {
             push(@{$self->{sections}}, 
-                new PurpleWiki::Database::Section('data' => $section));
+                new PurpleWiki::Database::Section('data' => $section,
+                        'config' => $self->{config}));
         }
     }
 
@@ -176,7 +178,7 @@ sub save {
 sub _createKeepDir {
     my $self = shift;
     my $id = $self->getID();
-    my $dir = $KeepDir;
+    my $dir = $self->{config}->KeepDir;
     my $subdir;
 
     PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
@@ -211,7 +213,7 @@ sub serialize {
     my $data;
     my $section;
     foreach $section ($self->getSections()) {
-        $data .= $FS1;
+        $data .= $self->{config}->FS1;
         $data .= $section->serialize();
     }
 

@@ -23,13 +23,17 @@ $VERSION = 0.2;
 use strict;
 no warnings 'redefine';
 
-use lib '/home/cdent/src/PurpleWiki.nidGen';
+use lib '/home/cdent/src/pwManage/purplewiki.nidGen';
 use PurpleWiki::Parser::WikiText;
+use PurpleWiki::Config;
 use MT;
 use MT::Blog;
 use MT::Entry;
 use MT::Comment;
 use MT::Template::Context;
+
+my $CONFIG_FILE = '/home/cdent/testwiki';
+my $WIKIWORDS = 1; # set to 0 if you don't want to parse for wikiwords
 
 ##### PRESENTATION #####
 
@@ -64,9 +68,11 @@ sub parseForPurple {
 
     $url = $entry->permalink;
     $str = "\n$str\r\n";
+    my $config = new PurpleWiki::Config($CONFIG_DIR);
     my $parser = PurpleWiki::Parser::WikiText->new();
-    my $wiki = $parser->parse($str);
-    my $results = $wiki->view('wikihtml', 'url' => $url);
+    my $wiki = $parser->parse($str, config => $config, wikiword => $WIKIWORDS);
+    my $results = $wiki->view('wikihtml', 'url' => $url, config => $config);
+
     return $results;
 }
 
