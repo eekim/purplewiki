@@ -210,3 +210,4 @@ wikidb/templates/lib/pageHistory.tt
 wikidb/templates/lib/recentChanges.tt
 wikidb/templates/lib/searchResults.tt
 wiki.pl
+META.yml                                 Module meta-data (added by MakeMaker)

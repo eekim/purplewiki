@@ -99,6 +99,11 @@ sub getID {
     return $self->{id};
 }
 
+sub setID {
+    my $self = shift;
+    $self->{id} = shift;
+}
+
 # Gets the username that last edited this Section.
 # FIXME: Discussion on UseModWiki points out that keeping
 # both ID and username is problematic from a clean
@@ -106,6 +111,11 @@ sub getID {
 sub getUsername {
     my $self = shift;
     return $self->{username};
+}
+
+sub setUsername {
+    my $self = shift;
+    $self->{username} = shift;
 }
 
 # Gets the revision of this section. If this Section

@@ -1174,6 +1174,7 @@ sub DoSearch {
 sub DoPost {
   my ($editDiff, $old, $newAuthor, $pgtime, $oldrev, $preview);
   my $userName = $user ? $user->username : undef;
+  my $userId = $user ? $user->id : undef;
   my $string = GetParam("text", undef);
   my $id = GetParam("title", "");
   my $summary = GetParam("summary", "");
@@ -1303,6 +1304,8 @@ sub DoPost {
   # FIXME: redundancy in data structure here
   $section->setRevision($section->getRevision() + 1);
   $section->setTS($Now);
+  $section->setUsername($userName);
+  $section->setID($userId);
   $keptRevision->addSection($section, $Now);
   $keptRevision->trimKepts($Now);
   $keptRevision->save();
