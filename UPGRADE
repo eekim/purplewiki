@@ -54,6 +54,7 @@ no longer used:
   EmailNotify
   EmbedWiki
   LogoLeft
+  UseLookup
 
 UPGRADING FROM V0.9.1
 =====================
