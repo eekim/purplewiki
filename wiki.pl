@@ -41,7 +41,6 @@ use PurpleWiki::Database::User;
 use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Search::Engine;
 use PurpleWiki::Syndication::Rss;
-use PurpleWiki::Template::TT;
 use CGI;
 use CGI::Carp qw(fatalsToBrowser);
 
@@ -73,9 +72,12 @@ my $TimeZoneOffset;     # User's prefernce for timezone. FIXME: can we
 # we only need one of each these per run
 $config = new PurpleWiki::Config($CONFIG_DIR);
 $wikiParser = PurpleWiki::Parser::WikiText->new;
-# FIXME: would be cool if there were a way to factory this based off a
-#        config value.
-$wikiTemplate = new PurpleWiki::Template::TT(templateDir => "$CONFIG_DIR/templates");
+
+# Select and load a  template driver
+my $templateDriver = $config->TemplateDriver();
+my $class = "PurpleWiki::Template::$templateDriver";
+eval "require $class";
+$wikiTemplate = $class->new(templateDir => $config->TemplateDirectory());
 
 # Set our umask if one was put in the config file. - matthew
 umask(oct($config->Umask)) if defined $config->Umask;

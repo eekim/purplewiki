@@ -73,6 +73,9 @@ SearchModule	=	Wiki
 #SearchModule	=	IrcLogger
 #SearchModule	=	Google
 
+# Template Modules
+TemplateDirectory = $DataDir/templates
+TemplateDriver = TT
 
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
