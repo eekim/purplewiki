@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.24.6.2 2003/05/21 06:13:24 cdent Exp $
+# $Id: Tree.pm,v 1.24.6.3 2003/06/14 22:17:04 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,11 +32,6 @@ package PurpleWiki::Tree;
 use 5.005;
 use strict;
 use PurpleWiki::StructuralNode;
-use PurpleWiki::View::debug;
-use PurpleWiki::View::text;
-use PurpleWiki::View::wikihtml;
-use PurpleWiki::View::wikitext;
-use PurpleWiki::View::xhtml;
 
 ### constructor
 
@@ -120,18 +115,23 @@ sub view {
     my ($driver, %params) = @_;
 
     if (lc($driver) eq 'debug') {
+	require PurpleWiki::View::debug;
         return &PurpleWiki::View::debug::view($this, %params);
     } 
     elsif (lc($driver) eq 'wikihtml') {
+	require PurpleWiki::View::wikihtml;
         return &PurpleWiki::View::wikihtml::view($this, %params);
     }
     elsif (lc($driver) eq 'wikitext') {
+	require PurpleWiki::View::wikitext;
         return &PurpleWiki::View::wikitext::view($this, %params);
     }
     elsif (lc($driver) eq 'text') {
+	require PurpleWiki::View::text;
         return &PurpleWiki::View::text::view($this, %params);
     }
     elsif (lc($driver) eq 'xhtml') {
+	require PurpleWiki::View::xhtml;
         return &PurpleWiki::View::xhtml::view($this, %params);
     }
 }
