@@ -283,6 +283,7 @@ sub BrowsePage {
   $keywords =~ s/_/\+/g if ($config->FreeLinks);
   $wikiTemplate->vars(siteName => $config->SiteName,
                       pageName => $pageName,
+		      expandedPageName => &expandPageName($pageName),
                       cssFile => $config->StyleSheet,
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
@@ -375,6 +376,7 @@ sub DoRc {
     my @vPages = &visitedPages;
     $wikiTemplate->vars(siteName => $config->SiteName,
                         pageName => $pageName,
+			expandedPageName => &expandPageName($pageName),
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
                         baseUrl => $config->ScriptName,
@@ -1146,6 +1148,8 @@ sub DoIndex {
     my @pages = PurpleWiki::Database::AllPagesList($config);
     my $username;
     $username = $user->username if ($user);
+    my @vPages = &visitedPages;
+
     $wikiTemplate->vars(siteName => $config->SiteName,
                         cssFile => $config->StyleSheet,
                         siteBase => $config->SiteBase,
@@ -1153,6 +1157,7 @@ sub DoIndex {
                         homePage => $config->HomePage,
                         userName => $username,
                         escapedUserName => uri_escape($username),
+			visitedPages => \@vPages,
                         pages => \@pages,
                         preferencesUrl => $config->ScriptName . '?action=editprefs');
     print GetHttpHeader() . $wikiTemplate->process('pageIndex');
@@ -1784,6 +1789,13 @@ sub visitedPages {
         $i++;
     };
     return @pages;
+}
+
+sub expandPageName {
+    my $pageName = shift;
+
+    $pageName =~ s/([a-z])([A-Z])/$1 $2/g;
+    return $pageName;
 }
 
 &DoWikiRequest()  if ($config->RunCGI && ($_ ne 'nocgi'));   # Do everything.

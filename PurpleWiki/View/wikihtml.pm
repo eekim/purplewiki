@@ -196,7 +196,6 @@ sub ddPost {
 sub prePost {
     my $self = shift;
     
-    $self->{outputString} .= "\n";
     $self->_closeTagWithNID(@_);
 }
 
