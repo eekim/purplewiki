@@ -18,7 +18,6 @@ PurpleWiki/Database/User.pm
 PurpleWiki/InlineNode.pm
 PurpleWiki/Page.pm
 PurpleWiki/Parser/WikiText.pm
-PurpleWiki/Rss.pm
 PurpleWiki/Search/Arts.pm
 PurpleWiki/Search/Blosxom.pm
 PurpleWiki/Search/Engine.pm
@@ -30,6 +29,7 @@ PurpleWiki/Search/Result.pm
 PurpleWiki/Search/Wiki.pm
 PurpleWiki/Sequence.pm
 PurpleWiki/StructuralNode.pm
+PurpleWiki/Syndication/Rss.pm
 PurpleWiki/Transclusion.pm
 PurpleWiki/Tree.pm
 PurpleWiki/Template/Base.pm
