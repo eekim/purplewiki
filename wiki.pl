@@ -276,12 +276,14 @@ sub BrowsePage {
       return;
   }
   my @vPages = &visitedPages;
+  my $keywords = $id;
+  $keywords =~ s/_/\+/g if ($config->FreeLinks);
   $wikiTemplate->vars(siteName => $config->SiteName,
                       pageName => $pageName,
                       cssFile => $config->StyleSheet,
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
-		      visitedPages => \@vPages,
+                      visitedPages => \@vPages,
                       homePage => $config->HomePage,
                       showRevision => $revision,
                       revision => $goodRevision,
@@ -290,7 +292,7 @@ sub BrowsePage {
                       escapedUserName => uri_escape($username),
                       lastEdited => $lastEdited,
                       pageUrl => $config->ScriptName . "?$id",
-                      backlinksUrl => $config->ScriptName . "?search=$id",
+                      backlinksUrl => $config->ScriptName . "?search=$keywords",
                       preferencesUrl => $config->ScriptName . '?action=editprefs',
                       editUrl => $config->ScriptName . "?action=edit&id=$id",
                       revisionsUrl => $config->ScriptName . "?action=history&id=$id",
