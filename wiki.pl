@@ -299,7 +299,7 @@ sub DoRc {
 
     foreach my $days (@{$config->RcDays}) {
         push @rcDays, { num => $days,
-                        url => $config->ScriptLink .
+                        url => $config->ScriptName .
                             "?action=rc&days=$days" };
     }
     if (&GetParam("from", 0)) {
