@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.6 2003/05/31 02:37:31 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.7 2003/06/10 06:46:12 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -112,10 +112,12 @@ sub closeLinkTag {
 sub wikiLink {
     my $node = shift;
     my $outputString;
+    my $pageNid;
 
     my $pageName = $node->content;
-    $pageName =~ s/\#(\d+)$//;
-    my $pageNid = $1;
+    if ($pageName =~ s/\#(\d+)$//) {
+        $pageNid = $1;
+    }
 
     if ($node->content =~ /:/) {
         $outputString .= '<a href="' .

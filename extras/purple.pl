@@ -41,7 +41,7 @@ MT->add_text_filter('purpleIN' => {
         &parseForPurple(@_);
     },
     docs =>
-        'http://www.burningchrome.com:8000/mt-static/docs/mtmanual_purple.html'
+        'http://www.burningchrome.com:8000/~cdent/wiki.cgi?PurplePlugin',
 });
 
 # parses the PurpleWiki text of the entry into HTML form
