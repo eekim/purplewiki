@@ -350,10 +350,18 @@ sub recentChanges {
                     # Get extra info
                     my $fsexp = $config->FS2;
                     my %userInfo = split /$fsexp/, $entries[6];
-                    $pages{$name}->{userId} = $userInfo{id}
-                        if ($userInfo{id});
-                    $pages{$name}->{userName} = $userInfo{name}
-                        if ($userInfo{name});
+                    if ($userInfo{id}) {
+                        $pages{$name}->{userId} = $userInfo{id};
+                    }
+                    else {
+                        $pages{$name}->{userId} = '';
+                    }
+                    if ($userInfo{name}) {
+                        $pages{$name}->{userName} = $userInfo{name};
+                    }
+                    else {
+                        $pages{$name}->{userName} = '';
+                    }
                 }
             }
         }

@@ -795,6 +795,7 @@ sub DoOtherRequest {
   elsif ($ename) {
     my $xsid = &GetParam('xri_xsid', '');
     &DoEname($ename, $xsid);
+    return;
   }
   
   if (&GetParam("edit_prefs", 0)) {
@@ -1214,6 +1215,8 @@ sub DoEname {
                 my $userId = $user->idFromUsername($ename);
                 if ($userId) {
                     $user = new PurpleWiki::Database::User('id' => $userId);
+                    $UserID = $userId;
+                    $session->param('userId', $userId);
                 }
                 else { # create new account
                     &DoNewLogin;
@@ -1284,7 +1287,8 @@ sub DoSearch {
 }
 
 sub DoPost {
-  my ($editDiff, $old, $newAuthor, $pgtime, $oldrev, $preview, $user);
+  my ($editDiff, $old, $newAuthor, $pgtime, $oldrev, $preview);
+  my $userName = $user->getUsername;
   my $string = &GetParam("text", undef);
   my $id = &GetParam("title", "");
   my $summary = &GetParam("summary", "");
@@ -1319,7 +1323,7 @@ sub DoPost {
                       siteBase => $config->SiteBase,
                       baseUrl => $config->ScriptName,
                       homePage => $config->HomePage,
-                      userName => $user->getUsername,
+                      userName => $userName,
                       pageName => $id,
                       preferencesUrl => $config->ScriptName . '?action=editprefs');
   if (!&UserCanEdit($id, 1)) {
@@ -1387,7 +1391,6 @@ sub DoPost {
     return;
   }
 
-  $user = &GetParam("username", "");
   # If the person doing editing chooses, send out email notification
   if (&GetParam("recent_edit", "") eq 'on') {
     $isEdit = 1;
@@ -1427,7 +1430,7 @@ sub DoPost {
   $page->setRevision($section->getRevision());
   $page->setTS($Now);
   $page->save();
-  &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $section->getHost());
+  &WriteRcLog($id, $summary, $isEdit, $editTime, $userName, $section->getHost());
   &PurpleWiki::Database::ReleaseLock();
   &ReBrowsePage($id, "", 1);
 }
