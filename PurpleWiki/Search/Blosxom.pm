@@ -31,6 +31,7 @@ package PurpleWiki::Search::Blosxom;
 
 use strict;
 use base 'PurpleWiki::Search::Interface';
+use PurpleWiki::Config;
 use PurpleWiki::Search::Result;
 use IO::File;
 
@@ -50,6 +51,11 @@ sub search {
     my %files;
     my @results;
 
+    my $config = PurpleWiki::Config->instance();
+    $ENTRIES_CACHE_INDEX = $config->BlosxomEntriesCache
+        if ($config->BlosxomEntriesCache);
+    $DATA_DIR = $config->BlosxomDataDir if ($config->BlosxomDataDir);
+    $URL = $config->BlosxomUrl if ($config->BlosxomUrl);
     my $fh = new IO::File $ENTRIES_CACHE_INDEX;
     if (defined $fh) {
         while (my $line = <$fh>) {
@@ -129,6 +135,14 @@ The cleaner way to do this would be to call the blosxom code directly.
 That would obviate the need to worry about blosxom dependencies in
 this module.  Unfortunately, it can't be done that way right now
 because of the way blosxom is architected.
+
+=head1 CONFIG VARIABLES
+
+This plugin reads the following variables from the config file:
+
+  BlosxomEntriesCache
+  BlosxomDataDir
+  BlosxomUrl
 
 =head1 METHODS
 

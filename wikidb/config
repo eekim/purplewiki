@@ -87,6 +87,9 @@ SearchModule	=	Wiki
 # Search Additional Config
 #MovableTypeDirectory	= 	/home/cdent/www/mt/
 #MovableTypeBlogID	=	1
+#BlosxomEntriesCache =
+#BlosxomDataDir      =
+#BlosxomUrl          =
 #ArtsDirectory		=	/usr/local/etc/
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbdev.config
 #IrcLogConfig		=	/home/kb-dev/ircquotes/kbeditors.config
