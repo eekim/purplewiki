@@ -29,7 +29,6 @@ $UserGotoBar = "";              # HTML added to end of goto bar
 
 # Major options:
 $UseSubpage  = 1;       # 1 = use subpages,       0 = do not use subpages
-$UseCache    = 0;       # 1 = cache HTML pages,   0 = generate every page
 $EditAllowed = 1;       # 1 = editing allowed,    0 = read-only
 $UseDiff     = 1;       # 1 = use diff features,  0 = do not use diff
 $FreeLinks   = 1;       # 1 = use [[word]] links, 0 = LinkPattern only
@@ -57,7 +56,6 @@ $NetworkFile = 1;       # 1 = allow remote file:, 0 = no file:// links
 $BracketWiki = 0;       # 1 = [WikiLnk txt] link, 0 = no local descriptions
 $UseLookup   = 1;       # 1 = lookup host names,  0 = skip lookup (IP only)
 $FreeUpper   = 1;       # 1 = force upper case,   0 = do not force case
-$FastGlob    = 1;       # 1 = new faster code,    0 = old compatible code
 
 # == You should not have to change anything below this line. =============
 $IndentLimit = 20;                  # Maximum depth of nested lists

@@ -1,6 +1,6 @@
 # PurpleWiki::Config.pm
 #
-# $Id: Config.pm,v 1.1.2.1 2003/01/21 06:15:39 cdent Exp $
+# $Id: Config.pm,v 1.1.2.2 2003/01/21 08:22:30 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -31,7 +31,7 @@ package PurpleWiki::Config;
 
 # PurpleWiki Configuration 
 
-# $Id: Config.pm,v 1.1.2.1 2003/01/21 06:15:39 cdent Exp $
+# $Id: Config.pm,v 1.1.2.2 2003/01/21 08:22:30 cdent Exp $
 
 use strict;
 use vars qw(@ISA @EXPORT);
@@ -42,9 +42,9 @@ require Exporter;
   $TempDir $LockDir $DataDir $HtmlDir $UserDir $KeepDir $PageDir
   $InterFile $RcFile $RcOldFile $IndexFile $FullUrl $SiteName $HomePage
   $LogoUrl $RcDefault $IndentLimit $RecentTop $EditAllowed $UseDiff
-  $UseSubpage $UseCache $SimpleLinks $NonEnglish $LogoLeft
+  $UseSubpage $SimpleLinks $NonEnglish $LogoLeft
   $KeepDays $HtmlTags $UseDiffLog $KeepMajor $KeepAuthor
-  $FreeUpper $EmailNotify $SendMail $EmailFrom $FastGlob $EmbedWiki
+  $FreeUpper $EmailNotify $SendMail $EmailFrom $EmbedWiki
   $ScriptTZ $BracketText $UseAmPm $UseConfig $UseIndex $UseLookup
   $RedirType $AdminPass $EditPass $UseHeadings $NetworkFile $BracketWiki
   $FreeLinks $WikiLinks $AdminDelete $FreeLinkPattern $RCName $RunCGI
@@ -58,9 +58,9 @@ use vars qw(@RcDays
   $TempDir $LockDir $DataDir $HtmlDir $UserDir $KeepDir $PageDir
   $InterFile $RcFile $RcOldFile $IndexFile $FullUrl $SiteName $HomePage
   $LogoUrl $RcDefault $IndentLimit $RecentTop $EditAllowed $UseDiff
-  $UseSubpage $UseCache $SimpleLinks $NonEnglish $LogoLeft
+  $UseSubpage $SimpleLinks $NonEnglish $LogoLeft
   $KeepDays $HtmlTags $UseDiffLog $KeepMajor $KeepAuthor
-  $FreeUpper $EmailNotify $SendMail $EmailFrom $FastGlob $EmbedWiki
+  $FreeUpper $EmailNotify $SendMail $EmailFrom $EmbedWiki
   $ScriptTZ $BracketText $UseAmPm $UseConfig $UseIndex $UseLookup
   $RedirType $AdminPass $EditPass $UseHeadings $NetworkFile $BracketWiki
   $FreeLinks $WikiLinks $AdminDelete $FreeLinkPattern $RCName $RunCGI
@@ -103,7 +103,6 @@ $UserGotoBar = "";              # HTML added to end of goto bar
 
 # Major options:
 $UseSubpage  = 1;       # 1 = use subpages,       0 = do not use subpages
-$UseCache    = 0;       # 1 = cache HTML pages,   0 = generate every page
 $EditAllowed = 1;       # 1 = editing allowed,    0 = read-only
 $UseDiff     = 1;       # 1 = use diff features,  0 = do not use diff
 $FreeLinks   = 1;       # 1 = use [[word]] links, 0 = LinkPattern only
@@ -131,7 +130,6 @@ $NetworkFile = 1;       # 1 = allow remote file:, 0 = no file:// links
 $BracketWiki = 0;       # 1 = [WikiLnk txt] link, 0 = no local descriptions
 $UseLookup   = 1;       # 1 = lookup host names,  0 = skip lookup (IP only)
 $FreeUpper   = 1;       # 1 = force upper case,   0 = do not force case
-$FastGlob    = 1;       # 1 = new faster code,    0 = old compatible code
 
 # == You should not have to change anything below this line. =============
 $IndentLimit = 20;                  # Maximum depth of nested lists
@@ -146,8 +144,74 @@ $RcFile      = "$DataDir/rclog";    # New RecentChanges logfile
 $RcOldFile   = "$DataDir/oldrclog"; # Old RecentChanges logfile
 $IndexFile   = "$DataDir/pageidx";  # List of all pages
 
+# == Static configuration. Do not chnage ============================
+# Field separators that delimit page storage
+$FS  = "\xb3";      # The FS character is a superscript "3"
+$FS1 = $FS . "1";   # The FS values are used to separate fields
+$FS2 = $FS . "2";   # in stored hashtables and other data structures.
+$FS3 = $FS . "3";   # The FS character is not allowed in user data.
+
 if ($UseConfig && (-f "$DataDir/config")) {
   do "$DataDir/config";  # Later consider error checking?
 }
 
+# Sets up the strings and regular expressions for matching
+InitLinkPatterns();
+
+# Creates the strings and regular expressions used for
+# link matching. 
+#
+# FIXME: with the parsers in place these are really 
+# only used for checking to see if an incoming request
+# is kosher, which makes these a bit redundant. The
+# fat has been trimmed but it still leaves a fair 
+# piece.
+sub InitLinkPatterns {
+  my ($UpperLetter, $LowerLetter, $AnyLetter, $LpA, $LpB, $QDelim);
+
+  $UpperLetter = "[A-Z";
+  $LowerLetter = "[a-z";
+  $AnyLetter   = "[A-Za-z";
+  if ($NonEnglish) {
+    $UpperLetter .= "\xc0-\xde";
+    $LowerLetter .= "\xdf-\xff";
+    $AnyLetter   .= "\xc0-\xff";
+  }
+  if (!$SimpleLinks) {
+    $AnyLetter .= "_0-9";
+  }
+  $UpperLetter .= "]"; $LowerLetter .= "]"; $AnyLetter .= "]";
+
+  # Main link pattern: lowercase between uppercase, then anything
+  $LpA = $UpperLetter . "+" . $LowerLetter . "+" . $UpperLetter
+         . $AnyLetter . "*";
+  # Optional subpage link pattern: uppercase, lowercase, then anything
+  $LpB = $UpperLetter . "+" . $LowerLetter . "+" . $AnyLetter . "*";
+
+  if ($UseSubpage) {
+    # Loose pattern: If subpage is used, subpage may be simple name
+    $LinkPattern = "((?:(?:$LpA)?\\/$LpB)|$LpA)";
+    # Strict pattern: both sides must be the main LinkPattern
+    # $LinkPattern = "((?:(?:$LpA)?\\/)?$LpA)";
+  } else {
+    $LinkPattern = "($LpA)";
+  }
+  $QDelim = '(?:"")?';     # Optional quote delimiter (not in output)
+  $LinkPattern .= $QDelim;
+
+  if ($FreeLinks) {
+    # Note: the - character must be first in $AnyLetter definition
+    if ($NonEnglish) {
+      $AnyLetter = "[-,.()' _0-9A-Za-z\xc0-\xff]";
+    } else {
+      $AnyLetter = "[-,.()' _0-9A-Za-z]";
+    }
+  }
+  $FreeLinkPattern = "($AnyLetter+)";
+  if ($UseSubpage) {
+    $FreeLinkPattern = "((?:(?:$AnyLetter+)?\\/)?$AnyLetter+)";
+  }
+  $FreeLinkPattern .= $QDelim;
+}
+  
 1;

@@ -1,8 +1,9 @@
 #!/usr/bin/perl
+# vi:et:tw=0:sm:ai:ts=2:sw=2
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.1 2003/01/21 06:15:39 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.2 2003/01/21 08:22:30 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -34,6 +35,8 @@ use lib '/home/cdent/src/PurpleWiki.refactor';
 use strict;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
+use CGI;
+use CGI::Carp qw(fatalsToBrowser);
 
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
@@ -42,46 +45,34 @@ use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
   %KeptRevisions %UserCookie %SetCookie %UserData %IndexHash %Translate
   %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
   $OpenPageName @KeptList @IndexList $IndexInit
-  $q $Now $UserID $TimeZoneOffset $ScriptName $BrowseCode $OtherCode);
+  $q $Now $UserID $TimeZoneOffset );
 
-# the global value of the wikiParser we use in this session
-use vars qw($wikiParser);
+my $ScriptName;         # the name by which this script is called
+my $wikiParser;         # the reference to the PurpleWiki Parser
 
-# Instantiate PurpleWiki parser.
-$wikiParser = PurpleWiki::Parser::WikiText->new;
-
-# The "main" program, called at the end of this script file.
+# The "main" program, called from the end of this script file.
 sub DoWikiRequest {
-  &InitLinkPatterns();
-  if (!&DoCacheBrowse()) {
-    eval $BrowseCode;
-    &InitRequest() or return;
-    if (!&DoBrowseRequest()) {
-      eval $OtherCode;
-      &DoOtherRequest();
-    }
+  &InitRequest() or return;
+
+  # Instantiate PurpleWiki parser.
+  $wikiParser = PurpleWiki::Parser::WikiText->new;
+
+  if (!&DoBrowseRequest()) {
+    &DoOtherRequest();
   }
+
 }
 
 # == Refactored functions for PurpleWiki ===============================
 sub pageExists {
     my $id = shift;
-    my (@temp, $exists);
+    my (@temp);
 
     $id =~ s|^/|$MainPage/|;
     if ($FreeLinks) {
         $id = &FreeToNormal($id);
     }
-    $exists = 0;
-    if ($UseIndex) {
-        if (!$IndexInit) {
-            @temp = &AllPagesList();          # Also initializes hash
-        }
-        $exists = 1  if ($IndexHash{$id});
-    } elsif (-f &GetPageFile($id)) {      # Page file exists
-        $exists = 1;
-    }
-    if ($exists) {
+    if (-f &GetPageFile($id)) {      # Page file exists
         return 1;
     }
     else {
@@ -90,113 +81,6 @@ sub pageExists {
 }
 
 # == Common and cache-browsing code ====================================
-sub InitLinkPatterns {
-  my ($UpperLetter, $LowerLetter, $AnyLetter, $LpA, $LpB, $QDelim);
-
-  # Field separators are used in the URL-style patterns below.
-  $FS  = "\xb3";      # The FS character is a superscript "3"
-  $FS1 = $FS . "1";   # The FS values are used to separate fields
-  $FS2 = $FS . "2";   # in stored hashtables and other data structures.
-  $FS3 = $FS . "3";   # The FS character is not allowed in user data.
-
-  $UpperLetter = "[A-Z";
-  $LowerLetter = "[a-z";
-  $AnyLetter   = "[A-Za-z";
-  if ($NonEnglish) {
-    $UpperLetter .= "\xc0-\xde";
-    $LowerLetter .= "\xdf-\xff";
-    $AnyLetter   .= "\xc0-\xff";
-  }
-  if (!$SimpleLinks) {
-    $AnyLetter .= "_0-9";
-  }
-  $UpperLetter .= "]"; $LowerLetter .= "]"; $AnyLetter .= "]";
-
-  # Main link pattern: lowercase between uppercase, then anything
-  $LpA = $UpperLetter . "+" . $LowerLetter . "+" . $UpperLetter
-         . $AnyLetter . "*";
-  # Optional subpage link pattern: uppercase, lowercase, then anything
-  $LpB = $UpperLetter . "+" . $LowerLetter . "+" . $AnyLetter . "*";
-
-  if ($UseSubpage) {
-    # Loose pattern: If subpage is used, subpage may be simple name
-    $LinkPattern = "((?:(?:$LpA)?\\/$LpB)|$LpA)";
-    # Strict pattern: both sides must be the main LinkPattern
-    # $LinkPattern = "((?:(?:$LpA)?\\/)?$LpA)";
-  } else {
-    $LinkPattern = "($LpA)";
-  }
-  $QDelim = '(?:"")?';     # Optional quote delimiter (not in output)
-  $LinkPattern .= $QDelim;
-
-  # Inter-site convention: sites must start with uppercase letter
-  # (Uppercase letter avoids confusion with URLs)
-  $InterSitePattern = $UpperLetter . $AnyLetter . "+";
-  $InterLinkPattern = "((?:$InterSitePattern:[^\\]\\s\"<>$FS]+)$QDelim)";
-
-  if ($FreeLinks) {
-    # Note: the - character must be first in $AnyLetter definition
-    if ($NonEnglish) {
-      $AnyLetter = "[-,.()' _0-9A-Za-z\xc0-\xff]";
-    } else {
-      $AnyLetter = "[-,.()' _0-9A-Za-z]";
-    }
-  }
-  $FreeLinkPattern = "($AnyLetter+)";
-  if ($UseSubpage) {
-    $FreeLinkPattern = "((?:(?:$AnyLetter+)?\\/)?$AnyLetter+)";
-  }
-  $FreeLinkPattern .= $QDelim;
-  
-  # Url-style links are delimited by one of:
-  #   1.  Whitespace                           (kept in output)
-  #   2.  Left or right angle-bracket (< or >) (kept in output)
-  #   3.  Right square-bracket (])             (kept in output)
-  #   4.  A single double-quote (")            (kept in output)
-  #   5.  A $FS (field separator) character    (kept in output)
-  #   6.  A double double-quote ("")           (removed from output)
-
-  $UrlProtocols = "http|https|ftp|afs|news|nntp|mid|cid|mailto|wais|"
-                  . "prospero|telnet|gopher";
-  $UrlProtocols .= '|file'  if $NetworkFile;
-  $UrlPattern = "((?:(?:$UrlProtocols):[^\\]\\s\"<>$FS]+)$QDelim)";
-  $ImageExtensions = "(gif|jpg|png|bmp|jpeg)";
-  $RFCPattern = "RFC\\s?(\\d+)";
-  $ISBNPattern = "ISBN:?([0-9- xX]{10,})";
-}
-
-# Simple HTML cache
-sub DoCacheBrowse {
-  my ($query, $idFile, $text);
-
-  return 0  if (!$UseCache);
-  $query = $ENV{'QUERY_STRING'};
-  if (($query eq "") && ($ENV{'REQUEST_METHOD'} eq "GET")) {
-    $query = $HomePage;  # Allow caching of home page.
-  }
-  if (!($query =~ /^$LinkPattern$/)) {
-    if (!($FreeLinks && ($query =~ /^$FreeLinkPattern$/))) {
-      return 0;  # Only use cache for simple links
-    }
-  }
-  $idFile = &GetHtmlCacheFile($query);
-  if (-f $idFile) {
-    local $/ = undef;   # Read complete files
-    open(INFILE, "<$idFile") or return 0;
-    $text = <INFILE>;
-    close INFILE;
-    print $text;
-    return 1;
-  }
-  return 0;
-}
-
-sub GetHtmlCacheFile {
-  my ($id) = @_;
-
-  return $HtmlDir . "/" . &GetPageDirectory($id) . "/$id.htm";
-}
-
 sub GetPageDirectory {
   my ($id) = @_;
 
@@ -225,21 +109,13 @@ sub Ts {
   return $text;
 }
 
-# == Normal page-browsing and RecentChanges code =======================
-$BrowseCode = ""; # Comment next line to always compile (slower)
-#$BrowseCode = <<'#END_OF_BROWSE_CODE';
-use CGI;
-use CGI::Carp qw(fatalsToBrowser);
-
 sub InitRequest {
-  my @ScriptPath = split('/', "$ENV{SCRIPT_NAME}");
-
   $CGI::POST_MAX = $MaxPost;
   $CGI::DISABLE_UPLOADS = 1;  # no uploads
   $q = new CGI;
 
   $Now = time;                     # Reset in case script is persistent
-  $ScriptName = pop(@ScriptPath);  # Name used in links
+  $ScriptName = $q->url('relative' => 1);  # Name used in links
   $IndexInit = 0;                  # Must be reset for each request
   $InterSiteInit = 0;
   %InterSite = ();
@@ -402,7 +278,6 @@ sub BrowsePage {
   $fullHtml .= &GetFooterText($id, $goodRevision);
   print $fullHtml;
   return  if ($showDiff || ($revision ne ''));  # Don't cache special version
-  &UpdateHtmlCache($id, $fullHtml)  if $UseCache;
 }
 
 sub ReBrowsePage {
@@ -755,7 +630,7 @@ sub GetOldPageLink {
 
 sub GetPageOrEditLink {
   my ($id, $name) = @_;
-  my (@temp, $exists);
+  my (@temp);
 
   if ($name eq "") {
     $name = $id;
@@ -767,16 +642,7 @@ sub GetPageOrEditLink {
   if ($FreeLinks) {
     $id = &FreeToNormal($id);
   }
-  $exists = 0;
-  if ($UseIndex) {
-    if (!$IndexInit) {
-      @temp = &AllPagesList();          # Also initializes hash
-    }
-    $exists = 1  if ($IndexHash{$id});
-  } elsif (-f &GetPageFile($id)) {      # Page file exists
-    $exists = 1;
-  }
-  if ($exists) {
+  if (-f &GetPageFile($id)) {      # Page file exists
     return &GetPageLinkText($id, $name);
   }
   if ($FreeLinks) {
@@ -1145,59 +1011,6 @@ sub CommonMarkup {
     }
   }
   return $_;
-}
-
-sub WikiLinesToHtml {
-  my ($pageText) = @_;
-  my ($pageHtml, @htmlStack, $code, $depth, $oldCode);
-
-  @htmlStack = ();
-  $depth = 0;
-  $pageHtml = "";
-  foreach (split(/\n/, $pageText)) {  # Process lines one-at-a-time
-    $_ .= "\n";
-    if (s/^(\;+)([^:]+\:?)\:/<dt>$2<dd>/) {
-      $code = "DL";
-      $depth = length $1;
-    } elsif (s/^(\:+)/<dt><dd>/) {
-      $code = "DL";
-      $depth = length $1;
-    } elsif (s/^(\*+)/<li>/) {
-      $code = "UL";
-      $depth = length $1;
-    } elsif (s/^(\#+)/<li>/) {
-      $code = "OL";
-      $depth = length $1;
-    } elsif (/^[ \t].*\S/) {
-      $code = "PRE";
-      $depth = 1;
-    } else {
-      $depth = 0;
-    }
-    while (@htmlStack > $depth) {   # Close tags as needed
-      $pageHtml .=  "</" . pop(@htmlStack) . ">\n";
-    }
-    if ($depth > 0) {
-      $depth = $IndentLimit  if ($depth > $IndentLimit);
-      if (@htmlStack) {  # Non-empty stack
-        $oldCode = pop(@htmlStack);
-        if ($oldCode ne $code) {
-          $pageHtml .= "</$oldCode><$code>\n";
-        }
-        push(@htmlStack, $code);
-      }
-      while (@htmlStack < $depth) {
-        push(@htmlStack, $code);
-        $pageHtml .= "<$code>\n";
-      }
-    }
-    s/^\s*$/<p>\n/;                        # Blank lines become <p> tags
-    $pageHtml .= &CommonMarkup($_, 1, 2);  # Line-oriented common markup
-  }
-  while (@htmlStack > 0) {       # Clear stack
-    $pageHtml .=  "</" . pop(@htmlStack) . ">\n";
-  }
-  return $pageHtml;
 }
 
 sub QuoteHtml {
@@ -2139,101 +1952,38 @@ sub CreatePageDir {
   }
 }
 
-sub UpdateHtmlCache {
-  my ($id, $html) = @_;
-  my $idFile;
-
-  $idFile = &GetHtmlCacheFile($id);
-  &CreatePageDir($HtmlDir, $id);
-  if (&RequestCacheLock()) {
-    &WriteStringToFile($idFile, $html);
-    &ReleaseCacheLock();
-  }
-}
-
-sub GenerateAllPagesList {
+sub AllPagesList {
   my (@pages, @dirs, $id, $dir, @pageFiles, @subpageFiles, $subId);
 
   @pages = ();
-  if ($FastGlob) {
-    # The following was inspired by the FastGlob code by Marc W. Mengel.
-    # Thanks to Bob Showalter for pointing out the improvement.
-    opendir(PAGELIST, $PageDir);
-    @dirs = readdir(PAGELIST);
+  # The following was inspired by the FastGlob code by Marc W. Mengel.
+  # Thanks to Bob Showalter for pointing out the improvement.
+  opendir(PAGELIST, $PageDir);
+  @dirs = readdir(PAGELIST);
+  closedir(PAGELIST);
+  @dirs = sort(@dirs);
+  foreach $dir (@dirs) {
+    next  if (($dir eq '.') || ($dir eq '..'));
+    opendir(PAGELIST, "$PageDir/$dir");
+    @pageFiles = readdir(PAGELIST);
     closedir(PAGELIST);
-    @dirs = sort(@dirs);
-    foreach $dir (@dirs) {
-      next  if (($dir eq '.') || ($dir eq '..'));
-      opendir(PAGELIST, "$PageDir/$dir");
-      @pageFiles = readdir(PAGELIST);
-      closedir(PAGELIST);
-      foreach $id (@pageFiles) {
-        next  if (($id eq '.') || ($id eq '..'));
-        if (substr($id, -3) eq '.db') {
-          push(@pages, substr($id, 0, -3));
-        } elsif (substr($id, -4) ne '.lck') {
-          opendir(PAGELIST, "$PageDir/$dir/$id");
-          @subpageFiles = readdir(PAGELIST);
-          closedir(PAGELIST);
-          foreach $subId (@subpageFiles) {
-            if (substr($subId, -3) eq '.db') {
-              push(@pages, "$id/" . substr($subId, 0, -3));
-            }
+    foreach $id (@pageFiles) {
+      next  if (($id eq '.') || ($id eq '..'));
+      if (substr($id, -3) eq '.db') {
+        push(@pages, substr($id, 0, -3));
+      } elsif (substr($id, -4) ne '.lck') {
+        opendir(PAGELIST, "$PageDir/$dir/$id");
+        @subpageFiles = readdir(PAGELIST);
+        closedir(PAGELIST);
+        foreach $subId (@subpageFiles) {
+          if (substr($subId, -3) eq '.db') {
+            push(@pages, "$id/" . substr($subId, 0, -3));
           }
-        }
-      }
-    }
-  } else {
-    # Old slow/compatible method.
-    @dirs = qw(A B C D E F G H I J K L M N O P Q R S T U V W X Y Z other);
-    foreach $dir (@dirs) {
-      if (-e "$PageDir/$dir") {  # Thanks to Tim Holt
-        while (<$PageDir/$dir/*.db $PageDir/$dir/*/*.db>) {
-          s|^$PageDir/||;
-          m|^[^/]+/(\S*).db|;
-          $id = $1;
-          push(@pages, $id);
         }
       }
     }
   }
   return sort(@pages);
-}
-
-sub AllPagesList {
-  my ($rawIndex, $refresh, $status);
-
-  if (!$UseIndex) {
-    return &GenerateAllPagesList();
-  }
-  $refresh = &GetParam("refresh", 0);
-  if ($IndexInit && !$refresh) {
-    # Note for mod_perl: $IndexInit is reset for each query
-    # Eventually consider some timestamp-solution to keep cache?
-    return @IndexList;
-  }
-  if ((!$refresh) && (-f $IndexFile)) {
-    ($status, $rawIndex) = &ReadFile($IndexFile);
-    if ($status) {
-      %IndexHash = split(/\s+/, $rawIndex);
-      @IndexList = sort(keys %IndexHash);
-      $IndexInit = 1;
-      return @IndexList;
-    }
-    # If open fails just refresh the index
-  }
-  @IndexList = ();
-  %IndexHash = ();
-  @IndexList = &GenerateAllPagesList();
-  foreach (@IndexList) {
-    $IndexHash{$_} = 1;
-  }
-  $IndexInit = 1;  # Initialized for this run of the script
-  # Try to write out the list for future runs
-  &RequestIndexLock() or return @IndexList;
-  &WriteStringToFile($IndexFile, join(" ", %IndexHash));
-  &ReleaseIndexLock();
-  return @IndexList;
 }
 
 sub CalcDay {
@@ -2345,8 +2095,6 @@ sub FreeToNormal {
 #END_OF_BROWSE_CODE
 
 # == Page-editing and other special-action code ========================
-$OtherCode = ""; # Comment next line to always compile (slower)
-#$OtherCode = <<'#END_OF_OTHER_CODE';
 
 sub DoOtherRequest {
   my ($id, $action, $text, $search);
@@ -3209,15 +2957,6 @@ sub DoPost {
   &SaveDefaultText();
   &SavePage();
   &WriteRcLog($id, $summary, $isEdit, $editTime, $user, $Section{'host'});
-  if ($UseCache) {
-    UnlinkHtmlCache($id);          # Old cached copy is invalid
-    if ($Page{'revision'} < 2) {   # If this is a new page...
-      &NewPageCacheClear($id);     # ...uncache pages linked to this one.
-    }
-  }
-  if ($UseIndex && ($Page{'revision'} == 1)) {
-    unlink($IndexFile);  # Regenerate index on next request
-  }
   &ReleaseLock();
   &ReBrowsePage($id, "", 1);
 }
@@ -3349,28 +3088,6 @@ sub SearchBody {
     }
   }
   return @found;
-}
-
-sub UnlinkHtmlCache {
-  my ($id) = @_;
-  my $idFile;
-
-  $idFile = &GetHtmlCacheFile($id);
-  if (-f $idFile) {
-    unlink($idFile);
-  }
-}
-
-sub NewPageCacheClear {
-  my ($id) = @_;
-  my $name;
-
-  return if (!$UseCache);
-  $id =~ s|.+/|/|;  # If subpage, search for just the subpage
-  # The following code used to search the body for the $id
-  foreach $name (&AllPagesList()) {  # Remove all to be safe
-    &UnlinkHtmlCache($name);
-  }
 }
 
 # Note: all diff and recent-list operations should be done within locks.
@@ -3602,7 +3319,6 @@ sub UpdateLinksList {
     &BuildLinkIndex();
   }
   &RequestLock() or die "UpdateLinksList could not get main lock";
-  unlink($IndexFile)  if ($UseIndex);
   foreach (split(/\n/, $commandList)) {
     s/\s+$//g;
     next  if (!(/^[=!|]/));  # Only valid commands.
@@ -3615,8 +3331,6 @@ sub UpdateLinksList {
       &RenameTextLinks($1, $2);
     }
   }
-  &NewPageCacheClear(".");  # Clear cache (needs testing?)
-  unlink($IndexFile)  if ($UseIndex);
   &ReleaseLock();
 }
 
@@ -3729,7 +3443,6 @@ sub DeletePage {
   unlink($fname)  if (-f $fname);
   $fname = $KeepDir . "/" . &GetPageDirectory($page) .  "/$page.kp";
   unlink($fname)  if (-f $fname);
-  unlink($IndexFile)  if ($UseIndex);
   &EditRecentChanges(1, $page, "")  if ($doRC);  # Delete page
   # Currently don't do anything with page text
 }
@@ -3941,7 +3654,6 @@ sub RenamePage {
   $newkeep = $KeepDir . "/" . &GetPageDirectory($new) .  "/$new.kp";
   unlink($newkeep)  if (-f $newkeep);  # Clean up if needed.
   rename($oldkeep,  $newkeep);
-  unlink($IndexFile)  if ($UseIndex);
   &EditRecentChanges(2, $old, $new)  if ($doRC);
   if ($doText) {
     &BuildLinkIndexPage($new);  # Keep index up-to-date
