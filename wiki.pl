@@ -226,12 +226,12 @@ sub BrowsePage {
 
   if ($config->UseDiff && $showDiff) {
     $diffRevision = GetParam('diffrevision', '');
-    my $diffText = DoDiff( $page->getText($diffRevision), 
-                           $page->getText($goodRevision) );
+    my $from = ($diffRevision) ? $page->getText($diffRevision)
+                               : $page->getPrev($goodRevision);
+    my $diffText = DoDiff( $from, $page->getText($goodRevision) );
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $pageName,
                         revision => $diffRevision || $goodRevision,
-                        diffLinks => (),
                         diffs => getDiffs($diffText),
                         lastEdited => TimeToText($page->getTime),
                         pageUrl => $config->ScriptName . "?$id",
@@ -239,6 +239,7 @@ sub BrowsePage {
                         revisionsUrl => $config->ScriptName
                                         . "?action=history&amp;id=$id");
     print GetHttpHeader() . $wikiTemplate->process('viewDiff');
+    return;
   }
 
   $body = $page->getWikiHTML();
@@ -358,10 +359,11 @@ sub DoHistory {
 
 
     my @vPages = &visitedPages;
+    my @pageHistory = $page->getRevisions();
     $wikiTemplate->vars(&globalTemplateVars,
                         pageName => $id,
                         visitedPages => \@vPages,
-                        pageHistory => ($page->getRevisions()));
+                        pageHistory => \@pageHistory);
     print GetHttpHeader() . $wikiTemplate->process('viewPageHistory');
 }
 
@@ -457,7 +459,7 @@ sub ValidIdOrDie {
                         pageName => $id);
     $error = ValidateId($id);
     if ($error ne "") {
-        print GetHttpHeader() . $wikiTemplate->process('errors/$error');
+        print GetHttpHeader() . $wikiTemplate->process("errors/$error");
         return 0;
     }
     return 1;

@@ -66,15 +66,15 @@ sub newPage {
   my $self = shift;
 
   my $page = PurpleWiki::Database::Page->new(pages => $self, @_);
-  $self->_newVersion($page) if (defined($page->{wikitext}));
+  $self->_newRevision($page) if (defined($page->{wikitext}));
   $page;
 }
 
-sub _newVersion {
+sub _newRevision {
 my ($self, $page) = @_;
   use PurpleWiki::Database::KeptRevision;
   my $fsexp = $self->{fs};
-  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
+  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $page->{id});
   $page->_openPage();
   my $text = $page->_getText();
   my $section = $page->getSection();
@@ -246,12 +246,6 @@ sub getRevision {
     return $self->getSection()->getRevision();
 }
 
-# Returns the revision of this Page. Internal, get if from the page, not section
-sub _getRevision {
-    my $self = shift;
-    return $self->{revision};
-}
-
 # Sets the revision of this Page.
 sub setRevision {
     my $self = shift;
@@ -314,20 +308,67 @@ sub _getText {
     return $section->getText();
 }
 
-# Or creates a new one (or lets getSectin create it)
+sub hasRevision {
+    my $self = shift;
+    my $rev = shift;
+    return 1 unless $rev;  # current rev always exists
+
+    $self->_openPage() unless ($self->{open});
+    return 1 if ($self->getSection->getRevision() == $rev);
+
+    my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
+    for my $section ($krev->getSections()) {
+        return 1 if ($rev == $section->getRevision());
+    }
+    return 0;  # no revision found
+}
+
+# Returns the text of the version previous to the selected one (or current)
+sub getPrev {
+    my $self = shift;
+    my $rev = "";
+    my $prev = 0;
+    $rev = ((@_) ? shift : $self->getRevision()) - 1;
+    $self->_openPage() unless ($self->{open});
+    my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
+    for my $section ($krev->getSections()) {
+        my $thisrev = $section->getRevision();
+        if ($thisrev <= $rev && $thisrev > $prev) {
+            $prev = $thisrev;
+            $psection = $section;
+            last if ($rev == $thisrev);
+        }
+    }
+    return "" unless $prev;
+    my $text = $psection->getText();
+    return (ref($text)) ? $text->getText() : $text;
+}
+
+#
+# page->getText([revision])
+#
+# Return the content string for the selected 'revision' or the current
+# revision.  Also sets the selected revision of the page, so if you do
+# another 'getText' or 'getRevision' that's what you get.
+#
 sub getText {
     my $self = shift;
-    my $selectrevision = "";
+    my $selectrevision = $self->{selectrevision};
     $self->{selectrevision} = $selectrevision = shift if @_;
     $self->_openPage() unless ($self->{open});
-    if ($selectrevision && ($selectrevision != $self->{version})) {
+    if ($selectrevision && ($selectrevision != $self->{revision})) {
         my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
-        return $krev->getRevision($selectrevision)->getText();
+        for my $section ($krev->getSections()) {
+            if ($selectrevision == $section->getRevision()) {
+                my $text = $section->getText();
+                return (ref($text)) ? $text->getText() : $text;
+            }
+        }
+        return "";  # no revision found
     } else {
         my $section = $self->getSection();
         my $text = $section->getText();
-        return $text->getText() if (ref($text));
-        return $section->getText();
+        return (ref($text)) ? $text->getText() : $text;
     }
 }
 
@@ -426,13 +467,13 @@ sub _getRevisionHistory {
             "?action=edit&amp;id=$id&amp;revision=$rev";
     }
     if (defined($summary) && ($summary ne "") && ($summary ne "*")) {
-        $summary = QuoteHtml($summary);   # Thanks Sunir! :-)
+        $summary = UseModWiki::QuoteHtml($summary);
     }
     else {
         $summary = '';
     }
     return { revision => $rev,
-             dateTime => UseMod::TimeToText($ts),
+             dateTime => UseModWiki::TimeToText($ts),
              host => $host,
              user => $user,
              summary => $summary,

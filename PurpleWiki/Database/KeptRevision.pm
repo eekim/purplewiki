@@ -53,7 +53,7 @@ sub new {
 
     $self->{id} = $params{id};
     $self->{config} = PurpleWiki::Config->instance();
-    $self->{sections} = ();
+    $self->{sections} = [];
     $self->_makeKeptList();
 
     return $self;
@@ -229,7 +229,9 @@ sub serialize {
 
     my $data;
     my $section;
-    foreach $section ($self->getSections()) {
+    my @secs = $self->getSections();
+
+    foreach $section (@secs) {
         $data .= $self->{config}->FS1;
         $data .= $section->serialize();
     }
