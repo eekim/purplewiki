@@ -1,7 +1,7 @@
 # PurpleWiki::View::wikihtml.pm
 # vi:ai:sm:ts=4:sw=4:et
 #
-# $Id: wikihtml.pm,v 1.1.6.8 2003/06/12 10:22:17 cdent Exp $
+# $Id: wikihtml.pm,v 1.1.6.9 2003/06/14 01:52:12 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -39,7 +39,7 @@ use PurpleWiki::Transclusion;
 
 # globals
 
-use vars qw(@sectionState $url);
+use vars qw(@sectionState);
 
 # structural node event handlers
 
@@ -69,8 +69,9 @@ sub openTagWithNid {
 
 sub closeTagWithNid {
     my $node = shift;
+    my %params = shift;
 
-    return &_nid($node->id) . &closeTag($node);
+    return &_nid($node->id, %params) . &closeTag($node);
 }
 
 # inline node event handlers
@@ -183,8 +184,8 @@ sub registerHandlers {
         sub { my $node = shift;
               return '<h' . &_headerLevel . '>' . &_anchor($node->id); };
     $PurpleWiki::View::EventHandler::structuralHandler{h}->{post} =
-        sub { my $node = shift;
-              return &_nid($node->id) . '</h' . &_headerLevel . '>'; };
+        sub { my $node = shift; my %params = @_;
+              return &_nid($node->id, %params) . '</h' . &_headerLevel . '>'; };
 
     $PurpleWiki::View::EventHandler::structuralHandler{p}->{pre} = \&openTagWithNid;
     $PurpleWiki::View::EventHandler::structuralHandler{p}->{post} = \&closeTagWithNid;
@@ -236,7 +237,7 @@ sub view {
     my ($wikiTree, %params) = @_;
 
     &registerHandlers;
-    $url = $params{url} || '';
+    $params{url} = '' unless defined($params{url});
     return &PurpleWiki::View::EventHandler::view($wikiTree, %params);
 }
 
@@ -275,12 +276,13 @@ sub _anchor {
 # FIXME: goes to too much effort to avoid a void return
 sub _nid {
     my $nid = shift;
+    my %params = @_;
     my $string = '';
 
     if ($nid) {
         $string = ' &nbsp;&nbsp; <a class="nid" ' .
 	                   'title="' . "0$nid" . '" href="' .
-			   $url . '#nid0' .
+			   $params{url} . '#nid0' .
 			   $nid . '">#</a>';
     }
 
