@@ -1,6 +1,6 @@
 # PurpleWiki::Parser::WikiText.pm
 #
-# $Id: WikiText.pm,v 1.6 2003/01/02 06:08:00 eekim Exp $
+# $Id: WikiText.pm,v 1.7 2003/01/17 06:25:08 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -80,41 +80,41 @@ sub parse {
     foreach $line (split(/\n/, $wikiContent)) { # Process lines one-at-a-time
         chomp $line;
         if ($isStart && $line =~ /^\[lastnid (\d+)\]$/) {
-	    $tree->lastNid($1);
-	}
-	elsif ($isStart && $line =~ /^\[title (.+)\]$/) {
+            $tree->lastNid($1);
+        }
+        elsif ($isStart && $line =~ /^\[title (.+)\]$/) {
             # The metadata below is not (currently) used by the
             # Wiki.  It's here to so that this parser can be used
             # as a general documentation formatting system.
-	    $tree->title($1);
-	}
-	elsif ($isStart && $line =~ /^\[subtitle (.+)\]$/) {
+            $tree->title($1);
+        }
+        elsif ($isStart && $line =~ /^\[subtitle (.+)\]$/) {
             # See above.
-	    $tree->subtitle($1);
-	}
-	elsif ($isStart && $line =~ /^\[docid (.+)\]$/) {
+            $tree->subtitle($1);
+        }
+        elsif ($isStart && $line =~ /^\[docid (.+)\]$/) {
             # See above.
-	    $tree->id($1);
-	}
-	elsif ($isStart && $line =~ /^\[date (.+)\]$/) {
+            $tree->id($1);
+        }
+        elsif ($isStart && $line =~ /^\[date (.+)\]$/) {
             # See above.
-	    $tree->date($1);
-	}
-	elsif ($isStart && $line =~ /^\[version (.+)\]$/) {
+            $tree->date($1);
+        }
+        elsif ($isStart && $line =~ /^\[version (.+)\]$/) {
             # See above.
-	    $tree->version($1);
-	}
-	elsif ($isStart && $line =~ /^\[author (.+)\]$/) {
+            $tree->version($1);
+        }
+        elsif ($isStart && $line =~ /^\[author (.+)\]$/) {
             # See above.
-	    my $authorString = $1;
-	    $authorString =~ s/\s+(\S+\@\S+)$//;
-	    my $authorEmail = $1;
-	    if ($authorEmail) {
-		push @authors, [$authorString, $authorEmail];
-	    }
-	    else {
-		push @authors, [$authorString];
-	    }
+            my $authorString = $1;
+            $authorString =~ s/\s+(\S+\@\S+)$//;
+            my $authorEmail = $1 if ($1 ne $authorString);
+            if ($authorEmail) {
+                push @authors, [$authorString, $authorEmail];
+            }
+            else {
+                push @authors, [$authorString];
+            }
         }
         elsif ($line =~ /^($aggregateListRegExp)$/) { # Process lists
             foreach $listType (keys(%listMap)) {
