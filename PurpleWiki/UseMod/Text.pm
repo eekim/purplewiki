@@ -1,4 +1,4 @@
-# PurpleWiki::Database::Text
+# PurpleWiki::UseMod::Text
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Database::Text;
+package PurpleWiki::UseMod::Text;
 
 # PurpleWiki Text Data Access
 

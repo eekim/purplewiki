@@ -1,4 +1,4 @@
-# PurpleWiki::Database::User::UseMod.pm
+# PurpleWiki::UseMod::User::UseMod.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -28,13 +28,13 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Database::User::UseMod;
+package PurpleWiki::UseMod::User::UseMod;
 
 use strict;
-#use base 'PurpleWiki::Database::User::Base';
 use DB_File;
 use PurpleWiki::Config;
-use PurpleWiki::Database;
+use PurpleWiki::Misc;
+use PurpleWiki::UseMod::Database;
 use PurpleWiki::User;
 
 our $VERSION;
@@ -56,10 +56,10 @@ sub new {
     # create user directories
     my $userDir = $self->{config}->UserDir;
     if (!(-d "$userDir/0")) {
-        PurpleWiki::Database::CreateDir($userDir);
+        PurpleWiki::Misc::CreateDir($userDir);
 
         foreach my $n (0..9) {
-            PurpleWiki::Database::CreateDir("$userDir/$n");
+            PurpleWiki::Misc::CreateDir("$userDir/$n");
         }
     }
 
@@ -81,13 +81,13 @@ sub createUser {
         $id += 10;
     }
 
-    &PurpleWiki::Database::RequestLock() or die('Could not get user ID lock');
+    &PurpleWiki::UseMod::Database::RequestLock() or die('Could not get user ID lock');
     while (-f $self->_userFile($id)) {
         $id++;
     }
     # reserve the user ID
-    &PurpleWiki::Database::WriteStringToFile($self->_userFile($id), "lock");
-    &PurpleWiki::Database::ReleaseLock();
+    &PurpleWiki::Misc::WriteStringToFile($self->_userFile($id), "lock");
+    &PurpleWiki::UseMod::Database::ReleaseLock();
 
     return PurpleWiki::User->new($id);
 }
@@ -98,7 +98,7 @@ sub loadUser {
     my $user = PurpleWiki::User->new;
 
     if ($userId && -f $self->_userFile($userId)) {
-        my $data = PurpleWiki::Database::ReadFileOrDie($self->_userFile($userId));
+        my $data = PurpleWiki::Misc::ReadFileOrDie($self->_userFile($userId));
         if ($data !~ /^lock/) {
             my $regexp = $self->{config}->FS1;
             my %tempHash = split (/$regexp/, $data, -1);
@@ -131,24 +131,24 @@ sub saveUser {
     }
 
     # write user data
-    PurpleWiki::Database::WriteStringToFile($self->_userFile($user->id), $string);
+    &PurpleWiki::Misc::WriteStringToFile($self->_userFile($user->id), $string);
 
     # update username->id map
     my %users;
     my $userDir = $self->{config}->UserDir;
-    &PurpleWiki::Database::RequestLock or die('Could not get usernames.db lock');
+    &PurpleWiki::UseMod::Database::RequestLock or die('Could not get usernames.db lock');
     tie %users, "DB_File", "$userDir/usernames.db",
         O_RDWR|O_CREAT, 0666, $DB_HASH;
     $users{$user->username} = $user->id;
     untie %users;
-    &PurpleWiki::Database::ReleaseLock;
+    &PurpleWiki::UseMod::Database::ReleaseLock;
 }
 
 sub deleteUser {
     my $self = shift;
     my $userName = shift;
 
-    &PurpleWiki::Database::RequestLock() or die('Could not get user-ID lock');
+    &PurpleWiki::UseMod::Database::RequestLock() or die('Could not get user-ID lock');
     my $userDir = $self->{config}->UserDir;
     my %users;
     tie %users, "DB_File", "$userDir/usernames.db";
@@ -158,7 +158,7 @@ sub deleteUser {
     untie %users;
     my $userFile = $self->_userFile($userId);
     unlink $userFile if (-f $userFile);
-    &PurpleWiki::Database::ReleaseLock();
+    &PurpleWiki::UseMod::Database::ReleaseLock();
 }
 
 sub idFromUsername {
@@ -189,11 +189,11 @@ __END__
 
 =head1 NAME
 
-PurpleWiki::Database::User::UseMod - UseMod backend for user database.
+PurpleWiki::UseMod::User::UseMod - UseMod backend for user database.
 
 =head1 SYNOPSIS
 
-  use PurpleWiki::Database::User::UseMod;
+  use PurpleWiki::UseMod::User::UseMod;
 
 =head1 DESCRIPTION
 
@@ -234,6 +234,6 @@ Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
 
 =head1 SEE ALSO
 
-L<PurpleWiki::Database::User::Base>
+L<PurpleWiki::UseMod::User::Base>
 
 =cut

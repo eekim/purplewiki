@@ -126,8 +126,4 @@ Chris Dent, E<lt>cdent@blueoxen.orgE<gt>
 
 Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
 
-=head1 SEE ALSO
-
-L<PurpleWiki::Database>.
-
 =cut

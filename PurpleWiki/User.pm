@@ -144,6 +144,6 @@ Eugene Eric Kim, E<lt>eekim@blueoxen.orgE<gt>
 
 =head1 SEE ALSO
 
-L<PurpleWiki::Database::User::Base>
+L<PurpleWiki::UseMod::User::Base>
 
 =cut

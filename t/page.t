@@ -7,13 +7,10 @@ use Test;
 
 BEGIN { plan tests => 11};
 
-use PurpleWiki::Database::Pages;
-use PurpleWiki::Database::KeptRevision;
 use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 
 my $configdir = 't';
-#my $lockdir = 'tDB/temp/lockmain';
 my $id = 'WikiPage';
 my $newcontent = "Describe the new page here.\n";
 my $content=<<"EOF";
@@ -78,12 +75,7 @@ ok($output, $expected_content);
 
 ## now save it
 
-# lock
-#ok(PurpleWiki::Database::RequestLock() && -d $lockdir);
 my $page = $pages->getPage($id);
-
-# unlock
-#ok(PurpleWiki::Database::ReleaseLock() && ! -d $lockdir);
 
 # stored id should be the same as what we gave it
 # getPage should fail and return null value

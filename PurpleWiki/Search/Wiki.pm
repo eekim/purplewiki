@@ -33,7 +33,6 @@ package PurpleWiki::Search::Wiki;
 use strict;
 use base 'PurpleWiki::Search::Interface';
 use PurpleWiki::Search::Result;
-#use PurpleWiki::Database;
 use PurpleWiki::Misc 'getWikiWordLink';
 
 our $VERSION;

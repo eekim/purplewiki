@@ -31,7 +31,7 @@
 our $VERSION;
 $VERSION = sprintf("%d", q$Id: SVNArchive.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
 
-package PurpleWiki::SVNArchive;
+package PurpleWiki::Archive::Subversion;
 
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
@@ -95,8 +95,8 @@ sub getPage {
   my $root = $self->_get_root($rev);
   my $check = $root->check_path($path);
   if ($check == $SVN::Node::none) {
-    return PurpleWiki::SVNPage->new(id=>$id, revision=>$self->_currentRev,
-                                    time=>time,
+    return PurpleWiki::Archive::SubversionPage->new(id=>$id,
+                                    revision=>$self->_currentRev, time=>time,
                                     wikitext=>'Describe the new page here.');
   } elsif ($check != $SVN::Node::file) {
     return '';
@@ -116,7 +116,7 @@ sub getPage {
 #print STDERR "Root:",ref($root),":$path:$check:Rv:$rev:Lm:$lastmod:",length($contents),"\n";
   $file->close();
 #print STDERR "Cont:$contents=\n";
-  return PurpleWiki::SVNPage->new(id=>$id, wikitext=>$contents,
+  return PurpleWiki::Archive::SubversionPage->new(id=>$id, wikitext=>$contents,
                                   time=>$lastmod, revision=>$curRev);
 }
 
@@ -356,7 +356,7 @@ sub getRevisions {
   return @response;
 }
 
-package PurpleWiki::SVNPage;
+package PurpleWiki::Archive::SubversionPage;
 
 # PurpleWiki Page Data Access
 

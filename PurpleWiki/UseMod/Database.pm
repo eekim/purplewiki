@@ -1,4 +1,4 @@
-# PurpleWiki::Database.pm
+# PurpleWiki::UseMod::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Database;
+package PurpleWiki::UseMod::Database;
 
 # PurpleWiki Page Data Access
 
@@ -36,62 +36,10 @@ package PurpleWiki::Database;
 
 use strict;
 use PurpleWiki::Config;
+use PurpleWiki::Misc;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
-
-# Reads a string from a given filename and returns the data.
-# If it cannot open the file, it dies with an error.
-# Public
-sub ReadFileOrDie {
-  my $fileName = shift;
-  my ($status, $data);
-
-  ($status, $data) = ReadFile($fileName);
-  if (!$status) {
-    die("Can not open $fileName: $!");
-  }
-  return $data;
-}
-
-# Reads a string from a given filename and returns a
-# status value and the string. 1 for success, 0 for 
-# failure.
-# Public
-sub ReadFile {
-  my $fileName = shift;
-  my ($data);
-  local $/ = undef;   # Read complete files
-
-  if (open(IN, "<$fileName")) {
-    $data=<IN>;
-    close IN;
-    return (1, $data);
-  }
-  return (0, "");
-}
-
-# Creates a directory if it doesn't already exist.
-# FIXME: there should be some error checking here.
-# Public
-sub CreateDir {
-    my $newdir = shift;
-
-    mkdir($newdir, 0775)  if (!(-d $newdir));
-}
-
-# Creates a diff using Text::Diff
-# We require it in here rather than at the top in
-# case we never need it in the current running
-# process.
-# Private
-sub _GetDiff {
-    require Text::Diff;
-    my ($old, $new, $lock) = @_;
-
-    my $diff_out = Text::Diff::diff(\$old, \$new, {STYLE => "OldStyle"});
-    return $diff_out;
-}
 
 # Creates a directory that acts as a general locking
 # mechanism for the system.
@@ -103,7 +51,7 @@ sub _RequestLockDir {
     my ($lockName, $n);
     my $config = PurpleWiki::Config->instance();
 
-    CreateDir($config->TempDir);
+    &PurpleWiki::Misc::CreateDir($config->TempDir);
     $lockName = $config->LockDir . $name;
     $n = 0;
     while (mkdir($lockName, 0555) == 0) {
@@ -149,27 +97,6 @@ sub ForceReleaseLock {
     $forced = !_RequestLockDir($name, 5, 3, 0);
     _ReleaseLockDir($name);  # Release the lock, even if we didn't get it.
     return $forced;
-}
-
-# Writes the given string to the given file. Dies
-# if it can't write.
-# Public
-sub WriteStringToFile {
-    my $file = shift;
-    my $string = shift;
-
-    open (OUT, ">$file") or die("can't write $file: $!");
-    print OUT  $string;
-    close(OUT);
- }
-
-# Not used?
-sub AppendStringToFile {
-    my ($file, $string) = @_;
-
-    open (OUT, ">>$file") or die("can't write $file $!");
-    print OUT  $string;
-    close(OUT);
 }
 
 # Creates and returns an array containing a list of all the

@@ -1,4 +1,4 @@
-# PurpleWiki::Database::Pages
+# PurpleWiki::Archive::UseMod
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -31,14 +31,13 @@
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-package PurpleWiki::Database::Pages;
+package PurpleWiki::Archive::UseMod;
 
-#use PurpleWiki::Misc;
-use PurpleWiki::Database;
+use PurpleWiki::Misc;
+use PurpleWiki::UseMod::Database;
 use PurpleWiki::Config;
-use PurpleWiki::Database::Section;
-#use PurpleWiki::Database::Text;
-use PurpleWiki::Database::KeptRevision;
+use PurpleWiki::UseMod::Section;
+use PurpleWiki::UseMod::KeptRevision;
 use PurpleWiki::Search::Result;
 use PurpleWiki::Parser::WikiText;
 
@@ -124,7 +123,7 @@ sub putPage {
   my $user = $args{userId};
   my $userName = $user ? $user->username : undef;
 
-  $page = PurpleWiki::Database::ModPage->new(
+  $page = PurpleWiki::Archive::ModPage->new(
                  pages => $self,
                  id => $id,
                  ts => $now,
@@ -133,7 +132,7 @@ sub putPage {
                  userid => $user );
 
   my $fsexp = $self->{fs};
-  my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $id);
+  my $keptRevision = new PurpleWiki::UseMod::KeptRevision(id => $id);
   my $text = $section->getText();
 
   $wikitext =~ s/$fsexp//g;
@@ -161,7 +160,7 @@ sub putPage {
 }
 
 sub allPages {
-  my @l = (PurpleWiki::Database::AllPagesList());
+  my @l = (PurpleWiki::UseMod::Database::AllPagesList());
   grep(s|\+|/|g, @l);
   @l;
 }
@@ -173,16 +172,16 @@ sub recentChanges {
   my $config = PurpleWiki::Config->instance();
   my %params = @_;
   $starttime = 0 unless $starttime;
-  PurpleWiki::Database::recentChanges($config, $starttime);
+  PurpleWiki::UseMod::Database::recentChanges($config, $starttime);
 }
 
 sub _releaseLock {
-  PurpleWiki::Database::ReleaseLock;
+  PurpleWiki::UseMod::Database::ReleaseLock;
 }
 
 sub _requestLock {
   # need to add code to force it when the lock is stale
-  PurpleWiki::Database::RequestLock;
+  PurpleWiki::UseMod::Database::RequestLock;
 }
 
 sub _WriteRcLog {
@@ -255,7 +254,7 @@ sub _save {
     my $data = $self->_serialize($page);
 
     $self->_createPageDir($id);
-    PurpleWiki::Database::WriteStringToFile($self->_getPageFile($id), $data);
+    PurpleWiki::Misc::WriteStringToFile($self->_getPageFile($id), $data);
 }
 
 # Serializes the data structure to a string. Calls serialize
@@ -284,24 +283,24 @@ sub _createPageDir {
     my $id = shift;
     my $dir = $self->{pagedir};
 
-    PurpleWiki::Database::CreateDir($dir);
+    PurpleWiki::Misc::CreateDir($dir);
     $dir .= ('/' . _getPageDirectory($id));
-    PurpleWiki::Database::CreateDir($dir);
+    PurpleWiki::Misc::CreateDir($dir);
     if ($id =~ m|/|) {  # Make sure main page exists
         $dir .= "/$`";
-        PurpleWiki::Database::CreateDir($dir);
+        PurpleWiki::Misc::CreateDir($dir);
     }
 }
 
 sub _openPage {
     my $self = shift;
     my $id = shift;
-    my $page = PurpleWiki::Database::ModPage->new(id => $id);
+    my $page = PurpleWiki::Archive::ModPage->new(id => $id);
 
     my $filename;
     if (-f ($filename = $self->_getPageFile($id))) {
         # FIXME: there should be a utility class of some kind
-        my $data = PurpleWiki::Database::ReadFileOrDie($filename);
+        my $data = PurpleWiki::Misc::ReadFileOrDie($filename);
         $self->_parseData($page, $data);
 #print STDERR "Exists($id) $page->{version}\n";
     } else {
@@ -340,7 +339,7 @@ sub getRevisions {
 
     my $currentSection = $page->_getSection();
     push @pageHistory, $self->_getRevisionHistory($id, $currentSection, 1);
-    my $krev = new PurpleWiki::Database::KeptRevision(id => $id);
+    my $krev = new PurpleWiki::UseMod::KeptRevision(id => $id);
     foreach my $section ( sort {($b->getRevision() <=> $a->getRevision())}
                                $krev->getSections() ) {
         # If KeptRevision == Current Revision don't print it. - matthew
@@ -411,7 +410,7 @@ sub _getRevisionHistory {
 #  ""
 #}
 
-package PurpleWiki::Database::ModPage;
+package PurpleWiki::Archive::ModPage;
 
 # PurpleWiki Page Data Access
 
@@ -485,7 +484,7 @@ sub _getText {
     my $self = shift;
     my $selectrevision = $self->{selectrevision};
     if ($selectrevision && ($selectrevision != $self->{revision})) {
-        my $krev = new PurpleWiki::Database::KeptRevision(id => $self->{id});
+        my $krev = new PurpleWiki::UseMod::KeptRevision(id => $self->{id});
         for my $section ($krev->getSections()) {
             if ($selectrevision == $section->getRevision()) {
                 $self->{section} = $section;
@@ -536,9 +535,9 @@ sub _getSection {
         return $self->{text_default};
     } else {
         $self->{text_default} =
-            new PurpleWiki::Database::Section('data' => $self->{text_default},
-                                              'userID' => $self->{userID},
-                                              'username' => $self->{username});
+            new PurpleWiki::UseMod::Section('data' => $self->{text_default},
+                                            'userID' => $self->{userID},
+                                            'username' => $self->{username});
         return $self->{text_default};
     }
 }

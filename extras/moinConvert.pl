@@ -17,9 +17,9 @@
 use strict;
 use lib '/home/eekim/devel/PurpleWiki/trunk';
 use PurpleWiki::Config;
-use PurpleWiki::Database;
-use PurpleWiki::Database::KeptRevision;
-use PurpleWiki::Database::Page;
+use PurpleWiki::Misc;
+use PurpleWiki::UseMod::KeptRevision;
+use PurpleWiki::Archive::UseMod;
 use PurpleWiki::Parser::MoinMoin;
 
 my $MOINDIR;
@@ -41,29 +41,27 @@ EOM
     exit;
 }
 
-opendir DIR, $MOINDIR;
-my @files = grep { -f "$MOINDIR/$_" } readdir(DIR);
-closedir DIR;
+use POSIX 'strftime';
+my $date = strftime("%F", localtime(time));
 
 my $config = PurpleWiki::Config->new($WIKIDB);
 my $wikiParser = PurpleWiki::Parser::MoinMoin->new;
 
+my $database_package = $config->DatabasePackage;
+print STDERR "Database Package $database_package\nError: $@\n"
+    unless (defined(eval "require $database_package"));
+$pages = $database_package->new ($config, create => 1);
+
+opendir DIR, $MOINDIR;
+my @files = grep { -f "$MOINDIR/$_" } readdir(DIR);
+closedir DIR;
+
 foreach my $file (@files) {
     my $now = time;
-    my $wikiContent = &PurpleWiki::Database::ReadFileOrDie("$MOINDIR/$file");
+    my $wikiContent = &PurpleWiki::Misc::ReadFileOrDie("$MOINDIR/$file");
     my $wiki = $wikiParser->parse($wikiContent, add_node_ids => 1);
 
-    my $keptRevision = new PurpleWiki::Database::KeptRevision(id => $file);
-    my $page = new PurpleWiki::Database::Page(id => $file, now => $now);
-    $page->openPage();
-    my $text = $page->getText();
-    my $section = $page->getSection();
-
-    $text->setText($wiki->view('wikitext'));
-    $text->setMinor(1);
-    $text->setSummary('Converted from MoinMoin.');
-    $section->setRevision($section->getRevision() + 1);
-    $section->setTS($now);
-    $page->setTS($now);
-    $page->save();
+    $pages->putPage(pageId => $file,
+                    tree => $wiki,
+                    changeSummary => 'Converted from MoinMoin $date');
 }

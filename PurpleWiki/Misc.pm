@@ -31,7 +31,6 @@
 package PurpleWiki::Misc;
 
 use PurpleWiki::Config;
-use PurpleWiki::Database;
 
 # mappings between PurpleWiki code and code within useMod
 
@@ -47,7 +46,7 @@ sub siteExists {
     my $status;
     my $data;
 
-    ($status, $data) = PurpleWiki::Database::ReadFile($config->InterFile);
+    ($status, $data) = ReadFile($config->InterFile);
     return undef if (!$status);
     my %interSite = split(/\s+/, $data); 
     return $interSite{$site};
@@ -196,6 +195,67 @@ sub SplitUrlPunct {
     ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
     $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
     return ($url, $punct);
+}
+
+# Reads a string from a given filename and returns the data.
+# If it cannot open the file, it dies with an error.
+# Public
+sub ReadFileOrDie {
+  my $fileName = shift;
+  my ($status, $data);
+
+  ($status, $data) = ReadFile($fileName);
+  if (!$status) {
+    die("Can not open $fileName: $!");
+  }
+  return $data;
+}
+
+# Reads a string from a given filename and returns a
+# status value and the string. 1 for success, 0 for 
+# failure.
+# Public
+sub ReadFile {
+  my $fileName = shift;
+  my ($data);
+  local $/ = undef;   # Read complete files
+
+  if (open(IN, "<$fileName")) {
+    $data=<IN>;
+    close IN;
+    return (1, $data);
+  }
+  return (0, "");
+}
+
+# Creates a directory if it doesn't already exist.
+# FIXME: there should be some error checking here.
+# Public
+sub CreateDir {
+    my $newdir = shift;
+
+    mkdir($newdir, 0775)  if (!(-d $newdir));
+}
+
+# Writes the given string to the given file. Dies
+# if it can't write.
+# Public
+sub WriteStringToFile {
+    my $file = shift;
+    my $string = shift;
+
+    open (OUT, ">$file") or die("can't write $file: $!");
+    print OUT  $string;
+    close(OUT);
+ }
+
+# Not used?
+sub AppendStringToFile {
+    my ($file, $string) = @_;
+
+    open (OUT, ">>$file") or die("can't write $file $!");
+    print OUT  $string;
+    close(OUT);
 }
 
 1;

@@ -1,4 +1,4 @@
-# PurpleWiki::Database::KeptRevision
+# PurpleWiki::UseMod::KeptRevision
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Database::KeptRevision;
+package PurpleWiki::UseMod::KeptRevision;
 
 # PurpleWiki Page Data Access
 
@@ -36,8 +36,8 @@ package PurpleWiki::Database::KeptRevision;
 
 use strict;
 use PurpleWiki::Config;
-use PurpleWiki::Database;
-use PurpleWiki::Database::Section;
+use PurpleWiki::Misc;
+use PurpleWiki::UseMod::Section;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -150,7 +150,7 @@ sub _makeKeptList {
 
     if ($self->keptFileExists()) {
         my $filename = $self->getKeepFile();
-        $data = PurpleWiki::Database::ReadFileOrDie($filename);
+        $data = PurpleWiki::Misc::ReadFileOrDie($filename);
         $self->_parseData($data);
     }
 }
@@ -167,7 +167,7 @@ sub _parseData {
         # field is empty
         if (length($section)) {
             push(@{$self->{sections}}, 
-                new PurpleWiki::Database::Section('data' => $section));
+                new PurpleWiki::UseMod::Section('data' => $section));
                        
         }
     }
@@ -186,11 +186,11 @@ sub save {
     my $data = $self->serialize();
 
     $self->_createKeepDir();
-    PurpleWiki::Database::WriteStringToFile($self->getKeepFile(), $data);
+    PurpleWiki::Misc::WriteStringToFile($self->getKeepFile(), $data);
 }
 
 # Creats the directory where KeptRevisions are stored. Uses
-# Database::CreateDir which only creates the directory if it
+# Misc::CreateDir which only creates the directory if it
 # is not there.
 sub _createKeepDir {
     my $self = shift;
@@ -198,13 +198,13 @@ sub _createKeepDir {
     my $dir = $self->{config}->KeepDir;
     my $subdir;
 
-    PurpleWiki::Database::CreateDir($dir);  # Make sure main page exists
+    PurpleWiki::Misc::CreateDir($dir);  # Make sure main page exists
     $subdir = $dir . '/' . $self->getKeepDirectory();
-    PurpleWiki::Database::CreateDir($subdir);
+    PurpleWiki::Misc::CreateDir($subdir);
 
     if ($id =~ m|([^/]+)/|) {
         $subdir = $subdir . '/' . $1;
-        PurpleWiki::Database::CreateDir($subdir);
+        PurpleWiki::Misc::CreateDir($subdir);
     }
 }
 

@@ -37,7 +37,7 @@ use strict;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
 
-my $CONFIG_DIR = $ENV{PURPLE_CONFIG_DIR} || 'r';
+my $CONFIG_DIR = $ENV{PW_CONFIG_DIR} || 'r';
 my $NEW_CONFIG = 'new';
 
 our $VERSION;
@@ -48,6 +48,10 @@ while (@ARGV) {
   $a = shift(@ARGV);
   if ($a =~ /^-v/) {
     $verb = 1;
+  } elsif ($a =~ /^-c/) {
+    $CONFIG_DIR = $' || shift(@ARGV);
+  } elsif ($a =~ /^-n/) {
+    $NEW_CONFIG = $' || shift(@ARGV);
   }
 }
 

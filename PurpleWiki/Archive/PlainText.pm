@@ -31,7 +31,7 @@
 our $VERSION;
 $VERSION = sprintf("%d", q$Id: DefaultArchive.pm 506 2004-09-22 07:31:44Z gerry $ =~ /\s(\d+)\s/);
 
-package PurpleWiki::DefaultArchive;
+package PurpleWiki::Archive::PlainText;
 
 use Fcntl ':mode';
 use IO::Dir;
@@ -69,8 +69,8 @@ sub getPage {
   my $rev = shift;
   $id =~ s|/|\+|g;
 
-  PurpleWiki::DefaultPage->new(id => $id, revision => $rev,
-                               datadir => $self->{datadir});
+  PurpleWiki::Archive::PlainTextPage->new(id => $id, revision => $rev,
+                                          datadir => $self->{datadir});
 }
 
 # $pages->putPage(<named args>)
@@ -97,7 +97,8 @@ sub putPage {
 #for (keys %args) { print STDERR "PP:$_ = $args{$_}\n"; }
   $id =~ s|/|\+|g;
   my $now = time;
-  my $page = PurpleWiki::DefaultPage->new(id => $id, datadir => $self->{datadir});
+  my $page = PurpleWiki::Archive::PlainTextPage->new(id => $id,
+                                                 datadir => $self->{datadir});
   return "Lock Failed" unless ($page->_requestLock());
   my $old_contents = $page->_getText();
 
@@ -285,7 +286,7 @@ sub getRevisions {
     @revisions;
 }
 
-package PurpleWiki::DefaultPage;
+package PurpleWiki::Archive::PlainTextPage;
 
 # PurpleWiki Page Data Access
 

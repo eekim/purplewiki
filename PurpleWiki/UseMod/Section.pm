@@ -1,4 +1,4 @@
-# PurpleWiki::Database::Section
+# PurpleWiki::UseMod::Section
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
 # $Id$
@@ -28,7 +28,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
-package PurpleWiki::Database::Section;
+package PurpleWiki::UseMod::Section;
 
 # PurpleWiki Section Data Access
 
@@ -36,7 +36,7 @@ package PurpleWiki::Database::Section;
 
 use strict;
 use PurpleWiki::Config;
-use PurpleWiki::Database::Text;
+use PurpleWiki::UseMod::Text;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -68,7 +68,7 @@ sub getText {
     my $self = shift;
 
     if (!ref($self->{data})) {
-        $self->{data} = new PurpleWiki::Database::Text(data => $self->{data});
+        $self->{data} = new PurpleWiki::UseMod::Text(data => $self->{data});
           
     }
     return $self->{data};
@@ -188,7 +188,7 @@ sub _init {
         $self->{host} = '';
         $self->{id} = $args{userID};
         $self->{username} = $args{username};
-        $self->{data} = new PurpleWiki::Database::Text();
+        $self->{data} = new PurpleWiki::UseMod::Text();
     }
 }
 

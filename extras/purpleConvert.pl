@@ -32,9 +32,9 @@
 
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
-use PurpleWiki::Database;
-use PurpleWiki::Database::KeptRevision;
-use PurpleWiki::Database::Page;
+use PurpleWiki::UseMod::Database;
+use PurpleWiki::UseMod::KeptRevision;
+use PurpleWiki::UseMod::Page;
 
 my $CONVERT_MESSAGE = "Automatic Purple Number Update";
 
@@ -46,16 +46,16 @@ my $url = $ARGV[1] or "die you must provide a url host information\n";
 my $config = new PurpleWiki::Config($configDir);
 my $wikiParser = new PurpleWiki::Parser::WikiText();
 
-my @pageList = &PurpleWiki::Database::AllPagesList($config);
+my @pageList = &PurpleWiki::UseMod::Database::AllPagesList($config);
 
-PurpleWiki::Database::RequestLock($config);
+PurpleWiki::UseMod::Database::RequestLock($config);
 foreach $id (@pageList) {
     my $now = time;
-    my $keptRevision = new PurpleWiki::Database::KeptRevision(
+    my $keptRevision = new PurpleWiki::UseMod::KeptRevision(
         id => $id,
         config => $config
     );
-    my $page = new PurpleWiki::Database::Page(
+    my $page = new PurpleWiki::Archive::UseMod(
         id => $id,
         now => $now,
         config => $config
@@ -101,7 +101,7 @@ foreach $id (@pageList) {
 
 
 }
-PurpleWiki::Database::ReleaseLock($config);
+PurpleWiki::UseMod::Database::ReleaseLock($config);
 
 
 

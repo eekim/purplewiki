@@ -13,7 +13,7 @@ use DB_File;
 use File::Copy;
 use File::Find;
 use PurpleWiki::Config;
-use PurpleWiki::Database::User::UseMod;
+use PurpleWiki::UseMod::User::UseMod;
 
 my $CONFIG;
 my $userName;
@@ -27,7 +27,7 @@ else {
 }
 
 my $config = new PurpleWiki::Config($CONFIG);
-my $userDb = new PurpleWiki::Database::User::UseMod;
+my $userDb = new PurpleWiki::UseMod::User::UseMod;
 $userDb->deleteUser($userName);
 
 =head1 NAME
