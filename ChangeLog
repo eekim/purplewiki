@@ -1,4 +1,17 @@
 Revision history for PurpleWiki.
 
+0.9 -- August 17, 2003
+	- Document-independent node IDs.
+	- Transclusions!
+	- Rearchitected View drivers so that they are extensible,
+	  reusable, and dynamically loadable.
+	- New utilities: purple, various blog integration tools, etc.  See
+	  the extras/ subdirectory.
+	- Major UseModWiki code cleanup, including heavily refactored
+	  Database classes.
+	- RSS syndication of RecentChanges.
+	- New config file format.
+	- Bug fixes galore, with updated tests and documentation.
+
 0.1 -- January 8, 2003
 	- First released version.
