@@ -1,7 +1,7 @@
 # PurpleWiki::Parser::WikiText.pm
 # vi:ai:sm:et:sw=4:ts=4
 #
-# $Id: WikiText.pm,v 1.16 2003/08/12 02:17:07 cdent Exp $
+# $Id: WikiText.pm,v 1.17 2003/08/13 17:17:58 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -80,8 +80,10 @@ sub parse {
     $sequence = new PurpleWiki::Sequence($params{config}->DataDir);
 
     # set default parameters
-    $params{wikiword} = 1 if (!defined $params{wikiword});
-    $params{freelink} = 1 if (!defined $params{freelink});
+    $params{wikiword} = $params{config}->WikiLinks
+        if (!defined $params{wikiword});
+    $params{freelink} = $params{config}->FreeLinks
+        if (!defined $params{freelink});
 
     my $tree = PurpleWiki::Tree->new;
     my ($currentNode, @sectionState, $isStart, $nodeContent);
