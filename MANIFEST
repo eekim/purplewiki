@@ -47,6 +47,8 @@ PurpleWiki/View/wikitext.pm
 PurpleWiki/View/xhtml.pm
 README
 UPGRADE
+docs/INames.wiki
+docs/Templates.wiki
 etc/purple.css
 etc/purplewiki.css
 extras/blosxom/purple
@@ -54,9 +56,6 @@ extras/mhonarc/README
 extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
-extras/rss/README
-extras/rss/rssCreate
-extras/rss/wikirss
 extras/createUsernameIndex.pl
 extras/moinConvert.pl
 extras/purple
