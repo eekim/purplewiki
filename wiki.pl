@@ -1277,8 +1277,8 @@ sub DoPost {
     return;
   }
   # Later extract comparison?
-  if ($user || ($section->getID() > 399))  {
-    $newAuthor = ($user->id ne $section->getID());       # known user(s)
+  if ($userId && ($section->getID() > 399))  {
+    $newAuthor = ($userId ne $section->getID());       # known user(s)
   } else {
     $newAuthor = ($section->getIP() ne $authorAddr);  # hostname fallback
   }
