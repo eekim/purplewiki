@@ -1,6 +1,6 @@
 # PurpleWiki::Tree.pm
 #
-# $Id: Tree.pm,v 1.28 2004/01/21 23:24:08 cdent Exp $
+# $Id: Tree.pm,v 1.29 2004/01/24 02:30:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -118,13 +118,16 @@ sub view {
     my ($driver, %params) = @_;
 
     $driver = lc($driver);
-    eval "require PurpleWiki::View::$driver";
+    my $viewer = "PurpleWiki::View::$driver";
+    eval "require $viewer";
     if ($@) { # driver not found
         # FIXME: Need better exception handling.
         return "Error: $driver View driver not found.";
     }
     else {
-        eval "return \&PurpleWiki::View::$driver\::view(\$this, \%params)";
+	$viewer = "${viewer}::view";
+	no strict 'refs';
+        return &{$viewer}($this, %params);
     }
 }
 

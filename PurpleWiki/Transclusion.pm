@@ -1,7 +1,7 @@
 # PurpleWiki::Transclusion.pm
 # vi:ai:sw=4:ts=4:et:sm
 #
-# $Id: Transclusion.pm,v 1.8 2004/01/21 23:24:08 cdent Exp $
+# $Id: Transclusion.pm,v 1.9 2004/01/24 02:30:22 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -76,43 +76,47 @@ sub get {
     my $nid = shift;
     my $nidLong = "nid$nid";
     my $outputType = $self->{outputType} || '';
+    my $content;
 
     # get the URL that hosts this nid out of the the db
     my $url = $self->{db}->{$nid}; 
 
-    my $content;
+    $content = "no URL for $nid" unless $url;
 
-    # if the page being retrieved is a wiki page
-    # and source and target are the same, don't
-    # try to retrieve. Same url on static content
-    # is fine.
-    # FIXME: assumes that anything not the wiki
-    # is static content
-    my $scriptName = $self->{config}->ScriptName;
-    if ($url =~ /$scriptName/ && $url eq $self->{url}) {
-        $content = q(Transclusion loop, please remove.);
-    } else {
-        # request the content of the URL 
-        my $ua = new LWP::UserAgent(agent => ref($self));
-        my $request = new HTTP::Request('GET', $url);
-        my $result = $ua->request($request);
-    
-        if ($result->is_success()) {
-            $content = $result->content();
-            ($content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is &&
-                $content =~
-                    s/&nbsp;&nbsp;\s*<a class="nid" title="$nid".*$//is ) ||
-                ($content = "transclusion index out of sync");
+    if ($url) {
+        # if the page being retrieved is a wiki page
+        # and source and target are the same, don't
+        # try to retrieve. Same url on static content
+        # is fine.
+        # FIXME: assumes that anything not the wiki
+        # is static content
+        my $scriptName = $self->{config}->ScriptName;
+        if ((($url =~ /$scriptName/) || ($url =~ /\.wiki$/)) &&
+            ($url eq $self->{url})) {
+            $content = q(Transclusion loop, please remove.);
         } else {
-            $content = "unable to retrieve content: " . $result->code();
+            # request the content of the URL 
+            my $ua = new LWP::UserAgent(agent => ref($self));
+            my $request = new HTTP::Request('GET', $url);
+            my $result = $ua->request($request);
+    
+            if ($result->is_success()) {
+                $content = $result->content();
+                ($content =~ s/^.*<a name="$nidLong"[^>]+><\/a>//is &&
+                    $content =~
+                        s/&nbsp;&nbsp;\s*<a class="nid" title="$nid".*$//is )
+                            || ($content = "transclusion index out of sync");
+            } else {
+                $content = "unable to retrieve content: " . $result->code();
+            }
         }
     }
 
     
     if ($outputType !~ /plaintext/) {
-      $content = qq(<span id="$nidLong" class="transclusion">) .
-        qq($content&nbsp;<a class="nid" title="$nid" ) .
-          qq(href="$url#$nidLong">T</a></span>);
+        $content = qq(<span id="$nidLong" class="transclusion">) .
+            qq($content&nbsp;<a class="nid" title="$nid" ) .
+            qq(href="$url#$nidLong">T</a></span>);
     }
     return $content;
 }
@@ -122,8 +126,8 @@ sub _tieHash {
     my $self = shift;
     my $file = shift;
 
-    tie %{$self->{db}}, 'DB_File', $file, O_RDONLY, 0644, $DB_HASH ||
-        die "unable to tie $file: $!";
+    tie %{$self->{db}}, 'DB_File', $file, O_RDONLY, 0444, $DB_HASH or
+        warn "unable to tie $file: $!";
 }
 
 1;
