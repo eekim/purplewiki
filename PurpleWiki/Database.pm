@@ -1,7 +1,7 @@
 # PurpleWiki::Database.pm
 # vi:sw=4:ts=4:ai:sm:et:tw=0
 #
-# $Id: Database.pm,v 1.1.2.4 2003/01/28 05:43:48 cdent Exp $
+# $Id: Database.pm,v 1.1.2.5 2003/01/29 08:31:24 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -32,333 +32,12 @@ package PurpleWiki::Database;
 
 # PurpleWiki Page Data Access
 
-# $Id: Database.pm,v 1.1.2.4 2003/01/28 05:43:48 cdent Exp $
+# $Id: Database.pm,v 1.1.2.5 2003/01/29 08:31:24 cdent Exp $
 
 use strict;
 use PurpleWiki::Config;
 
-# these should be made available as parameters
-my $OpenPageName;
-
-sub OpenNewPage {
-  my $id = shift;
-  my $pagehash = shift;
-  my $now = shift;
-
-  $$pagehash{'version'} = 3;      # Data format version
-  $$pagehash{'revision'} = 0;     # Number of edited times
-  $$pagehash{'tscreate'} = $now;  # Set once at creation
-  $$pagehash{'ts'} = $now;        # Updated every edit
-}
-
-sub OpenNewSection {
-  my $name = shift;
-  my $data = shift;
-  my $userid = shift;
-  my $username = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $now = shift;
-
-  $$sectionhash{'name'} = $name;
-  $$sectionhash{'version'} = 1;      # Data format version
-  $$sectionhash{'revision'} = 0;     # Number of edited times
-  $$sectionhash{'tscreate'} = $now;  # Set once at creation
-  $$sectionhash{'ts'} = $now;        # Updated every edit
-  $$sectionhash{'ip'} = $ENV{REMOTE_ADDR};
-  $$sectionhash{'host'} = '';        # Updated only for real edits (can be slow)
-  $$sectionhash{'id'} = $userid;
-  $$sectionhash{'username'} = $username;
-  $$sectionhash{'data'} = $data;
-  $$pagehash{$name} = join($FS2, %$sectionhash);  # Replace with save?
-}
-
-sub OpenNewText {
-  my $name = shift;  # Name of text (usually "default")
-  my $userid = shift;
-  my $username = shift;
-  my $texthash = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $now = shift;
-
-  # Later consider translation of new-page message? (per-user difference?)
-  if ($NewText ne '') {
-    $$texthash{'text'} = $NewText;
-  } else {
-    $$texthash{'text'} = 'Describe the new page here.' . "\n";
-  }
-  $$texthash{'text'} .= "\n"  if (substr($$texthash{'text'}, -1, 1) ne "\n");
-  $$texthash{'minor'} = 0;      # Default as major edit
-  $$texthash{'newauthor'} = 1;  # Default as new author
-  $$texthash{'summary'} = '';
-  &OpenNewSection("text_$name", join($FS3, %$texthash), $userid, $username, $pagehash, $sectionhash, $now);
-}
-
-sub GetPageFile {
-  my ($id) = @_;
-
-  return $PageDir . "/" . &GetPageDirectory($id) . "/$id.db";
-}
-
-sub OpenPage {
-  my $id = shift;
-  my $pagehash = shift;
-  my $now = shift;
-  my ($fname, $data);
-
-  if ($OpenPageName eq $id) {
-    return;
-  }
-  $fname = &GetPageFile($id);
-  if (-f $fname) {
-    print STDERR "OpenPage:fname: $fname\n";
-    $data = &ReadFileOrDie($fname);
-    %$pagehash = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  } else {
-    return &OpenNewPage($id, $pagehash, $now);
-  }
-  if ($$pagehash{'version'} != 3) {
-    &UpdatePageVersion();
-  }
-  $OpenPageName = $id;
-}
-
-sub OpenSection {
-  my $name = shift;
-  my $userid = shift;
-  my $username = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $now = shift;
-
-  if (!defined($$pagehash{$name})) {
-    &OpenNewSection($name, "", $username, $username, $pagehash, $sectionhash, $now);
-  } else {
-    %$sectionhash = split(/$FS2/, $$pagehash{$name}, -1);
-  }
-
-}
-
-sub OpenText {
-  my $name = shift;
-  my $userid = shift;
-  my $username = shift;
-  my $pagehash = shift;
-  my $texthash = shift;
-  my $sectionhash = shift;
-  my $now = shift;
-
-  if (!defined($$pagehash{"text_$name"})) {
-    return &OpenNewText($name, $username, $texthash, $sectionhash);
-  } else {
-    &OpenSection("text_$name", $userid, $username, $pagehash, $sectionhash, $now);
-    %$texthash = split(/$FS3/, $$sectionhash{'data'}, -1);
-  }
-}
-
-sub OpenDefaultText {
-  my $userid = shift;
-  my $username = shift;
-  my $pagehash = shift;
-  my $texthash = shift;
-  my $sectionhash = shift;
-  my $now = shift;
-  &OpenText('default', $userid, $username, $pagehash, $texthash, $sectionhash, $now);
-}
-
-# Called after OpenKeptRevisions
-sub OpenKeptRevision {
-  my $revision = shift;
-  my $keptrevisionshash = shift;
-  my $sectionhash = shift;
-  my $texthash = shift;
-
-  %$sectionhash = split(/$FS2/, $$keptrevisionshash{$revision}, -1);
-  %$texthash = split(/$FS3/, $$sectionhash{'data'}, -1);
-}
-
-sub GetPageCache {
-  my $name = shift;
-  my $pagehash = shift;
-
-  return $$pagehash{"cache_$name"};
-}
-
-# Always call SavePage within a lock.
-sub SavePage {
-  my $pagehash = shift;
-  my $now = shift;
-  my $file = &GetPageFile($OpenPageName);
-
-  $$pagehash{'revision'} += 1;    # Number of edited times
-  $$pagehash{'ts'} = $now;        # Updated every edit
-  &CreatePageDir($PageDir, $OpenPageName);
-  print STDERR "SavePage: $file\n";
-  &WriteStringToFile($file, join($FS1, %$pagehash));
-}
-
-sub SaveSection {
-  my $name = shift;
-  my $data = shift;
-  my $username = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $userid = shift;
-  my $now = shift;
-
-  $$sectionhash{'revision'} += 1;   # Number of edited times
-  $$sectionhash{'ts'} = $now;       # Updated every edit
-  $$sectionhash{'ip'} = $ENV{REMOTE_ADDR};
-  $$sectionhash{'id'} = $userid;
-  $$sectionhash{'username'} = $username;
-  $$sectionhash{'data'} = $data;
-  $$pagehash{$name} = join($FS2, %$sectionhash);
-}
-
-sub SaveText {
-  my $name = shift;
-  my $texthash = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $userid = shift;
-  my $username = shift;
-  my $now = shift;
-  &SaveSection("text_$name", join($FS3, %$texthash), $username, $pagehash, $sectionhash, $userid, $now);
-}
-
-sub SaveDefaultText {
-  my $texthash = shift;
-  my $pagehash = shift;
-  my $sectionhash = shift;
-  my $userid = shift;
-  my $username = shift;
-  my $now = shift;
-  &SaveText('default', $texthash, $pagehash, $sectionhash, $userid, $username, $now);
-}
-
-sub SetPageCache {
-  my $pagehash = shift;
-  my $name = shift;
-  my $data = shift;
-
-  $$pagehash{"cache_$name"} = $data;
-}
-
-sub UpdatePageVersion {
-  &ReportError('Bad page version (or corrupt page).');
-}
-
-sub KeepFileName {
-  return $KeepDir . "/" . &GetPageDirectory($OpenPageName)
-         . "/$OpenPageName.kp";
-}
-
-sub SaveKeepSection {
-  my $sectionhash = shift;
-  my $now = shift;
-  my $file = &KeepFileName();
-  my $data;
-
-  return  if ($$sectionhash{'revision'} < 1);  # Don't keep "empty" revision
-  $$sectionhash{'keepts'} = $now;
-  $data = $FS1 . join($FS2, %$sectionhash);
-  &CreatePageDir($KeepDir, $OpenPageName);
-  &AppendStringToFile($file, $data);
-}
-
-sub ExpireKeepFile {
-  my $pagehash = shift;
-  my $now = shift;
-  my ($fname, $data, @kplist, %tempSection, $expirets);
-  my ($anyExpire, $anyKeep, $expire, %keepFlag, $sectName, $sectRev);
-  my ($oldMajor, $oldAuthor);
-
-  $fname = &KeepFileName();
-  return  if (!(-f $fname));
-  $data = &ReadFileOrDie($fname);
-  @kplist = split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-  return  if (length(@kplist) < 1);  # Also empty
-  shift(@kplist)  if ($kplist[0] eq "");  # First can be empty
-  return  if (length(@kplist) < 1);  # Also empty
-  %tempSection = split(/$FS2/, $kplist[0], -1);
-  if (!defined($tempSection{'keepts'})) {
-#   die("Bad keep file." . join("|", %tempSection));
-    return;
-  }
-  $expirets = $now - ($KeepDays * 24 * 60 * 60);
-  return  if ($tempSection{'keepts'} >= $expirets);  # Nothing old enough
-
-  $anyExpire = 0;
-  $anyKeep   = 0;
-  %keepFlag  = ();
-  $oldMajor  = &GetPageCache('oldmajor', $pagehash);
-  $oldAuthor = &GetPageCache('oldauthor', $pagehash);
-  foreach (reverse @kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    $sectRev = $tempSection{'revision'};
-    $expire = 0;
-    if ($sectName eq "text_default") {
-      if (($KeepMajor  && ($sectRev == $oldMajor)) ||
-          ($KeepAuthor && ($sectRev == $oldAuthor))) {
-        $expire = 0;
-      } elsif ($tempSection{'keepts'} < $expirets) {
-        $expire = 1;
-      }
-    } else {
-      if ($tempSection{'keepts'} < $expirets) {
-        $expire = 1;
-      }
-    }
-    if (!$expire) {
-      $keepFlag{$sectRev . "," . $sectName} = 1;
-      $anyKeep = 1;
-    } else {
-      $anyExpire = 1;
-    }
-  }
-
-  if (!$anyKeep) {  # Empty, so remove file
-    unlink($fname);
-    return;
-  }
-  return  if (!$anyExpire);  # No sections expired
-  open (OUT, ">$fname") or die ("can't write $fname: $!");
-  foreach (@kplist) {
-    %tempSection = split(/$FS2/, $_, -1);
-    $sectName = $tempSection{'name'};
-    $sectRev = $tempSection{'revision'};
-    if ($keepFlag{$sectRev . "," . $sectName}) {
-      print OUT $FS1, $_;
-    }
-  }
-  close(OUT);
-}
-
-sub OpenKeptList {
-  my ($fname, $data);
-
-  $fname = &KeepFileName();
-  return  if (!(-f $fname));
-  $data = &ReadFileOrDie($fname);
-  return split(/$FS1/, $data, -1);  # -1 keeps trailing null fields
-}
-
-sub OpenKeptRevisions {
-  my $name = shift;  # Name of section
-  my $keptrevisionshash = shift;
-  my ($fname, $data, %tempSection);
-
-  my @KeptList = &OpenKeptList();
-
-  foreach (@KeptList) {
-    %tempSection = split(/$FS2/, $_, -1);
-    next  if ($tempSection{'name'} ne $name);
-    $$keptrevisionshash{$tempSection{'revision'}} = $_;
-  }
-}
-
+# === User Functions follow ===
 sub LoadUserData {
   my $userid = shift;
   my $userdatahash = shift;
@@ -692,11 +371,11 @@ sub GetDiffHTML {
       $diffText = '(The revisions are identical or unavailable.)';
     }
   } else {
-    $diffText  = &GetCacheDiff($cacheName);
+    $diffText  = &GetCacheDiff($page, $cacheName);
   }
-  $useMajor  = 0  if ($useMajor  && ($diffText eq &GetCacheDiff("major")));
-  $useMinor  = 0  if ($useMinor  && ($diffText eq &GetCacheDiff("minor")));
-  $useAuthor = 0  if ($useAuthor && ($diffText eq &GetCacheDiff("author")));
+  $useMajor  = 0  if ($useMajor  && ($diffText eq &GetCacheDiff($page, "major")));
+  $useMinor  = 0  if ($useMinor  && ($diffText eq &GetCacheDiff($page, "minor")));
+  $useAuthor = 0  if ($useAuthor && ($diffText eq &GetCacheDiff($page, "author")));
   $useMajor  = 0  if ((!defined($page->getPageCache('oldmajor'))) ||
                       ($page->getPageCache("oldmajor") < 1));
   $useAuthor = 0  if ((!defined($page->getPageCache('oldauthor'))) ||
@@ -728,8 +407,8 @@ sub GetDiffHTML {
             . "</b>\n" . "$links<br>" . &DiffToHTML($diffText) . "<hr>\n";
   } else {
     if (($diffType != 2) &&
-        ((!defined(&GetPageCache("old$cacheName"))) ||
-         (&GetPageCache("old$cacheName") < 1))) {
+        ((!defined($page->getPageCache("old$cacheName"))) ||
+         ($page->getPageCache("old$cacheName") < 1))) {
       $html = '<b>'
               . "No diff available--this is the first $priorName revision."
               . "</b>\n$links<hr>";
@@ -743,12 +422,12 @@ sub GetDiffHTML {
 }
 
 sub GetCacheDiff {
-  my ($type) = @_;
+  my ($page, $type) = @_;
   my ($diffText);
 
-  $diffText = &GetPageCache("diff_default_$type");
-  $diffText = &GetCacheDiff('minor')  if ($diffText eq "1");
-  $diffText = &GetCacheDiff('major')  if ($diffText eq "2");
+  $diffText = $page->getPageCache("diff_default_$type");
+  $diffText = &GetCacheDiff($page, 'minor')  if ($diffText eq "1");
+  $diffText = &GetCacheDiff($page, 'major')  if ($diffText eq "2");
   return $diffText;
 }
 
@@ -756,7 +435,8 @@ sub GetKeptDiff {
     my $keptRevision = shift;
   my ($newText, $oldRevision, $lock) = @_;
 
-  my $oldText = $keptRevision->getRevision($oldRevision)->getText();
+  my $section = $keptRevision->getRevision($oldRevision);
+  my $oldText = $section->getText()->getText();
 
   return ""  if ($oldText eq "");  # Old revision not found
   return &GetDiff($oldText, $newText, $lock);
@@ -788,17 +468,7 @@ sub ColorDiff {
   my $wikiParser = PurpleWiki::Parser::WikiText->new();
 
   $diff =~ s/(^|\n)[<>]/$1/g;
-  #$diff = &QuoteHtml($diff);
-  # Do some of the Wiki markup rules:
-  #%SaveUrl = ();
-  #%SaveNumUrl = ();
-  #$SaveUrlIndex = 0;
-  #$SaveNumUrlIndex = 0;
-  #$diff =~ s/$FS//g;
-  #$diff =  &CommonMarkup($diff, 0, 1);      # No images, all patterns
-  $diff =  $wikiParser->parse($diff, 'add_node_ids' => 0)->view('wikihtml'); # No images, all patterns
-  #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore saved text
-  #$diff =~ s/$FS(\d+)$FS/$SaveUrl{$1}/ge;   # Restore nested saved text
+  $diff =  $wikiParser->parse($diff, 'add_node_ids' => 0)->view('wikitext');
   $diff =~ s/\r?\n/<br>/g;
   return "<table width=\"95\%\" bgcolor=#$color><tr><td>\n" . $diff
          . "</td></tr></table>\n";

@@ -3,7 +3,7 @@
 #
 # wiki.pl - PurpleWiki
 #
-# $Id: wiki.pl,v 1.5.2.7 2003/01/28 07:58:42 cdent Exp $
+# $Id: wiki.pl,v 1.5.2.8 2003/01/29 08:31:24 cdent Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002.  All rights reserved.
 #
@@ -44,15 +44,13 @@ use CGI::Carp qw(fatalsToBrowser);
 local $| = 1;  # Do not buffer output (localized for mod_perl)
 
 # Global variables:
-#use vars qw( %Section %Text %InterSite %SaveUrl %SaveNumUrl
-#use vars qw(%Page %Section %Text %InterSite %SaveUrl %SaveNumUrl
-use vars qw(%InterSite %SaveUrl %SaveNumUrl
-  %UserCookie %SetCookie %UserData %IndexHash %Translate
-  %LinkIndex $InterSiteInit $SaveUrlIndex $SaveNumUrlIndex $MainPage
-  @KeptList @IndexList $IndexInit $q $Now $UserID $TimeZoneOffset );
+use vars qw(%UserCookie %SetCookie %UserData $MainPage
+  $q $Now $UserID $TimeZoneOffset );
 
 my $ScriptName;         # the name by which this script is called
 my $wikiParser;         # the reference to the PurpleWiki Parser
+my $InterSiteInit = 0;
+my %InterSite;
 
 # The "main" program, called from the end of this script file.
 sub DoWikiRequest {
@@ -94,9 +92,6 @@ sub InitRequest {
 
   $Now = time;                     # Reset in case script is persistent
   $ScriptName = $q->url('relative' => 1);  # Name used in links
-  $IndexInit = 0;                  # Must be reset for each request
-  $InterSiteInit = 0;
-  %InterSite = ();
   $MainPage = ".";       # For subpages only, the name of the top-level page
   &PurpleWiki::Database::CreateDir($DataDir);  # Create directory if it doesn't exist
   if (!-d $DataDir) {
@@ -132,17 +127,19 @@ sub InitCookie {
 
 sub DoBrowseRequest {
   my ($id, $action, $text);
+  my $page;
 
   if (!$q->param) {             # No parameter
     &BrowsePage($HomePage);
     return 1;
   }
   $id = &GetParam('keywords', '');
+  $page = new PurpleWiki::Database::Page('id' => $id);
   if ($id) {                    # Just script?PageName
-    if ($FreeLinks && (!-f &PurpleWiki::Database::GetPageFile($id))) {
+    if ($FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
     }
-    if (($NotFoundPg ne '') && (!-f &PurpleWiki::Database::GetPageFile($id))) {
+    if (($NotFoundPg ne '') && (!$page->pageExists())) {
       $id = $NotFoundPg;
     }
     &BrowsePage($id)  if &ValidIdOrDie($id);
@@ -150,11 +147,12 @@ sub DoBrowseRequest {
   }
   $action = lc(&GetParam('action', ''));
   $id = &GetParam('id', '');
+  $page = new PurpleWiki::Database::Page('id' => $id);
   if ($action eq 'browse') {
-    if ($FreeLinks && (!-f &PurpleWiki::Database::GetPageFile($id))) {
+    if ($FreeLinks && (!$page->pageExists())) {
       $id = &FreeToNormal($id);
     }
-    if (($NotFoundPg ne '') && (!-f &PurpleWiki::Database::GetPageFile($id))) {
+    if (($NotFoundPg ne '') && (!$page->pageExists())) {
       $id = $NotFoundPg;
     }
     &BrowsePage($id)  if &ValidIdOrDie($id);
@@ -512,6 +510,7 @@ sub DoHistory {
   $keptRevision = new PurpleWiki::Database::KeptRevision($id);
   foreach my $section (reverse sort {$a->getRevision() <=> $b->getRevision()}
                     $keptRevision->getSections()) {
+    next if (!defined($section ));
     $html .= &GetHistoryLine($id, $section, $canEdit, 0);
   }
   print $html;
@@ -631,7 +630,8 @@ sub GetPageOrEditLink {
   if ($FreeLinks) {
     $id = &FreeToNormal($id);
   }
-  if (-f &PurpleWiki::Database::GetPageFile($id)) {      # Page file exists
+  my $page = new PurpleWiki::Database::Page('id' => $id);
+  if ($page->pageExists()) {      # Page file exists
     return &GetPageLinkText($id, $name);
   }
   if ($FreeLinks) {
@@ -641,6 +641,53 @@ sub GetPageOrEditLink {
   }
   return $name . &GetEditLink($id,"?");
 }
+
+sub InterPageLink {
+    my ($id) = @_;
+    my ($name, $site, $remotePage, $url, $punct);
+
+    ($id, $punct) = &SplitUrlPunct($id);
+
+    $name = $id;
+    ($site, $remotePage) = split(/:/, $id, 2);
+    $url = &GetSiteUrl($site);
+    return ("", $id . $punct)  if ($url eq "");
+    $remotePage =~ s/&amp;/&/g;  # Unquote common URL HTML
+    $url .= $remotePage;
+    return ("<a href=\"$url\">$name</a>", $punct);
+}
+
+sub SplitUrlPunct {
+    my ($url) = @_;
+    my ($punct);
+
+    if ($url =~ s/\"\"$//) {
+      return ($url, "");   # Delete double-quote delimiters here
+    }
+    $punct = "";
+    ($punct) = ($url =~ /([^a-zA-Z0-9\/\xc0-\xff]+)$/);
+    $url =~ s/([^a-zA-Z0-9\/\xc0-\xff]+)$//;
+    return ($url, $punct);
+}
+
+
+
+
+sub GetSiteUrl {
+    my ($site) = @_;
+    my ($data, $url, $status);
+
+    if (!$InterSiteInit) {
+      $InterSiteInit = 1;
+      ($status, $data) = &PurpleWiki::Database::ReadFile($InterFile);
+      return ""  if (!$status);
+      %InterSite = split(/\s+/, $data);  # Later consider defensive code
+    }
+    $url = $InterSite{$site}  if (defined($InterSite{$site}));
+    return $url;
+}
+
+
 
 sub GetSearchLink {
   my ($id) = @_;
