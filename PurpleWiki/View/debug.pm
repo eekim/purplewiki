@@ -1,6 +1,6 @@
 # PurpleWiki::View::debug.pm
 #
-# $Id: debug.pm,v 1.4 2003/08/18 07:10:54 eekim Exp $
+# $Id: debug.pm,v 1.5 2003/08/29 18:42:03 eekim Exp $
 #
 # Copyright (c) Blue Oxen Associates 2002-2003.  All rights reserved.
 #
@@ -80,6 +80,7 @@ sub registerHandlers {
     $PurpleWiki::View::EventHandler::structuralHandler{dd}->{pre} = \&structuralContentPre;
     $PurpleWiki::View::EventHandler::structuralHandler{dt}->{pre} = \&structuralContentPre;
     $PurpleWiki::View::EventHandler::structuralHandler{pre}->{pre} = \&structuralContentPre;
+    $PurpleWiki::View::EventHandler::structuralHandler{sketch}->{pre} = \&structuralContentPre;
 
     $PurpleWiki::View::EventHandler::inlineHandler{b}->{pre} = \&inlinePre;
     $PurpleWiki::View::EventHandler::inlineHandler{i}->{pre} = \&inlinePre;
