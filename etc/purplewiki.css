@@ -1,0 +1,17 @@
+body {
+    padding-bottom: 50em;
+}
+
+div.indent {
+    margin-left: 3em;
+}
+
+a.nid {
+    font-family: "Helvetica", "Arial", sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: x-small;
+    text-decoration: none;
+    color: #C8A8FF;  /* light purple */
+}
+
