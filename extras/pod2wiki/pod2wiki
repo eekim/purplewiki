@@ -1,0 +1,111 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use Pod::SAX;
+use Pod::SAX::PurpleWiki;
+use Getopt::Long qw(:config no_ignore_case);
+
+our ($nowiki, $title, $subtitle, $author, $version, $date);
+
+GetOptions("nowiki=s", \$nowiki,
+           "title=s", \$title,
+           "subtitle=s", \$subtitle,
+           "author=s", \$author,
+           "version=s", \$version,
+           "date=s", \$date);
+my $in = shift || dieWithHelp();
+my $out = shift;
+
+my $text = "";
+my $h = Pod::SAX::PurpleWiki->new(output => \$text, 
+                                  metadata => getMetadata(),
+                                  nowiki => [split(/,/, $nowiki || "")]);
+my $p = Pod::SAX->new(Handler => $h);
+$p->parse_uri($in);
+if ($out) {
+    open(FILE, ">$out") || die "Unable to write wikitext to $out\n";
+    print FILE $text;
+    close(FILE);
+} else {
+    print $text;
+}
+
+sub getMetadata {
+    my %meta;
+    no strict 'refs'; 
+    my $ok = sub { defined($_[0]) and length($_[0]) };
+    my $set = sub { $meta{$_[0]} = ${$_[0]} if $ok->(${$_[0]}) };
+    for my $meta (qw(title subtitle author version date)) {
+        $set->($meta);
+    }
+    return \%meta;
+}
+
+sub dieWithHelp {
+    my $help =<<HELP;
+Usage: $0 [options] infile [outfile]
+
+Converts POD into PurpleWiki style Wikitext.  POD is read from infile and
+written to STDOUT or to outfile if outfile is gvien.  The available options
+are:
+
+    --nowiki=STRING
+
+        This option should be passed a comman delimited set of POD tags (see
+        Pod::SAX documentation for legal tag names).  Tags passed to this
+        option will not have any wiki markup inside them honored.  For example,
+        to not have wikitext honored in a head elements you could do the 
+        following: --nowiki=head1,head2,head3,head4
+
+    --title=STRING
+    --subtitle=STRING
+    --author=STRING
+    --version=STRING
+    --date=STRING
+
+        If this is passed in then the metadata line {foo STRING} is set where
+        foo is the name of the options you're setting.
+
+HELP
+    die "$help\n";
+}
+
+1;
+__END__
+
+=pod
+
+=head1 USAGE
+
+    pod2wiki[options] infile [outfile]
+
+=head1 DESCRIPTION
+
+    Converts POD into PurpleWiki style Wikitext.  POD is read from infile and
+    written to STDOUT or to outfile if outfile is gvien.  
+
+=head1 OPTIONS
+    
+=over
+
+=item --nowiki=STRING
+
+This option should be passed a comman delimited set of POD tags (see Pod::SAX
+documentation for legal tag names).  Tags passed to this option will not have
+any wiki markup inside them honored.  For example, to not have wikitext honored
+in a head elements you could do the following: --nowiki=head1,head2,head3,head4
+
+=item --title=STRING
+
+=item --subtitle=STRING
+
+=item --author=STRING
+
+=item --version=STRING
+
+=item --date=STRING
+
+If this is passed in then the metadata line {foo STRING} is set where foo is
+the name of the options you're setting.
+
+=cut

@@ -93,6 +93,9 @@ C<$coolUri> to 1.
 
 =head2 Adding purple numbers to your entries
 
+You can either use the C<purpleNumber> plugin (avaiable where you found this
+plugin) or follow the instructions below.
+
 You can use the purple utility (different from this plugin) that comes
 with PurpleWiki to add purple numbers to your entries.  However, you
 have to be a bit careful, because strictly speaking, a blosxom entry

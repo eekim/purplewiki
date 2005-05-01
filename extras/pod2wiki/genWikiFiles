@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+use strict;
+use warnings;
+use File::Basename;
+
+my $dir = shift || die "Usage: $0 directory\n";
+my @files = `find $dir -type f -name '*.pm'`;
+chomp(@files);
+
+for my $file (@files) {
+    local $/ = undef;
+    my $text = "";
+    open(FILE, $file) || warn "Can not open $file: $!\n" && next;
+    $text = <FILE>;
+    close(FILE);
+    my $name = basename($file);
+    if ($text =~ /^package\s+([\w:]+)\s*;\s*$/m) {
+        $name = $1;
+    }
+    print $name . "\n";
+    my $fname = $name;
+    $fname =~ s/::/-/g;
+    my ($year, $mon, $day) = (localtime(time))[5,4,3];
+    $year += 1900;
+    $mon = sprintf("%02d", $mon);
+    $day = sprintf("%02d", $day);
+    my $date = $year . $mon . $day;
+    my @x = ("./pod2wiki", "--title=$name", "--version=1", "--date=$date", 
+           "--author=mtoconno", "--subtitle='POD'", 
+           "--nowiki=head1,head2,head3,head4,verbatim", $file, "$fname.wiki");
+    system(@x);
+}
+
+1;
+__END__
+
+=pod
+
+=head1 NAME
+
+    Usage: genWikiFiles directory
+
+=head1 DESCRIPTION
+
+This utility will find all the *.pm files underneath a directory (recursively)
+and then run pod2wiki on each one.
+
+=head1 AUTHOR
+
+Matthew O'Connor E<lt>matthew@canonical.orgE<gt>
+
+=cut

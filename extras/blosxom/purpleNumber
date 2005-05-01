@@ -1,0 +1,282 @@
+package purpleNumber;
+# -------- Configuration Variables -------- 
+
+# The location of the PurpleWiki's configuration files and data.
+our $wikidir = "/home/kb-dev/wikidata";
+
+# The file extension for files we purple number (e.g. .wiki, .txt, .html, etc)
+our $file_extension = $blosxom::file_extension;
+
+# The file extension used on the URLs of entries which are numbered.  If not
+# set then this is the same as file_extension above.
+our $live_extension = $blosxom::default_flavour;
+
+# The directory to put backups in.  Leave blank to not create backups.
+our $backupdir = "/home/kb-dev/blog/backups";
+
+# -----------------------------------------
+use strict;
+use warnings;
+no warnings 'once';
+use File::Basename;
+use File::Copy;
+use PurpleWiki::Config;
+use PurpleWiki::Parser::WikiText;
+
+sub start {
+    return if not ($wikidir and -r $wikidir and -w _ and -x _);
+    return if $backupdir and not (-r $backupdir and -w _ and -x _);
+    $file_extension = "" if not defined $file_extension;
+    $backupdir =~ s/\/\s*$//;  # Remove trailing /
+    $wikidir =~ s/\/\s*$//; # Remove trailing /
+
+    return 1;
+}
+
+sub filter {
+    my ($pkg, $files) = @_;
+
+    for my $file (reverse orderFilesByDate($files)) {
+        purpleNumber($file);
+    }
+
+    return 1;
+}
+
+sub orderFilesByDate {
+    my $files = shift || {};
+    return sort { $files->{$a} <=> $files->{$b} } keys %$files;
+}
+
+sub purpleNumber {
+    my $file = shift;
+    return if not goodFile($file);
+
+    my $config = getConfig() || return;
+    my $wiki = parseFile($file, $config) || return;
+    doBackup($file) || return;
+    numberFile($file, $wiki, $config) || return;
+    touchFiles($file);
+}
+
+sub touchFiles {
+    my $file = shift || "";
+    my $backup = getBackupFilename($file);
+    my $mtime = (stat($file))[9];
+    utime($mtime, $mtime + 1, $backup);
+}
+
+sub numberFile {
+    my ($file, $wiki, $config) = @_;
+    eval {
+        my $text = $wiki->view('wikitext', config => $config);
+        my ($head) = getFileContent($file);
+        die if not (defined $text and defined $head);
+
+        open(FILE, ">$file") || die;
+        print FILE "$head\n$text";
+        close(FILE);
+    };
+    return ($@ ? 0 : 1);
+}
+
+sub getConfig {
+    my $config;
+    eval { $config = PurpleWiki::Config->new($wikidir) };
+    return $config;
+}
+
+sub parseFile {
+    my ($file, $config) = @_;
+    my $wiki;
+    eval {
+        my ($head, $content) = getFileContent($file);
+        my $parser = PurpleWiki::Parser::WikiText->new();
+        $wiki = $parser->parse($content, 
+                               config => $config,
+                               add_node_ids => 1,
+                               wikiword => 0,
+                               freelink => 0,
+                               url => getURL($file));
+        $wiki->title(undef);
+    };
+    return $wiki;
+}
+
+sub getURL {
+    my $file = shift || "";
+    my ($path, $base) = parseFilename($file);
+    my $url = $blosxom::url || "";
+    $url =~ s/\/\s*$//; # chop off last trailing /
+
+    if ($file_extension and $live_extension) {
+        $base =~ s/\.$file_extension$/\.$live_extension/;
+    } elsif ($live_extension) {
+        $base .= ".$live_extension";
+    }
+
+    return "$url/$path/$base";
+}
+
+sub getFileContent {
+    my $file = shift || "";
+    my $file_body = "";
+    my $file_head= "";
+    my $inHeader = 1;
+
+    open(FILE, $file) || die "Unable to read $file: $!\n";
+    while (my $line = <FILE>) {
+        $inHeader = 0 if $line =~ /^\s*$/;
+        if ($inHeader) {
+            $file_head .= $line;
+            next;
+        }
+        $file_body .= $line;
+    }
+    close(FILE);
+
+    return ($file_head, $file_body);
+}
+
+sub doBackup {
+    my $file = shift || "";
+    return 1 if not $backupdir;
+    my $backup = getBackupFilename($file);
+    my $x = prepareBackupDir($backup);
+    return copy($file, $backup);
+}
+
+sub prepareBackupDir {
+    my $backup = shift || "";
+    my $dirname = dirname($backup);
+    $dirname =~ s/^$backupdir\/?//;
+
+    my $base = $backupdir;
+    for my $part (split m{/}, $dirname) {
+        $base .= "/$part";
+        if (not -e $base) {
+            mkdir($base) || return;
+        }
+    }
+
+    return 1;
+}
+
+sub goodFile {
+    my $file = shift;
+    return if not ($file and -r $file and -w _);
+    return if length($file_extension) and not $file =~ /\.$file_extension$/;
+    return 1 if not $backupdir;
+
+    # Get the backup file and see if we can write to it.
+    my $backup = getBackupFilename($file);
+    return if not canMakeBackup($backup);
+    return 1 if not -e $backup;  # backup doesn't exist, so we're good to go.
+
+    # See if existing backup file is older than the production file.
+    my $file_mtime = (stat($file))[9];
+    my $backup_mtime = (stat($backup))[9];
+    return ($backup_mtime < $file_mtime);
+}
+
+sub canMakeBackup {
+    my $backup = shift || "";
+    #my $backupdir = dirname($backup);
+    return 1 if not -e $backup and -d $backupdir and -r _ and -w _ and -x _;
+    return if not -e $backup;  # Backup doesn't exist and dir is not rwx.
+    return (-r $backup and -w _);  # is file read/write?
+}
+
+sub parseFilename {
+    my $file = shift || "";
+    my $path = dirname($file) || "";
+    my $base = basename($file) || "";
+
+    # Pull off the datadir portion of the file name and remove trailing slash.
+    my $datadir = $blosxom::datadir;
+    $path =~ s/^$datadir\/?//;
+    $path =~ s/\/$//;
+
+    return ($path, $base);
+}
+
+sub getBackupFilename {
+    my $file = shift;
+    my ($path, $base) = parseFilename($file);
+    my $username = (getpwuid((stat($file))[4]))[0] || "unknown";
+    my $file = "$backupdir/$path/$username-$base";
+    $file =~ s{/+}{/}g;
+    return $file;
+}
+
+1;
+__END__
+=head1 NAME
+
+Blosxom Plug-in: purpleNumber
+
+=head1 DESCRIPTION
+
+This module is a filter plugin and it *will* modify the on-disk entry.  This
+module will purple number entries ending in $file_extension.  The file will be
+parsed, purple numers added, and saved back.  A backup of the file will be
+placed in $backupdir if it is set.
+
+=head1 CAVEAT
+
+For this module to work the blog entries and $backupdir (and the files inside
+of it) all must be readable and writeable by the user blosxom runs as.
+
+=head2 Prerequisites
+
+PurpleWiki.  See:
+
+  http://www.blueoxen.net/tools/purplewiki/
+
+  http://purplewiki.blueoxen.net/
+
+=head2 Configuration variables
+
+C<$wikidir> is the location of your Wiki's configuration directory (usually
+called wikidb).  There must be a valid PurpleWiki config file in the directory,
+even if you don't actually have a local Wiki installation.
+
+C<$file_extension> is the file extension of entries we purple number.  For
+example, if you only want to purple numbers entries ending in ".wiki" then you
+set the file extension to "wiki".
+
+C<$live_extension> is the flavour someone uses to see the purple numbered
+entries.  This is used for when we regeister our purple numbered text with
+PuprleWiki because this flavour extension is what the file name in the URL you
+type into your browser ends with.
+
+C<$backupdir> is the location to write backup files to.  A backup is always
+made before we go in and write to the file.
+
+=head1 AUTHOR
+
+Matthew O'Connor E<lt>matthew@canonical.orgE<gt>
+
+=head1 LICENSE
+
+Copyright (C) 2005 Matthew O'Connor
+
+(This license is the same as Blosxom's)
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
