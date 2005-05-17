@@ -1215,7 +1215,7 @@ sub DoPost {
     if ($user || ($page->getUserID() > 399))  {
       $newAuthor = ($user->id ne $page->getUserID());       # known user(s)
     } else {
-      $newAuthor = ($page->getIP() ne $authorAddr);  # hostname fallback
+      $newAuthor = ($page->getHost ne $authorAddr);  # hostname fallback
     }
     $newAuthor = 1  if ($oldrev == 0);  # New page
     $newAuthor = 0  if (!$newAuthor);   # Standard flag form, not empty
