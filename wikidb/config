@@ -7,7 +7,7 @@
 # AppConfig isn't happy with that, so those items must be
 # commented out.
 
-ScriptName  = /cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
+ScriptName  = http://my.host.com/cgi-bin/wiki.pl  # The name of the wiki script, for use in urls
 ScriptDir   = /cgi-bin/         # The directory to the Wiki script (for the cookie)
 SiteName    = YourWiki          # Name of site (used for titles)
 HomePage    = FrontPage         # Home page (change space to _)
