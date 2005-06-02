@@ -449,6 +449,13 @@ sub getTree {
   $self->{tree};
 }
 
+sub hasText {
+  my ($self, $query) = (shift, shift);
+
+  my $text = $self->_getText();
+  return ($text =~ /$query/i) ? 1 : 0;
+}
+
 # Retrieves the page id.
 sub getID {
     return shift->{id};

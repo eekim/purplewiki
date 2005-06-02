@@ -525,6 +525,13 @@ sub getTree {
   return $parser->parse($text, 'add_node_ids' => 0);
 }
 
+sub hasText {
+  my ($self, $query) = (shift, shift);
+
+  my $text = $self->_getText();
+  return ($text =~ /$query/i) ? 1 : 0;
+}
+
 # exists. If not a new one is created
 # and returned.
 sub _getSection {

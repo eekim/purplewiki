@@ -393,6 +393,13 @@ sub getTree {
   $parser->parse($text, 'add_node_ids' => 0);
 }
 
+sub hasText {
+  my ($self, $query) = (shift, shift);
+
+  my $text = $self->_getText();
+  return ($text =~ /$query/i) ? 1 : 0;
+}
+
 # Retrieves the page id.
 sub getID {
   my $id = shift->{id};

@@ -51,13 +51,13 @@ sub search {
     foreach my $id ($pages->allPages()) {
         my $page = $pages->getPage($id);
 	    my $name = $pages->getName($id);
-        my $text;
         if ($name =~ /$query/i) {
 print STDERR "Search Match name $name \n";
             push(@results, _searchResult($page, $name));
-        } elsif (($text = $page->getTree->view('wikitext')) =~ /$query/i) {
+        } elsif ($page->hasText($query)) {
 print STDERR "Search Match body $name \n";
-            push(@results, _searchResult($page, $name, $text));
+            push(@results, _searchResult($page, $name,
+                                  $page->getTree->view('wikitext')));
         }
     }
 
