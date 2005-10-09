@@ -34,10 +34,10 @@ use strict;
 use IO::File;
 use PurpleWiki::Config;
 use PurpleWiki::Parser::WikiText;
-use Apache::RequestRec ();
-use Apache::RequestIO ();
-use Apache::URI;
-use Apache::Const -compile => qw(OK);
+use Apache2::RequestRec ();
+use Apache2::RequestIO ();
+use Apache2::URI;
+use Apache2::Const -compile => qw(OK);
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -72,7 +72,7 @@ sub handler {
     $r->print($wikiTemplate->process('handler'));
 
     # FIXME: sometimes okay is not the desired return code
-    return Apache::OK;
+    return Apache2::Const::OK;
 
 }
 
