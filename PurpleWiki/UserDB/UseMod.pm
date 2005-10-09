@@ -57,6 +57,7 @@ sub new {
 
     # create user directories
     my $userDir = $self->{config}->UserDir;
+    $self->{lastUserIdFile} = "$userDir/last_id";
     if (!(-d "$userDir/0")) {
         PurpleWiki::Misc::CreateDir($userDir);
 
@@ -71,26 +72,11 @@ sub new {
 sub createUser {
     my $self = shift;
 
-    # generate new user ID
-    my $id = 1001;
-    while (-f $self->_userFile($id+1000)) {
-        $id += 1000;
-    }
-    while (-f $self->_userFile($id+100)) {
-        $id += 100;
-    }
-    while (-f $self->_userFile($id+10)) {
-        $id += 10;
-    }
-
     &PurpleWiki::UseMod::Database::RequestLock() or die('Could not get user ID lock');
-    while (-f $self->_userFile($id)) {
-        $id++;
-    }
+    my $id = $self->_newUserId;
     # reserve the user ID
     &PurpleWiki::Misc::WriteStringToFile($self->_userFile($id), "lock");
     &PurpleWiki::UseMod::Database::ReleaseLock();
-
     return PurpleWiki::User->new($id);
 }
 
@@ -183,6 +169,37 @@ sub _userFile {
 
     return if ($userId < 0);
     return $self->{config}->UserDir . "/" . ($userId % 10) . "/$userId.db";
+}
+
+sub _newUserId {
+    my $self = shift;
+    my $userId;
+
+    if (-e $self->{lastUserIdFile}) {
+        my $fh = new IO::File;
+        $fh->open($self->{lastUserIdFile});
+        $userId = <$fh>;
+        $fh->close;
+        chomp $userId;
+        $userId++;
+    }
+    else { # create new last_id file
+        $userId = 1001;
+        while (-f $self->_userFile($userId+1000)) {
+            $userId += 1000;
+        }
+        while (-f $self->_userFile($userId+100)) {
+            $userId += 100;
+        }
+        while (-f $self->_userFile($userId+10)) {
+            $userId += 10;
+        }
+        while (-f $self->_userFile($userId)) {
+            $userId++;
+        }
+    }
+    &PurpleWiki::Misc::WriteStringToFile($self->{lastUserIdFile}, $userId);
+    return $userId;
 }
 
 1;

@@ -816,7 +816,7 @@ sub DoEditPrefs {
   if (!$user && $useCap) {  # set up Authen::Captcha
       my $captcha = Authen::Captcha->new(data_folder => $config->CaptchaDataDir,
                                          output_folder => $config->CaptchaOutputDir);
-      $captchaCode = $captcha->generate_code(7);
+      $captchaCode = $captcha->generate_code(4);
   }
   $wikiTemplate->vars(&globalTemplateVars,
                       captcha => $captchaCode,
