@@ -53,8 +53,6 @@ my $InterSiteInit = 0;
 my %InterSite;
 my $user;               # our reference to the logged in user
 my $session;            # CGI::Session object
-my $visitedPagesCache;
-my $visitedPagesCacheSize = 7;
 
 my $q;                  # CGI query reference
 
@@ -158,8 +156,6 @@ sub InitCookie {
   if ($user && $user->tzOffset != 0) {
     $TimeZoneOffset = $user->tzOffset * (60 * 60);
   }
-
-  $visitedPagesCache = $session->param('visitedPagesCache') || {};
 }
 
 sub preferredLanguages {
@@ -267,13 +263,13 @@ sub BrowsePage {
   my $url = $config->BaseURL . '?' . $id;
   $body = WikiHTML($id, $page->getTree(), $url);
 
-  &updateVisitedPagesCache($id);
+  $session->newVisitedPage($id);
   if ($id eq $config->RCName) {
       DoRc($id, $pageName, $revision, $body);
       return;
   }
 
-  my @vPages = &visitedPages;
+  my @vPages = $session->visitedPages;
   my $keywords = $id;
   $keywords =~ s/_/\+/g if ($config->FreeLinks);
 
@@ -348,7 +344,7 @@ sub DoRc {
               changeUrl => $config->BaseURL .
                   '?action=history&amp;id=' . $page->{pageId} };
     }
-    my @vPages = &visitedPages;
+    my @vPages = $session->visitedPages;
     $wikiTemplate->vars(&globalTemplateVars,
                         id => $id,
                         pageName => $pageName,
@@ -382,7 +378,7 @@ sub DoHistory {
     my $text;
 
     my $base = $config->BaseURL;
-    my @vPages = &visitedPages;
+    my @vPages = $session->visitedPages;
     my @pageHistory = $pages->getRevisions($id);
     my $count = 1;
     for my $pageinfo (@pageHistory) {
@@ -753,7 +749,7 @@ sub DoEdit {
   $page = $pages->getPage($id, $revision);
   $pageTime = $page->getTime() || 0;
 
-  my @vPages = &visitedPages;
+  my @vPages = $session->visitedPages;
 
   if ($isConflict) {
       $wikiTemplate->vars(&globalTemplateVars,
@@ -965,7 +961,7 @@ sub DoIndex {
     for my $id ($pages->allPages($config)) {
         push(@list, { id => $id, pageName => $pages->getName($id) });
     }
-    my @vPages = &visitedPages;
+    my @vPages = $session->visitedPages;
 
     $wikiTemplate->vars(&globalTemplateVars,
                         visitedPages => \@vPages,
@@ -1342,40 +1338,6 @@ sub logSession {
     print FH "\t" . $q->remote_host . "\t" . $session->param('userId') . "\t" .
         $q->referer . "\n";
     close FH;
-}
-
-sub updateVisitedPagesCache {
-    my $id = shift;
-
-    my @pages = keys %{$visitedPagesCache};
-    if (!defined $visitedPagesCache->{$id} &&
-        (scalar @pages - 1 >= $visitedPagesCacheSize)) {
-        my @oldestPages = sort {
-            $visitedPagesCache->{$a} <=> $visitedPagesCache->{$b}
-        } @pages;
-        my $remove = scalar @pages - $visitedPagesCacheSize + 1;
-        for (my $i = 0; $i < $remove; $i++) {
-            delete $visitedPagesCache->{$oldestPages[$i]};
-        }
-    }
-    $visitedPagesCache->{$id} = time;
-    $session->param('visitedPagesCache', $visitedPagesCache);
-}
-
-sub visitedPages {
-    my @pages = sort { $visitedPagesCache->{$b} <=> $visitedPagesCache->{$a} }
-        keys %{$visitedPagesCache};
-    my $i = 0;
-    foreach my $id (@pages) {
-        my $pageName = $id;
-        $pageName =~ s/_/ /g if ($config->FreeLinks);
-        $pages[$i] = {
-            'id' => $id,
-            'pageName' => $pageName,
-        };
-        $i++;
-    };
-    return @pages;
 }
 
 sub expandPageName {

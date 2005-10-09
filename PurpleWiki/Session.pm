@@ -50,6 +50,9 @@ sub new {
     }
     $self->{session} = CGI::Session->new("driver:File", $sid,
                                          {Directory => $self->{config}->SessionDir});
+    $self->{visitedPagesSize} = 7;
+    $self->{visitedPages} = $self->{session}->param('visitedPagesCache') || {};
+
     bless($self, $this);
     return $self;
 }
@@ -74,6 +77,44 @@ sub id {
 sub delete {
     my $self = shift;
     return $self->{session}->delete(@_);
+}
+
+sub visitedPages {
+    my $self = shift;
+
+    my @pages = sort { $self->{visitedPages}->{$b} <=>
+                           $self->{visitedPages}->{$a} }
+        keys %{$self->{visitedPages}};
+    my $i = 0;
+    foreach my $id (@pages) {
+        my $pageName = $id;
+        $pageName =~ s/_/ /g if ($self->{config}->FreeLinks);
+        $pages[$i] = {
+            'id' => $id,
+            'pageName' => $pageName,
+        };
+        $i++;
+    };
+    return @pages;
+}
+
+sub newVisitedPage {
+    my $self = shift;
+    my $id = shift;
+
+    my @pages = keys %{$self->{visitedPages}};
+    if (!defined $self->{visitedPages}->{$id} &&
+        (scalar @pages - 1 >= $self->{visitedPagesSize})) {
+        my @oldestPages = sort {
+            $self->{visitedPages}->{$a} <=> $self->{visitedPages}->{$b}
+        } @pages;
+        my $remove = scalar @pages - $self->{visitedPagesCacheSize} + 1;
+        for (my $i = 0; $i < $remove; $i++) {
+            delete $self->{visitedPages}->{$oldestPages[$i]};
+        }
+    }
+    $self->{visitedPages}->{$id} = time;
+    $self->param('visitedPagesCache', $self->{visitedPages});
 }
 
 1;
