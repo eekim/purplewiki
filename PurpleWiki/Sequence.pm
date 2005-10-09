@@ -215,7 +215,7 @@ sub _setValue {
     my $fh = new IO::File;
     if ($fh->open($self->{datafile}, 'w')) {
         print $fh $value;
-        $fh->close();
+        $fh->close;
     } else {
         die "unable to write value to " . $self->{datafile} . ": $!";
     }
@@ -285,7 +285,7 @@ sub getCurrentValue {
         my $fh = new IO::File;
         $fh->open($file) || die "Unable to open $file: $!";
         $value = $fh->getline();
-        $fh->close();
+        $fh->close;
     } else {
         $value = $ORIGIN;
     }
@@ -361,8 +361,9 @@ sub _updateURLByLocal {
 #print STDERR "Delete($url) $nid\n";
     }
     $revidx{$url} = join(" ", @newnids);
-    untie %index;
+
     untie %revidx;
+    untie %index;
 }
 
 #

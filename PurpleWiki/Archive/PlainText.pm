@@ -355,7 +355,7 @@ sub _currentRev {
     my $fh = IO::File->new($file);
     if ($fh) {
         my $v = <$fh>;
-        undef $fh;
+        $fh->close;
         return $& if ($v =~ /\d+/);
     }
     0;
@@ -410,7 +410,7 @@ sub _readPage {
   my $fh = IO::File->new($file);
   return undef unless (defined($fh));
   $self->{text} = join("", (<$fh>));
-  undef $fh;
+  $fh->close;
   "";
 }
 
@@ -429,7 +429,7 @@ sub _readMeta {
 #print STDERR "RM:$k -> $v\n";
       $self->{$k} = $v;
     }
-    undef $fh;
+    $fh->close;
   }
 }
 
@@ -446,7 +446,7 @@ sub _writePage {
   my $fh = IO::File->new(">$file");
   if ($fh) {
     print $fh $text;
-    undef $fh
+    $fh->close;
   } else {
     print STDERR "_writePage:$file\nError:$!\n";
   }
@@ -461,7 +461,7 @@ sub _writeCurrent {
   my $fh = IO::File->new(">$file");
   if ($fh) {
     print $fh $rev,"\n";
-    undef $fh
+    $fh->close;
   } else {
     print STDERR "_writeCurrent:$file\nError:$!\n";
   }
@@ -478,7 +478,7 @@ sub _writeMeta {
     for (sort keys %$hashref) {
         print $fh "$_=$$hashref{$_}\n";
     }
-    undef $fh
+    $fh->close;
   }
 }
 

@@ -11,7 +11,6 @@
 # Copyright (c) Blue Oxen Associates 2004.  All rights reserved.
 
 use strict;
-use DB_File;
 use File::Copy;
 use File::Find;
 use PurpleWiki::Config;
