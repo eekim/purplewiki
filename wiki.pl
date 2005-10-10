@@ -345,6 +345,7 @@ sub DoRc {
                   '?action=history&amp;id=' . $page->{pageId} };
     }
     my @vPages = $session->visitedPages;
+    my $currentDate = localtime;
     $wikiTemplate->vars(&globalTemplateVars,
                         id => $id,
                         pageName => $pageName,
@@ -356,6 +357,7 @@ sub DoRc {
                         rcDays => \@rcDays,
                         changesFrom => TimeToText($starttime),
                         recentChanges => \@recentChanges,
+                        currentDate => $currentDate,
                         pageUrl => $config->BaseURL . "?$id",
                         backlinksUrl => $config->BaseURL . "?search=$id",
                         editUrl => $acl->canEdit($user, $id) ?
@@ -650,7 +652,7 @@ sub DoOtherRequest {
       &DoLogout;
     } elsif ($action eq 'rss') {
       require PurpleWiki::Syndication::Rss;
-      my $rss = new PurpleWiki::Syndication::Rss;
+      my $rss = PurpleWiki::Syndication::Rss->new(userDb => $userDb);
       print $q->header(-type => 'text/xml') .
           $rss->getRSS;
     } else {

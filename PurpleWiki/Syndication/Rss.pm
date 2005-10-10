@@ -75,6 +75,9 @@ sub getRSS {
     # to loop on the array
     while ($count-- > 0) {
         my $recentChange = shift(@recentChanges) || last;
+        my $userId = $recentChange->{userId};
+        my $username;
+        $username = $userId ? $self->{userDb}->loadUser($userId)->username : 'Anonymous';
 
         my $id = $recentChange->{pageId};
         my $bodyText = $pages->getPage($id)
@@ -84,7 +87,7 @@ sub getRSS {
             title => $id,
             link  => $self->{config}->BaseURL . '?' .$id,
             dc => {
-                creator => $recentChange->{userId},
+                creator => $username,
             },
             description => "<![CDATA[$bodyText]]>\n",
         );
