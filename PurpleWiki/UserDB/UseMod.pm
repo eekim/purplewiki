@@ -117,18 +117,25 @@ sub saveUser {
         }
     }
 
+    # get old username
+    my $oldUser = $self->loadUser($user->id);
     # write user data
     &PurpleWiki::Misc::WriteStringToFile($self->_userFile($user->id), $string);
 
     # update username->id map
-    my %users;
-    my $userDir = $self->{config}->UserDir;
-    &PurpleWiki::UseMod::Database::RequestLock or die('Could not get usernames.db lock');
-    tie %users, "DB_File", "$userDir/usernames.db",
-        O_RDWR|O_CREAT, 0666, $DB_HASH;
-    $users{$user->username} = $user->id;
-    untie %users;
-    &PurpleWiki::UseMod::Database::ReleaseLock;
+    if (!$oldUser || ($oldUser && $oldUser->username ne $user->username)) {
+        my %users;
+        my $userDir = $self->{config}->UserDir;
+        &PurpleWiki::UseMod::Database::RequestLock or die('Could not get usernames.db lock');
+        tie %users, "DB_File", "$userDir/usernames.db",
+            O_RDWR|O_CREAT, 0666, $DB_HASH;
+        $users{$user->username} = $user->id;
+        if ($oldUser && $oldUser->username ne $user->username) {
+            delete $users{$oldUser->username};
+        }
+        untie %users;
+        &PurpleWiki::UseMod::Database::ReleaseLock;
+    }
 }
 
 sub deleteUser {
@@ -140,7 +147,6 @@ sub deleteUser {
     my %users;
     tie %users, "DB_File", "$userDir/usernames.db";
     my $userId = $users{$userName};
-    print STDERR "username = $userName\nuserid = $userId\n";
     delete $users{$userName};
     untie %users;
     my $userFile = $self->_userFile($userId);
