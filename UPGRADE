@@ -6,6 +6,18 @@ For all versions, the environment variable WIKIDB has been changed to
 PW_CONFIG_DIR.  Change your scripts and such and make any extensions
 compatible as well.
 
+UPGRADING FROM V0.95
+====================
+
+There is a bug with backendConvert.pl that sometimes generates
+revisions in reverse.  If this happens to you, run InvertRevisions.py
+(contributed by Jonathan Cheyer) on your newly created wikidb:
+
+  extras/InvertRevisions.py newdb
+
+All scripts related to user management, including
+createUsernameIndex.pl, are now located in extras/userdb/.
+
 UPGRADING FROM V0.94
 ====================
 

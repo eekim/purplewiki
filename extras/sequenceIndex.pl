@@ -30,6 +30,7 @@
 #    59 Temple Place, Suite 330
 #    Boston, MA 02111-1307 USA
 
+use lib '/home/eekim/devel/PurpleWiki/trunk';
 use strict;
 use PurpleWiki::Sequence;
 use PurpleWiki::Archive::Sequence;
@@ -48,7 +49,7 @@ my $backend = ($opts{'b'}) ? $opts{'b'} : 'PurpleWiki::Archive::PlainText';
 $backend = "PurpleWiki::Archive::$backend" if ($backend !~ /:/);
 my $verbose = $opts{'v'};
 
-ie "Usage: sequenceIndex.pl [-v] -u url [-d dataDir] [-s sequenceDir] [-b backend]\n"
+die "Usage: sequenceIndex.pl [-v] -u url [-d dataDir] [-s sequenceDir] [-b backend]\n"
    if ($opts{'h'} || !$url);
 
 local $| = 1;  # Do not buffer output
@@ -68,7 +69,7 @@ my $maxNID = &PurpleWiki::Archive::Sequence::getCurrentValue($pages);
 my $origNID = $maxNID;
 my $count = 0;
 for my $id ($pages->allPages()) {
-    print "$count: $id $maxNID\n" if $verb;
+    print "$count: $id $maxNID\n" if $verbose;
     $count++;
     &PurpleWiki::Archive::Sequence::updateNIDs
         ($pages, $url."?$id", $id, \$maxNID);

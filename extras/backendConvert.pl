@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
 # vi:et:tw=0:sm:ai:ts=2:sw=2
 #
 # backendConvert.pl - PurpleWiki
@@ -11,6 +11,7 @@
 
 package UseModWiki;  # nasty hack
 
+use lib '/home/eekim/devel/PurpleWiki/trunk';
 use strict;
 use File::Copy;
 use Getopt::Std;
@@ -98,7 +99,8 @@ for my $pageTime (sort { $b <=> $a } (keys %all)) {
                                    host => $host,
                                    timeStamp => $pageTime,
                                    userId => $userId,
-                                   url => "$url?$id")) {
+				   )) {
+#                                   url => "$url?$id")) {
         print "$id :: $rev -> $err\n";
         $badCount++;
     }
