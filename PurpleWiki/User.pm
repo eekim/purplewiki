@@ -3,7 +3,7 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2005.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -81,6 +81,22 @@ sub createIp {
 
     $self->{createIp} = shift if @_;
     return $self->{createIp};
+}
+
+# need traditional get/set accessor/mutator for password.
+# otherwise, it would be impossible to undef the password.
+
+sub getPassword {
+    my $self = shift;
+
+    return $self->{password};
+}
+
+sub setPassword {
+    my $self = shift;
+
+    $self->{password} = shift;
+    return $self->{password};
 }
 
 # the following may eventually go away.  here mostly for backwards

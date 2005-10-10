@@ -5,7 +5,7 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2005.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -902,11 +902,11 @@ sub DoUpdatePrefs {
   my $passwordChanged = 0;
   if ($password eq "") {
       $passwordRemoved = 1;
-      $user->setField('password', undef);
+      $user->setPassword(undef);
   }
   elsif ($password ne "*") {
       $passwordChanged = 1;
-      $user->setField('password', $password);
+      $user->setPassword($password);
   }
 
   UpdatePrefNumber("rcdays", 0, 0, 999999);
@@ -1017,7 +1017,7 @@ sub DoLogin {
   my $userId = $userDb->idFromUsername($username);
   $user = $userDb->loadUser($userId);
   if ($user && defined($user->getField('password')) &&
-      ($user->getField('password') eq $password)) {
+      ($user->getPassword eq $password)) {
       $session->param('userId', $userId);
       $success = 1;
   }
