@@ -3,7 +3,7 @@
 use strict;
 use Test;
 
-BEGIN { plan tests => 8 };
+BEGIN { plan tests => 10 };
 
 use PurpleWiki::UserDB::UseMod;
 use PurpleWiki::Config;
@@ -23,6 +23,7 @@ my $userDb = PurpleWiki::UserDB::UseMod->new;
 my $user = $userDb->createUser;
 ok($user->id == 1001);
 $user->username($userName);
+$user->setPassword('yoyoyo');
 $userDb->saveUser($user);
 ok(-f "$datadir/user/1/1001.db");
 
@@ -36,6 +37,11 @@ $user = undef;
 $user = $userDb->loadUser($userDb->idFromUsername($userName));
 ok($user->id == 1001);
 ok($user->username eq $userName);
+ok($user->getPassword eq 'yoyoyo');
+
+# undef password
+$user->setPassword(undef);
+ok(!defined $user->getPassword);
 
 # rename the user
 $user->username('eekim');

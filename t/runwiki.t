@@ -5,7 +5,7 @@ $^W = 0;
 require "t/runlog.pl";
 require "t/runTest.pl";
 
-BEGIN { plan tests => 85 };
+BEGIN { plan tests => 83 };
 END {
     system('cp t/config.tDef t/config');
     system('rm -fr t/rDB');
@@ -27,7 +27,7 @@ local (*OUT);
     open(OUT, ">&STDOUT") || die "Error open $!\n";
 
     my ($test_in, $test_out, $compare);
-    for my $seq (0..84) {
+    for my $seq (0..43, 45..52, 54..84) {
         $test_in = "$testdir/request.$seq";
         $test_out = "$testdir/test.$seq.html";
         $compare = "$testdir/wiki.$seq.html";
