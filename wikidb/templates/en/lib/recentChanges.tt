@@ -34,4 +34,4 @@
 </ul>
 [% END %]
 
-<p>Page generated [% currentDate %]</p>
+<p>Page generated [% currentTime %]</p>

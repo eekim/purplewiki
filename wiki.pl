@@ -345,7 +345,7 @@ sub DoRc {
                   '?action=history&amp;id=' . $page->{pageId} };
     }
     my @vPages = $session->visitedPages;
-    my $currentDate = localtime;
+    my $currentTime = localtime;
     $wikiTemplate->vars(&globalTemplateVars,
                         id => $id,
                         pageName => $pageName,
@@ -357,7 +357,7 @@ sub DoRc {
                         rcDays => \@rcDays,
                         changesFrom => TimeToText($starttime),
                         recentChanges => \@recentChanges,
-                        currentDate => $currentDate,
+                        currentTime => $currentTime,
                         pageUrl => $config->BaseURL . "?$id",
                         backlinksUrl => $config->BaseURL . "?search=$id",
                         editUrl => $acl->canEdit($user, $id) ?
@@ -704,7 +704,7 @@ sub DoOtherRequest {
 sub DoEdit {
   my ($id, $isConflict, $newTree, $preview) = @_;
   my ($header, $editRows, $editCols, $revision, $oldText);
-  my ($summary, $pageTime);
+  my ($summary, $lastSavedTime);
   my $newText;
   unless (defined($newTree)) {
     my $revision = GetParam('revision','');
@@ -749,10 +749,11 @@ sub DoEdit {
   my $oldrev = $pages->getPage($id)->getRevision();  # get current revision
 
   $page = $pages->getPage($id, $revision);
-  $pageTime = $page->getTime() || 0;
+  $lastSavedTime = $page->getTime() || 0;
 
   my @vPages = $session->visitedPages;
 
+  my $currentTime = localtime;
   if ($isConflict) {
       $wikiTemplate->vars(&globalTemplateVars,
                           visitedPages => \@vPages,
@@ -760,9 +761,10 @@ sub DoEdit {
                           pageName => $pageName,
                           revision => $revision,
                           isConflict => $isConflict,
-                          pageTime => $pageTime,
+                          lastSavedTime => $lastSavedTime,
+                          currentTime => $currentTime,
                           oldrev => $oldrev,
-                          oldText => &QuoteHtml($page->getTree()->view('wikihtml')),
+                          oldText => &QuoteHtml($page->getTree->view('wikitext')),
                           newText => &QuoteHtml($newText),
                           revisionsUrl => $config->BaseURL
                                           . "?action=history&amp;id=$id");
@@ -778,7 +780,6 @@ sub DoEdit {
                           pageName => $pageName,
                           revision => $revision,
                           isConflict => $isConflict,
-                          pageTime => $pageTime,
                           oldrev => $oldrev,
                           oldText => &QuoteHtml($newText),
                           body => $body,
@@ -792,7 +793,6 @@ sub DoEdit {
                           id => $id,
                           pageName => $pageName,
                           revision => $revision,
-                          pageTime => $pageTime,
                           oldText => &QuoteHtml($newText),
                           oldrev => $oldrev,
                           revisionsUrl => $config->BaseURL . "?action=history&amp;id=$id");
