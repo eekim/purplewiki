@@ -1,5 +1,9 @@
 Revision history for PurpleWiki.
 
+0.96 -- ?, 2005
+	- Access Control Lists.
+	- Bug squashing extravaganza!
+	
 0.95 -- December 1, 2004
 	- Pluggable backends.  We've replaced the old default UseMod
 	  backend with a PlainText backend.  There's also an experimental

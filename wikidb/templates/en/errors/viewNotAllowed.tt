@@ -1,7 +1,9 @@
 [% INCLUDE common/header.tt
-           title = "Error!"
+           title = 'Sorry!'
 %]
 
-<h2>Viewing not allowed for [% pageName %]</h2>
+<h2>Viewing Not Allowed!</h2>
+
+<p>You do not have permission to view this page.</p>
 
 [% INCLUDE common/footer.tt %]

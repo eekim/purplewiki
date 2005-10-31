@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-# Copyright (c) Blue Oxen Associates 2002-2004.  All rights reserved.
+# Copyright (c) Blue Oxen Associates 2002-2005.  All rights reserved.
 #
 # This file is part of PurpleWiki.  PurpleWiki is derived from:
 #
@@ -53,12 +53,28 @@ sub new {
 
 ### methods
 
+# if $DataDir/restricted.read, then only the user IDs listed can read
+
 sub canRead {
     my $self = shift;
     my ($user, $pageId) = @_;
 
-    return 1;
+    my ($status, $data) = PurpleWiki::Misc::ReadFile($self->{config}->DataDir . '/restricted.read');
+    if (!$status) { # no file exists, so all is good
+        return 1;
+    }
+    elsif ($user) {
+        foreach my $allowedUserId (split(/\n/, $data)) {
+            return 1 if ($user->id == $allowedUserId);
+        }
+        return 0;
+    }
+    else {
+        return 0;
+    }
 }
+
+# if $DataDir/restricted.edit, then only the user IDs listed can edit
 
 sub canEdit {
     my $self = shift;
@@ -68,20 +84,34 @@ sub canEdit {
                  && defined $pageId);
     # check ban list
     my ($status, $data) = PurpleWiki::Misc::ReadFile($self->{config}->DataDir . "/banlist");
-    return 1 if (!$status);  # No file exists, so no ban
-    my $ip = $ENV{'REMOTE_ADDR'};
-    my $host = $ENV{REMOTE_HOST};
-    if ($host eq "") {
-        # Catch errors (including bad input) without aborting the script
-        eval 'use Socket; my $iaddr = inet_aton($ip});' .
-            '$host = gethostbyaddr($iaddr, AF_INET)';
+    if ($status) {
+        my $ip = $ENV{'REMOTE_ADDR'};
+        my $host = $ENV{REMOTE_HOST};
+        if ($host eq "") {
+            # Catch errors (including bad input) without aborting the script
+            eval 'use Socket; my $iaddr = inet_aton($ip});' .
+                '$host = gethostbyaddr($iaddr, AF_INET)';
+        }
+        foreach (split(/\n/, $data)) {
+            next if ((/^\s*$/) || (/^\#/));  # Skip empty, spaces, or comments
+            return 0 if ($ip   =~ /$_/i);
+            return 0 if ($host =~ /$_/i);
+        }
     }
-    foreach (split(/\n/, $data)) {
-        next if ((/^\s*$/) || (/^#/));  # Skip empty, spaces, or comments
-        return 0 if ($ip   =~ /$_/i);
-        return 0 if ($host =~ /$_/i);
+    # check for restricted file
+    ($status, $data) = PurpleWiki::Misc::ReadFile($self->{config}->DataDir . '/restricted.write');
+    if (!$status) { # no file exists, so all is good
+        return 1;
     }
-    return 1;
+    elsif ($user) {
+        foreach my $allowedUserId (split(/\n/, $data)) {
+            return 1 if ($user->id == $allowedUserId);
+        }
+        return 0;
+    }
+    else {
+        return 0;
+    }
 }
 
 sub canAdmin {
