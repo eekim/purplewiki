@@ -13,6 +13,11 @@ Templates changed:
 
   wikidb/templates/en/lib/recentChanges.tt
 
+Config variables:
+
+  StyleSheet
+  LogoURL
+
 There is a bug with backendConvert.pl that sometimes generates
 revisions in reverse.  If this happens to you, run InvertRevisions.py
 (contributed by Jonathan Cheyer) on your newly created wikidb:
