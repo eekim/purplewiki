@@ -1366,6 +1366,8 @@ sub expandPageName {
 sub globalTemplateVars {
     return (siteName => $config->SiteName,
             baseUrl => $config->BaseURL,
+            stylesheet => $config->StyleSheet,
+            logoUrl => $config->LogoURL,
             homePage => $config->HomePage,
             userName => $user ? $user->username : undef,
             userId => $user ? $user->id : undef,

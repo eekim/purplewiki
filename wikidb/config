@@ -22,6 +22,10 @@ CaptchaDataDir = $DataDir/captcha
 CaptchaOutputDir = /var/www/htdocs/captcha
 CaptchaWebDir = /captcha
 
+### Template variables
+StyleSheet  = "/purplewiki.css"
+#LogoURL     = ""
+
 ### Spam Regular Expressions
 #SpamRegexp = '/var/www/spamre.txt'
 

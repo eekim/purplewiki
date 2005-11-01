@@ -11,7 +11,11 @@
 [% title %]
 [% END %]
 </title>
+[% IF stylesheet %]
+<link rel="stylesheet" href="[% stylesheet %]" />
+[% ELSE %]
 <link rel="stylesheet" href="/purplewiki.css" />
+[% END %]
 </head>
 
 <body>
@@ -21,7 +25,9 @@
 <h1>[% title %]</h1>
 </div>
 <div class='right'>
-<!-- img tag would go here if you have a logo -->
+[% IF logoUrl %]
+<a href="[% homePage %]"><img src="[% logoUrl %]" border="0" /></a>
+[% END %]
 </div>
 </div>
 
