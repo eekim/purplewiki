@@ -85,7 +85,8 @@ my $acl = $aclDriver->new;
 
 # check for i-names support
 if ($config->UseINames) {
-    require XDI::SPIT;
+    require XDI::SSO;
+    require XDI::Registry;
 }
 
 # Set our umask if one was put in the config file. - matthew
@@ -150,7 +151,9 @@ sub InitCookie {
       $q->cookie($config->SiteName);
   $session = PurpleWiki::Session->new($sid);
   my $userId = $session->param('userId');
-  $user = $userDb->loadUser($userId) if ($userId);
+  if ($userId) {
+      $user = $userDb->loadUser($userId);
+  }
   $session->clear(['userId']) if (!$user);
 
   if ($user && $user->tzOffset != 0) {
@@ -1036,11 +1039,19 @@ sub DoLogin {
 }
 
 sub DoLogout {
-    if ($config->UseINames && (my $xsid = $session->param('xsid')) ) {
-        my $spit = XDI::SPIT->new;
+    if ($config->UseINames && !&GetParam('xri_cmd', undef)) {
+        my $spit = XDI::SSO->new;
+        my $registry = XDI::Registry->new(
+                name => $config->ServiceProviderName,
+                key => $config->ServiceProviderKey
+            );
         my $iname = $user->username;
         my ($idBroker, $inumber) = $spit->resolveBroker($iname);
-        $spit->logout($idBroker, $iname, $xsid) if ($idBroker);
+#        $spit->logout($idBroker, $iname, $xsid) if ($idBroker);
+        print "Location: " . $registry->logout($idBroker, $user->id,
+                                               $config->ReturnUrl .
+                                               "action=logout") . "\n\n";
+        return;
     }
     $session->delete;
     my $cookie = $q->cookie(-name => $config->SiteName,
@@ -1079,7 +1090,7 @@ sub DoAssociateIname {
         $user->username($iname);
         $userDb->saveUser($user);
         # now login
-        my $spit = XDI::SPIT->new;
+        my $spit = XDI::SSO->new;
         my ($idBroker, $inumber) = $spit->resolveBroker($iname);
         if ($idBroker) {
             my $redirectUrl = $spit->getAuthUrl($idBroker, $iname, $config->ReturnUrl);
@@ -1102,7 +1113,7 @@ sub DoAssociateIname {
 sub DoIname {
     my ($iname, $xsid) = @_;
 
-    my $spit = XDI::SPIT->new;
+    my $spit = XDI::SSO->new;
     my ($idBroker, $inumber) = $spit->resolveBroker($iname);
     if ($idBroker) {
         if ($xsid) {
