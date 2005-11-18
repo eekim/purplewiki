@@ -68,9 +68,15 @@ extras/mhonarc/README
 extras/mhonarc/mhpurple.pl
 extras/mt/README
 extras/mt/purple.pl
+extras/userdb/changeMetadata.pl
+extras/userdb/copyUser.pl
+extras/userdb/deleteUser.pl
+extras/userdb/showEditors.pl
+extras/userdb/changePassword.pl
+extras/userdb/createUsernameIndex.pl
+extras/userdb/renameUser.pl
+extras/userdb/showUsers.pl
 extras/backendConvert.pl
-extras/createUsernameIndex.pl
-extras/deleteUser.pl
 extras/dumpSequence.pl
 extras/moinConvert.pl
 extras/plaintextIntegrity.pl
@@ -607,3 +613,4 @@ wikidb/templates/en/lib/pageHistory.tt
 wikidb/templates/en/lib/recentChanges.tt
 wikidb/templates/en/lib/searchResults.tt
 wiki.pl
+META.yml                                 Module meta-data (added by MakeMaker)
