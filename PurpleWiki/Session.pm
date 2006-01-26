@@ -104,11 +104,11 @@ sub newVisitedPage {
 
     my @pages = keys %{$self->{visitedPages}};
     if (!defined $self->{visitedPages}->{$id} &&
-        (scalar @pages - 1 >= $self->{visitedPagesSize})) {
+        (scalar @pages >= $self->{visitedPagesSize})) {
         my @oldestPages = sort {
             $self->{visitedPages}->{$a} <=> $self->{visitedPages}->{$b}
         } @pages;
-        my $remove = scalar @pages - $self->{visitedPagesCacheSize} + 1;
+        my $remove = scalar @pages - $self->{visitedPagesSize} + 1;
         for (my $i = 0; $i < $remove; $i++) {
             delete $self->{visitedPages}->{$oldestPages[$i]};
         }
