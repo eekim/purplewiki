@@ -752,7 +752,7 @@ sub DoEdit {
   my $oldrev = $pages->getPage($id)->getRevision();  # get current revision
 
   $page = $pages->getPage($id, $revision);
-  $lastSavedTime = $page->getTime() || 0;
+  $lastSavedTime = localtime($page->getTime()) || 0;
 
   my @vPages = $session->visitedPages;
 
