@@ -977,7 +977,7 @@ sub DoIndex {
 }
 
 sub DoAllPages {
-    print GetHttpHeader;
+    print "Content-Type: text/plain\n\n";
     for my $id ($pages->allPages($config)) {
         print $config->BaseURL . "?$id " . $pages->getName($id) . "\n";
     }
