@@ -633,6 +633,8 @@ sub DoOtherRequest {
       DoUnlock();
     } elsif ($action eq "index") {
       DoIndex();
+    } elsif ($action eq "allpages") {
+      DoAllPages();
     } elsif ($action eq "editprefs") {
       DoEditPrefs();
     } elsif ($config->UseINames && $action eq "getiname") {
@@ -972,6 +974,13 @@ sub DoIndex {
                         visitedPages => \@vPages,
                         pages => \@list);
     print GetHttpHeader() . $wikiTemplate->process('pageIndex');
+}
+
+sub DoAllPages {
+    print GetHttpHeader;
+    for my $id ($pages->allPages($config)) {
+        print $config->BaseURL . "?$id " . $pages->getName($id) . "\n";
+    }
 }
 
 # Create a new user file/cookie pair
