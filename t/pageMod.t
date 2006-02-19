@@ -76,7 +76,7 @@ my $config = new PurpleWiki::Config($configdir);
 my $pages = $config->{pages};
 
 my $parser = PurpleWiki::Parser::WikiText->new();
-my $wiki = $parser->parse($content, add_node_ids => 1);
+my $wiki = $parser->parse($content, add_node_ids => 1, url => 'test:test');
 my $output = $wiki->view('wikitext');
 $output =~ s/\r//g;
 
@@ -127,7 +127,7 @@ sleep 1;  # if it runs to fast, the two posts get the same timestamp and
           # possible test failures if they don't sort consistently
 
 # parse second content
-$wiki = $parser->parse($second_content, add_node_ids => 1);
+$wiki = $parser->parse($second_content, add_node_ids => 1, url => 'test:test');
 $result = $pages->putPage(pageId => $id2, tree => $wiki);
 ok($result, "");
 ok($pages->pageExists($id2));

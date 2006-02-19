@@ -15,6 +15,9 @@ use PurpleWiki::Parser::WikiText;
 use PurpleWiki::Config;
 use PurpleWiki::View::Filter;
 
+# remove any nid index that might exist
+unlink 't/tDB/purple.db';
+
 my $configdir = 't';
 my $content=<<"EOF";
 Hello this is a wiki page, using WikiPage as a WikiWord.
@@ -30,7 +33,8 @@ EOF
 # parse content
 my $config = new PurpleWiki::Config($configdir);
 my $parser = PurpleWiki::Parser::WikiText->new();
-my $wiki = $parser->parse($content, add_node_ids => 1);
+# XXX parse requires a url now?
+my $wiki = $parser->parse($content, add_node_ids => 1, url => 'test:test');
 my @nids;
 my $filter = PurpleWiki::View::Filter->new(
   useOO => 1,
@@ -53,6 +57,5 @@ foreach (@nids) {
     ok($_ == $i++);
 }
 
-sub END {
-    unlink('t/tDB/sequence');
+END {
 }

@@ -38,6 +38,8 @@ package PurpleWiki::Sequence;
 use strict;
 use IO::File;
 use DB_File;
+use lib '/Users/cdent/src/Purple/lib';
+use Purple;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);

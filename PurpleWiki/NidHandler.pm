@@ -1,3 +1,4 @@
+# XXX deprecated in favor of Purple::Server in Purple.pm
 # PurpleWiki::NidHandler.pm
 # vi:ai:sw=4:ts=4:et:sm
 #

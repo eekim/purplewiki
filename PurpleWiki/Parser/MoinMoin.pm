@@ -32,17 +32,17 @@ package PurpleWiki::Parser::MoinMoin;
 
 use 5.005;
 use strict;
-vuse PurpleWiki::Config;
+use PurpleWiki::Config;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;
-use PurpleWiki::Sequence;
 use PurpleWiki::Misc;
+use Purple::Client;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
 
-my $sequence;
+my $purple_client;
 my $url;
 
 ### markup regular expressions
@@ -83,8 +83,10 @@ sub parse {
     $params{config} = PurpleWiki::Config->instance();
 
     $url = $params{url};
-    $sequence = new PurpleWiki::Sequence($params{config}->LocalSequenceDir,
-        $params{config}->RemoteSequenceURL);
+    $purple_client = new Purple::Client(
+        store => $params{config}->LocalSequenceDir,
+        server_url => $params{config}->RemoteSequenceURL
+    );
 
     # set default parameters
     $params{wikiword} = $params{config}->WikiLinks
@@ -793,7 +795,7 @@ sub _traverseAndAddNids {
              $node->type eq 'li' || $node->type eq 'pre' ||
              $node->type eq 'dt' || $node->type eq 'dd') &&
             !$node->id) {
-            $node->id($sequence->getNext($url));
+            $node->id($purple_client->getNext($url));
         }
         my $childrenRef = $node->children;
         &_traverseAndAddNids($childrenRef)

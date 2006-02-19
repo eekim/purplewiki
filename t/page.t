@@ -75,7 +75,8 @@ my $config = new PurpleWiki::Config($configdir);
 my $pages = $config->{pages};
 
 my $parser = PurpleWiki::Parser::WikiText->new();
-my $wiki = $parser->parse($content, add_node_ids => 1);
+# parse now requires a url be passed...
+my $wiki = $parser->parse($content, add_node_ids => 1, url => 'test:test');
 my $output = $wiki->view('wikitext');
 $output =~ s/\r//g;
 
@@ -123,7 +124,7 @@ ok($newPage->getID(), $id);
 ok($newPage->getTree()->view('wikitext'), $expected_content);
 
 # parse second content
-$wiki = $parser->parse($second_content, add_node_ids => 1);
+$wiki = $parser->parse($second_content, add_node_ids => 1, url => 'test:test');
 $result = $pages->putPage(pageId => $id2, tree => $wiki);
 ok($result, "");
 ok($pages->pageExists($id2));

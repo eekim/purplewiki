@@ -36,8 +36,8 @@ use PurpleWiki::Config;
 use PurpleWiki::InlineNode;
 use PurpleWiki::StructuralNode;
 use PurpleWiki::Tree;
-use PurpleWiki::Sequence;
 use PurpleWiki::Misc;
+use Purple::Client;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -67,8 +67,10 @@ sub new {
     my $self = {};
     my $config = PurpleWiki::Config->instance();
     if ($config) {
-      $self->{sequence} = new PurpleWiki::Sequence($config->LocalSequenceDir,
-                                                   $config->RemoteSequenceURL);
+    $self->{purple_client} = new Purple::Client(
+        store      => $config->LocalSequenceDir,
+        server_url => $config->RemoteSequenceURL
+    );
       $self->{wikiword} = $config->WikiLinks;
       $self->{freelink} = $config->FreeLinks;
     }
@@ -774,7 +776,7 @@ sub _traverseAndAddNids {
              $node->type eq 'li' || $node->type eq 'pre' ||
              $node->type eq 'dt' || $node->type eq 'dd') &&
             !$node->id) {
-            $node->id($this->{sequence}->getNext($this->{url}));
+            $node->id($this->{purple_client}->getNext($this->{url}));
         }
         my $childrenRef = $node->children;
         $this->_traverseAndAddNids($childrenRef)

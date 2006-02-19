@@ -2,31 +2,34 @@
 
 use strict;
 use warnings;
-use Test;
+use Test::More;
 
 BEGIN { plan tests => 4 };
 
 use IO::File;
-use PurpleWiki::Sequence;
+use Purple::Client;
 
 my $datadir = '/tmp';
+my $url = 'test:test';
+my $i=0;
 
 # make sure any existing sequence is killed
-unlink('/tmp/sequence');
+unlink("$datadir/purple.db");
 
 ### test sequence incrementing
-my $sequence = new PurpleWiki::Sequence($datadir);
-ok(ref $sequence eq 'PurpleWiki::Sequence');
-ok($sequence->getNext() eq '1');
+# Using local store, expecting sqlite
+my $sequence = new Purple::Client(store => $datadir);
+is(ref $sequence, 'Purple::SQLite', 'returned object should be Purple::SQLite');
+ok($sequence->getNext($url) eq '1');
 
 for (0..7) {
-	$sequence->getNext();
+	$sequence->getNext($i++ . $url);
 }
-ok($sequence->getNext() eq 'A');
+ok($sequence->getNext($i++ . $url) eq 'A');
 
 for (0..24) {
-	$sequence->getNext();
+	$sequence->getNext($i-- . $url );
 }
-ok($sequence->getNext() eq '10');
+ok($sequence->getNext($i++ . $url ) eq '10');
 
-unlink("$datadir/sequence");
+#unlink("$datadir/purple.db");

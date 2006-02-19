@@ -36,6 +36,7 @@ use LWP::UserAgent;
 use PurpleWiki::Config;
 use PurpleWiki::Sequence;
 use PurpleWiki::Parser::WikiText;
+use Purple::Client;
 
 our $VERSION;
 $VERSION = sprintf("%d", q$Id$ =~ /\s(\d+)\s/);
@@ -63,6 +64,11 @@ sub new {
     }
     bless ($self, $class);
 
+    $self->{purple} = Purple::Client->new(
+        store => $self->{config}->LocalSequenceDir,
+        server_url => $self->{config}->RemoteSequenceURL,
+    );
+
     return $self;
 }
 
@@ -73,6 +79,7 @@ sub new {
 # the content or an error message if it could not be obtained
 # is returned.
 
+# XXX move this to Purple::Transclusion?
 sub get {
     my $self = shift;
     my $nid = shift;
@@ -151,18 +158,7 @@ sub getURL {
     my $self = shift;
     my $nid = shift;
 
-    my $sequence = new PurpleWiki::Sequence($self->{config}->LocalSequenceDir(),
-        $self->{config}->RemoteSequenceURL());
-    return $sequence->getURL($nid); 
-}
-
-# Attaches to the the DB file which contains the NID:URL index
-sub _tieHash {
-    my $self = shift;
-    my $file = shift;
-
-    tie %{$self->{db}}, 'DB_File', $file, O_RDONLY, 0444, $DB_HASH or
-        warn "unable to tie $file: $!";
+    return $self->{purple}->getURL($nid); 
 }
 
 1;
