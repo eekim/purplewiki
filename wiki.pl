@@ -670,7 +670,8 @@ sub DoOtherRequest {
   }
   elsif ($config->UseINames && $iname) {
     my $xsid = &GetParam('xri_xsid', '');
-    &DoIname($iname, $xsid);
+    my $fromPage = &GetParam('fromPage', '');
+    &DoIname($iname, $xsid, $fromPage);
     return;
   }
 
@@ -1048,7 +1049,7 @@ sub DoLogin {
 }
 
 sub DoLogout {
-    if ($config->UseINames && !&GetParam('xri_cmd', undef)) {
+    if ($user && $config->UseINames && !&GetParam('xri_cmd', undef)) {
         my $spit = XDI::SSO->new;
         my $registry = XDI::Registry->new(
                 name => $config->ServiceProviderName,
@@ -1120,7 +1121,7 @@ sub DoAssociateIname {
 }
 
 sub DoIname {
-    my ($iname, $xsid) = @_;
+    my ($iname, $xsid, $fromPage) = @_;
 
     my $spit = XDI::SSO->new;
     my ($idBroker, $inumber) = $spit->resolveBroker($iname);
@@ -1139,9 +1140,14 @@ sub DoIname {
                     $userDb->saveUser($user);
                 }
                 # successful login message
-                $wikiTemplate->vars(&globalTemplateVars,
-                                    loginSuccess => 1);
-                print &GetHttpHeader . $wikiTemplate->process('loginResults');
+                if ($fromPage) {
+                    print 'Location: ' . $config->BaseURL . "?$fromPage\n\n";
+                }
+                else {
+                    $wikiTemplate->vars(&globalTemplateVars,
+                                        loginSuccess => 1);
+                    print &GetHttpHeader . $wikiTemplate->process('loginResults');
+                }
             }
             else { # invalid xsid
                 $wikiTemplate->vars(&globalTemplateVars);
@@ -1149,7 +1155,9 @@ sub DoIname {
             }
         }
         else {
-            my $redirectUrl = $spit->getAuthUrl($idBroker, $iname, $config->ReturnUrl);
+            my $returnUrl = $config->ReturnUrl;
+            $returnUrl .= "fromPage=$fromPage&" if ($fromPage);
+            my $redirectUrl = $spit->getAuthUrl($idBroker, $iname, $returnUrl);
             print "Location: $redirectUrl\n\n";
         }
     }
@@ -1381,7 +1389,9 @@ sub globalTemplateVars {
             userName => $user ? $user->username : undef,
             userId => $user ? $user->id : undef,
             preferencesUrl => $config->BaseURL . '?action=editprefs',
-            sessionId => $session ? $session->id : undef);
+            sessionId => $session ? $session->id : undef,
+            stylesheet => $config->StyleSheet,
+            logoUrl => $config->LogoURL);
 }
 
 my $is_require = (caller($_))[7];
