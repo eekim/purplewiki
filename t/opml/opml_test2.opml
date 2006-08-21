@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/hyperscope/src/client/lib/hs/xslt/hyperscope.xsl"?>
+<opml xmlns:hs="http://www.hyperscope.org/hyperscope/opml/public/2006/05/09" hs:version="1.0" version="2.0"><head>
+<title>opml_test2.txt</title>
+</head>
+<body>
+<outline text="opml_test2.txt">
+<outline>
+<outline hs:nid="01" text="&lt;h2&gt;Second Header&lt;/h2&gt;">
+<outline hs:nid="02" text="&lt;p&gt;I should get a few outline tags first.&lt;/p&gt;" />
+</outline>
+</outline>
+</outline>
+</body>
+</opml>

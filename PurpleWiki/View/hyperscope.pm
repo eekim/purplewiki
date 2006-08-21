@@ -31,6 +31,7 @@ package PurpleWiki::View::hyperscope;
 use 5.005;
 use strict;
 use warnings;
+use Carp;
 use PurpleWiki::View::Driver;
 use PurpleWiki::View::wikihtml;
 
@@ -101,7 +102,80 @@ sub sectionPost {
     $self->_hardRule(0);
     $self->{isStart} = 0;
 
-    $self->{outputString} .= "</outline>\n";
+    $self->{outputString} .= "</outline>\n" unless $self->{emptyFirstSection};
+}
+
+sub indentPre { 
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "<outline>\n";
+}
+
+sub indentPost { 
+    shift->{outputString} .= "</outline>\n";
+}
+
+sub ulPre { 
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "<outline>\n";
+}
+
+sub ulPost { 
+    shift->{outputString} .= "</outline>\n";
+}
+
+sub olPre { 
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "<outline>\n";
+}
+
+sub olPost { 
+    shift->{outputString} .= "</outline>\n";
+}
+
+sub dlPre { 
+    my $self = shift;
+    $self->_hardRule(0);
+    $self->{outputString} .= "<outline>\n";
+}
+
+sub dlPost { 
+    shift->{outputString} .= "</outline>\n";
+}
+
+sub liPre {
+  my ($self, $node) = @_;
+
+  $self->{outputString} .= '<outline hs:nid="' . $node->id . '" text="* ';
+}
+
+sub liMain { shift->_liRecurse(@_) }
+sub ddMain { shift->_liRecurse(@_) }
+
+sub liPost {
+  shift->{outputString} .= "</outline>\n";
+}
+
+sub dtPre {
+  my ($self, $node) = @_;
+
+  $self->{outputString} .= '<outline hs:nid="' . $node->id . '" text="* ';
+}
+
+sub dtPost {
+  shift->{outputString} .= "</outline>\n";
+}
+
+sub ddPre {
+  my ($self, $node) = @_;
+
+  $self->{outputString} .= '<outline hs:nid="' . $node->id . '" text="* ';
+}
+
+sub ddPost {
+  shift->{outputString} .= "</outline>\n";
 }
 
 sub hPre { 
@@ -133,21 +207,60 @@ sub pPre {
 
 sub pPost { shift->_closeTagWithNID(@_) }
 
+sub prePre {
+    my ($self, $node) = @_;
+
+    $self->_hardRule(0);
+    $self->_openTagWithNID($node);
+}
+
+sub prePost { shift->_closeTagWithNID(@_) }
+
+sub bPre { shift->{outputString} .= '&lt;' . shift->type . '&gt;' }
+sub iPre { shift->{outputString} .= '&lt;' . shift->type . '&gt;' }
+sub ttPre { shift->{outputString} .= '&lt;' . shift->type . '&gt;' }
+
+sub bPost { shift->{outputString} .= '&lt;/' . shift->type . '&gt;' }
+sub iPost { shift->{outputString} .= '&lt;/' . shift->type . '&gt;' }
+sub ttPost { shift->{outputString} .= '&lt;/' . shift->type . '&gt;' }
+
+sub textMain { shift->_quoteHtml(@_) }
+sub nowikiMain { shift->_quoteHtml(@_) }
+sub linkMain { shift->_quoteHtml(@_) }
+sub urlMain { shift->_quoteHtml(@_) }
+
+sub imageMain {
+    my ($self, $nodeRef) = @_;
+    my $href = $nodeRef->href;
+    $self->{outputString} .= '&lt;img alt="' . $href .
+        '" src="' .  $href . '" /&gt;';
+}
+
+sub freelinkMain { shift->_wikiLink(@_) }
+sub wikiwordMain { shift->_wikiLink(@_) }
+
 ############### Private Methods ###############
 
 sub _hardRule {
-    my ($self, $isSection) = @_;
+  my ($self, $isSection) = @_;
 
-    if ($self->{isPrevSection}) {
-        if (!$self->{isStart}) {
-            if (!$isSection || ($isSection &&
-                $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
-                $self->{outputString} .= '<outline text="&lt;hr /&gt;">' . 
-		    "\n\n";
-            }
-        }
-        $self->{isPrevSection} = 0;
+  if ($self->{isPrevSection}) {
+    if ($self->{isStart}) {
+      if ($isSection) {
+        $self->{outputString} .= "<outline>\n";
+      }
+      elsif ($self->{sectionDepth} == $self->{depthLastClosedSection} + 1) {
+        $self->{outputString} .= "<outline>\n";
+      }      
     }
+    else {
+      if (!$isSection || ($isSection &&
+          $self->{sectionDepth} == $self->{depthLastClosedSection} + 1) ) {
+        $self->{outputString} .= '<outline text="&lt;hr /&gt;">' . "\n";
+      }
+    }
+    $self->{isPrevSection} = 0;
+  }
 }
 
 sub _opmlHeader {
@@ -155,7 +268,7 @@ sub _opmlHeader {
     my $outputString;
 
     $outputString = qq(<?xml version="1.0" encoding="UTF-8"?>\n) .
-       qq(<!-- ?xml-stylesheet type="text/xsl" href="/hyperscope/src/client/lib/hs/xslt/hyperscope.xsl"? -->\n) .
+       qq(<?xml-stylesheet type="text/xsl" href="/hyperscope/src/client/lib/hs/xslt/hyperscope.xsl"?>\n) .
        qq(<opml xmlns:hs="http://www.hyperscope.org/hyperscope/opml/public/2006/05/09" hs:version="1.0" version="2.0">) .
        qq(<head>\n);
     $outputString .= '<title>' . $wikiTree->title . "</title>\n"
@@ -183,6 +296,20 @@ sub _headerLevel {
     return $headerLevel;
 }
 
+sub _liRecurse { # also used for dd
+    my ($self, $nodeRef) = @_;
+
+    if (!defined $nodeRef) {
+        carp "Warning: tried to recurse on an undefined node\n";
+        return;
+    }
+    if ($nodeRef->isa('PurpleWiki::StructuralNode')) {
+        $self->traverse($nodeRef->content) if defined $nodeRef->content;
+    }
+    # display NID here
+    $self->traverse($nodeRef->children) if defined $nodeRef->children;
+}
+
 sub _openTagWithNID {
     my ($self, $nodeRef) = @_;
     $self->{outputString} .= '<outline hs:nid="0' . $nodeRef->id . '" text="';
@@ -193,6 +320,101 @@ sub _openTagWithNID {
 sub _closeTagWithNID {
     my ($self, $nodeRef) = @_;
     $self->{outputString} .= '&lt;/' . $nodeRef->type . '&gt;" />' . "\n";
+}
+
+sub _quoteHtml {
+    my ($self, $nodeRef) = @_;
+    my $html = $nodeRef->content || '';
+
+    $html =~ s/&/&amp;/g;
+    $html =~ s/</&lt;/g;
+    $html =~ s/>/&gt;/g;
+
+    if (1) {   # Make an official option?
+        $html =~ s/&amp;([#a-zA-Z0-9]+);/&$1;/g;  # Allow character references
+    }
+
+    $self->{outputString} .= $html;
+}
+
+sub _wikiLink {
+    my ($self, $nodeRef) = @_;
+    my $pageName = $nodeRef->content;
+    my $linkString = "";
+    my $pageNid;
+    my $pages = $self->{config}->{pages};
+
+    if ($pageName =~ s/\#([A-Z0-9]+)$//) {
+        $pageNid = $1;
+    }
+    my $pageId = $pageName;
+    $pageId = PurpleWiki::Misc::FreeToNormal($pageName)
+        if ($nodeRef->type eq 'freelink');
+
+    if ($nodeRef->content =~ /:/) {
+        $linkString .= '&lt;a href="'
+                       . PurpleWiki::Misc::getInterWikiLink($pageName);
+        $linkString .= "#nid$pageNid" if $pageNid;
+        $linkString .= '" class="interwiki"&gt;' . $nodeRef->content . '&lt;/a&gt;';
+    }
+    elsif ($pages && $pages->pageExists($pageId)) {
+        if ($nodeRef->type eq 'freelink') {
+            $linkString .= '&lt;a href="'
+                           . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                           . '" class="freelink"&gt;';
+        } else {
+            $linkString .= '&lt;a href="'
+                           . PurpleWiki::Misc::getWikiWordLink($pageName);
+            $linkString .= "#nid$pageNid" if $pageNid;
+            $linkString .= '" class="wikiword"&gt;';
+        }
+        $linkString .= $nodeRef->content . '&lt;/a&gt;';
+    }
+    else {
+        my $createLinkText = $self->{locale}->createLinkText;
+        if ($nodeRef->type eq 'freelink') {
+            if ($createLinkText) {
+                my $linkText .= '[' . $nodeRef->content . ']';
+                my $createLink = '&lt;a href="'
+                         . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                               . qq{" class="freelink"&gt;$createLinkText&lt;/a&gt;};
+                if ($self->{config}->CreateLinkBefore) {
+                    $linkString .= $createLink . $linkText;
+                }
+                else {
+                    $linkString .= $linkText . $createLink;
+                }
+            }
+            else {
+                # the bracket syntax isn't necessary, because the
+                # entire text is linked
+                $linkString .= '&lt;a href="'
+                         . PurpleWiki::Misc::getFreeLink($nodeRef->content)
+                         . qq{" class="create"&gt;$nodeRef->content&lt;/a&gt;};
+            }
+        }
+        else {
+            if ($createLinkText) {
+                my $linkText .= $nodeRef->content;
+                my $createLink .= '&lt;a href="'
+                          . PurpleWiki::Misc::getWikiWordLink($pageName)
+                          . qq{" class="wikiword"&gt;$createLinkText&lt;/a&gt;};
+                if ($self->{config}->CreateLinkBefore) {
+                    $linkString .= $createLink . $linkText;
+                }
+                else {
+                    $linkString .= $linkText . $createLink;
+                }
+            }
+            else {
+                $linkString .= '&lt;a href="'
+                     . PurpleWiki::Misc::getWikiWordLink($pageName)
+                     . '" class="create"&gt;' . $nodeRef->content . '&lt;/a&gt;';
+            }
+        }
+    }
+
+    $self->{outputString} .= $linkString;
 }
 1;
 __END__

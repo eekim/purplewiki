@@ -1,0 +1,5 @@
+Hello world. {nid 1}
+
+---
+
+New section. {nid 2}

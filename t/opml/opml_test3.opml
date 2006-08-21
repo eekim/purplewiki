@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/hyperscope/src/client/lib/hs/xslt/hyperscope.xsl"?>
+<opml xmlns:hs="http://www.hyperscope.org/hyperscope/opml/public/2006/05/09" hs:version="1.0" version="2.0"><head>
+<title>opml_test3.txt</title>
+</head>
+<body>
+<outline text="opml_test3.txt">
+<outline>
+<outline hs:nid="01" text="&lt;p&gt;Hello world.&lt;/p&gt;" />
+</outline>
+<outline text="&lt;hr /&gt;">
+<outline hs:nid="02" text="&lt;p&gt;New section.&lt;/p&gt;" />
+</outline>
+</outline>
+</body>
+</opml>

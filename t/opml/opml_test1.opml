@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/hyperscope/src/client/lib/hs/xslt/hyperscope.xsl"?>
+<opml xmlns:hs="http://www.hyperscope.org/hyperscope/opml/public/2006/05/09" hs:version="1.0" version="2.0"><head>
+<title>opml_test1.txt</title>
+</head>
+<body>
+<outline text="opml_test1.txt">
+<outline hs:nid="03" text="&lt;h1&gt;Section 1&lt;/h1&gt;">
+<outline hs:nid="02" text="&lt;p&gt;This is a paragraph.&lt;/p&gt;" />
+<outline hs:nid="01" text="&lt;p&gt;This is another paragraph.&lt;/p&gt;" />
+</outline>
+<outline hs:nid="05" text="&lt;h1&gt;Section 2&lt;/h1&gt;">
+<outline hs:nid="04" text="&lt;p&gt;Hello, world.&lt;/p&gt;" />
+<outline hs:nid="06" text="&lt;h2&gt;Section 3&lt;/h2&gt;">
+<outline hs:nid="07" text="&lt;p&gt;Fini!&lt;/p&gt;" />
+</outline>
+</outline>
+</outline>
+</body>
+</opml>

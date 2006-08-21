@@ -1,0 +1,13 @@
+= Section 1 {nid 3} =
+
+This is a paragraph. {nid 2}
+
+This is another paragraph. {nid 1}
+
+= Section 2 {nid 5} =
+
+Hello, world. {nid 4}
+
+== Section 3 {nid 6} ==
+
+Fini! {nid 7}
