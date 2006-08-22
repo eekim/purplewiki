@@ -144,7 +144,7 @@ sub GetPageLinkText {
     $id = FreeToNormal($id);
     $name =~ s/_/ /g;
   }
-  return ScriptLink($id, $name);
+  return ScriptLink("action=browse&amp;id=$id", $name);
 }
 
 sub ScriptLink {

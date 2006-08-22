@@ -358,18 +358,19 @@ sub _wikiLink {
     if ($nodeRef->content =~ /:/) {
         $linkString .= '&lt;a href=&quot;'
                        . PurpleWiki::Misc::getInterWikiLink($pageName);
-        $linkString .= "#nid$pageNid" if $pageNid;
+        $linkString .= "#nid0$pageNid" if $pageNid;
         $linkString .= '&quot; class=&quot;interwiki&quot;&gt;' . $nodeRef->content . '&lt;/a&gt;';
     }
     elsif ($pages && $pages->pageExists($pageId)) {
         if ($nodeRef->type eq 'freelink') {
             $linkString .= '&lt;a href=&quot;'
                            . PurpleWiki::Misc::getFreeLink($nodeRef->content)
-                           . '&quot; class=&quot;freelink&quot;&gt;';
+                           . '&amp;v=hyperscope&quot; class=&quot;freelink&quot;&gt;';
         } else {
             $linkString .= '&lt;a href=&quot;'
                            . PurpleWiki::Misc::getWikiWordLink($pageName);
-            $linkString .= "#nid$pageNid" if $pageNid;
+	    $linkString .= "&amp;v=hyperscope";
+            $linkString .= "#nid0$pageNid" if $pageNid;
             $linkString .= '&quot; class=&quot;wikiword&quot;&gt;';
         }
         $linkString .= $nodeRef->content . '&lt;/a&gt;';
